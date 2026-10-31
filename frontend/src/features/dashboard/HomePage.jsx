@@ -12,8 +12,6 @@ import Card from "../../components/common/Card/Card";
 import Button from "../../components/common/Button/Button";
 import Badge from "../../components/common/Badge/Badge";
 import EmptyState from "../../components/common/EmptyState/EmptyState";
-import { analyzePasswordStrength } from "../shield/services/passwordStrengthService";
-import { analyzePinSecurity } from "../shield/services/pinSecurityService";
 
 import "./HomePage.css";
 
@@ -23,29 +21,6 @@ export default function HomePage() {
   const [deadlines, setDeadlines] = useState([]);
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Security Copilot Advisor State
-  const [testPassword, setTestPassword] = useState("");
-  const [showTestPwd, setShowTestPwd] = useState(false);
-  const [pwdAdvice, setPwdAdvice] = useState(null);
-  const [testPin, setTestPin] = useState("");
-  const [pinAdvice, setPinAdvice] = useState(null);
-
-  useEffect(() => {
-    if (testPassword) {
-      setPwdAdvice(analyzePasswordStrength(testPassword));
-    } else {
-      setPwdAdvice(null);
-    }
-  }, [testPassword]);
-
-  useEffect(() => {
-    if (testPin) {
-      setPinAdvice(analyzePinSecurity(testPin, testPin.length >= 5 ? 6 : 4));
-    } else {
-      setPinAdvice(null);
-    }
-  }, [testPin]);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -158,114 +133,6 @@ export default function HomePage() {
             </Button>
           </Link>
         </div>
-
-        {/* Security Password & PIN Copilot Advisor (Non-blocking Guidance) */}
-        <Card padding="lg" style={{ marginBottom: "24px", background: "var(--color-surface)", border: "1px solid var(--color-border)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: "rgba(1, 90, 71, 0.12)", color: "#015A47", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <ShieldCheck size={20} />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "var(--color-text-primary)" }}>
-                  Security Copilot Advisor
-                </h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "var(--color-text-secondary)" }}>
-                  Test passwords and PINs for rule compliance and vulnerabilities. Does not generate or save anything.
-                </p>
-              </div>
-            </div>
-            <Badge variant="info">Live Heuristic Copilot</Badge>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
-            {/* Password Advisor */}
-            <div style={{ padding: "14px", borderRadius: "8px", background: "var(--color-surface-secondary)", border: "1px solid var(--color-border-subtle)" }}>
-              <label style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text-primary)", display: "block", marginBottom: "6px" }}>
-                Evaluate a Password
-              </label>
-              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                <input
-                  type={showTestPwd ? "text" : "password"}
-                  value={testPassword}
-                  onChange={(e) => setTestPassword(e.target.value)}
-                  placeholder="Type any password to test..."
-                  style={{
-                    width: "100%",
-                    padding: "8px 36px 8px 12px",
-                    borderRadius: "6px",
-                    border: "1px solid var(--color-border)",
-                    background: "var(--color-surface)",
-                    color: "var(--color-text-primary)",
-                    fontSize: "13px"
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowTestPwd(!showTestPwd)}
-                  style={{ position: "absolute", right: "8px", background: "none", border: "none", color: "#64748b", cursor: "pointer" }}
-                >
-                  {showTestPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              {pwdAdvice && (
-                <div style={{ marginTop: "10px", fontSize: "12px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                    <span style={{ fontWeight: 600, color: pwdAdvice.score >= 2 ? "#10b981" : "#ef4444" }}>
-                      Rating: {pwdAdvice.level.label}
-                    </span>
-                    <span style={{ color: "var(--color-text-muted)" }}>~{pwdAdvice.entropy} bits entropy</span>
-                  </div>
-                  {pwdAdvice.recommendations && pwdAdvice.recommendations.length > 0 && (
-                    <ul style={{ margin: "6px 0 0", paddingLeft: "16px", color: "var(--color-text-secondary)" }}>
-                      {pwdAdvice.recommendations.map((r, i) => (
-                        <li key={i}>{r}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* PIN Advisor */}
-            <div style={{ padding: "14px", borderRadius: "8px", background: "var(--color-surface-secondary)", border: "1px solid var(--color-border-subtle)" }}>
-              <label style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text-primary)", display: "block", marginBottom: "6px" }}>
-                Evaluate a PIN (4 or 6 Digits)
-              </label>
-              <input
-                type="password"
-                inputMode="numeric"
-                maxLength={6}
-                value={testPin}
-                onChange={(e) => setTestPin(e.target.value.replace(/\D/g, ""))}
-                placeholder="e.g. 1234 or 8492"
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid var(--color-border)",
-                  background: "var(--color-surface)",
-                  color: "var(--color-text-primary)",
-                  fontSize: "13px"
-                }}
-              />
-              {pinAdvice && (
-                <div style={{ marginTop: "10px", fontSize: "12px" }}>
-                  <span style={{ fontWeight: 600, color: pinAdvice.isBlocked ? "#ef4444" : "#10b981" }}>
-                    {pinAdvice.isBlocked ? "⚠️ Notice: Vulnerable / Predictable Pattern" : "✓ Acceptable Resistance Pattern"}
-                  </span>
-                  {pinAdvice.warnings && pinAdvice.warnings.length > 0 && (
-                    <ul style={{ margin: "6px 0 0", paddingLeft: "16px", color: "#f87171" }}>
-                      {pinAdvice.warnings.map((w, i) => (
-                        <li key={i}>{w}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </Card>
 
         {/* Dual Layout: Recent Documents & Upcoming Deadlines */}
         <div className="dv-dash-dual-grid">

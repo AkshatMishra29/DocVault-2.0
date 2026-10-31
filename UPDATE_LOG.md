@@ -37,6 +37,14 @@ All notable changes, security updates, and new feature implementations for the *
   - Created a production-grade class-based `ErrorBoundary` wrapping the entire application tree in `App.jsx`.
   - Renders a clean recovery interface with **Reload Application** and **Reset Session & Go to Home** options if any child component throws an unexpected runtime error.
 
+### 4. Zero-Knowledge Live Security Heuristic Copilot Integration
+* **Removed Test Advisor Card from Overview Dashboard (`HomePage.jsx`):**
+  - Removed the standalone "Security Copilot Advisor" widget from the active user dashboard.
+* **Embedded Live Heuristic Advice Directly into Registration (`RegisterPage.jsx`):**
+  - Integrated real-time Shannon entropy password evaluation and DataGenetics empirical PIN security checks directly into the account creation form.
+  - **100% In-Memory & Client-Side:** No credentials or hashes ever leave browser memory; evaluations run in $<1\text{ms}$ with zero network requests.
+  - Features real-time 4-segment visual rating bar, entropy estimation (`~X bits`), specific rule suggestions (e.g. uppercase, symbols, sequential number warnings), PIN pattern resilience indicators, and show/hide toggles.
+
 ---
 
 ## [2026-10-31] – Version 2.4.0: Firebase Auth, DocVault Shield & Advanced Vault Security Suite

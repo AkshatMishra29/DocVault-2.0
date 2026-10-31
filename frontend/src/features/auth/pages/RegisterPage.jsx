@@ -1,9 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../../../services/api";
-import { User, Mail, Lock, Phone, KeyRound, AlertCircle, ArrowRight, Sun, Moon, ShieldCheck, RefreshCw } from "lucide-react";
+import { 
+  User, Mail, Lock, Phone, KeyRound, AlertCircle, ArrowRight, 
+  Sun, Moon, ShieldCheck, RefreshCw, Eye, EyeOff 
+} from "lucide-react";
 import DocVaultLogo from "../../../components/common/DocVaultLogo/DocVaultLogo";
+import { analyzePasswordStrength } from "../../shield/services/passwordStrengthService";
+import { analyzePinSecurity } from "../../shield/services/pinSecurityService";
 import "./Auth.css";
 
 export default function RegisterPage() {
@@ -16,13 +21,26 @@ export default function RegisterPage() {
     pin: "",
     phone: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPin, setShowPin] = useState(false);
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState("form"); // "form" | "otp"
-  const [pinWarning, setPinWarning] = useState("");
   const [error, setError] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+
+  // Live Heuristic Password Advice (100% In-Memory Shannon Entropy & Rule Engine)
+  const pwdAdvice = useMemo(() => {
+    if (!formData.password) return null;
+    return analyzePasswordStrength(formData.password);
+  }, [formData.password]);
+
+  // Live Heuristic PIN Security Advice (100% In-Memory DataGenetics Engine)
+  const pinAdvice = useMemo(() => {
+    if (!formData.pin || formData.pin.length < 2) return null;
+    return analyzePinSecurity(formData.pin, formData.pinLength);
+  }, [formData.pin, formData.pinLength]);
 
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -34,17 +52,6 @@ export default function RegisterPage() {
   const handlePinChange = (val) => {
     const clean = val.replace(/\D/g, "").slice(0, Number(formData.pinLength));
     handleChange("pin", clean);
-
-    // Heuristic warning (warns but does not block)
-    if (clean.length === Number(formData.pinLength)) {
-      if (["1234", "0000", "1111", "2580", "123456", "000000", "111111"].includes(clean)) {
-        setPinWarning("⚠️ Notice: This PIN is easily guessable. You can still proceed or choose a stronger PIN.");
-      } else {
-        setPinWarning("");
-      }
-    } else {
-      setPinWarning("");
-    }
   };
 
   // Step 1: Send 6-Digit OTP to User's Email via MongoDB
@@ -332,17 +339,71 @@ export default function RegisterPage() {
                   <div className="arcana-form-row">
                     <div className="arcana-field">
                       <label className="arcana-label">Master Password</label>
-                      <div className="arcana-input-wrap">
+                      <div className="arcana-input-wrap" style={{ position: "relative" }}>
                         <Lock size={15} className="arcana-input-icon" />
                         <input
-                          type="password"
+                          type={showPassword ? "text" : "password"}
                           name="password"
                           value={formData.password}
                           onChange={(e) => handleChange("password", e.target.value)}
                           placeholder="••••••••••••"
+                          style={{ paddingRight: "34px" }}
                           required
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            background: "none",
+                            border: "none",
+                            color: "var(--color-text-secondary, #64748b)",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "4px"
+                          }}
+                          title={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
                       </div>
+
+                      {/* Live Password Strength Meter & Actionable Advice */}
+                      {pwdAdvice && formData.password && (
+                        <div style={{ marginTop: "6px", fontSize: "11px" }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                            <div style={{ display: "flex", gap: "3px", width: "72px" }}>
+                              {[0, 1, 2, 3].map((idx) => (
+                                <div
+                                  key={idx}
+                                  style={{
+                                    height: "4px",
+                                    flex: 1,
+                                    borderRadius: "2px",
+                                    background: idx <= pwdAdvice.score ? pwdAdvice.level.color : "rgba(148, 163, 184, 0.25)",
+                                    transition: "all 0.2s ease"
+                                  }}
+                                />
+                              ))}
+                            </div>
+                            <span style={{ fontWeight: 700, color: pwdAdvice.level.color }}>
+                              {pwdAdvice.level.label}
+                            </span>
+                            <span style={{ color: "var(--color-text-muted, #94a3b8)", fontSize: "10px" }}>
+                              ~{pwdAdvice.entropy} bits entropy
+                            </span>
+                          </div>
+                          {pwdAdvice.recommendations && pwdAdvice.recommendations.length > 0 && (
+                            <ul style={{ margin: "3px 0 0", paddingLeft: "14px", color: "var(--color-text-secondary, #94a3b8)", lineHeight: 1.35 }}>
+                              {pwdAdvice.recommendations.slice(0, 2).map((r, i) => (
+                                <li key={i}>{r}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="arcana-field">
@@ -355,9 +416,9 @@ export default function RegisterPage() {
                             setFormData(prev => ({ ...prev, pinLength: len, pin: prev.pin.slice(0, len) }));
                           }}
                           style={{
-                            background: "#0f172a",
-                            color: "#38bdf8",
-                            border: "1px solid #334155",
+                            background: "var(--color-surface, #0f172a)",
+                            color: "var(--color-primary, #38bdf8)",
+                            border: "1px solid var(--color-border, #334155)",
                             borderRadius: "4px",
                             fontSize: "11px",
                             padding: "2px 6px",
@@ -368,34 +429,82 @@ export default function RegisterPage() {
                           <option value={6}>6 Digits</option>
                         </select>
                       </div>
-                      <div className="arcana-input-wrap" style={{ marginTop: "6px" }}>
+                      <div className="arcana-input-wrap" style={{ marginTop: "6px", position: "relative" }}>
                         <KeyRound size={15} className="arcana-input-icon" />
                         <input
-                          type="password"
+                          type={showPin ? "text" : "password"}
+                          inputMode="numeric"
                           name="pin"
                           maxLength={formData.pinLength}
                           value={formData.pin}
                           onChange={(e) => handlePinChange(e.target.value)}
                           placeholder={formData.pinLength === 6 ? "••••••" : "••••"}
+                          style={{ paddingRight: "34px", letterSpacing: showPin ? "2px" : "normal" }}
                           required
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPin(!showPin)}
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            background: "none",
+                            border: "none",
+                            color: "var(--color-text-secondary, #64748b)",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            padding: "4px"
+                          }}
+                          title={showPin ? "Hide PIN" : "Show PIN"}
+                        >
+                          {showPin ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
                       </div>
+
+                      {/* Live PIN Resistance Advice & Warnings */}
+                      {pinAdvice && formData.pin && (
+                        <div style={{ marginTop: "6px", fontSize: "11px" }}>
+                          <span style={{
+                            fontWeight: 700,
+                            color: pinAdvice.isBlocked ? "#ef4444" : "#10b981",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px"
+                          }}>
+                            {pinAdvice.isBlocked ? "⚠️ Notice: Vulnerable Pattern" : "✓ Acceptable Resistance Pattern"}
+                          </span>
+                          {pinAdvice.warnings && pinAdvice.warnings.length > 0 && (
+                            <ul style={{ margin: "3px 0 0", paddingLeft: "14px", color: "#f87171", lineHeight: 1.35 }}>
+                              {pinAdvice.warnings.slice(0, 2).map((w, i) => (
+                                <li key={i}>{w}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {pinWarning && (
-                    <div style={{
-                      padding: "8px 12px",
-                      borderRadius: "6px",
-                      background: "rgba(234, 179, 8, 0.12)",
-                      border: "1px solid rgba(234, 179, 8, 0.3)",
-                      color: "#facc15",
-                      fontSize: "12px",
-                      marginBottom: "12px"
-                    }}>
-                      {pinWarning}
-                    </div>
-                  )}
+                  {/* Private & Zero-Knowledge In-Memory Security Note */}
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    background: "rgba(1, 90, 71, 0.08)",
+                    border: "1px solid rgba(1, 90, 71, 0.2)",
+                    fontSize: "11.5px",
+                    color: "var(--color-text-secondary, #64748b)",
+                    lineHeight: 1.4,
+                    marginBottom: "4px"
+                  }}>
+                    <ShieldCheck size={16} color="#10b981" style={{ flexShrink: 0 }} />
+                    <span>
+                      <strong style={{ color: "var(--color-text-primary, #0f172a)" }}>Private & Client-Side:</strong> Evaluated strictly in local device memory using Shannon entropy and heuristic dictionaries. No credentials ever leave your browser.
+                    </span>
+                  </div>
 
                   <button
                     type="submit"
