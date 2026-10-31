@@ -1,13 +1,115 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { User } from './auth.model.js';
+import { OtpVerification } from './otp.model.js';
+import { sendOtpEmail } from '../../services/emailService.js';
 import { config } from '../../config/index.js';
 
-export async function registerUser({ name, email, password, pin, phone }) {
+/**
+ * Dispatch 6-digit OTP to user email and store hash in MongoDB
+ */
+export async function sendOtp({ email, purpose = 'register' }) {
+  if (!email) {
+    const error = new Error('Email address is required.');
+    error.status = 400;
+    throw error;
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+
+  // If registering, verify email not already claimed
+  if (purpose === 'register') {
+    const existing = await User.findOne({ email: cleanEmail });
+    if (existing) {
+      const error = new Error('An account with this email already exists.');
+      error.status = 400;
+      throw error;
+    }
+  }
+
+  // Generate secure 6-digit numeric OTP
+  const rawOtp = crypto.randomInt(100000, 999999).toString();
+
+  // Hash OTP before storing in MongoDB
+  const salt = await bcrypt.genSalt(10);
+  const otpHash = await bcrypt.hash(rawOtp, salt);
+
+  // Expire in 10 minutes (TTL index will clean up automatically)
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  // Remove existing pending OTPs for this email and purpose
+  await OtpVerification.deleteMany({ email: cleanEmail, purpose });
+
+  await OtpVerification.create({
+    email: cleanEmail,
+    otpHash,
+    purpose,
+    expiresAt,
+  });
+
+  // Send branded email through nodemailer (or dev logger)
+  await sendOtpEmail(cleanEmail, rawOtp, purpose === 'register' ? 'Account Registration' : 'Vault Access');
+
+  return {
+    success: true,
+    message: `Verification code sent to ${cleanEmail}`,
+    email: cleanEmail,
+    expiresInSeconds: 600
+  };
+}
+
+/**
+ * Verify submitted 6-digit OTP code against MongoDB record
+ */
+export async function verifyOtpCode({ email, otp, purpose = 'register' }) {
+  if (!email || !otp) {
+    const error = new Error('Email and 6-digit OTP code are required.');
+    error.status = 400;
+    throw error;
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+  const record = await OtpVerification.findOne({ email: cleanEmail, purpose });
+
+  if (!record) {
+    const error = new Error('No pending verification code found or code has expired. Please request a new one.');
+    error.status = 400;
+    throw error;
+  }
+
+  if (record.attempts >= 5) {
+    await OtpVerification.deleteOne({ _id: record._id });
+    const error = new Error('Too many incorrect attempts. Please request a new code.');
+    error.status = 429;
+    throw error;
+  }
+
+  const isMatch = await bcrypt.compare(otp.toString().trim(), record.otpHash);
+  if (!isMatch) {
+    record.attempts += 1;
+    await record.save();
+    const error = new Error('Invalid verification code. Please check and try again.');
+    error.status = 400;
+    throw error;
+  }
+
+  // Valid OTP: delete record so it cannot be re-used
+  await OtpVerification.deleteOne({ _id: record._id });
+
+  return { success: true, verified: true, email: cleanEmail };
+}
+
+export async function registerUser({ name, email, password, pin, phone, otp }) {
   if (!name || !email || !password || !pin) {
     const error = new Error('Name, email, password, and PIN are required.');
     error.status = 400;
     throw error;
+  }
+
+  // If OTP is provided, verify it first before creating user
+  if (otp) {
+    await verifyOtpCode({ email, otp, purpose: 'register' });
   }
 
   if (pin.length < 4 || pin.length > 6) {
@@ -383,6 +485,10 @@ export async function authenticateWithFirebaseIdToken(idToken) {
     error.status = 400;
     throw error;
   }
+
+  // Ensure Firebase Admin is initialized
+  const { initFirebaseAdmin } = await import('../../services/storage/firebaseService.js');
+  initFirebaseAdmin();
 
   // Dynamically import or verify using Firebase Admin SDK
   const { getAuth } = await import('firebase-admin/auth');

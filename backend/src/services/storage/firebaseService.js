@@ -1,32 +1,69 @@
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { initializeApp, cert, getApps, getApp } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
+import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { config } from '../../config/index.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 let bucket = null;
+let firebaseApp = null;
 
-try {
-  let serviceAccount = null;
-
-  if (config.firebase.serviceAccountJson) {
-    serviceAccount = JSON.parse(config.firebase.serviceAccountJson);
-  } else if (fs.existsSync(config.firebase.serviceAccountPath)) {
-    serviceAccount = JSON.parse(fs.readFileSync(config.firebase.serviceAccountPath, 'utf8'));
+export function initFirebaseAdmin() {
+  if (getApps().length > 0) {
+    firebaseApp = getApp();
+    if (!bucket) {
+      try {
+        bucket = getStorage().bucket();
+      } catch (e) {}
+    }
+    return firebaseApp;
   }
 
-  if (serviceAccount && !getApps().length) {
-    initializeApp({
-      credential: cert(serviceAccount),
-      storageBucket: config.firebase.storageBucket,
-    });
-    bucket = getStorage().bucket();
-    console.log(`[Firebase] Initialized with bucket: ${config.firebase.storageBucket}`);
-  } else if (!serviceAccount) {
-    console.warn('[Firebase] Warning: No service account credentials found. Set FIREBASE_SERVICE_ACCOUNT_JSON in cloud environments.');
+  try {
+    let serviceAccount = null;
+
+    if (config.firebase.serviceAccountJson) {
+      serviceAccount = JSON.parse(config.firebase.serviceAccountJson);
+    } else {
+      // Resolve path against both cwd and backend directory
+      const candidates = [
+        config.firebase.serviceAccountPath,
+        path.resolve(process.cwd(), config.firebase.serviceAccountPath),
+        path.resolve(__dirname, '../../../firebase-service-account.json'),
+        path.resolve(__dirname, '../../firebase-service-account.json'),
+      ];
+
+      for (const p of candidates) {
+        if (p && fs.existsSync(p)) {
+          serviceAccount = JSON.parse(fs.readFileSync(p, 'utf8'));
+          break;
+        }
+      }
+    }
+
+    if (serviceAccount) {
+      firebaseApp = initializeApp({
+        credential: cert(serviceAccount),
+        storageBucket: config.firebase.storageBucket,
+      });
+      bucket = getStorage().bucket();
+      console.log(`[Firebase Admin] Initialized for project: ${serviceAccount.project_id || config.firebase.storageBucket}`);
+    } else {
+      console.warn('[Firebase Admin] Warning: No service account credentials found. Set FIREBASE_SERVICE_ACCOUNT_PATH or FIREBASE_SERVICE_ACCOUNT_JSON.');
+    }
+  } catch (error) {
+    console.error('[Firebase Admin] Initialization error:', error.message);
   }
-} catch (error) {
-  console.error('[Firebase] Initialization error:', error.message);
+
+  return firebaseApp;
 }
+
+// Auto-run initialization immediately on module load
+initFirebaseAdmin();
 
 /**
  * Upload a file buffer to Firebase Storage

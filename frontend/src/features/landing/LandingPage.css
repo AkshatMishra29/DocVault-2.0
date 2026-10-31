@@ -3,12 +3,73 @@
    ========================================================================== */
 
 .dv-landing-modern {
-  background-color: #FAFCFB;
-  color: #0F172A;
+  background-color: var(--color-bg, #FAFCFB);
+  color: var(--color-text-primary, #0F172A);
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
   position: relative;
 }
+
+[data-theme="dark"] .dv-landing-modern {
+  background-color: #090D16;
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-m-hero {
+  background: 
+    radial-gradient(ellipse 65% 55% at 85% 25%, rgba(16, 185, 129, 0.15) 0%, rgba(1, 90, 71, 0.08) 50%, transparent 80%),
+    radial-gradient(ellipse 50% 50% at 15% 15%, rgba(56, 189, 248, 0.08) 0%, transparent 70%),
+    #090D16;
+}
+
+[data-theme="dark"] .dv-m-hero__pill {
+  background-color: #0F172A;
+  border-color: #1E293B;
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-m-hero__title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-m-hero__description {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-m-hero__strip {
+  background-color: #0F172A;
+  border-color: #1E293B;
+}
+
+[data-theme="dark"] .dv-m-strip-item h5 {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-m-strip-item p {
+  color: #64748B;
+}
+
+[data-theme="dark"] .dv-m-card,
+[data-theme="dark"] .dv-m-step-card,
+[data-theme="dark"] .dv-m-faq {
+  background-color: #090D16 !important;
+}
+
+[data-theme="dark"] .dv-m-faq div[style*="background: #ffffff"],
+[data-theme="dark"] .dv-m-faq div[style*="background: rgb(255, 255, 255)"] {
+  background-color: #0F172A !important;
+  border-color: #1E293B !important;
+}
+
+[data-theme="dark"] .dv-m-faq h2,
+[data-theme="dark"] .dv-m-faq h4 {
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .dv-m-faq p {
+  color: #94A3B8 !important;
+}
+
 
 /* --------------------------------------------------------------------------
    1. HERO SECTION

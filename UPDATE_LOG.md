@@ -4,6 +4,41 @@ All notable changes, security updates, and new feature implementations for the *
 
 ---
 
+## [2026-11-01] – Version 2.5.0: Native MongoDB OTP Verification, White Screen Fix & Auth Simplification
+
+### 1. Native MongoDB 6-Digit OTP Email Verification (Replacing Quota-Limited Links)
+* **Live Gmail SMTP Dispatcher (`backend/src/services/emailService.js`):**
+  - Integrated `nodemailer` configured with secure Gmail SMTP transport for immediate delivery of verification codes.
+  - Generates HTML branded transactional emails with 6-digit verification code badges and 10-minute expiry notifications.
+* **MongoDB OtpVerification Schema & Lifecycle (`otp.model.js` & `auth.service.js`):**
+  - Stored OTP codes with bcrypt hashing to prevent plain-text exposure in database collections.
+  - Implemented 10-minute automatic document cleanup using MongoDB native TTL indexes (`expiresAfterSeconds: 0`).
+  - Enforced brute-force rate limiting: maximum 5 attempts per OTP code before auto-invalidation (`HTTP 429`).
+  - Added backend endpoints `POST /api/auth/send-otp` and `POST /api/auth/verify-otp`.
+* **Two-Step Registration UI Flow (`RegisterPage.jsx`):**
+  - Step 1: Collects user name, email, master password, phone number, and customizable 4/6-digit Vault Security PIN.
+  - Step 2: Dispatches verification OTP and transitions to a focused 6-digit numeric input screen with resend timer and instant unlock.
+
+### 2. Streamlined Minimalist Authentication UI
+* **Removed Third-Party Social Login Buttons:**
+  - Removed Google, GitHub, and Facebook buttons from the Login and Register screens to enforce pure zero-knowledge master credentials.
+* **Fixed Post-Logout Guest Experience:**
+  - Resolved issue where logged-out users saw "Unlock My Vault" on the landing page and navbar.
+  - Landing page hero and Public Navbar dynamically display "Get Started Free" and "Sign In" for guest users, and "Go to Vault Overview" / "Lock Vault" only for verified active sessions.
+  - Bottom navigation `/` link corrected to `/dashboard` when authenticated.
+
+### 3. White Screen Diagnostic & Comprehensive Application Recovery
+* **Eliminated Undefined Reference Errors in `LoginPage.jsx`:**
+  - Fixed `ReferenceError: infoMessage is not defined` and missing `Sparkles` icon import that previously caused React to unmount on `/login`.
+  - Added safe `useLocation` state initialization for redirect notification banners.
+* **Hardened LocalStorage & SessionStorage Initializers (`AuthContext.jsx`):**
+  - Wrapped `localStorage.getItem('docvault_user')` and `sessionStorage.getItem('docvault_pin_length')` in defensive `try/catch` guards to prevent app-wide crashes caused by malformed or corrupted browser storage strings.
+* **Root-Level React Error Boundary (`ErrorBoundary.jsx`):**
+  - Created a production-grade class-based `ErrorBoundary` wrapping the entire application tree in `App.jsx`.
+  - Renders a clean recovery interface with **Reload Application** and **Reset Session & Go to Home** options if any child component throws an unexpected runtime error.
+
+---
+
 ## [2026-10-31] – Version 2.4.0: Firebase Auth, DocVault Shield & Advanced Vault Security Suite
 
 ### 1. Firebase Authentication & Passwordless Sign-In

@@ -13,7 +13,7 @@ export default function BottomNav() {
   return (
     <nav className="bottom-nav">
       <NavLink 
-        to="/" 
+        to="/dashboard" 
         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
         end
       >

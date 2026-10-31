@@ -9,6 +9,24 @@ export async function register(req, res) {
   }
 }
 
+export async function sendOtp(req, res) {
+  try {
+    const result = await authService.sendOtp(req.body);
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+}
+
+export async function verifyOtp(req, res) {
+  try {
+    const result = await authService.verifyOtpCode(req.body);
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+}
+
 export async function login(req, res) {
   try {
     const result = await authService.loginUser(req.body);

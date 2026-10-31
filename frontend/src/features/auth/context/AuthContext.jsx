@@ -6,23 +6,48 @@ const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes at rest
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('docvault_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('docvault_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (err) {
+      console.warn('[DocVault Auth] Corrupted user data in localStorage, resetting:', err);
+      localStorage.removeItem('docvault_user');
+      return null;
+    }
   });
 
-  const [token, setToken] = useState(() => localStorage.getItem('docvault_token') || localStorage.getItem('token') || null);
+  const [token, setToken] = useState(() => {
+    try {
+      return localStorage.getItem('docvault_token') || localStorage.getItem('token') || null;
+    } catch {
+      return null;
+    }
+  });
 
   // Track if vault PIN is currently unlocked for this active session
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(() => {
-    return sessionStorage.getItem('docvault_unlocked') === 'true';
+    try {
+      return sessionStorage.getItem('docvault_unlocked') === 'true';
+    } catch {
+      return false;
+    }
   });
 
   const [pendingEmail, setPendingEmail] = useState(() => {
-    return sessionStorage.getItem('docvault_pending_email') || '';
+    try {
+      return sessionStorage.getItem('docvault_pending_email') || '';
+    } catch {
+      return '';
+    }
   });
 
   const [pinLength, setPinLength] = useState(() => {
-    return parseInt(sessionStorage.getItem('docvault_pin_length') || '4', 10);
+    try {
+      const len = parseInt(sessionStorage.getItem('docvault_pin_length') || '4', 10);
+      return isNaN(len) ? 4 : len;
+    } catch {
+      return 4;
+    }
   });
 
   // Auto-Lock Vault: Detects 10-minute rest / inactivity AND mobile device sleep / backgrounding
@@ -348,20 +373,20 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('dv_last_activity_time');
   };
 
-  // Full Logout (clears session, but stores last email so PIN / biometric flow functions properly)
+  // Full Logout (cleans up all session tokens and credentials completely)
   const logout = () => {
-    const lastEmail = user?.email || pendingEmail;
     setUser(null);
     setToken(null);
     setIsVaultUnlocked(false);
+    setPendingEmail('');
     localStorage.removeItem('docvault_user');
     localStorage.removeItem('docvault_token');
     localStorage.removeItem('token');
+    localStorage.removeItem('pending_pin_email');
+    localStorage.removeItem('dv_last_activity_time');
     sessionStorage.removeItem('docvault_unlocked');
-    if (lastEmail) {
-      setPendingEmail(lastEmail);
-      sessionStorage.setItem('docvault_pending_email', lastEmail);
-    }
+    sessionStorage.removeItem('docvault_pending_email');
+    sessionStorage.removeItem('docvault_pin_length');
   };
 
   return (

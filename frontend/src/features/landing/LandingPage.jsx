@@ -3,17 +3,19 @@ import { Link } from 'react-router-dom';
 import PublicNavbar from '../../components/layout/PublicNavbar/PublicNavbar';
 import PublicFooter from '../../components/layout/PublicFooter/PublicFooter';
 import cloudStorageIllustration from '../../assets/Secure Cloud File Storage Illustration.png';
+import { useAuth } from '../auth/context/AuthContext';
 
 import { 
   ArrowRight, ShieldCheck, Sparkles, Clock, 
   FolderLock, HardDrive, FileCheck, CheckCircle2, 
   UploadCloud, Cpu, Layers, Search, Lock, Shield,
   ChevronRight, KeyRound, EyeOff, Zap, FileSpreadsheet,
-  FileText
+  FileText, LayoutDashboard
 } from 'lucide-react';
 import './LandingPage.css';
 
 export default function LandingPage() {
+  const { user, isVaultUnlocked } = useAuth();
   return (
     <div className="dv-landing-modern">
       <PublicNavbar />
@@ -38,14 +40,23 @@ export default function LandingPage() {
             </p>
 
             <div className="dv-m-hero__cta-group">
-              <Link to="/register" className="dv-m-btn-primary">
-                <span>Get Started Free</span>
-                <ArrowRight size={16} />
-              </Link>
-              <Link to="/login" className="dv-m-btn-secondary">
-                <span>Sign In</span>
-                <KeyRound size={15} />
-              </Link>
+              {user && isVaultUnlocked ? (
+                <Link to="/dashboard" className="dv-m-btn-primary">
+                  <span>Go to Vault Overview</span>
+                  <LayoutDashboard size={16} />
+                </Link>
+              ) : (
+                <>
+                  <Link to="/register" className="dv-m-btn-primary">
+                    <span>Get Started Free</span>
+                    <ArrowRight size={16} />
+                  </Link>
+                  <Link to="/login" className="dv-m-btn-secondary">
+                    <span>Sign In</span>
+                    <KeyRound size={15} />
+                  </Link>
+                </>
+              )}
             </div>
 
             <div className="dv-m-hero__trust-points">

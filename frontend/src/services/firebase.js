@@ -46,7 +46,8 @@ export async function signInWithGoogle() {
  */
 export async function sendEmailLoginLink(email) {
   const actionCodeSettings = {
-    url: `${window.location.origin}/login?emailLink=true`,
+    // Route to dedicated verification page
+    url: `${window.location.origin}/auth/verify?emailLink=true`,
     handleCodeInApp: true,
   };
 
@@ -62,7 +63,7 @@ export async function verifyEmailLinkSignIn() {
   if (isSignInWithEmailLink(auth, window.location.href)) {
     let email = window.localStorage.getItem('docvault_emailForSignIn');
     if (!email) {
-      email = window.prompt('Please provide your email for confirmation');
+      email = window.prompt('Please confirm your email address for instant unlock');
     }
     if (email) {
       const result = await signInWithEmailLink(auth, email, window.location.href);

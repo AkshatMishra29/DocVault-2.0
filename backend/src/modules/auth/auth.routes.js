@@ -4,6 +4,8 @@ import { requireAuth } from '../../middleware/auth.middleware.js';
 
 const router = Router();
 
+router.post('/send-otp', authController.sendOtp);
+router.post('/verify-otp', authController.verifyOtp);
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.post('/firebase', authController.firebaseAuth);

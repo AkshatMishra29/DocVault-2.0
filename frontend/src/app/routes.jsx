@@ -7,6 +7,7 @@ import LandingPage from "../features/landing/LandingPage";
 import LoginPage from "../features/auth/pages/LoginPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
 import EnterPinPage from "../features/auth/pages/EnterPinPage";
+import AuthVerifiedPage from "../features/auth/pages/AuthVerifiedPage";
 
 import HomePage from "../features/dashboard/HomePage";
 import DocumentsPage from "../features/documents/DocumentsPage";
@@ -27,6 +28,7 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/enter-pin" element={<EnterPinPage />} />
+      <Route path="/auth/verify" element={<AuthVerifiedPage />} />
 
       {/* Backward Compatibility & Authenticated Application Shell */}
       <Route

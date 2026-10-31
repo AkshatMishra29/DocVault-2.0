@@ -1,51 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Mail, Lock, AlertCircle, ArrowRight, Sparkles } from "lucide-react";
+import { Mail, Lock, AlertCircle, ArrowRight, Sun, Moon, Sparkles } from "lucide-react";
 import DocVaultLogo from "../../../components/common/DocVaultLogo/DocVaultLogo";
-import { signInWithGoogle, sendEmailLoginLink, verifyEmailLinkSignIn } from "../../../services/firebase";
 import "./Auth.css";
 
 export default function LoginPage() {
+  const location = useLocation();
+  const [theme, setTheme] = useState(() => document.documentElement.getAttribute("data-theme") || "dark");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
-  const [infoMessage, setInfoMessage] = useState("");
+  const [infoMessage, setInfoMessage] = useState(() => location.state?.message || "");
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
-  const { login, loginWithFirebaseToken } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  // Listen for Email Link verification if returning from email inbox
-  useEffect(() => {
-    if (searchParams.get("emailLink") === "true") {
-      (async () => {
-        try {
-          setLoading(true);
-          const cred = await verifyEmailLinkSignIn();
-          if (cred && cred.idToken) {
-            const result = await loginWithFirebaseToken(cred.idToken);
-            if (result.success) {
-              navigate("/enter-pin", { state: { email: cred.email } });
-              return;
-            }
-          }
-        } catch (err) {
-          setError(err.message || "Failed to verify email sign-in link.");
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }
-  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setInfoMessage("");
 
     if (!email || !password) {
       setError("Please provide both email and password.");
@@ -57,55 +32,17 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result.success) {
-      if (result.requiresPin) {
-        navigate("/enter-pin", { state: { email, pinLength: result.user?.pinLength || 4 } });
-      } else {
-        navigate("/enter-pin", { state: { email, pinLength: result.user?.pinLength || 4 } });
-      }
+      navigate("/enter-pin", { state: { email, pinLength: result.user?.pinLength || 4 } });
     } else {
       setError(result.error || "Authentication failed. Please check your credentials.");
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setError("");
-    setInfoMessage("");
-    setGoogleLoading(true);
-    try {
-      const googleUser = await signInWithGoogle();
-      if (googleUser && googleUser.idToken) {
-        const result = await loginWithFirebaseToken(googleUser.idToken);
-        if (result.success) {
-          // ALWAYS ask for the PIN security challenge after Google OAuth
-          navigate("/enter-pin", { state: { email: googleUser.email, pinLength: result.user?.pinLength || 4 } });
-        } else {
-          setError(result.error || "Google sign-in succeeded, but vault sync failed.");
-        }
-      }
-    } catch (err) {
-      if (err.code !== "auth/popup-closed-by-user") {
-        setError(err.message || "Google authentication was cancelled or failed.");
-      }
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
-  const handleSendEmailLink = async () => {
-    if (!email) {
-      setError("Please enter your email above before requesting an instant sign-in link.");
-      return;
-    }
-    setError("");
-    setLoading(true);
-    try {
-      await sendEmailLoginLink(email);
-      setInfoMessage(`A secure magic login link has been sent to ${email}. Check your inbox!`);
-    } catch (err) {
-      setError(err.message || "Failed to send email login link.");
-    } finally {
-      setLoading(false);
-    }
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("docvault_theme", next);
+    setTheme(next);
   };
 
   return (
@@ -114,10 +51,32 @@ export default function LoginPage() {
         {/* Left Side: Clean Minimalist Sign In Form */}
         <div className="arcana-form-side">
           <div className="arcana-form-content">
-            {/* Top Logo */}
-            <Link to="/" className="arcana-brand-logo">
-              <DocVaultLogo height={38} />
-            </Link>
+            {/* Top Logo & Dark/Light Mode Switcher */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <Link to="/" className="arcana-brand-logo" style={{ marginBottom: 0 }}>
+                <DocVaultLogo height={38} />
+              </Link>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "10px",
+                  background: "var(--color-surface)",
+                  border: "1px solid var(--color-border)",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
+                }}
+              >
+                {theme === "dark" ? <Sun size={17} color="#fbbf24" /> : <Moon size={17} color="#0f172a" />}
+              </button>
+            </div>
 
             <h1 className="arcana-title">Sign in</h1>
 
@@ -192,44 +151,16 @@ export default function LoginPage() {
               <button
                 type="submit"
                 className="arcana-submit-btn"
-                disabled={loading || googleLoading}
+                disabled={loading}
               >
                 <span>{loading ? "Signing in..." : "Sign In to Vault"}</span>
                 <ArrowRight size={15} />
               </button>
             </form>
 
-            <div className="arcana-links-row">
+            <div className="arcana-links-row" style={{ marginTop: "24px" }}>
               <span className="arcana-links-text">Don't have an account? </span>
               <Link to="/register" className="arcana-link-bold">Sign up</Link>
-            </div>
-            <div className="arcana-links-row forgot">
-              <button
-                type="button"
-                onClick={handleSendEmailLink}
-                style={{ background: "none", border: "none", color: "#64748b", fontSize: "12px", cursor: "pointer", textDecoration: "underline", padding: 0 }}
-              >
-                Forgot Password? Email me magic login link
-              </button>
-            </div>
-
-            {/* Social Logins */}
-            <div className="arcana-socials">
-              <button
-                type="button"
-                className="arcana-social-btn"
-                aria-label="Google sign in"
-                onClick={handleGoogleSignIn}
-                disabled={googleLoading || loading}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                </svg>
-                <span>{googleLoading ? "Connecting..." : "Continue with Google"}</span>
-              </button>
             </div>
           </div>
         </div>
