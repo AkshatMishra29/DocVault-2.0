@@ -14,6 +14,9 @@ export const config = {
     apiKey: process.env.GROQ_API_KEY,
     model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
   },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
+  },
   huggingFace: {
     apiKey: process.env.HUGGINGFACE_API_KEY,
     model: process.env.HF_EMBEDDING_MODEL || 'BAAI/bge-small-en-v1.5',
