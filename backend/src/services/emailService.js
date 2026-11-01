@@ -1,46 +1,100 @@
 import nodemailer from 'nodemailer';
-import { config } from '../config/index.js';
 
-let transporter = null;
+let smtpTransporter = null;
 
-export function getEmailTransporter() {
-  if (transporter) return transporter;
+/**
+ * Configure Nodemailer SMTP Transporter with connection timeouts
+ */
+function getSmtpTransporter() {
+  if (smtpTransporter) return smtpTransporter;
 
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
   if (user && pass) {
     const cleanPass = pass.replace(/\s+/g, '');
-    transporter = nodemailer.createTransport({
+    smtpTransporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: user.trim(),
         pass: cleanPass,
       },
+      connectionTimeout: 8000, // 8s timeout to avoid hanging on blocked cloud ports
+      greetingTimeout: 8000,
+      socketTimeout: 10000,
     });
-    console.log('[EmailService] Gmail SMTP Transporter configured for:', user);
-  } else {
-    // Development / fallback logger transporter if no SMTP credentials set yet
-    transporter = {
-      sendMail: async (mailOptions) => {
-        console.log('----------------------------------------------------');
-        console.log('[EmailService DEV MOCK] Outgoing Email:');
-        console.log('To:', mailOptions.to);
-        console.log('Subject:', mailOptions.subject);
-        console.log('Text Content:', mailOptions.text);
-        console.log('----------------------------------------------------');
-        return { messageId: 'mock-' + Date.now() };
-      }
-    };
-    console.log('[EmailService] Running with in-console email logger (set SMTP_USER and SMTP_PASS in .env for production sending).');
+    console.log('[EmailService] Gmail SMTP Transporter initialized for:', user);
   }
 
-  return transporter;
+  return smtpTransporter;
 }
 
-export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
-  const mailer = getEmailTransporter();
+/**
+ * Dispatch email via Resend REST API (HTTPS Port 443 - Never blocked by Render/AWS/Cloud)
+ */
+async function sendViaResend({ apiKey, from, to, subject, html, text }) {
+  console.log(`[EmailService] Attempting HTTPS dispatch via Resend API to: ${to}`);
+  const sender = from || process.env.RESEND_FROM || 'DocVault <onboarding@resend.dev>';
 
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey.trim()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: sender,
+      to: [to],
+      subject,
+      html,
+      text,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `Resend API Error: ${res.statusText}`);
+  }
+
+  console.log(`[EmailService] Successfully sent via Resend API. Message ID: ${data.id}`);
+  return { messageId: data.id, provider: 'resend' };
+}
+
+/**
+ * Dispatch email via Brevo REST API (HTTPS Port 443 - Never blocked by Render/AWS/Cloud)
+ */
+async function sendViaBrevo({ apiKey, from, to, subject, html, text }) {
+  console.log(`[EmailService] Attempting HTTPS dispatch via Brevo API to: ${to}`);
+  const senderEmail = from || process.env.SMTP_USER || 'security@docvault.local';
+
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': apiKey.trim(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      sender: { name: 'DocVault Security', email: senderEmail },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+      textContent: text,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `Brevo API Error: ${res.statusText}`);
+  }
+
+  console.log(`[EmailService] Successfully sent via Brevo API. Message ID: ${data.messageId}`);
+  return { messageId: data.messageId, provider: 'brevo' };
+}
+
+/**
+ * Master OTP Email Dispatcher with automatic Render / Cloud fallback
+ */
+export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
   const mailOptions = {
     from: process.env.SMTP_FROM || `"DocVault Security" <${process.env.SMTP_USER || 'security@docvault.local'}>`,
     to: email,
@@ -74,6 +128,71 @@ export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
     `
   };
 
-  return await mailer.sendMail(mailOptions);
-}
+  // Provider 1: Resend HTTP API (Port 443 - Recommended for Render)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      return await sendViaResend({
+        apiKey: process.env.RESEND_API_KEY,
+        from: mailOptions.from,
+        to: mailOptions.to,
+        subject: mailOptions.subject,
+        html: mailOptions.html,
+        text: mailOptions.text,
+      });
+    } catch (err) {
+      console.error('[EmailService] Resend dispatch failed:', err.message);
+    }
+  }
 
+  // Provider 2: Brevo HTTP API (Port 443)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      return await sendViaBrevo({
+        apiKey: process.env.BREVO_API_KEY,
+        from: process.env.SMTP_USER,
+        to: mailOptions.to,
+        subject: mailOptions.subject,
+        html: mailOptions.html,
+        text: mailOptions.text,
+      });
+    } catch (err) {
+      console.error('[EmailService] Brevo dispatch failed:', err.message);
+    }
+  }
+
+  // Provider 3: Gmail SMTP Transporter (Port 587/465)
+  const transporter = getSmtpTransporter();
+  if (transporter) {
+    try {
+      console.log(`[EmailService] Attempting Gmail SMTP dispatch to: ${email}`);
+      const result = await transporter.sendMail(mailOptions);
+      console.log('[EmailService] Gmail SMTP dispatch succeeded! Message ID:', result.messageId);
+      return result;
+    } catch (smtpErr) {
+      console.error('[EmailService ERROR] Gmail SMTP dispatch failed:', smtpErr.message);
+
+      // Detect Render egress firewall blocking SMTP ports
+      const isFirewallBlocked = smtpErr.code === 'ETIMEDOUT' || smtpErr.code === 'ECONNREFUSED' || smtpErr.message.includes('timeout');
+      if (isFirewallBlocked) {
+        console.warn('========================================================================');
+        console.warn('[EmailService CLOUD ALERT] Render/Cloud firewall blocked SMTP port 587!');
+        console.warn('Render Free Tier blocks outbound SMTP ports 25, 465, and 587 to prevent spam.');
+        console.warn('SOLUTION: Set RESEND_API_KEY in Render Environment Variables (works over port 443).');
+        console.warn(`EMERGENCY LOGGED OTP FOR [ ${email} ]: >>> ${otpCode} <<<`);
+        console.warn('========================================================================');
+      }
+
+      throw new Error(`Email delivery failed: ${smtpErr.message}. If running on Render Free Tier, standard SMTP ports are blocked. Add RESEND_API_KEY to Render Environment.`);
+    }
+  }
+
+  // Fallback 4: In-Console Logger (When no credentials exist in Render environment)
+  console.warn('========================================================================');
+  console.warn('[EmailService NO CREDENTIALS CONFIGURED]');
+  console.warn('Neither RESEND_API_KEY nor SMTP_USER / SMTP_PASS found in environment variables.');
+  console.warn('Please add SMTP_USER & SMTP_PASS (or RESEND_API_KEY) to your Render Dashboard.');
+  console.warn(`DISPATCHED OTP FOR [ ${email} ]: >>> ${otpCode} <<<`);
+  console.warn('========================================================================');
+
+  return { messageId: 'mock-console-' + Date.now(), mocked: true };
+}

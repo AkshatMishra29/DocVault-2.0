@@ -45,6 +45,16 @@ All notable changes, security updates, and new feature implementations for the *
   - **100% In-Memory & Client-Side:** No credentials or hashes ever leave browser memory; evaluations run in $<1\text{ms}$ with zero network requests.
   - Features real-time 4-segment visual rating bar, entropy estimation (`~X bits`), specific rule suggestions (e.g. uppercase, symbols, sequential number warnings), PIN pattern resilience indicators, and show/hide toggles.
 
+### 5. Multi-Transport Cloud Email Architecture (Render Egress Firewall Defense)
+* **Diagnosis of Cloud Delivery Failures:**
+  - Render Free Tier enforces strict egress firewall rules that block outbound traffic on standard SMTP ports (25, 465, 587), causing connections to `smtp.gmail.com` to hang and throw `ETIMEDOUT`.
+* **HTTPS Port 443 REST API Support (Resend & Brevo):**
+  - Added native HTTPS dispatch via Resend REST API (`https://api.resend.com/emails`) and Brevo REST API (`https://api.brevo.com/v3/smtp/email`).
+  - Operates over standard Port 443 (HTTPS), which is completely unblocked on Render, AWS, and cloud providers.
+* **Socket Timeouts & Graceful Logging:**
+  - Added 8-second socket and connection timeouts to Nodemailer to prevent cloud worker hanging.
+  - Added automatic backup console logging of dispatched OTP codes in Render logs if firewall blocks occur.
+
 ---
 
 ## [2026-10-31] – Version 2.4.0: Firebase Auth, DocVault Shield & Advanced Vault Security Suite

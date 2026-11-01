@@ -379,3 +379,4 @@ When extending DocVault, adhere strictly to these engineering principles:
    - **Backend:** Create module under `backend/src/modules/<feature>/` (`model.js`, `routes.js`, `controller.js`) and mount in `backend/src/app.js`.
    - **Frontend:** Create module under `frontend/src/features/<feature>/`, declare routes in `frontend/src/app/routes.jsx`, and add navigation link in `AppSidebar.jsx` and `BottomNav.jsx`.
    - **Verification:** Always verify build sanity using `npm --prefix frontend run build`.
+
