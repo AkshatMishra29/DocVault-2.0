@@ -480,3 +480,123 @@
   background-color: #1C1310;
   border-color: rgba(198, 59, 46, 0.4);
 }
+
+/* ==========================================================================
+   GOOGLE OAUTH, DIVIDER, REGISTRATION GRID & FORGOT PASSWORD
+   ========================================================================== */
+
+/* Google Auth Button */
+.dv-auth-google-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 12px;
+  background-color: var(--color-auth-surface, #FFFFFF);
+  border: 1.5px solid var(--color-auth-border, #D8CCC3);
+  color: var(--color-auth-text-dark, #1C1310);
+  font-family: var(--font-ui, 'Manrope', sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(28, 19, 16, 0.04);
+  transition: all 0.15s ease;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .dv-auth-google-btn {
+  background-color: var(--color-auth-input-bg, #1C1310);
+  border-color: var(--color-auth-border, #3D2F28);
+  color: #F8F5F1;
+}
+
+.dv-auth-google-btn:hover:not(:disabled) {
+  background-color: var(--color-auth-panel-light, #F2ECE6);
+  border-color: var(--color-auth-coral, #EB6C3B);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(28, 19, 16, 0.08);
+}
+
+[data-theme="dark"] .dv-auth-google-btn:hover:not(:disabled) {
+  background-color: #241A17;
+}
+
+.dv-auth-google-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.dv-auth-google-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* OR Divider */
+.dv-auth-divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 18px 0 14px;
+  gap: 12px;
+}
+
+.dv-auth-divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-auth-border, #D8CCC3);
+}
+
+[data-theme="dark"] .dv-auth-divider-line {
+  background-color: var(--color-auth-border, #3D2F28);
+}
+
+.dv-auth-divider-text {
+  font-family: var(--font-ui, 'Manrope', sans-serif);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--color-auth-muted, #766B65);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* Forgot Password Link */
+.dv-auth-forgot-link {
+  font-family: var(--font-ui, 'Manrope', sans-serif);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-auth-muted, #766B65);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  padding: 0;
+  text-decoration: none;
+}
+
+.dv-auth-forgot-link:hover {
+  color: var(--color-auth-cta, #FD2B06);
+  text-decoration: underline;
+}
+
+/* Registration Grid Layout */
+.dv-auth-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 12px;
+  width: 100%;
+}
+
+.dv-auth-form-grid--full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 540px) {
+  .dv-auth-form-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+

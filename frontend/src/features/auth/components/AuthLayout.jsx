@@ -11,7 +11,8 @@ export default function AuthLayout({
   brandVariant = 'login',
   customTitle,
   customSubtitle,
-  customImage
+  customImage,
+  cardClassName = ''
 }) {
   const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'light');
 
@@ -61,7 +62,7 @@ export default function AuthLayout({
         </div>
 
         <div className="dv-auth-form-viewport">
-          <div className="dv-auth-form-card">
+          <div className={`dv-auth-form-card ${cardClassName}`}>
             {children}
           </div>
         </div>
