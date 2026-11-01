@@ -1,0 +1,220 @@
+.dv-auth-brand-panel {
+  position: relative;
+  width: 44%;
+  height: 100vh;
+  min-height: 600px;
+  background: 
+    radial-gradient(circle at 15% 15%, rgba(1, 134, 90, 0.28) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.16) 0%, transparent 50%),
+    linear-gradient(145deg, #061914 0%, #092C24 45%, #0B1C17 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-8) var(--space-10);
+  box-sizing: border-box;
+  overflow: hidden;
+  color: #FFFFFF;
+}
+
+/* Background Subtle Architectural Grid */
+.dv-brand-mesh-bg {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.dv-brand-radial-glow {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%);
+  filter: blur(50px);
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.dv-brand-header {
+  position: relative;
+  z-index: 2;
+}
+
+.dv-brand-logo-link {
+  display: inline-flex;
+  align-items: center;
+  transition: opacity var(--transition-fast);
+}
+
+.dv-brand-logo-link:hover {
+  opacity: 0.9;
+}
+
+/* Center Visual & Artwork */
+.dv-brand-visual-container {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: auto 0;
+  max-width: 440px;
+}
+
+.dv-shield-monolith {
+  position: relative;
+  width: 180px;
+  height: 170px;
+  margin-bottom: var(--space-6);
+  animation: dv-shield-float 6.5s ease-in-out infinite;
+}
+
+.dv-shield-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4));
+}
+
+@keyframes dv-shield-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.dv-brand-narrative {
+  margin-bottom: var(--space-6);
+}
+
+.dv-brand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-size: 11px;
+  font-weight: 700;
+  color: #8AF0BC;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+}
+
+.dv-brand-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  box-shadow: 0 0 6px var(--color-accent);
+}
+
+.dv-brand-title {
+  font-size: clamp(28px, 2.5vw, 36px);
+  font-weight: var(--font-extrabold);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: #FFFFFF;
+  margin-bottom: var(--space-2);
+}
+
+.dv-brand-title-accent {
+  background: linear-gradient(90deg, #8AF0BC 0%, #34D399 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dv-brand-tagline {
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.45;
+}
+
+/* 3 Benefits */
+.dv-brand-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.dv-benefit-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(8px);
+  transition: all var(--transition-fast);
+}
+
+.dv-benefit-row:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(16, 185, 129, 0.3);
+  transform: translateX(3px);
+}
+
+.dv-benefit-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: rgba(16, 185, 129, 0.15);
+  color: #8AF0BC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.dv-benefit-title {
+  font-size: 13px;
+  font-weight: var(--font-bold);
+  color: #FFFFFF;
+  margin-bottom: 1px;
+}
+
+.dv-benefit-desc {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.35;
+}
+
+/* Footer */
+.dv-brand-footer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.dv-brand-footer-dot {
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dv-shield-monolith {
+    animation: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .dv-auth-brand-panel {
+    display: none;
+  }
+}

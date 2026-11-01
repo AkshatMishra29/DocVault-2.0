@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ShieldCheck, Delete, AlertCircle, ArrowLeft, KeyRound, Fingerprint } from "lucide-react";
-import DocVaultLogo from "../../../components/common/DocVaultLogo/DocVaultLogo";
-import Card from "../../../components/common/Card/Card";
+import { 
+  ShieldCheck, AlertCircle, ArrowLeft, KeyRound, Fingerprint, 
+  Lock, LogOut, ArrowRight, Clock 
+} from "lucide-react";
+
+import AuthLayout from "../components/AuthLayout";
+import AuthHeader from "../components/AuthHeader";
+import AuthAlert from "../components/AuthAlert";
+import PinInput from "../components/PinInput";
+import PinKeypad from "../components/PinKeypad";
 import Button from "../../../components/common/Button/Button";
-import "./Auth.css";
 
 export default function EnterPinPage() {
   const [pin, setPin] = useState("");
@@ -14,7 +20,7 @@ export default function EnterPinPage() {
   const [bioLoading, setBioLoading] = useState(false);
   const [lockoutRemaining, setLockoutRemaining] = useState(0);
 
-  const { verifyPin, unlockWithBiometrics } = useAuth();
+  const { verifyPin, unlockWithBiometrics, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -63,10 +69,10 @@ export default function EnterPinPage() {
     }
   }, [email]);
 
-  // Keyboard support for physical numpads and standard digits
+  // Physical Keyboard support (standard digits, numpad, backspace, enter)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (lockoutRemaining > 0) return;
+      if (lockoutRemaining > 0 || loading) return;
 
       if (/^[0-9]$/.test(e.key)) {
         e.preventDefault();
@@ -76,33 +82,40 @@ export default function EnterPinPage() {
         handleBackspace();
       } else if (e.key === "Enter") {
         e.preventDefault();
-        if (pin.length >= 4) {
-          handleUnlock();
+        if (pin.length === pinLength) {
+          handleUnlock(pin);
         }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [pin, lockoutRemaining]);
+  }, [pin, pinLength, lockoutRemaining, loading]);
 
   const handleDigit = (digit) => {
-    if (lockoutRemaining > 0) return;
+    if (lockoutRemaining > 0 || loading) return;
     if (pin.length < pinLength) {
-      setPin((prev) => prev + digit);
+      const nextPin = pin + digit;
+      setPin(nextPin);
       setError("");
+
+      // Auto-submit when length reached
+      if (nextPin.length === pinLength) {
+        handleUnlock(nextPin);
+      }
     }
   };
 
   const handleBackspace = () => {
-    if (lockoutRemaining > 0) return;
+    if (lockoutRemaining > 0 || loading) return;
     setPin((prev) => prev.slice(0, -1));
     setError("");
   };
 
   const handleClear = () => {
-    if (lockoutRemaining > 0) return;
+    if (lockoutRemaining > 0 || loading) return;
     setPin("");
+    setError("");
   };
 
   const formatLockoutTime = (seconds) => {
@@ -111,10 +124,10 @@ export default function EnterPinPage() {
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
-  const handleUnlock = async () => {
-    if (lockoutRemaining > 0) return;
+  const handleUnlock = async (submittedPin = pin) => {
+    if (lockoutRemaining > 0 || loading) return;
 
-    if (pin.length < pinLength) {
+    if (submittedPin.length < pinLength) {
       setError(`Please enter your full ${pinLength}-digit PIN.`);
       return;
     }
@@ -122,7 +135,7 @@ export default function EnterPinPage() {
     setLoading(true);
     setError("");
 
-    const result = await verifyPin(email, pin);
+    const result = await verifyPin(email, submittedPin);
     setLoading(false);
 
     if (result.success) {
@@ -137,7 +150,7 @@ export default function EnterPinPage() {
         if (email && result.lockUntil) {
           localStorage.setItem(`dv_lock_until_${email}`, result.lockUntil);
         }
-        setError(result.error || "Vault is locked for 5 minutes due to too many failed attempts.");
+        setError(result.error || "Vault is locked for 5 minutes due to consecutive failed attempts.");
       } else {
         setError(result.error || "Incorrect Security PIN. Please try again.");
       }
@@ -163,259 +176,125 @@ export default function EnterPinPage() {
     }
   };
 
+  const handleSwitchAccount = () => {
+    logout();
+    navigate("/login");
+  };
+
   const isLocked = lockoutRemaining > 0;
 
   return (
-    <div className="dv-auth-page-centered">
-      <div className="dv-auth-container--pin">
-        <div className="dv-auth-brand" style={{ textAlign: "center", marginBottom: "24px" }}>
-          <Link to="/">
-            <DocVaultLogo height={42} />
-          </Link>
-          <p className="dv-auth-tagline" style={{ color: "var(--color-text-secondary)", fontSize: "14px", marginTop: "8px" }}>
-            Step 2: Vault Security Challenge
+    <AuthLayout>
+      <AuthHeader
+        badgeText="Security Barrier 2"
+        title="Unlock your vault"
+        subtitle="Step 2: Enter your personal security PIN to decrypt your documents."
+      />
+
+      {/* Account Email Identification Pill */}
+      {email && (
+        <div className="dv-auth-account-pill">
+          <Lock size={14} className="dv-account-pill-icon" />
+          <span className="dv-account-pill-email">{email}</span>
+        </div>
+      )}
+
+      {error && <AuthAlert type="error" message={error} />}
+
+      {/* Lockout Warning State */}
+      {isLocked ? (
+        <div className="dv-lockout-box" role="alert">
+          <Clock size={36} color="#DC2626" />
+          <h3 className="dv-lockout-title">Vault Temporarily Locked</h3>
+          <p className="dv-lockout-desc">
+            Too many consecutive incorrect attempts. Protection protocol active.
           </p>
-        </div>
-
-        <Card padding="lg" className="dv-auth-card">
-          {/* If device has fingerprint and user hasn't explicitly clicked 'continue with pin', show Fingerprint prompt first */}
-          {hasBiometrics && !usePinFallback && !isLocked ? (
-            <div style={{ textAlign: "center", padding: "16px 8px" }}>
-              <div
-                style={{
-                  width: "72px",
-                  height: "72px",
-                  borderRadius: "50%",
-                  background: "rgba(16, 185, 129, 0.12)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 20px",
-                  color: "#10b981",
-                  cursor: "pointer"
-                }}
-                onClick={handleBiometricUnlock}
-              >
-                <Fingerprint size={42} />
-              </div>
-              <h2 className="dv-auth-card__title" style={{ fontSize: "1.25rem", marginBottom: "8px" }}>
-                Biometric Unlock
-              </h2>
-              <p className="dv-auth-card__subtitle" style={{ marginBottom: "24px" }}>
-                Touch ID / Fingerprint enrolled for <strong style={{ color: "var(--color-primary)" }}>{email || "User"}</strong>
-              </p>
-
-              {error && (
-                <div className="dv-auth-error" style={{ marginBottom: "16px" }}>
-                  <AlertCircle size={16} className="dv-auth-error__icon" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <Button
-                type="button"
-                variant="primary"
-                size="lg"
-                fullWidth
-                loading={bioLoading}
-                icon={Fingerprint}
-                onClick={handleBiometricUnlock}
-                style={{ marginBottom: "12px" }}
-              >
-                Tap Sensor to Unlock
-              </Button>
-
-              <button
-                type="button"
-                onClick={() => setUsePinFallback(true)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#38bdf8",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  marginTop: "8px",
-                  textDecoration: "underline"
-                }}
-              >
-                Continue with PIN instead
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="dv-auth-card__header" style={{ textAlign: "center" }}>
-                <div
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    margin: "0 auto 16px",
-                    color: "var(--color-primary)",
-                  }}
-                >
-                  <KeyRound size={24} />
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                  <span style={{ fontSize: "12px", color: "#94a3b8" }}>PIN Mode</span>
-                  <select
-                    value={pinLength}
-                    onChange={(e) => {
-                      const len = Number(e.target.value);
-                      setPinLength(len);
-                      setPin(prev => prev.slice(0, len));
-                    }}
-                    style={{
-                      background: "#0f172a",
-                      color: "#38bdf8",
-                      border: "1px solid #334155",
-                      borderRadius: "4px",
-                      fontSize: "11px",
-                      padding: "2px 6px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    <option value={4}>4 Digits</option>
-                    <option value={6}>6 Digits</option>
-                  </select>
-                </div>
-                <h2 className="dv-auth-card__title">
-                  {isLocked ? "Vault Temporarily Locked" : `Enter ${pinLength}-Digit PIN`}
-                </h2>
-                <p className="dv-auth-card__subtitle">
-                  {isLocked ? (
-                    <span>
-                      Security lockout active. Try again in{" "}
-                      <strong>{formatLockoutTime(lockoutRemaining)}</strong>
-                    </span>
-                  ) : (
-                    <>
-                      Authenticating session for{" "}
-                      <strong className="dv-pin-email" style={{ color: "var(--color-primary)" }}>
-                        {email || "User"}
-                      </strong>
-                    </>
-                  )}
-                </p>
-              </div>
-
-              {error && (
-                <div className="dv-auth-error">
-                  <AlertCircle size={16} className="dv-auth-error__icon" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {/* Glowing Pin Slot Indicator (adapts to 4 or 6 digits) */}
-              <div className="dv-pin-display">
-                {Array.from({ length: pinLength }).map((_, index) => (
-                  <div
-                    key={index}
-                    className={`dv-pin-slot ${pin.length > index ? "dv-pin-slot--filled" : ""}`}
-                    style={isLocked ? { opacity: 0.4 } : {}}
-                  />
-                ))}
-              </div>
-
-              {/* Interactive Numpad */}
-              <div
-                className="dv-pin-keypad"
-                style={isLocked ? { opacity: 0.5, pointerEvents: "none" } : {}}
-              >
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
-                  <button
-                    key={digit}
-                    type="button"
-                    className="dv-keypad-btn"
-                    disabled={isLocked}
-                    onClick={() => handleDigit(digit.toString())}
-                  >
-                    {digit}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className="dv-keypad-btn dv-keypad-btn--action"
-                  disabled={isLocked}
-                  onClick={handleClear}
-                >
-                  C
-                </button>
-                <button
-                  type="button"
-                  className="dv-keypad-btn"
-                  disabled={isLocked}
-                  onClick={() => handleDigit("0")}
-                >
-                  0
-                </button>
-                <button
-                  type="button"
-                  className="dv-keypad-btn dv-keypad-btn--action"
-                  disabled={isLocked}
-                  onClick={handleBackspace}
-                >
-                  <Delete size={20} />
-                </button>
-              </div>
-
-              <Button
-                type="button"
-                variant="primary"
-                size="lg"
-                fullWidth
-                loading={loading}
-                disabled={pin.length < pinLength || isLocked}
-                onClick={handleUnlock}
-                icon={ShieldCheck}
-                iconPosition="right"
-              >
-                {isLocked ? `Locked (${formatLockoutTime(lockoutRemaining)})` : "Decrypt & Unlock Vault"}
-              </Button>
-
-              {hasBiometrics && (
-                <div style={{ textAlign: "center", marginTop: "12px" }}>
-                  <button
-                    type="button"
-                    onClick={() => setUsePinFallback(false)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#10b981",
-                      fontSize: "12px",
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px"
-                    }}
-                  >
-                    <Fingerprint size={14} /> Switch to Fingerprint
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-
-          <div className="dv-auth-card__footer">
-            <Link
-              to="/login"
-              className="dv-auth-link"
-              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-            >
-              <ArrowLeft size={14} /> Back to Sign In
-            </Link>
+          <div className="dv-lockout-timer">
+            <span>Cooldown: <strong>{formatLockoutTime(lockoutRemaining)}</strong></span>
           </div>
-        </Card>
-
-        <div className="dv-auth-security-notice">
-          <ShieldCheck size={16} color="var(--color-primary)" />
-          <span>Strict Tenant Isolation • Password & Personal Vault PIN Protected</span>
         </div>
+      ) : hasBiometrics && !usePinFallback ? (
+        /* Biometric Unlock Option */
+        <div className="dv-biometric-prompt">
+          <button
+            type="button"
+            className="dv-biometric-circle"
+            onClick={handleBiometricUnlock}
+            disabled={bioLoading}
+            title="Scan Fingerprint"
+          >
+            <Fingerprint size={48} />
+          </button>
+          <p className="dv-biometric-title">Touch ID / Fingerprint Ready</p>
+          <span className="dv-biometric-sub">Tap the sensor to unlock your personal vault</span>
+
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => setUsePinFallback(true)}
+            style={{ marginTop: "16px" }}
+          >
+            Use Security PIN Instead
+          </Button>
+        </div>
+      ) : (
+        /* PIN Input & Numeric Keypad */
+        <div className="dv-pin-entry-container">
+          <PinInput
+            length={pinLength}
+            value={pin}
+            hasError={Boolean(error)}
+            isMasked={true}
+          />
+
+          <PinKeypad
+            onDigit={handleDigit}
+            onBackspace={handleBackspace}
+            onClear={handleClear}
+            disabled={loading || isLocked}
+          />
+
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={() => handleUnlock(pin)}
+            loading={loading}
+            disabled={pin.length !== pinLength || loading || isLocked}
+            icon={ArrowRight}
+            iconPosition="right"
+            className="dv-auth-submit-btn"
+          >
+            {loading ? "Decrypting Vault..." : "Unlock Vault"}
+          </Button>
+
+          {hasBiometrics && (
+            <button
+              type="button"
+              className="dv-switch-bio-btn"
+              onClick={() => setUsePinFallback(false)}
+            >
+              <Fingerprint size={16} />
+              <span>Use Biometric Sensor</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="dv-auth-footer-nav" style={{ marginTop: "24px" }}>
+        <button
+          type="button"
+          onClick={handleSwitchAccount}
+          className="dv-auth-footer-link dv-auth-switch-btn"
+        >
+          <LogOut size={14} />
+          <span>Sign in to a different account</span>
+        </button>
       </div>
-    </div>
+
+      <div className="dv-auth-security-note">
+        <ShieldCheck size={14} color="#059669" />
+        <span>Protected by two-stage cryptographic authentication & PIN lock</span>
+      </div>
+    </AuthLayout>
   );
 }

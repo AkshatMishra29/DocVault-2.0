@@ -55,3 +55,4 @@ export default function ExpiryBadge({ expiryDate, daysLeft, size = 'sm' }) {
     </span>
   );
 }
+

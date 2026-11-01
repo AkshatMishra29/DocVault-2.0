@@ -1,0 +1,56 @@
+.dv-pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  max-width: 280px;
+  margin: 0 auto var(--space-5);
+  width: 100%;
+}
+
+.dv-keypad-btn {
+  height: 54px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: var(--font-bold);
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.dv-keypad-btn:hover:not(:disabled) {
+  background-color: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.dv-keypad-btn:active:not(:disabled) {
+  transform: translateY(0);
+  background-color: var(--color-primary-subtle);
+  border-color: var(--color-primary);
+}
+
+.dv-keypad-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dv-keypad-btn--action {
+  font-size: 13px;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+}
+
+.dv-keypad-action-text {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+}

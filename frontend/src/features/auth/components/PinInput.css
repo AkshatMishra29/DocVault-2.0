@@ -1,0 +1,66 @@
+.dv-pin-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 var(--space-6);
+}
+
+.dv-pin-slot {
+  width: 48px;
+  height: 54px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.dv-pin-slot--current {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(1, 90, 71, 0.12);
+}
+
+.dv-pin-slot--filled {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-subtle);
+}
+
+.dv-pin-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  box-shadow: 0 0 6px rgba(1, 90, 71, 0.3);
+  animation: dv-pin-pop 0.18s ease-out;
+}
+
+.dv-pin-digit {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: var(--font-extrabold);
+  color: var(--color-primary);
+}
+
+.dv-pin-display--error .dv-pin-slot {
+  border-color: var(--color-danger);
+  background-color: var(--color-danger-bg);
+}
+
+.dv-pin-display--error .dv-pin-dot {
+  background-color: var(--color-danger);
+}
+
+@keyframes dv-pin-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

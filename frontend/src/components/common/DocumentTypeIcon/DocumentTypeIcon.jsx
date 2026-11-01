@@ -49,3 +49,4 @@ export default function DocumentTypeIcon({ category = 'Other', format = 'PDF', s
     </div>
   );
 }
+

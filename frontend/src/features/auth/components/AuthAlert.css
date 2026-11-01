@@ -1,0 +1,37 @@
+.dv-auth-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2-5);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin-bottom: var(--space-4);
+}
+
+.dv-auth-alert__icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.dv-auth-alert__text {
+  flex: 1;
+}
+
+.dv-auth-alert--error {
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger);
+}
+
+.dv-auth-alert--success {
+  background-color: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success);
+}
+
+.dv-auth-alert--info {
+  background-color: var(--color-primary-subtle);
+  border: 1px solid rgba(1, 90, 71, 0.25);
+  color: var(--color-primary);
+}

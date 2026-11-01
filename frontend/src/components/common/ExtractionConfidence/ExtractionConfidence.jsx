@@ -26,3 +26,4 @@ export default function ExtractionConfidence({ confidence = 0, showBar = true })
     </div>
   );
 }
+

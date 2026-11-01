@@ -1,0 +1,33 @@
+.dv-pin-advice {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  background-color: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  margin-top: 2px;
+}
+
+.dv-pin-advice--vulnerable {
+  border-color: rgba(239, 68, 68, 0.25);
+  background-color: var(--color-danger-bg);
+}
+
+.dv-pin-advice--secure {
+  border-color: rgba(16, 185, 129, 0.25);
+  background-color: var(--color-success-bg);
+}
+
+.dv-pin-advice__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: var(--font-bold);
+}
+
+.dv-pin-advice__msg {
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+}

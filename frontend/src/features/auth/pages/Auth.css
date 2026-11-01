@@ -1,707 +1,376 @@
 /* ==========================================================================
-   DOCVAULT AUTHENTICATION (NO-SCROLL 100VH COMPACT FIT + AUTHENTIC FOLDER)
+   DOCVAULT PREMIUM AUTHENTICATION SYSTEM (STYLES & TRANSITIONS)
    ========================================================================== */
 
-.arcana-auth-page {
-  height: 100vh;
-  width: 100vw;
-  background-color: var(--color-bg); /* #FAFCFB */
+.dv-auth-form {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  margin: 0;
-  overflow: hidden; /* Prevents window scrollbar entirely */
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  box-sizing: border-box;
+  flex-direction: column;
+  gap: var(--space-3-5);
+  width: 100%;
 }
 
-.arcana-auth-wrapper {
+.dv-form-field-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   width: 100%;
-  max-width: 1360px;
-  height: 100vh;
-  max-height: 900px;
+}
+
+/* Remember Me Checkbox */
+.dv-auth-remember-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 48px;
-  padding: 24px 48px;
-  box-sizing: border-box;
+  margin-top: 2px;
 }
 
-/* --------------------------------------------------------------------------
-   LEFT FORM SIDE (COMPACT, PRECISE ALIGNMENT)
-   -------------------------------------------------------------------------- */
-.arcana-form-side {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-}
-
-.arcana-form-content {
-  width: 100%;
-  max-width: 380px;
-  display: flex;
-  flex-direction: column;
-}
-
-.arcana-brand-logo {
+.dv-checkbox-label {
   display: inline-flex;
   align-items: center;
-  margin-bottom: 24px;
-  text-decoration: none;
-}
-
-.arcana-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 30px;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: var(--color-text-primary);
-  margin: 0 0 20px 0;
-}
-
-.arcana-alert-error {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background-color: var(--color-danger-subtle);
-  border: 1px solid rgba(220, 38, 38, 0.25);
-  color: var(--color-danger);
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 14px;
-}
-
-.arcana-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-
-.arcana-form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.arcana-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.arcana-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #334155;
-  letter-spacing: -0.01em;
-}
-
-.arcana-input-wrap {
-  height: 44px;
-  background-color: var(--color-surface);
-  border: 1.5px solid var(--color-border);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  gap: 10px;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-
-.arcana-input-wrap:focus-within {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(1, 90, 71, 0.15);
-}
-
-.arcana-input-icon {
-  color: var(--color-text-muted);
-  flex-shrink: 0;
-  transition: color 0.2s ease;
-}
-
-.arcana-input-wrap:focus-within .arcana-input-icon {
-  color: var(--color-primary);
-}
-
-.arcana-input-wrap input {
-  width: 100%;
-  height: 100%;
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 13.5px;
-  color: var(--color-text-primary);
-  font-family: 'Inter', sans-serif;
-}
-
-.arcana-input-wrap input::placeholder {
-  color: #94A3B8;
-}
-
-/* Custom Checkbox */
-.arcana-remember-wrap {
-  display: flex;
-  align-items: center;
-  margin: 2px 0 4px;
-}
-
-.arcana-checkbox-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   cursor: pointer;
   user-select: none;
-  position: relative;
 }
 
-.arcana-checkbox-label input {
+.dv-checkbox-label input {
   position: absolute;
   opacity: 0;
-  cursor: pointer;
-  height: 0;
   width: 0;
+  height: 0;
 }
 
-.arcana-custom-checkbox {
-  width: 15px;
-  height: 15px;
-  border: 1.5px solid #CBD5E1;
-  border-radius: 4px;
-  background-color: #FFFFFF;
-  display: inline-block;
-  transition: all 0.15s ease;
-  position: relative;
+.dv-checkbox-custom {
+  width: 17px;
+  height: 17px;
+  border-radius: var(--radius-xs);
+  border: 1.5px solid var(--color-border);
+  background-color: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
 }
 
-.arcana-checkbox-label input:checked ~ .arcana-custom-checkbox {
+.dv-checkbox-label input:checked ~ .dv-checkbox-custom {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
 }
 
-.arcana-checkbox-label input:checked ~ .arcana-custom-checkbox::after {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 1px;
+.dv-checkbox-label input:checked ~ .dv-checkbox-custom::after {
+  content: '';
   width: 4px;
   height: 8px;
-  border: solid white;
+  border: solid #FFFFFF;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
+  margin-bottom: 2px;
 }
 
-.arcana-checkbox-text {
+.dv-checkbox-text {
   font-size: 12.5px;
-  color: #475569;
-  font-weight: 500;
-}
-
-/* Action Button */
-.arcana-submit-btn {
-  height: 44px;
-  background-color: var(--color-primary);
-  color: #FFFFFF;
-  border: none;
-  border-radius: 10px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(1, 90, 71, 0.28);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.arcana-submit-btn:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(1, 90, 71, 0.38);
-}
-
-.arcana-submit-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.arcana-links-row {
-  margin-top: 16px;
-  font-size: 12.5px;
-}
-
-.arcana-links-row.forgot {
-  margin-top: 4px;
-}
-
-.arcana-links-text {
-  color: #64748B;
-}
-
-.arcana-link-bold {
-  color: var(--color-primary);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.arcana-link-bold:hover {
-  text-decoration: underline;
-}
-
-.arcana-link-muted {
-  color: #64748B;
-  text-decoration: none;
-}
-
-.arcana-link-muted:hover {
-  color: var(--color-primary);
-  text-decoration: underline;
-}
-
-/* Circular Social Buttons */
-.arcana-socials {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-top: 24px;
-}
-
-.arcana-social-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background-color: #FFFFFF;
-  border: 1px solid var(--color-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-}
-
-.arcana-social-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(1, 90, 71, 0.12);
-  border-color: var(--color-primary);
-}
-
-/* --------------------------------------------------------------------------
-   RIGHT SIDE: FIT CONTAINER WITH REAL AUTHENTIC FOLDER SILHOUETTE
-   -------------------------------------------------------------------------- */
-.arcana-hero-side {
-  flex: 1.15;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-}
-
-.arcana-black-card {
-  width: 100%;
-  max-width: 540px;
-  height: calc(100vh - 56px);
-  max-height: 800px;
-  background: linear-gradient(170deg, #021a15 0%, #062b22 55%, #0B1120 100%);
-  border-radius: 36px;
-  padding: 36px 40px 32px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 
-    0 25px 60px -15px rgba(1, 90, 71, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.08);
-}
-
-/* Ambient Radial Emerald Light Streak */
-.arcana-light-streak {
-  position: absolute;
-  top: -60px;
-  right: -60px;
-  width: 460px;
-  height: 320px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(1, 90, 71, 0.08) 50%, transparent 70%);
-  pointer-events: none;
-}
-
-/* 3D Geometric Monolith Artwork */
-.arcana-monolith-wrap {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin-top: 0;
-  position: relative;
-  z-index: 2;
-}
-
-.arcana-monolith-svg {
-  width: 210px;
-  height: 180px;
-  filter: drop-shadow(0 16px 25px rgba(0, 0, 0, 0.85));
-}
-
-.arcana-card-copy {
-  position: relative;
-  z-index: 2;
-  margin: 12px 0 18px;
-}
-
-.arcana-brand-pill {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  color: #34D399;
-  margin-bottom: 8px;
-  display: block;
-  letter-spacing: -0.01em;
-}
-
-.arcana-welcome-heading {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: #FFFFFF;
-  margin: 0 0 8px 0;
-  line-height: 1.2;
-}
-
-.arcana-welcome-desc {
-  font-size: 13px;
-  color: #94A3B8;
-  line-height: 1.55;
-  margin: 0 0 12px 0;
-  max-width: 450px;
-}
-
-.arcana-stats-line {
-  font-size: 12px;
-  color: #6EE7B7;
-  font-weight: 600;
-  display: block;
-}
-
-/* --------------------------------------------------------------------------
-   AUTHENTIC FOLDER SILHOUETTE (INHERENT FOLDER TAB CUTOUT)
-   -------------------------------------------------------------------------- */
-.arcana-authentic-folder {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  /* Folder tab notch at the top right/left */
-  clip-path: polygon(
-    0% 28px,
-    180px 28px,
-    215px 0%,
-    100% 0%,
-    100% 100%,
-    0% 100%
-  );
-  background: linear-gradient(145deg, #122822 0%, #0d1e19 100%);
-  border-radius: 20px;
-  padding: 38px 24px 22px; /* Top space for tab angle */
-  box-shadow: 
-    0 12px 30px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(52, 211, 153, 0.25);
-  box-sizing: border-box;
-  border: 1px solid rgba(52, 211, 153, 0.2);
-}
-
-.arcana-folder-content {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.arcana-folder-left {
-  flex: 1;
-}
-
-.arcana-folder-left h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 15.5px;
-  font-weight: 800;
-  color: #FFFFFF;
-  letter-spacing: -0.02em;
-  margin: 0 0 6px 0;
-  line-height: 1.3;
-}
-
-.arcana-folder-left p {
-  font-size: 12px;
-  color: #A7F3D0;
-  opacity: 0.85;
-  line-height: 1.45;
-  margin: 0;
-}
-
-/* Stacked Members */
-.arcana-avatar-stack {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.arcana-avatar-img {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #0d1e19;
-  margin-left: -9px;
-}
-
-.arcana-avatar-img:first-child {
-  margin-left: 0;
-}
-
-.arcana-avatar-badge {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: var(--color-primary);
-  color: #34D399;
-  font-size: 11px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #0d1e19;
-  margin-left: -9px;
-}
-
-/* --------------------------------------------------------------------------
-   RESPONSIVE BREAKPOINTS (NO-SCROLL PRESERVED)
-   -------------------------------------------------------------------------- */
-@media (max-width: 1024px) {
-  .arcana-auth-page {
-    height: auto;
-    min-height: 100vh;
-    overflow-y: auto;
-    padding: 32px 20px;
-  }
-
-  .arcana-auth-wrapper {
-    height: auto;
-    max-height: none;
-    flex-direction: column-reverse;
-    justify-content: center;
-    gap: 32px;
-    padding: 0;
-  }
-
-  .arcana-hero-side {
-    width: 100%;
-    height: auto;
-  }
-
-  .arcana-black-card {
-    height: auto;
-    max-height: none;
-    max-width: 480px;
-    padding: 32px 28px;
-    border-radius: 26px;
-  }
-
-  .arcana-monolith-svg {
-    width: 170px;
-    height: 145px;
-  }
-}
-
-@media (max-width: 480px) {
-  .arcana-folder-content {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-/* OAuth & Social Divider */
-.dv-auth-divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  margin: var(--space-4) 0;
   color: var(--color-text-secondary);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
-.dv-auth-divider::before,
-.dv-auth-divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.dv-auth-divider span {
-  padding: 0 var(--space-3);
-}
-
-.dv-google-btn {
+/* Primary Auth Submit Button */
+.dv-auth-submit-btn {
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  padding: 0.75rem 1rem;
-  background-color: #ffffff;
-  color: #1e293b;
-  border: 1px solid #cbd5e1;
+  height: 46px;
+  margin-top: var(--space-2);
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-weight: var(--font-bold);
+  letter-spacing: -0.01em;
+  box-shadow: 0 4px 14px rgba(1, 90, 71, 0.25);
+  transition: all var(--transition-normal);
 }
 
-.dv-google-btn:hover {
-  background-color: #f8fafc;
-  border-color: #94a3b8;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.dv-google-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* --------------------------------------------------------------------------
-   PIN VERIFICATION SCREEN & NUMPAD STYLES
-   -------------------------------------------------------------------------- */
-.dv-auth-page-centered {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  background-color: var(--color-bg);
-  box-sizing: border-box;
-}
-
-.dv-auth-container--pin {
-  width: 100%;
-  max-width: 440px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.dv-auth-card {
-  width: 100%;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-}
-
-.dv-pin-display {
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  margin: 24px 0 28px;
-}
-
-.dv-pin-slot {
-  width: 18px;
-  height: 18px;
-  border-radius: 9999px;
-  border: 2px solid var(--color-border);
-  background-color: var(--color-surface);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dv-pin-slot--filled {
-  background: var(--color-primary, #015A47);
-  border-color: var(--color-primary, #015A47);
-  transform: scale(1.15);
-  box-shadow: 0 0 12px rgba(1, 90, 71, 0.4);
-}
-
-.dv-pin-keypad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
-  width: 100%;
-}
-
-.dv-keypad-btn {
-  height: 56px;
-  font-size: 20px;
-  font-weight: 700;
-  border-radius: 12px;
-  background-color: var(--color-surface-secondary, #f8fafc);
-  border: 1.5px solid var(--color-border, #e2e8f0);
-  color: var(--color-text-primary, #0f172a);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-  user-select: none;
-}
-
-.dv-keypad-btn:hover {
-  background-color: rgba(1, 90, 71, 0.08);
-  border-color: var(--color-primary, #015A47);
-  color: var(--color-primary, #015A47);
+.dv-auth-submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(1, 90, 71, 0.15);
+  box-shadow: 0 6px 20px rgba(1, 90, 71, 0.35);
 }
 
-.dv-keypad-btn:active {
+.dv-auth-submit-btn:active:not(:disabled) {
   transform: translateY(0);
 }
 
-.dv-keypad-btn--action {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-secondary, #64748b);
-}
-
-.dv-auth-card__footer {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border);
-  text-align: center;
-  font-size: 13.5px;
-}
-
-.dv-auth-link {
-  color: var(--color-primary);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.dv-auth-link:hover {
-  text-decoration: underline;
-}
-
-.dv-auth-security-notice {
+/* Footer Navigation Links */
+.dv-auth-footer-nav {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 20px;
-  font-size: 12px;
-  color: var(--color-text-muted);
+  gap: 4px;
+  margin-top: var(--space-5);
+  font-size: 13px;
 }
 
+.dv-auth-footer-text {
+  color: var(--color-text-secondary);
+}
 
+.dv-auth-footer-link {
+  color: var(--color-primary);
+  font-weight: var(--font-bold);
+  transition: color var(--transition-fast);
+}
+
+.dv-auth-footer-link:hover {
+  color: var(--color-primary-light);
+  text-decoration: underline;
+}
+
+.dv-auth-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.dv-auth-switch-btn:hover {
+  color: var(--color-primary);
+}
+
+/* Bottom Security Trust Note */
+.dv-auth-security-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-subtle);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* PIN Config Toggle (4 vs 6 Digits) */
+.dv-pin-config-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.dv-pin-config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dv-pin-len-toggle {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+
+.dv-pin-len-btn {
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dv-pin-len-btn--active {
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+}
+
+/* Step 2 Back Button */
+.dv-step-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  margin-bottom: var(--space-3);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  align-self: flex-start;
+}
+
+.dv-step-back-btn:hover {
+  color: var(--color-primary);
+  background-color: var(--color-surface-hover);
+}
+
+/* Resend Code Section */
+.dv-resend-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: var(--space-4);
+  font-size: 12.5px;
+}
+
+.dv-resend-text {
+  color: var(--color-text-secondary);
+}
+
+.dv-resend-btn {
+  color: var(--color-primary);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  font-size: 12.5px;
+  transition: color var(--transition-fast);
+}
+
+.dv-resend-btn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.dv-resend-btn:disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* PIN Screen Specifics */
+.dv-auth-account-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  margin-bottom: var(--space-4);
+  align-self: center;
+}
+
+.dv-account-pill-icon {
+  color: var(--color-primary);
+}
+
+.dv-account-pill-email {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+}
+
+.dv-pin-entry-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.dv-switch-bio-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-3);
+  font-size: 12px;
+  color: var(--color-primary);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.dv-switch-bio-btn:hover {
+  background-color: var(--color-primary-subtle);
+}
+
+/* Biometric Prompt */
+.dv-biometric-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-5) var(--space-2);
+  width: 100%;
+}
+
+.dv-biometric-circle {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(1, 90, 71, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
+  border: 2px solid rgba(1, 90, 71, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  cursor: pointer;
+  margin-bottom: var(--space-4);
+  transition: all var(--transition-fast);
+  box-shadow: 0 8px 24px rgba(1, 90, 71, 0.15);
+}
+
+.dv-biometric-circle:hover:not(:disabled) {
+  transform: scale(1.05);
+  border-color: var(--color-primary);
+  box-shadow: 0 12px 28px rgba(1, 90, 71, 0.25);
+}
+
+.dv-biometric-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  margin-bottom: 2px;
+}
+
+.dv-biometric-sub {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+/* Lockout Box */
+.dv-lockout-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  margin: var(--space-4) 0;
+}
+
+.dv-lockout-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+  color: var(--color-danger);
+  margin-top: var(--space-2);
+  margin-bottom: 2px;
+}
+
+.dv-lockout-desc {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  margin-bottom: var(--space-3);
+}
+
+.dv-lockout-timer {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  font-family: var(--font-mono);
+  background-color: #FFFFFF;
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-danger-border);
+}
+
+[data-theme="dark"] .dv-lockout-timer {
+  background-color: #1E293B;
+}

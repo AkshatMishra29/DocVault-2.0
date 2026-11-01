@@ -1,0 +1,44 @@
+.dv-auth-header {
+  margin-bottom: var(--space-5);
+  display: flex;
+  flex-direction: column;
+}
+
+.dv-auth-header__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-primary);
+  background-color: var(--color-primary-subtle);
+  border: 1px solid rgba(1, 90, 71, 0.2);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-2);
+  align-self: flex-start;
+}
+
+.dv-auth-header__badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+}
+
+.dv-auth-header__title {
+  font-size: clamp(24px, 2.2vw, 30px);
+  font-weight: var(--font-extrabold);
+  letter-spacing: -0.03em;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
+  line-height: 1.2;
+}
+
+.dv-auth-header__subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
