@@ -10,7 +10,7 @@ const VARIANT_CONFIGS = {
     title: "Your documents, beautifully in order.",
     subtitle: "Everything important, organized in one secure place.",
     imageSrc: "/assets/auth/hero-vault.jpg",
-    imageAlt: "DocVault 3D sculptural safe and floating documents",
+    imageAlt: "DocVault 3D document vault safe with spoke locker wheel handle and floating documents",
     bullets: [
       { icon: ShieldCheck, text: "Client-side encrypted zero-knowledge custody" },
       { icon: Sparkles, text: "Smart OCR and structured document metadata" },

@@ -11,7 +11,7 @@ This document details the original 3D editorial illustrations generated specific
 - **Usage**: Sign In / Login Page (`/login`)
 - **Generation Model**: Imagen 3 / Google Antigravity Image Generator
 - **Prompt**:
-  > Premium editorial 3D product illustration for a sophisticated personal document vault login screen. A sculptural minimalist safe vault slightly ajar, warm beige and muted taupe ceramic materials, oversized pristine white paper sheets and folders floating weightlessly around it, an elegant metallic bronze/gold security shield badge, vibrant warm orange accents (#FD2B06) on ribbon bookmarks and locks, soft diffused studio lighting, subtle atmospheric shadows, off-white background, clean modern museum quality composition, ultra-detailed textures, Octane 3D render style, 8k resolution.
+  > Premium editorial 3D product illustration for DocVault's login screen hero image: A sculptural, minimalist personal document vault locker safe, slightly open. On the safe door, there is a realistic, heavy-duty circular metallic locker wheel (a 3-spoke polished brass/bronze vault locker wheel handle and dial tumbler mechanism). A proper, authentic bank/document locker safe door with no shields or badges. Around the locker, pristine white document sheets and minimalist warm beige ceramic folders float weightlessly with vibrant orange accents (#FD2B06) on bookmark ribbons and tabs against a soft studio backdrop. Octane 3D render, ultra-detailed textures.
 - **License**: DocVault Proprietary Asset.
 
 ---
