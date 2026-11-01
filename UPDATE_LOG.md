@@ -4,6 +4,86 @@ All notable changes, security updates, and new feature implementations for the *
 
 ---
 
+## [2026-11-02] – Version 2.6.0: 3D Editorial Overhaul, Floating Capsule Nav, Dedicated OTP Flow & Brand Polish
+
+**Session Completed At:** 2026-11-02T00:08:45+05:30 (Asia/Kolkata / Indian Standard Time)  
+**Engineering Lead & Author:** Satyam Diwaker (@satyamdiwaker000001 | satyamdiwaker863@gmail.com)
+
+---
+
+### 1. Dedicated Email OTP Verification Page (`/verify-otp`) & Mandatory Account Activation
+* **Dedicated Verification Route (`frontend/src/features/auth/pages/VerifyOtpPage.jsx` & `frontend/src/routes.jsx`):**
+  - Created a dedicated, distraction-free OTP verification page at `/verify-otp` with custom layout, 6-box segmented numeric input fields, automatic auto-focus sequencing, and keyboard backspace management.
+  - Implemented 60-second cooldown timer with dynamic resend trigger calling `POST /api/auth/send-otp`.
+  - Added direct fallback navigation to allow users to update an incorrect email address or return to registration.
+* **Strict Post-Verification Dashboard Routing Workflow (`RegisterPage.jsx`):**
+  - Refactored user registration: submitting the registration form no longer prematurely provisions an authenticated session or jumps directly into the dashboard.
+  - Instead, the form validates all fields, securely dispatches the 6-digit OTP code to the user's email via the backend service, passes registration parameters securely in location state, and redirects immediately to `/verify-otp`.
+  - Only upon successful code verification (`POST /api/auth/register` with valid code) are user credentials committed, tokens issued, and the user routed to `/dashboard`.
+
+### 2. Floating Dynamic Island Capsule Navigation Built from Scratch
+* **Floating Island Architecture (`frontend/src/components/common/PublicNavbar.jsx` & `PublicNavbar.css`):**
+  - Completely replaced the legacy static full-width navbar with a floating glassmorphic capsule design suspended `16px` from the viewport top (`border-radius: 9999px`, `max-width: 1240px`, `backdrop-filter: blur(20px)`).
+  - Added scroll-reactive dynamic elevation with subtle hairline borders and micro-drop-shadow transitions.
+  - Built an active protection indicator badge featuring a pulsing live ping dot alongside the `ShieldCheck` icon.
+* **Streamlined Brand Identity & Asset Sizing:**
+  - Increased logo size to a prominent 34px icon with balanced typography (`DM Serif Display` / `Outfit`).
+  - Completely removed blurry CSS drop-shadow/glow filters from the logo, achieving crisp, clean vector edges.
+* **Mobile Glass Sheet Menu:**
+  - Rebuilt the responsive navigation drawer into an animated slide-down sheet with full touch support and one-click quick action routes.
+
+### 3. Flagship Landing Page Redesign with 3D Editorial CGI Artwork
+* **Bespoke 3D CGI Vault Artwork (`frontend/src/assets/hero-landing.jpg`):**
+  - Commissioned and rendered a custom, ultra-high-resolution 3D editorial visual featuring a high-security titanium vault safe with spoke locker wheel, soft natural studio lighting, and floating document folders.
+* **Editorial Typography & Visual Hierarchy (`LandingPage.jsx` & `LandingPage.css`):**
+  - Upgraded typography to high-trust `DM Serif Display` headlines coupled with `Manrope` body text.
+  - Introduced live verification pill counters, trusted institutional proof badges, and high-contrast CTA buttons.
+* **5-Tier Architectural Content Restructuring:**
+  - **Hero Zone:** Dual primary/secondary conversion triggers with quick-glance cryptographic reassurance markers.
+  - **Architectural Pillars:** 4 foundational technical cards highlighting AES-256-GCM vaulting, native OCR extraction, brute-force rate defenses, and zero third-party telemetry.
+  - **6-Card Interactive Bento Grid:** High-density feature showcase with simulated UI components (Smart Categorization, Multi-Device Biometrics, Emergency Dead-Man Protocol, Audit Log Trails).
+  - **Simulated Ingestion Sandbox:** Live interactive preview demonstrating document ingestion, instant OCR scanning, and metadata chip tagging.
+  - **Structured 3-Step Guided Journey:** Clear onboarding milestones from Account Creation to PIN Enclave to Daily Vault Operations.
+
+### 4. Interactive shadcn/ui-Style Accordion FAQ & Lucide-Only Standardized Footer
+* **Category-Filtered FAQ Accordion (`LandingPage.jsx`):**
+  - Replaced informal emoji titles with clean, enterprise-grade accordion questions.
+  - Built interactive category filter pill tabs (`All Topics`, `Security & PIN`, `OCR & Intelligence`, `Session Defense`).
+  - Implemented animated chevron indicators with smooth layout expansion powered by CSS transitions.
+* **Lucide Icon Standardized Footer (`PublicFooter.jsx` & `PublicFooter.css`):**
+  - Replaced all legacy inline SVG code and plain text items exclusively with official `lucide-react` vector icons (`GitBranch`, `Mail`, `MessageSquare`, `Globe`, `ShieldCheck`, `Lock`, `CheckCircle2`, `ArrowRight`).
+  - Added live platform status pill (`99.99% Guaranteed Uptime`), institutional directory sitemap, and security compliance badges.
+
+### 5. Universal Dark Mode Elimination & Enforced Light Editorial Theme
+* **Complete Removal of Theme Toggles:**
+  - Removed all theme toggle pills, moon/sun icons, and toggle states from `AuthLayout.jsx`, `PublicNavbar.jsx`, `AppHeader.jsx`, and `MorePage.jsx` (including complete removal of `.dv-toggle-pill` CSS).
+* **Guaranteed Light Theme Enforcement (`frontend/src/main.jsx`):**
+  - Set default `data-theme="light"` directly on `document.documentElement` on application startup.
+  - Removed legacy `docvault_theme` localStorage keys to prevent legacy theme persistence and inconsistent component contrast.
+
+### 6. Registration Form Balanced Spacing & Browser Reveal Eye Collision Fix
+* **Even Field Distribution Within Fixed Height Container (`Auth.css`):**
+  - Kept registration container dimensions strictly constrained to `height: 652.983px !important` with `overflow: hidden` (zero vertical scrollbars).
+  - Evenly expanded input heights from `38px` to `44px`, submit button to `46px`, Google CTA button to `44px`, and grid row gaps to `14px 16px`, completely eliminating awkward bottom empty voids.
+* **Browser Native Reveal Eye Suppression (`PasswordInput.css` & `globals.css`):**
+  - Resolved double/conflicting eye icons appearing inside Master Password, Confirm Password, and PIN input fields.
+  - Separated vendor pseudo-elements (`input::-ms-reveal`, `input::-ms-clear`, and WebKit auto-fill styles) into distinct CSS rule blocks to prevent browser selector dropping, ensuring custom DocVault eye icons render exclusively.
+
+### 7. Brand Copy Clarification & Professional Industry Placeholders
+* **Removed Misleading "Zero-Knowledge" Claims:**
+  - Audited all user-facing surfaces and replaced misleading zero-knowledge claims with precise, fact-based security descriptions ("Create an account to access your secure document vault").
+  - Updated `RegisterPage.jsx`, `AuthBrandPanel.jsx`, `LandingPage.jsx`, `emailService.js`, and `mockData.js`.
+* **Standardized Corporate Input Placeholders:**
+  - Replaced informal or redundant field placeholders across authentication screens with industry-standard formats:
+    - Full Name: `Enter your full name`
+    - Email Address: `name@example.com`
+    - Master Password: `Create master password`
+    - Confirm Password: `Confirm master password`
+    - Security PIN: `Enter ${pinLength}-digit PIN`
+    - Phone Number: `Enter contact phone number`
+
+---
+
 ## [2026-11-01] – Version 2.5.0: Native MongoDB OTP Verification, White Screen Fix & Auth Simplification
 
 ### 1. Native MongoDB 6-Digit OTP Email Verification (Replacing Quota-Limited Links)

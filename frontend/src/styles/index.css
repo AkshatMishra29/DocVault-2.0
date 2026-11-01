@@ -8,6 +8,6 @@
 
 ::selection,
 *::selection {
-  background-color: #e9280633;
+  background-color: rgba(253, 43, 6, 0.2);
   color: #1C1310;
 }
