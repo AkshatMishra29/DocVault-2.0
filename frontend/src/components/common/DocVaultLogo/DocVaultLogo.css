@@ -1,7 +1,7 @@
 .dv-brand-logo {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
   text-decoration: none;
   user-select: none;
 }
@@ -9,12 +9,12 @@
 .dv-brand-logo__svg {
   display: block;
   flex-shrink: 0;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s ease;
 }
 
 .dv-brand-logo:hover .dv-brand-logo__svg {
-  transform: scale(1.05);
-  filter: drop-shadow(0 4px 12px rgba(1, 90, 71, 0.3));
+  transform: scale(1.06) rotate(1.5deg);
+  filter: drop-shadow(0 6px 20px rgba(253, 43, 6, 0.42));
 }
 
 .dv-brand-logo__img {
@@ -28,29 +28,36 @@
 }
 
 .dv-brand-logo__text {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-ui, 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
   font-weight: 800;
-  letter-spacing: -0.03em;
-  color: #0F172A; /* Slate Black */
+  letter-spacing: -0.035em;
+  color: var(--color-auth-text-dark, #1C1310);
   line-height: 1;
 }
 
 [data-theme="dark"] .dv-brand-logo__text {
-  color: #F8FAFC;
+  color: #F8F5F1;
 }
 
 .dv-brand-logo__accent {
-  color: #015A47; /* Logo Emerald Green */
+  background: linear-gradient(135deg, #FD2B06 0%, #EB6C3B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
 }
 
 [data-theme="dark"] .dv-brand-logo__accent {
-  color: #10B981;
+  background: linear-gradient(135deg, #FF4D26 0%, #EB6C3B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .dv-brand-logo--light .dv-brand-logo__text {
-  color: #FFFFFF; /* Pure White */
+  color: #FFFFFF;
 }
 
 .dv-brand-logo--light .dv-brand-logo__accent {
-  color: #10B981; /* Bright Jade/Mint */
+  background: linear-gradient(135deg, #FFA07A 0%, #EB6C3B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

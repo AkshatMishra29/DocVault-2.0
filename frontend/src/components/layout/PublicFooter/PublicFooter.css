@@ -1,8 +1,14 @@
 .dv-public-footer {
-  background-color: #FFFFFF;
-  border-top: 1px solid #E2E8F0;
+  background-color: var(--color-surface, #FFFFFF);
+  border-top: 1px solid var(--color-border, #D8CCC3);
   padding: 80px 0 40px;
   margin-top: 60px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme="dark"] .dv-public-footer {
+  background-color: #14100E;
+  border-top-color: #3D2F28;
 }
 
 .dv-public-footer__container {
@@ -23,8 +29,12 @@
 .dv-public-footer__tagline {
   margin-top: 16px;
   font-size: 15px;
-  color: #64748B;
+  color: var(--color-text-secondary, #5C524C);
   line-height: 1.6;
+}
+
+[data-theme="dark"] .dv-public-footer__tagline {
+  color: #A89F98;
 }
 
 .dv-public-footer__columns {
@@ -40,24 +50,36 @@
 }
 
 .dv-public-footer__col h4 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 14px;
   font-weight: 800;
-  color: #0F172A;
+  color: var(--color-text-primary, #1C1310);
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
+[data-theme="dark"] .dv-public-footer__col h4 {
+  color: #F8F5F1;
+}
+
 .dv-public-footer__col a {
   font-size: 15px;
-  color: #64748B;
+  color: var(--color-text-secondary, #5C524C);
   text-decoration: none;
   transition: color 0.15s ease;
 }
 
+[data-theme="dark"] .dv-public-footer__col a {
+  color: #A89F98;
+}
+
 .dv-public-footer__col a:hover {
-  color: #0F766E;
+  color: var(--color-primary, #FD2B06);
+}
+
+[data-theme="dark"] .dv-public-footer__col a:hover {
+  color: #FD2B06;
 }
 
 .dv-public-footer__socials {
@@ -69,7 +91,11 @@
 .dv-public-footer__bottom {
   margin-top: 60px;
   padding-top: 32px;
-  border-top: 1px solid #F1F5F9;
+  border-top: 1px solid var(--color-border-subtle, #EAE3DB);
+}
+
+[data-theme="dark"] .dv-public-footer__bottom {
+  border-top-color: #2A1F1B;
 }
 
 .dv-public-footer__bottom-container {
@@ -80,9 +106,13 @@
   justify-content: space-between;
   align-items: center;
   font-size: 14px;
-  color: #94A3B8;
+  color: var(--color-text-muted, #8C8077);
   flex-wrap: wrap;
   gap: 16px;
+}
+
+[data-theme="dark"] .dv-public-footer__bottom-container {
+  color: #766B65;
 }
 
 .dv-public-footer__made-with {

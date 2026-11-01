@@ -1,5 +1,4 @@
 import React from 'react';
-import LogoImg from '../../../assets/logoDV.png';
 import './DocVaultLogo.css';
 
 export function DocVaultLogoIcon({ size = 36, className = "" }) {
@@ -7,64 +6,97 @@ export function DocVaultLogoIcon({ size = 36, className = "" }) {
     <svg 
       width={size} 
       height={size} 
-      viewBox="0 0 44 44" 
+      viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
       className={`dv-brand-logo__svg ${className}`}
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id="dvLogoTileGrad" x1="2" y1="2" x2="42" y2="42" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#01865A" />
-          <stop offset="45%" stopColor="#015A47" />
-          <stop offset="100%" stopColor="#052E25" />
+        {/* Obsidian & Espresso Vault Tile */}
+        <linearGradient id="dvVaultTileGrad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#2E1D17" />
+          <stop offset="50%" stopColor="#1C110D" />
+          <stop offset="100%" stopColor="#120A07" />
         </linearGradient>
-        <linearGradient id="dvSpokeGrad" x1="12" y1="12" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#34D399" />
-          <stop offset="100%" stopColor="#10B981" />
+
+        {/* Dynamic Beveled Sunset Rim */}
+        <linearGradient id="dvTileBorderGrad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FD2B06" stopOpacity="0.8" />
+          <stop offset="35%" stopColor="#EB6C3B" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="rgba(255, 255, 255, 0.12)" />
         </linearGradient>
-        <linearGradient id="dvCenterHub" x1="17" y1="17" x2="27" y2="27" gradientUnits="userSpaceOnUse">
+
+        {/* Vault Dial Track Gradient */}
+        <linearGradient id="dvRingSunset" x1="12" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FD2B06" />
+          <stop offset="50%" stopColor="#EB6C3B" />
+          <stop offset="100%" stopColor="#FFA07A" />
+        </linearGradient>
+
+        {/* Holographic Document Foil */}
+        <linearGradient id="dvDocGrad" x1="16" y1="12" x2="32" y2="35" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(253, 43, 6, 0.28)" />
+          <stop offset="100%" stopColor="rgba(235, 108, 59, 0.06)" />
+        </linearGradient>
+
+        {/* Precision Core Node */}
+        <radialGradient id="dvEmberCore" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#FFFFFF" />
-          <stop offset="100%" stopColor="#A7F3D0" />
-        </linearGradient>
-        <filter id="dvTileShadow" x="0" y="1" width="44" height="44" filterUnits="userSpaceOnUse">
-          <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#01241C" floodOpacity="0.3" />
+          <stop offset="35%" stopColor="#FFA380" />
+          <stop offset="75%" stopColor="#FD2B06" />
+          <stop offset="100%" stopColor="#C42003" />
+        </radialGradient>
+
+        {/* Ambient Ember Glow Filter */}
+        <filter id="dvLogoDropShadow" x="0" y="2" width="48" height="46" filterUnits="userSpaceOnUse">
+          <feDropShadow dx="0" dy="3" stdDeviation="3.5" floodColor="#1C110D" floodOpacity="0.4" />
+          <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="#FD2B06" floodOpacity="0.25" />
         </filter>
       </defs>
 
-      <g filter="url(#dvTileShadow)">
-        {/* Base Squircle Vault Tile */}
-        <rect x="2" y="2" width="40" height="40" rx="11" fill="url(#dvLogoTileGrad)" />
-        <rect x="2" y="2" width="40" height="40" rx="11" stroke="rgba(255, 255, 255, 0.22)" strokeWidth="1" />
+      <g filter="url(#dvLogoDropShadow)">
+        {/* Base Squircle Vault Chamber */}
+        <rect x="3" y="3" width="42" height="42" rx="12" fill="url(#dvVaultTileGrad)" />
+        <rect x="3.5" y="3.5" width="41" height="41" rx="11.5" stroke="url(#dvTileBorderGrad)" strokeWidth="1.2" />
 
-        {/* Embossed Folded Document Foil */}
-        <path 
-          d="M13 12C13 10.8954 13.8954 10 15 10H25L31 16V32C31 33.1046 30.1046 34 29 34H15C13.8954 34 13 33.1046 13 32V12Z" 
-          fill="white" 
-          fillOpacity="0.12" 
-          stroke="white" 
-          strokeOpacity="0.28" 
-          strokeWidth="1.2" 
+        {/* Outer Calibrated Dial Ring */}
+        <circle 
+          cx="24" 
+          cy="24" 
+          r="14.5" 
+          stroke="url(#dvRingSunset)" 
+          strokeWidth="1.8" 
+          strokeDasharray="4 2.5" 
+          strokeOpacity="0.75"
         />
+
+        {/* Dimensional Document Silhouette (Folded Origami Geometry) */}
         <path 
-          d="M25 10V16H31" 
+          d="M17 14C17 13.1716 17.6716 12.5 18.5 12.5H25.5L31 18V32.5C31 33.3284 30.3284 34 29.5 34H18.5C17.6716 34 17 33.3284 17 32.5V14Z" 
+          fill="url(#dvDocGrad)" 
+          stroke="#EB6C3B" 
+          strokeWidth="1.3" 
+          strokeOpacity="0.75"
+        />
+        {/* Precision Folded Document Flap */}
+        <path 
+          d="M25.5 12.5V18H31" 
           fill="none" 
-          stroke="white" 
-          strokeOpacity="0.45" 
-          strokeWidth="1.2" 
+          stroke="#FFA380" 
+          strokeWidth="1.3" 
           strokeLinejoin="round" 
         />
 
-        {/* Precision Vault Locker Wheel Track */}
-        <circle cx="22" cy="22" r="7.5" stroke="url(#dvSpokeGrad)" strokeWidth="2" strokeDasharray="3.2 2" />
-        <circle cx="22" cy="22" r="4.2" fill="url(#dvCenterHub)" />
-        <circle cx="22" cy="22" r="1.8" fill="#013D30" />
+        {/* Central Luminous Cryptographic Aperture / Vault Lock Wheel */}
+        <circle cx="24" cy="24" r="5.5" fill="url(#dvEmberCore)" stroke="#FFFFFF" strokeWidth="1" strokeOpacity="0.9" />
+        <circle cx="24" cy="24" r="2" fill="#1C110D" />
 
-        {/* Calibrated Directional Spokes */}
-        <line x1="22" y1="11.5" x2="22" y2="13.5" stroke="#34D399" strokeWidth="1.6" strokeLinecap="round" />
-        <line x1="22" y1="30.5" x2="22" y2="32.5" stroke="#34D399" strokeWidth="1.6" strokeLinecap="round" />
-        <line x1="11.5" y1="22" x2="13.5" y2="22" stroke="#34D399" strokeWidth="1.6" strokeLinecap="round" />
-        <line x1="30.5" y1="22" x2="32.5" y2="22" stroke="#34D399" strokeWidth="1.6" strokeLinecap="round" />
+        {/* Cardinal Caliper Ticks (Laser Alignment Nodes) */}
+        <line x1="24" y1="12" x2="24" y2="14.5" stroke="#FD2B06" strokeWidth="2" strokeLinecap="round" />
+        <line x1="24" y1="33.5" x2="24" y2="36" stroke="#FD2B06" strokeWidth="2" strokeLinecap="round" />
+        <line x1="12" y1="24" x2="14.5" y2="24" stroke="#FD2B06" strokeWidth="2" strokeLinecap="round" />
+        <line x1="33.5" y1="24" x2="36" y2="24" stroke="#FD2B06" strokeWidth="2" strokeLinecap="round" />
       </g>
     </svg>
   );
@@ -73,23 +105,13 @@ export function DocVaultLogoIcon({ size = 36, className = "" }) {
 export default function DocVaultLogo({ 
   height = 40, 
   variant = 'default', // 'default' (dark text), 'light' (white text), 'icon-only'
-  className = '',
-  useImage = false
+  className = ''
 }) {
   return (
     <div className={`dv-brand-logo dv-brand-logo--${variant} ${className}`}>
-      {useImage ? (
-        <img 
-          src={LogoImg} 
-          alt="DocVault" 
-          style={{ height: `${height}px`, width: 'auto' }}
-          className="dv-brand-logo__img" 
-        />
-      ) : (
-        <DocVaultLogoIcon size={height} />
-      )}
+      <DocVaultLogoIcon size={height} />
       {variant !== 'icon-only' && (
-        <span className="dv-brand-logo__text" style={{ fontSize: `${Math.round(height * 0.54)}px` }}>
+        <span className="dv-brand-logo__text" style={{ fontSize: `${Math.round(height * 0.52)}px` }}>
           Doc<span className="dv-brand-logo__accent">Vault</span>
         </span>
       )}

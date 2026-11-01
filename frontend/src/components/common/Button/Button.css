@@ -47,12 +47,12 @@
 .dv-btn--primary {
   background: var(--gradient-ai);
   color: #FFFFFF;
-  box-shadow: 0 4px 14px 0 rgba(1, 90, 71, 0.35);
+  box-shadow: 0 4px 14px 0 rgba(253, 43, 6, 0.32);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 .dv-btn--primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px 0 rgba(1, 90, 71, 0.45);
+  box-shadow: 0 6px 20px 0 rgba(253, 43, 6, 0.42);
   filter: brightness(1.08);
 }
 .dv-btn--primary:active:not(:disabled) {

@@ -618,7 +618,7 @@
   font-size: 11px !important;
 }
 
-/* Registration Form Sections with 50px Vertical Gap */
+/* Registration Form Sections with 20px Vertical Gap */
 .dv-auth-form--register {
   display: flex;
   flex-direction: column;
@@ -633,9 +633,9 @@
   width: 100%;
 }
 
-/* 50px vertical gap between registration form field sections */
+/* 20px vertical gap between registration form field sections */
 .dv-reg-section + .dv-reg-section {
-  margin-top: 50px !important;
+  margin-top: 20px !important;
 }
 
 /* Section Header Tag */
@@ -775,11 +775,11 @@
   border-radius: 7px !important;
 }
 
-/* 50px vertical gap before Submit Button */
+/* 20px vertical gap before Submit Button */
 .dv-auth-form--register .dv-auth-submit-btn {
   height: 46px !important;
   font-size: 14.5px !important;
-  margin-top: 50px !important;
+  margin-top: 20px !important;
   border-radius: 11px !important;
 }
 
@@ -801,11 +801,11 @@
   }
 
   .dv-reg-section + .dv-reg-section {
-    margin-top: 36px !important;
+    margin-top: 16px !important;
   }
 
   .dv-auth-form--register .dv-auth-submit-btn {
-    margin-top: 36px !important;
+    margin-top: 16px !important;
   }
 }
 

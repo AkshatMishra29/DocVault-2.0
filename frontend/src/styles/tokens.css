@@ -27,38 +27,38 @@
   --color-auth-error: #C63B2E;
   --color-auth-focus-ring: rgba(253, 43, 6, 0.16);
 
-  /* DocVault Signature Brand Palette (Deep Emerald Green, Slate Black, White) */
-  --color-primary: #015A47;          /* Primary Deep Emerald */
-  --color-primary-hover: #014335;    /* Darker Emerald */
-  --color-primary-light: #01865A;    /* Vibrant Emerald */
-  --color-secondary: #0F172A;        /* Slate Black */
-  --color-secondary-hover: #020617;  /* Pitch Slate */
-  --color-accent: #10B981;           /* Bright Mint / Jade Accent */
-  --color-accent-hover: #059669;
-  --color-accent-subtle: #ECFDF5;
-  --color-primary-subtle: #F0FDF5;   /* Very Light Tint of Emerald */
+  /* DocVault Signature Brand Palette (3D Editorial Sunset, Warm Espresso, Linen) */
+  --color-primary: #FD2B06;          /* Primary Electric Ember / Sunset */
+  --color-primary-hover: #E02504;    /* Darker Ember */
+  --color-primary-light: #EB6C3B;    /* Warm Terracotta Accent */
+  --color-secondary: #1C1310;        /* Deep Warm Espresso */
+  --color-secondary-hover: #120B09;  /* Pitch Espresso */
+  --color-accent: #EB6C3B;           /* Terracotta / Coral Accent */
+  --color-accent-hover: #D95627;
+  --color-accent-subtle: #FDF2ED;
+  --color-primary-subtle: #FFF3EE;   /* Very Light Tint of Sunset Coral */
   
   /* Foundation Surfaces */
-  --color-bg: #FAFCFB;               /* Crisp Clean Off-White with faint mint tint */
+  --color-bg: #F8F5F1;               /* Editorial Linen Sand */
   --color-surface: #FFFFFF;          /* Pure White */
   --color-surface-white: #FFFFFF;
-  --color-surface-hover: #F8FAFC;
-  --color-surface-secondary: #F1F5F9;
-  --color-surface-tertiary: #E2E8F0;
-  --color-surface-dark: #0F172A;     /* Slate Black Surface */
-  --color-surface-dark-card: #0B1120;
+  --color-surface-hover: #F2ECE6;
+  --color-surface-secondary: #EDE5DE;
+  --color-surface-tertiary: #E4DBD2;
+  --color-surface-dark: #1C1310;     /* Deep Espresso Surface */
+  --color-surface-dark-card: #140E0C;
 
   /* Typography Colors */
-  --color-text-primary: #0F172A;     /* Slate Black Primary */
-  --color-text-secondary: #475569;   /* Slate Medium */
-  --color-text-muted: #94A3B8;       /* Slate Light */
+  --color-text-primary: #1C1310;     /* Deep Espresso Primary */
+  --color-text-secondary: #5C524C;   /* Warm Taupe Medium */
+  --color-text-muted: #8C8077;       /* Soft Sand Muted */
   --color-text-inverse: #FFFFFF;     /* Pure White */
 
   /* Borders & Dividers */
-  --color-border: #E2E8F0;
-  --color-border-subtle: #F1F5F9;
-  --color-border-focus: #015A47;
-  --color-border-hover: #CBD5E1;
+  --color-border: #D8CCC3;
+  --color-border-subtle: #EAE3DB;
+  --color-border-focus: #FD2B06;
+  --color-border-hover: #C2B4AA;
 
   /* Feedback Colors */
   --color-success: #059669;
@@ -112,8 +112,8 @@
   --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
   --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
   --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 10px 10px -5px rgba(15, 23, 42, 0.02);
-  --shadow-glow: 0 0 24px -4px rgba(1, 90, 71, 0.25);
-  --shadow-glow-mint: 0 0 20px -3px rgba(16, 185, 129, 0.25);
+  --shadow-glow: 0 0 24px -4px rgba(253, 43, 6, 0.28);
+  --shadow-glow-mint: 0 0 20px -3px rgba(235, 108, 59, 0.25);
 
   /* Glassmorphism tokens */
   --glass-bg: rgba(255, 255, 255, 0.88);
@@ -121,9 +121,9 @@
   --glass-blur: blur(16px);
 
   /* Gradients */
-  --gradient-ai: linear-gradient(135deg, #015A47 0%, #01865A 60%, #10B981 100%);
-  --gradient-card: linear-gradient(180deg, #FFFFFF 0%, #FAFCFB 100%);
-  --gradient-hero: radial-gradient(circle at 50% 15%, rgba(1, 90, 71, 0.12) 0%, rgba(16, 185, 129, 0.05) 40%, transparent 70%);
+  --gradient-ai: linear-gradient(135deg, #FD2B06 0%, #EB6C3B 60%, #FF6E4A 100%);
+  --gradient-card: linear-gradient(180deg, #FFFFFF 0%, #F8F5F1 100%);
+  --gradient-hero: radial-gradient(circle at 50% 15%, rgba(253, 43, 6, 0.12) 0%, rgba(235, 108, 59, 0.05) 40%, transparent 70%);
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -146,23 +146,23 @@
   --color-auth-disabled-text: #665851;
   --color-auth-soft-grey: #261D19;
 
-  --color-bg: #090D16;
-  --color-surface: #0F172A;
-  --color-surface-white: #0F172A;
-  --color-surface-hover: #1E293B;
-  --color-surface-secondary: #1E293B;
-  --color-surface-tertiary: #334155;
-  --color-border: #1E293B;
-  --color-border-subtle: #162032;
-  --color-border-hover: #334155;
-  --color-text-primary: #F8FAFC;
-  --color-text-secondary: #94A3B8;
-  --color-text-muted: #64748B;
-  --glass-bg: rgba(15, 23, 42, 0.88);
+  --color-bg: #14100E;
+  --color-surface: #1E1512;
+  --color-surface-white: #1E1512;
+  --color-surface-hover: #281D19;
+  --color-surface-secondary: #281D19;
+  --color-surface-tertiary: #3D2E27;
+  --color-border: #3D2F28;
+  --color-border-subtle: #2A1F1B;
+  --color-border-hover: #544138;
+  --color-text-primary: #F8F5F1;
+  --color-text-secondary: #A89F98;
+  --color-text-muted: #766B65;
+  --glass-bg: rgba(30, 21, 18, 0.88);
   --glass-border: rgba(255, 255, 255, 0.08);
-  --color-primary-subtle: rgba(1, 90, 71, 0.2);
-  --color-accent-subtle: rgba(16, 185, 129, 0.15);
-  --color-success-bg: rgba(5, 150, 105, 0.15);
+  --color-primary-subtle: rgba(253, 43, 6, 0.18);
+  --color-accent-subtle: rgba(235, 108, 59, 0.18);
+  --color-success-bg: rgba(40, 122, 82, 0.18);
   --color-warning-bg: rgba(217, 119, 6, 0.15);
   --color-danger-bg: rgba(220, 38, 38, 0.15);
 }

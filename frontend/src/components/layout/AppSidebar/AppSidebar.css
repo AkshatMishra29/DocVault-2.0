@@ -50,7 +50,7 @@
 }
 
 .dv-sidebar__item--active {
-  background: linear-gradient(90deg, rgba(1, 90, 71, 0.12) 0%, rgba(16, 185, 129, 0.06) 100%);
+  background: linear-gradient(90deg, rgba(253, 43, 6, 0.12) 0%, rgba(235, 108, 59, 0.06) 100%);
   color: var(--color-primary);
   font-weight: var(--font-semibold);
 }

@@ -2,10 +2,16 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: rgba(255, 255, 255, 0.92);
+  background-color: rgba(248, 245, 241, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  border-bottom: 1px solid var(--color-border, #D8CCC3);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme="dark"] .dv-public-nav {
+  background-color: rgba(20, 16, 14, 0.92);
+  border-bottom-color: var(--color-border, #3D2F28);
 }
 
 .dv-public-nav__container {
@@ -31,16 +37,24 @@
 }
 
 .dv-public-nav__link {
-  font-family: 'Plus Jakarta Sans', var(--font-body);
+  font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 15.5px;
   font-weight: 600;
-  color: #475569;
+  color: var(--color-text-secondary, #5C524C);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
+[data-theme="dark"] .dv-public-nav__link {
+  color: #A89F98;
+}
+
 .dv-public-nav__link:hover {
-  color: #0F766E;
+  color: var(--color-primary, #FD2B06);
+}
+
+[data-theme="dark"] .dv-public-nav__link:hover {
+  color: #FD2B06;
 }
 
 .dv-public-nav__actions {
@@ -52,13 +66,17 @@
 .dv-public-nav__login {
   font-size: 15px;
   font-weight: 700;
-  color: #334155;
+  color: var(--color-text-primary, #1C1310);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
+[data-theme="dark"] .dv-public-nav__login {
+  color: #F8F5F1;
+}
+
 .dv-public-nav__login:hover {
-  color: #0F766E;
+  color: var(--color-primary, #FD2B06);
 }
 
 .dv-public-nav__btn-primary {
@@ -67,20 +85,20 @@
   gap: 8px;
   height: 44px;
   padding: 0 24px;
-  background-color: #0F766E;
+  background-color: var(--color-primary, #FD2B06);
   color: #FFFFFF;
   border-radius: 9999px;
   font-size: 15px;
   font-weight: 700;
   text-decoration: none;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.25);
+  box-shadow: 0 4px 14px rgba(253, 43, 6, 0.28);
 }
 
 .dv-public-nav__btn-primary:hover {
-  background-color: #0D6962;
+  background-color: var(--color-primary-hover, #E02504);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(15, 118, 110, 0.35);
+  box-shadow: 0 6px 20px rgba(253, 43, 6, 0.38);
 }
 
 @media (max-width: 1024px) {
