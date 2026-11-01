@@ -3,14 +3,14 @@
   "name": "DocVault — Encrypted AI Document Vault",
   "icons": [
     {
-      "src": "/vault.svg",
-      "type": "image/svg+xml",
+      "src": "/favicon/favicon.png",
+      "type": "image/png",
       "sizes": "192x192 512x512"
     }
   ],
   "start_url": "/",
-  "background_color": "#F8FAFC",
-  "theme_color": "#4338CA",
+  "background_color": "#FAF9F5",
+  "theme_color": "#FAF9F5",
   "display": "standalone",
   "orientation": "portrait"
 }

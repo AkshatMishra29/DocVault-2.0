@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../../../services/api";
 import { 
-  User, Mail, Lock, Phone, KeyRound, ShieldCheck, ArrowRight 
+  User, Mail, Lock, Phone, KeyRound, ShieldCheck, ArrowRight, HelpCircle 
 } from "lucide-react";
 import { signInWithGoogle } from "../../../services/firebase";
 
