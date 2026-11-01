@@ -1,7 +1,7 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../features/auth/context/AuthContext';
-import { LogOut, ShieldCheck, Lock } from 'lucide-react';
+import { LogOut, ShieldCheck, Lock, Shield } from 'lucide-react';
 import Button from '../../common/Button/Button';
 import './AppHeader.css';
 
@@ -14,11 +14,18 @@ export default function AppHeader({ title, subtitle }) {
     navigate('/enter-pin', { state: { email: user?.email } });
   };
 
+  const userInitial = user?.name ? user.name[0].toUpperCase() : 'U';
+
   return (
     <header className="dv-app-header">
       <div className="dv-app-header__title-group">
-        <h1 className="dv-app-header__title">{title}</h1>
-        {subtitle && <p className="dv-app-header__subtitle">{subtitle}</p>}
+        <div className="dv-app-header__mobile-avatar">
+          <span>{userInitial}</span>
+        </div>
+        <div>
+          <h1 className="dv-app-header__title">{title}</h1>
+          {subtitle && <p className="dv-app-header__subtitle">{subtitle}</p>}
+        </div>
       </div>
 
       <div className="dv-app-header__actions">
@@ -28,13 +35,27 @@ export default function AppHeader({ title, subtitle }) {
         </div>
 
         {/* Lock Vault Button - immediately locks the vault and redirects to PIN challenge */}
-        <Button variant="outline" size="sm" icon={Lock} onClick={handleLockVault}>
-          Lock Vault
+        <Button 
+          variant="outline" 
+          size="sm" 
+          icon={Lock} 
+          onClick={handleLockVault}
+          className="dv-app-header__lock-btn"
+          title="Lock Vault"
+        >
+          <span className="dv-btn-text">Lock Vault</span>
         </Button>
 
         {/* Complete Sign Out */}
-        <Button variant="ghost" size="sm" icon={LogOut} onClick={logout} title="Sign Out of Session">
-          Sign Out
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          icon={LogOut} 
+          onClick={logout} 
+          title="Sign Out of Session"
+          className="dv-app-header__logout-btn"
+        >
+          <span className="dv-btn-text">Sign Out</span>
         </Button>
       </div>
     </header>

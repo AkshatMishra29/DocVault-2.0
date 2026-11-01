@@ -357,10 +357,26 @@ export default function RegisterPage() {
         </Link>
       </div>
 
+      <div className="dv-auth-about-link-row">
+        <button
+          type="button"
+          className="dv-auth-about-trigger"
+          onClick={() => setIsAboutModalOpen(true)}
+        >
+          <HelpCircle size={14} color="#FD2B06" />
+          <span>Know about DocVault • Sovereign Security Architecture</span>
+        </button>
+      </div>
+
       <div className="dv-auth-security-note">
         <ShieldCheck size={14} className="dv-auth-security-note-icon" />
         <span>Your documents. Your privacy. Your control.</span>
       </div>
+
+      <AboutDocVaultModal
+        isOpen={isAboutModalOpen}
+        onClose={() => setIsAboutModalOpen(false)}
+      />
     </AuthLayout>
   );
 }

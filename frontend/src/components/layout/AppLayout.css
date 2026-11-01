@@ -1,7 +1,8 @@
 .dv-app-shell {
   display: flex;
   min-height: 100vh;
-  background-color: var(--color-bg);
+  min-height: 100dvh;
+  background-color: #FAF8F5;
 }
 
 .dv-app-main {
@@ -10,7 +11,8 @@
   flex-direction: column;
   min-width: 0;
   overflow-y: auto;
-  padding-bottom: 70px; /* Space for mobile nav */
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 76px; /* Space for mobile nav */
 }
 
 @media (min-width: 1025px) {
@@ -23,12 +25,12 @@
   max-width: 1360px;
   width: 100%;
   margin: 0 auto;
-  padding: var(--space-6) var(--space-8);
+  padding: var(--space-6, 24px) var(--space-8, 32px);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .dv-app-content-container {
-    padding: var(--space-4);
+    padding: 16px 12px;
   }
 }
 

@@ -5,8 +5,9 @@ import { apiRequest } from "../../services/api";
 import { 
   ShieldCheck, Download, KeyRound, Smartphone, HardDrive, 
   Clock, LogOut, CheckCircle2, ChevronRight, Sparkles, Lock, 
-  Shield, Fingerprint, FileText
+  Shield, Fingerprint, FileText, HelpCircle
 } from "lucide-react";
+import AboutDocVaultModal from "../../components/common/AboutModal/AboutDocVaultModal";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
 import Card from "../../components/common/Card/Card";
@@ -29,6 +30,7 @@ export default function MorePage() {
   const [savingSessionPref, setSavingSessionPref] = useState(false);
   const [savingAutoLockPref, setSavingAutoLockPref] = useState(false);
   const [registeringBio, setRegisteringBio] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [hasRegisteredBio, setHasRegisteredBio] = useState(() => {
     return Boolean(localStorage.getItem(`dv_bio_cred_${user?.email}`));
   });
@@ -316,6 +318,7 @@ export default function MorePage() {
           )}
         </Card>
       </div>
+      <AboutDocVaultModal isOpen={isAboutModalOpen} onClose={() => setIsAboutModalOpen(false)} />
     </div>
   );
 }

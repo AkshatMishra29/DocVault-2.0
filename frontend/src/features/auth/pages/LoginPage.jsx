@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Mail, Lock, ArrowRight, ShieldCheck } from "lucide-react";
+import { Mail, Lock, ArrowRight, ShieldCheck, HelpCircle } from "lucide-react";
+import AboutDocVaultModal from "../../../components/common/AboutModal/AboutDocVaultModal";
 import { signInWithGoogle } from "../../../services/firebase";
 
 import AuthLayout from "../components/AuthLayout";
@@ -29,6 +30,7 @@ export default function LoginPage() {
   const [infoMessage, setInfoMessage] = useState(() => location.state?.message || "");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
 
   const { login, loginWithFirebaseToken } = useAuth();
   const navigate = useNavigate();
@@ -186,10 +188,26 @@ export default function LoginPage() {
         </Link>
       </div>
 
+      <div className="dv-auth-about-link-row">
+        <button
+          type="button"
+          className="dv-auth-about-trigger"
+          onClick={() => setIsAboutModalOpen(true)}
+        >
+          <HelpCircle size={14} color="#FD2B06" />
+          <span>Know about DocVault • Sovereign Security Architecture</span>
+        </button>
+      </div>
+
       <div className="dv-auth-security-note">
         <ShieldCheck size={14} className="dv-auth-security-note-icon" />
         <span>Your documents. Your privacy. Your control.</span>
       </div>
+
+      <AboutDocVaultModal
+        isOpen={isAboutModalOpen}
+        onClose={() => setIsAboutModalOpen(false)}
+      />
     </AuthLayout>
   );
 }

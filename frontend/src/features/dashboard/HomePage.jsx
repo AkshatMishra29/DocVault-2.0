@@ -126,6 +126,22 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Mobile & Tablet Native App Quick Action Pills */}
+        <div className="dv-mobile-quick-actions">
+          <Link to="/upload" className="dv-mobile-quick-btn dv-mobile-quick-btn--primary">
+            <UploadCloud size={16} />
+            <span>Upload File</span>
+          </Link>
+          <Link to="/ask-ai" className="dv-mobile-quick-btn dv-mobile-quick-btn--dark">
+            <Sparkles size={16} />
+            <span>Ask Copilot</span>
+          </Link>
+          <Link to="/admin" className="dv-mobile-quick-btn dv-mobile-quick-btn--outline">
+            <ShieldCheck size={16} />
+            <span>Enclave Admin</span>
+          </Link>
+        </div>
+
         {/* Urgent Renewal Alert Banner */}
         {urgentDeadlines.length > 0 && (
           <div className="dv-alert-banner dv-alert-banner--warning">
@@ -149,8 +165,8 @@ export default function HomePage() {
         {/* Section B: Overview Metrics Grid */}
         <div className="dv-stats-grid">
           <Card padding="md" className="dv-stat-card">
-            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--emerald">
-              <FileText size={22} color="#015A47" />
+            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--brand">
+              <FileText size={22} color="#FD2B06" />
             </div>
             <div className="dv-stat-card__meta">
               <span className="dv-stat-card__label">Total Documents</span>

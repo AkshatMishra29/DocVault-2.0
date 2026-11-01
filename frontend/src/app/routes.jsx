@@ -18,11 +18,12 @@ import AssetsPage from "../features/assets/AssetsPage";
 import DeadlinesPage from "../features/deadlines/DeadlinesPage";
 import UploadPage from "../features/upload/UploadPage";
 import MorePage from "../features/dashboard/MorePage";
+import AdminDashboardPage from "../features/admin/AdminDashboardPage";
 
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Public Marketing Landing Page */}
+      {/* Public Marketing Landing Page / Mobile App Gateway */}
       <Route path="/" element={<LandingPage />} />
 
       {/* Public Auth Routes */}
@@ -32,7 +33,7 @@ export function AppRoutes() {
       <Route path="/enter-pin" element={<EnterPinPage />} />
       <Route path="/auth/verify" element={<AuthVerifiedPage />} />
 
-      {/* Backward Compatibility & Authenticated Application Shell */}
+      {/* Authenticated Application Shell */}
       <Route
         path="/dashboard"
         element={
@@ -58,6 +59,8 @@ export function AppRoutes() {
         <Route path="/deadlines" element={<DeadlinesPage />} />
         <Route path="/upload" element={<UploadPage />} />
         <Route path="/more" element={<MorePage />} />
+        <Route path="/admin" element={<AdminDashboardPage />} />
+        <Route path="/dashboard/admin" element={<AdminDashboardPage />} />
       </Route>
 
       {/* Catch-all Fallback */}

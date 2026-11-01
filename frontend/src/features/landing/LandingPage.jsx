@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import MobileAppAuthView from './MobileAppAuthView';
 import PublicNavbar from '../../components/layout/PublicNavbar/PublicNavbar';
 import PublicFooter from '../../components/layout/PublicFooter/PublicFooter';
 import heroArtwork from '../../assets/hero-landing.jpg';
@@ -71,6 +72,31 @@ export default function LandingPage() {
   const { user, isVaultUnlocked } = useAuth();
   const [openFaq, setOpenFaq] = useState(1);
   const [faqFilter, setFaqFilter] = useState('all');
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 1024;
+    }
+    return false;
+  });
+  const [forceDesktopWeb, setForceDesktopWeb] = useState(false);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobileOrTablet(window.innerWidth <= 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // When already authenticated, go straight to dashboard
+  if (user && isVaultUnlocked) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Mobile to Tab View: show native app login/registration screen
+  if (isMobileOrTablet && !forceDesktopWeb) {
+    return <MobileAppAuthView onSwitchToDesktopWeb={() => setForceDesktopWeb(true)} />;
+  }
 
   const toggleFaq = (id) => {
     setOpenFaq(prev => prev === id ? null : id);
@@ -683,6 +709,17 @@ export default function LandingPage() {
       </section>
 
       <PublicFooter />
+      {isMobileOrTablet && forceDesktopWeb && (
+        <button
+          type="button"
+          onClick={() => setForceDesktopWeb(false)}
+          className="dv-lp-switch-app-pill"
+          aria-label="Return to Mobile App View"
+        >
+          <Smartphone size={16} />
+          <span>Return to App View</span>
+        </button>
+      )}
     </div>
   );
 }

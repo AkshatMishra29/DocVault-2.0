@@ -11,6 +11,7 @@ const navItems = [
   { to: '/assets', label: 'Asset Registry', icon: Layers },
   { to: '/deadlines', label: 'Deadlines', icon: Calendar },
   { to: '/ask-ai', label: 'Ask AI Copilot', icon: Sparkles, badge: 'RAG' },
+  { to: '/admin', label: 'Admin Console', icon: ShieldCheck, badge: 'System' },
   { to: '/more', label: 'Settings & Audit', icon: Settings },
 ];
 

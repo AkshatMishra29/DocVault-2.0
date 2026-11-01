@@ -764,3 +764,32 @@
 
 
 
+
+/* Know About DocVault Trigger Link */
+.dv-auth-about-link-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.dv-auth-about-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  font-family: var(--font-ui, 'Manrope', sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-auth-text, #1C1310);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.dv-auth-about-trigger:hover {
+  background: rgba(253, 43, 6, 0.08);
+  color: #FD2B06;
+}

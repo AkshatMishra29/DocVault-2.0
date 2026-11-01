@@ -1335,3 +1335,29 @@
     bottom: -10px;
   }
 }
+
+/* Floating Return to App Pill for Mobile/Tablet users viewing desktop web */
+.dv-lp-switch-app-pill {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #111827;
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 18px;
+  border-radius: 9999px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.dv-lp-switch-app-pill:active {
+  transform: scale(0.95);
+}

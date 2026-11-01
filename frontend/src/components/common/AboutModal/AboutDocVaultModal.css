@@ -1,0 +1,307 @@
+.dv-about-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: dvAboutFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dvAboutFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dv-about-sheet {
+  background: #FFFFFF;
+  border-radius: 24px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: dvAboutSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dvAboutSlideUp {
+  from {
+    transform: translateY(20px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.dv-about-sheet__handle {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .dv-about-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .dv-about-sheet {
+    max-height: 88vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+  }
+  .dv-about-sheet__handle {
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: #E2E8F0;
+    border-radius: 9999px;
+    margin: 10px auto 0 auto;
+  }
+}
+
+.dv-about-header {
+  padding: 20px 24px 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.dv-about-header__branding {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dv-about-logo-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #FFF1EE;
+  border: 1px solid #FFE4DF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dv-about-title {
+  margin: 0;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.dv-about-subtitle {
+  margin: 2px 0 0 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.dv-about-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dv-about-close-btn:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+.dv-about-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dv-about-hero-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  height: 140px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.dv-about-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.dv-about-hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.2) 0%, rgba(15, 23, 42, 0.85) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 16px;
+}
+
+.dv-about-hero-tag {
+  align-self: flex-start;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: #FD2B06;
+  color: #FFFFFF;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.dv-about-hero-heading {
+  margin: 0;
+  color: #FFFFFF;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.dv-about-intro {
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.dv-about-pillars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dv-about-pillar-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+}
+
+.dv-about-pillar-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dv-about-pillar-icon--orange {
+  background: #FFF1EE;
+  color: #FD2B06;
+}
+
+.dv-about-pillar-icon--blue {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.dv-about-pillar-icon--green {
+  background: #F0FDF4;
+  color: #16A34A;
+}
+
+.dv-about-pillar-icon--purple {
+  background: #FAF5FF;
+  color: #9333EA;
+}
+
+.dv-about-pillar-info h5 {
+  margin: 0 0 3px 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.dv-about-pillar-info p {
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.45;
+}
+
+.dv-about-trust-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0 0 0;
+  border-top: 1px dashed #E2E8F0;
+}
+
+.dv-about-trust-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #0F172A;
+  background: #F1F5F9;
+  padding: 5px 10px;
+  border-radius: 9999px;
+}
+
+.dv-about-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #F1F5F9;
+  background: #FFFFFF;
+}
+
+.dv-about-cta-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #FD2B06;
+  color: #FFFFFF;
+  border: none;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 13px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(253, 43, 6, 0.25);
+}
+
+.dv-about-cta-btn:hover {
+  background: #E02604;
+  transform: translateY(-1px);
+}

@@ -1,0 +1,429 @@
+.dv-native-app-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #F8F9FA;
+  display: flex;
+  flex-direction: column;
+  padding: max(12px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom)) 16px;
+  box-sizing: border-box;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Native App Bar */
+.dv-native-app-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 4px 16px 4px;
+}
+
+.dv-native-app-bar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dv-native-app-bar__badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: #FFF1EE;
+  color: #FD2B06;
+  border: 1px solid #FFE4DF;
+  padding: 3px 8px;
+  border-radius: 9999px;
+}
+
+.dv-native-app-bar__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.dv-native-ping-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16A34A;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+}
+
+/* Main Body */
+.dv-native-app-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 440px;
+  width: 100%;
+  margin: 0 auto;
+  justify-content: center;
+}
+
+/* Segmented Control (iOS / Material 3) */
+.dv-native-segmented-bar {
+  display: flex;
+  background: #E9ECEF;
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 16px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.dv-native-segment-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #6C757D;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dv-native-segment-btn:active {
+  transform: scale(0.97);
+}
+
+.dv-native-segment-btn--active {
+  background: #FFFFFF;
+  color: #0F172A;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* Card Surface */
+.dv-native-card {
+  background: #FFFFFF;
+  border-radius: 24px;
+  border: 1px solid #E9ECEF;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.02);
+  padding: 24px 20px;
+}
+
+.dv-native-card__intro {
+  margin-bottom: 20px;
+}
+
+.dv-native-card__title {
+  margin: 0 0 4px 0;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 22px;
+  color: #0F172A;
+  font-weight: 500;
+}
+
+.dv-native-card__desc {
+  margin: 0;
+  font-size: 13px;
+  color: #64748B;
+  line-height: 1.45;
+}
+
+/* Alerts */
+.dv-native-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.dv-native-alert--error {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FEE2E2;
+}
+
+/* Google Button */
+.dv-native-google-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #FFFFFF;
+  color: #1F2937;
+  border: 1px solid #D1D5DB;
+  border-radius: 12px;
+  height: 46px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dv-native-google-btn:active {
+  background: #F9FAFB;
+  transform: scale(0.98);
+}
+
+/* Divider */
+.dv-native-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 18px 0;
+  color: #9CA3AF;
+  font-size: 11.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dv-native-divider::before,
+.dv-native-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.dv-native-divider span {
+  padding: 0 10px;
+}
+
+/* Fields */
+.dv-native-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dv-native-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dv-native-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dv-native-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  letter-spacing: -0.01em;
+}
+
+.dv-native-link-sm {
+  font-size: 12px;
+  font-weight: 600;
+  color: #FD2B06;
+  text-decoration: none;
+}
+
+.dv-native-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.dv-native-input-icon {
+  position: absolute;
+  left: 14px;
+  color: #9CA3AF;
+  pointer-events: none;
+}
+
+.dv-native-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 42px 0 42px;
+  border-radius: 12px;
+  border: 1px solid #D1D5DB;
+  background: #F9FAFB;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: #111827;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.dv-native-input:focus {
+  outline: none;
+  background: #FFFFFF;
+  border-color: #FD2B06;
+  box-shadow: 0 0 0 3px rgba(253, 43, 6, 0.12);
+}
+
+.dv-native-eye-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #9CA3AF;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dv-native-eye-btn:hover {
+  color: #4B5563;
+}
+
+/* PIN Header and Toggle */
+.dv-native-pin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.dv-native-pin-toggle {
+  display: inline-flex;
+  background: #F3F4F6;
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.dv-native-pin-pill {
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6B7280;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dv-native-pin-pill.active {
+  background: #FD2B06;
+  color: #FFFFFF;
+}
+
+.dv-native-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dv-native-grid-2 .dv-native-input {
+  padding-left: 38px;
+  padding-right: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+}
+
+/* Submit CTA */
+.dv-native-submit-btn {
+  width: 100%;
+  height: 48px;
+  margin-top: 6px;
+  background: #FD2B06;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(253, 43, 6, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dv-native-submit-btn:active {
+  transform: scale(0.97);
+  background: #E02604;
+}
+
+.dv-native-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* App Info & About Links */
+.dv-native-app-links {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #F1F5F9;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dv-native-about-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #FFF7F5;
+  border: 1px solid #FFE4DF;
+  border-radius: 10px;
+  color: #0F172A;
+  font-family: 'Manrope', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dv-native-about-btn:active {
+  background: #FFE8E3;
+}
+
+.dv-native-about-chevron {
+  color: #94A3B8;
+}
+
+.dv-native-web-btn {
+  background: transparent;
+  border: none;
+  color: #64748B;
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* Bottom Footer */
+.dv-native-footer {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6B7280;
+}
