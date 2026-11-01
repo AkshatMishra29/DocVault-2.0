@@ -19,7 +19,7 @@ export default function AppSidebar() {
     <aside className="dv-sidebar">
       <div className="dv-sidebar__header">
         <NavLink to="/dashboard">
-          <DocVaultLogo height={30} />
+          <DocVaultLogo height={44} />
         </NavLink>
       </div>
 

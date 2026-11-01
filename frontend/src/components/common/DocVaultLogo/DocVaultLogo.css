@@ -1,35 +1,33 @@
 .dv-brand-logo {
   display: inline-flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   text-decoration: none;
   user-select: none;
+  line-height: 1;
+  vertical-align: middle;
 }
 
 .dv-brand-logo__svg {
   display: block;
   flex-shrink: 0;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dv-brand-logo:hover .dv-brand-logo__svg {
-  transform: scale(1.06) rotate(1.5deg);
-  filter: drop-shadow(0 6px 20px rgba(253, 43, 6, 0.42));
+  transform: scale(1.04);
 }
 
 .dv-brand-logo__img {
   object-fit: contain;
+  object-position: left center;
   display: block;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+  width: auto;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dv-brand-logo:hover .dv-brand-logo__img {
-  transform: scale(1.04);
-  filter: drop-shadow(0 4px 16px rgba(253, 43, 6, 0.25));
-}
-
-[data-theme="dark"] .dv-brand-logo__img {
-  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.85)) brightness(1.08);
+  transform: scale(1.03);
 }
 
 .dv-brand-logo__text {

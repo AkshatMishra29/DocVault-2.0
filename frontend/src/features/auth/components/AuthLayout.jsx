@@ -41,7 +41,7 @@ export default function AuthLayout({
           {/* Mobile-only brand logo */}
           <div className="dv-auth-mobile-logo">
             <Link to="/" title="Return to DocVault Home">
-              <DocVaultLogo height={32} />
+              <DocVaultLogo height={44} />
             </Link>
           </div>
 

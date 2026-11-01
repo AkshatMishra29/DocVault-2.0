@@ -78,7 +78,7 @@ export default function AuthBrandPanel({
       {/* Top Header Area */}
       <div className="dv-editorial-top">
         <Link to="/" className="dv-editorial-logo-link" title="Return to DocVault Home">
-          <DocVaultLogo height={36} />
+          <DocVaultLogo height={52} />
         </Link>
         <span className="dv-editorial-tagline-pill">Private & Encrypted</span>
       </div>

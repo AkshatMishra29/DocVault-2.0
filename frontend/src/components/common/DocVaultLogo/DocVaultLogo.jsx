@@ -104,7 +104,7 @@ export function DocVaultLogoIcon({ size = 36, className = "" }) {
 }
 
 export default function DocVaultLogo({ 
-  height = 40, 
+  height = 50, 
   variant = 'default', // 'default' (dark text), 'light' (white text), 'icon-only'
   className = '',
   useImage = true

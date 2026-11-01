@@ -584,7 +584,7 @@
 /* Registration Grid Layout (Managed 652.983px Container) */
 .dv-auth-form-card--register {
   max-width: 530px !important;
-  padding: 24px 30px 20px 30px !important;
+  padding: 24px 28px 18px 28px !important;
   box-sizing: border-box;
   height: 652.983px !important;
   display: flex !important;
@@ -608,19 +608,21 @@
 }
 
 .dv-auth-form-card--register .dv-auth-google-btn {
-  height: 42px !important;
-  font-size: 13.5px !important;
+  height: 44px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
   gap: 10px !important;
   border-radius: 11px !important;
 }
 
 .dv-auth-form-card--register .dv-auth-divider {
-  margin: 8px 0 !important;
+  margin: 6px 0 !important;
   gap: 10px !important;
 }
 
 .dv-auth-form-card--register .dv-auth-divider-text {
   font-size: 11px !important;
+  letter-spacing: 0.05em;
 }
 
 /* Registration Form Natural Flow - Proportional Spacing */
@@ -633,7 +635,7 @@
 .dv-auth-form--register .dv-reg-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px 14px;
+  gap: 14px 16px;
   width: 100%;
 }
 
@@ -662,12 +664,13 @@
 .dv-auth-form--register .dv-auth-input-group {
   display: flex;
   flex-direction: column;
-  gap: 5px !important;
+  gap: 6px !important;
 }
 
 .dv-auth-form--register .dv-auth-input-label {
   font-size: 12.5px !important;
-  font-weight: 700;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
   margin-bottom: 0 !important;
   color: var(--color-auth-text-dark, #1C1310);
 }
@@ -677,9 +680,9 @@
 }
 
 .dv-auth-form--register .dv-auth-input-field {
-  height: 42px !important;
+  height: 44px !important;
   font-size: 13.5px !important;
-  line-height: 42px !important;
+  line-height: 44px !important;
   border-radius: 10px !important;
   padding: 0 14px !important;
 }
@@ -694,14 +697,14 @@
 
 .dv-auth-form--register .dv-auth-input-prefix-icon {
   left: 12px !important;
-  width: 16px !important;
-  height: 16px !important;
+  width: 17px !important;
+  height: 17px !important;
 }
 
 .dv-auth-form--register .dv-auth-input-toggle-btn {
   right: 7px !important;
-  width: 26px !important;
-  height: 26px !important;
+  width: 28px !important;
+  height: 28px !important;
 }
 
 .dv-auth-form--register .dv-pwd-meter {
@@ -729,15 +732,15 @@
 
 /* Submit Button in Managed Layout */
 .dv-auth-form--register .dv-auth-submit-btn {
-  height: 44px !important;
+  height: 46px !important;
   font-size: 15px !important;
   font-weight: 700 !important;
   margin-top: 14px !important;
-  border-radius: 11px !important;
+  border-radius: 12px !important;
 }
 
 .dv-auth-form-card--register .dv-auth-footer-nav {
-  margin-top: 10px !important;
+  margin-top: 8px !important;
   font-size: 13px !important;
 }
 

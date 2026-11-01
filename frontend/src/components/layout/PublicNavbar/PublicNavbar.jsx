@@ -26,7 +26,7 @@ export default function PublicNavbar() {
     <header className="dv-public-nav">
       <div className="dv-public-nav__container">
         <Link to="/" className="dv-public-nav__logo">
-          <DocVaultLogo height={44} />
+          <DocVaultLogo height={52} />
         </Link>
 
         <nav className="dv-public-nav__links">

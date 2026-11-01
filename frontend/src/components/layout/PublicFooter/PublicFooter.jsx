@@ -8,7 +8,7 @@ export default function PublicFooter() {
     <footer className="dv-public-footer">
       <div className="dv-public-footer__container">
         <div className="dv-public-footer__brand">
-          <DocVaultLogo height={38} />
+          <DocVaultLogo height={48} />
           <p className="dv-public-footer__tagline">
             Secure, Organize, Stay Ahead. Your sovereign intelligent personal document vault.
           </p>
