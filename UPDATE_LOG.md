@@ -4,6 +4,84 @@ All notable changes, security updates, and new feature implementations for the *
 
 ---
 
+## [2026-11-02] – Version 2.7.0: Native Mobile & Tablet App Experience, Enterprise Admin Console, Social Preview Metadata & Fluid Responsive Hardening
+
+**Session Completed At:** 2026-11-02T01:05:00+05:30 (Asia/Kolkata / Indian Standard Time)  
+**Engineering Lead & Author:** Satyam Diwaker (@satyamdiwaker000001 | satyamdiwaker863@gmail.com)
+
+---
+
+### 1. Native Mobile & Tablet App Experience Transformation
+* **Dedicated Mobile Authentication View (`MobileAppAuthView.jsx` & `MobileAppAuthView.css`):**
+  - Designed a high-polish, app-native authentication gateway exclusively displayed on mobile and tablet viewport widths (`<= 768px`).
+  - Implemented an iOS/Android segmented switch control for toggling between `Sign In` and `Create Account` without full page reloads.
+  - Eliminated marketing landing page bloat on mobile screens; users now experience an immediate, native application login screen with zero vertical fluff.
+* **Intelligent Viewport Auto-Routing (`LandingPage.jsx`):**
+  - Integrated dynamic screen-size detection (`useWindowDimensions` / media queries) on the root landing route.
+  - Automatically routes mobile users directly to `MobileAppAuthView`, while maintaining the full 3D editorial marketing experience for desktop and widescreen viewports.
+  - Added an unobtrusive top announcement bar (`dv-lp-desktop-bar`) allowing users to effortlessly switch between Native App Mode and Full Web Experience without blocking UI buttons.
+
+### 2. Native Mobile Header Bar & Raised Upload FAB Navigation
+* **Native Mobile App Header (`AppHeader.jsx` & `AppHeader.css`):**
+  - Modernized the mobile application header to match native iOS/Android system styling.
+  - Added real-time user initial avatar badge, verified encryption status pulse dot, and dynamic notification bell.
+  - Implemented hardware safe-area top inset support (`env(safe-area-inset-top)`) for seamless notch display on iPhone and Android cutouts.
+* **Native Bottom Tab Navigation with Elevated Central FAB (`BottomNav.jsx` & `BottomNav.css`):**
+  - Built a persistent bottom navigation bar featuring 5 primary touch targets (`Vault`, `Search`, `Upload`, `Activity`, `More`).
+  - Integrated an elevated, prominent central Upload / Scan action FAB with gradient styling (`#FD2B06`), high tactile tap targets, and smooth hover elevation.
+  - Added bottom safe-area insets (`env(safe-area-inset-bottom)`) for gesture bar compatibility on modern mobile devices.
+
+### 3. Enterprise Enclave Administration Console (`/admin`) & Backend Telemetry
+* **Real-Time Telemetry API (`backend/src/modules/vault/vault.routes.js`):**
+  - Added `GET /api/vault/admin/stats` aggregating platform-wide security metrics: active custodians, total encrypted objects, cluster storage consumption, OCR pipelines processed, and uptime telemetry.
+  - Structured live health check endpoints covering Encrypted Storage clusters, OCR Microservices, and HSM / Key Management infrastructure.
+* **Admin Dashboard UI (`AdminDashboardPage.jsx` & `AdminDashboardPage.css`):**
+  - Created a professional, high-density enterprise administrative console with real-time cluster health badges.
+  - Implemented 4 high-level KPI metric cards with change indicators and trend analytics.
+  - Built an interactive, searchable Custodian User Directory with role badges, 2FA status indicators, and permission levels.
+  - Added an append-only cryptographic audit stream detailing administrative security events with severity tagging.
+
+### 4. Architecture & Security Transparency Modal ("Know About DocVault")
+* **Native Bottom Sheet Architecture Sheet (`AboutDocVaultModal.jsx` & `AboutDocVaultModal.css`):**
+  - Developed an informative modal explaining DocVault's security principles: Zero-Knowledge Client-Side Cryptography, Two-Tier Master PIN Isolation, Private OCR Engine, and Session Guardrails.
+  - Designed with accessible touch gestures, smooth backdrop blur, and structured architectural cards.
+* **Contextual Trigger Links (`LoginPage.jsx` & `RegisterPage.jsx`):**
+  - Placed subtle, reassuring trigger links directly beneath authentication action buttons (*"Curious how your documents are protected? Learn about DocVault architecture & privacy"*).
+  - Enables users to inspect platform privacy policies and encryption mechanics without navigating away from the login or registration flow.
+
+### 5. Universal Removal of "Mobile Enclave" & Arbitrary "AES-256" Technical Badges
+* **Clean Brand Typography Over Misleading Enclave Labels:**
+  - Removed misleading "Mobile Enclave" text badges across mobile headers, landing components, and authentication cards.
+  - Replaced arbitrary badges with clean DocVault brand typography and centered, uncluttered layout headings.
+* **Professional Cryptographic Terminology:**
+  - Standardized terminology across the frontend, landing pages, and backend stats from raw "AES-256" badges to accurate, industry-standard language ("Hardware Accelerated Vault Encryption" and "Zero-Knowledge Storage").
+
+### 6. Fluid Responsive Layouts, Mobile Capsule Collision Fix & Light Theme Polish
+* **Dynamic Fluid Typography (`clamp()`):**
+  - Replaced rigid, fixed pixel font sizes across landing hero headlines and kicker badges with responsive CSS `clamp()` formulas (`clamp(2rem, 6vw, 3.75rem)` for headlines, `clamp(1rem, 2.8vw, 1.25rem)` for subtitles).
+  - Eliminates text wrapping breaks and ensures visual balance on narrow 360px phones up to ultrawide desktop monitors.
+* **Mobile Floating Capsule Navigation Collision Fix (`PublicNavbar.css`):**
+  - Scaled brand logo down to 28px (`max-width: 125px`) on mobile viewports (`<= 600px`).
+  - Cleanly concealed desktop text buttons inside `.dv-nav-capsule` on small screens, delegating quick navigation to the full-screen touch drawer and preventing horizontal overflow.
+* **Floating Return Pill Overlap Resolution (`LandingPage.jsx` & `LandingPage.css`):**
+  - Eliminated the fixed floating `Return to App View` pill (`bottom: 24px; right: 20px`) that previously collided with the primary `Sign In` and submit buttons on mobile screens.
+  - Converted into a clean, non-intrusive top banner (`dv-lp-desktop-bar`) positioned safely away from primary touch interactions.
+* **Harmonized Mobile Browser Chrome Color (`frontend/index.html`):**
+  - Updated `<meta name="theme-color">` from harsh `#FD2B06` to natural editorial stone `#FAF9F5`, ensuring Android and iOS browser URL bars match the website aesthetic seamlessly.
+
+### 7. Component Error Boundary Hardening & PWA Manifest Recovery
+* **Missing Lucide Icon Import (`RegisterPage.jsx`):**
+  - Resolved `ReferenceError: HelpCircle is not defined` by explicitly adding `HelpCircle` to the `lucide-react` import statement, restoring smooth registration rendering.
+* **Defensive Optional Chaining in Security Gauges (`PasswordStrengthMeter.jsx` & `PinStrengthIndicator.jsx`):**
+  - Added safe optional chaining (`level?.color`, `riskLevel?.color`) and default fallbacks to prevent unhandled TypeErrors when password evaluation payloads are pending.
+* **Editorial Light Theme Error Boundary (`ErrorBoundary.jsx` & `ErrorBoundary.css`):**
+  - Redesigned the fallback crash screen to seamlessly match DocVault's signature warm stone aesthetic (`#FAF8F5`) and brand color `#FD2B06`.
+* **PWA Manifest 404 Resolution (`frontend/public/manifest.json` & `frontend/public/vault.svg`):**
+  - Added modern `<meta name="mobile-web-app-capable" content="yes" />` tag to eliminate browser deprecation warnings.
+  - Updated PWA manifest icon references to valid `/favicon/favicon.png` and created a standalone `/vault.svg` vector asset to eliminate manifest download errors.
+
+---
+
 ## [2026-11-02] – Version 2.6.0: 3D Editorial Overhaul, Floating Capsule Nav, Dedicated OTP Flow & Brand Polish
 
 **Session Completed At:** 2026-11-02T00:08:45+05:30 (Asia/Kolkata / Indian Standard Time)  
