@@ -4,7 +4,7 @@ import { apiRequest, API_BASE_URL } from "../../services/api";
 import { 
   ArrowLeft, Download, Trash2, Calendar, FileText, CheckCircle2,
   ShieldCheck, AlertTriangle, ExternalLink, Link2, Sparkles,
-  Lock, Edit3, Check, X
+  Lock, Edit3, Check, X, Shield, Cpu, Tag
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -12,6 +12,12 @@ import Card from "../../components/common/Card/Card";
 import Button from "../../components/common/Button/Button";
 import Badge from "../../components/common/Badge/Badge";
 import Modal from "../../components/common/Modal/Modal";
+import Skeleton from "../../components/common/Skeleton/Skeleton";
+import DocumentTypeIcon from "../../components/common/DocumentTypeIcon/DocumentTypeIcon";
+import ExpiryBadge from "../../components/common/ExpiryBadge/ExpiryBadge";
+import VerificationStatus from "../../components/common/VerificationStatus/VerificationStatus";
+import ExtractionConfidence from "../../components/common/ExtractionConfidence/ExtractionConfidence";
+
 import "./DocumentDetailPage.css";
 
 export default function DocumentDetailPage() {
@@ -37,17 +43,20 @@ export default function DocumentDetailPage() {
       try {
         setLoading(true);
         const [docRes, assetsRes] = await Promise.all([
-          apiRequest(`/api/documents/${id}`),
-          apiRequest("/api/assets"),
+          apiRequest(`/api/documents/${id}`).catch(() => ({ success: false })),
+          apiRequest("/api/assets").catch(() => ({ data: [] })),
         ]);
 
-        if (docRes.success && docRes.data) {
+        if (docRes?.success && docRes.data) {
           setDoc(docRes.data);
+          if (docRes.data.assetId) {
+            setSelectedAssetId(docRes.data.assetId);
+          }
         } else {
           setError("Document not found in vault.");
         }
 
-        if (assetsRes.success && assetsRes.data) {
+        if (assetsRes?.success && assetsRes.data) {
           setAssets(assetsRes.data);
         }
       } catch (err) {
@@ -86,36 +95,44 @@ export default function DocumentDetailPage() {
       });
       if (res.success && res.data) {
         setDoc(res.data);
+        alert("Document successfully linked to selected asset.");
       }
     } catch (err) {
-      console.warn("Link asset failed:", err.message);
+      alert("Failed to link asset: " + err.message);
     } finally {
       setLinking(false);
     }
   };
 
-  const handleFieldCorrection = async (action, overrideVal = null) => {
-    if (!editingField) return;
+  // Fixed field correction: accepts field target directly to prevent async state race condition
+  const handleFieldCorrection = async (action, targetField = null, overrideVal = null) => {
+    const activeField = targetField || editingField;
+    if (!activeField) return;
+
     try {
       setSavingCorrection(true);
-      const res = await apiRequest('/api/extraction/correct-field', {
-        method: 'POST',
+      const res = await apiRequest("/api/extraction/correct-field", {
+        method: "POST",
         body: JSON.stringify({
           documentId: id,
-          fieldName: editingField.fieldName,
+          fieldName: activeField.fieldName,
           action,
           correctedValue: overrideVal !== null ? overrideVal : fieldValueInput,
         }),
       });
 
-      if (res.success && res.document) {
-        setDoc(res.document);
+      if (res.success) {
+        // Refresh document from server
+        const updatedRes = await apiRequest(`/api/documents/${id}`);
+        if (updatedRes.success && updatedRes.data) {
+          setDoc(updatedRes.data);
+        }
         setEditingField(null);
       } else {
-        alert(res.error || 'Failed to update field.');
+        alert(res.error || "Failed to update field.");
       }
     } catch (err) {
-      alert(err.message || 'Error updating field.');
+      alert(err.message || "Error updating field.");
     } finally {
       setSavingCorrection(false);
     }
@@ -132,16 +149,17 @@ export default function DocumentDetailPage() {
       />
 
       <div className="dv-doc-detail-content">
+        {/* Navigation Toolbar */}
         <div className="dv-detail-top-nav">
           <Link to="/documents" className="dv-back-btn">
-            <ArrowLeft size={16} /> Back to Repository
+            <ArrowLeft size={16} /> Back to Documents
           </Link>
 
           {doc && (
             <div className="dv-detail-actions">
               <Link to={`/ask-ai?docId=${doc._id}`}>
-                <Button variant="secondary" size="sm" icon={Sparkles}>
-                  Ask Copilot About This Doc
+                <Button variant="outline" size="sm" icon={Sparkles}>
+                  Ask Copilot
                 </Button>
               </Link>
               <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
@@ -162,176 +180,181 @@ export default function DocumentDetailPage() {
         </div>
 
         {loading ? (
-          <div className="dv-docs-loading">
-            <div className="dv-btn__spinner" />
-            <span>Decrypting document metadata...</span>
+          <div className="dv-detail-loading">
+            <Skeleton height="180px" />
+            <Skeleton height="320px" />
           </div>
         ) : error || !doc ? (
-          <Card padding="lg">
-            <p className="dv-text-danger">{error || "Document not found."}</p>
+          <Card padding="lg" className="dv-detail-error-card">
+            <AlertTriangle size={32} color="#DC2626" />
+            <p className="dv-text-danger">{error || "Document not found in vault."}</p>
+            <Link to="/documents">
+              <Button variant="outline" size="sm">Return to Documents</Button>
+            </Link>
           </Card>
         ) : (
           <div className="dv-detail-grid">
-            {/* Left Column: Metadata & Extracted Key Details */}
-            <div className="dv-detail-col">
+            {/* Left Column: Metadata, Summary & Extracted Fields */}
+            <div className="dv-detail-main-col">
+              {/* Document Overview Card */}
               <Card padding="lg" className="dv-detail-summary-card">
-                <div className="dv-detail-card-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <Badge variant="primary" size="md">{doc.category}</Badge>
-                  {doc.privacyMode === 'STORAGE_ONLY' ? (
-                    <Badge variant="danger" size="md">🔒 Storage-Only Isolated</Badge>
-                  ) : doc.processingStatus === 'needs_review' ? (
-                    <Badge variant="warning" size="md">⚠️ Needs Verification</Badge>
-                  ) : (
-                    <Badge variant="success" size="md">✓ Verified Document</Badge>
-                  )}
-                  <span className="dv-text-muted">{doc.format} • {doc.fileSizeFormatted}</span>
-                </div>
-
-                <h2 className="dv-detail-heading">{doc.title}</h2>
-                <p className="dv-detail-summary-text">{doc.summary || "No automated summary generated."}</p>
-
-                {doc.expiryDate && (
-                  <div className="dv-detail-expiry-box">
-                    <Calendar size={18} color="#D97706" />
+                <div className="dv-detail-summary-top">
+                  <div className="dv-detail-type-wrap">
+                    <DocumentTypeIcon 
+                      category={doc.category} 
+                      format={doc.format} 
+                      size={24} 
+                      isStorageOnly={doc.privacyMode === "STORAGE_ONLY"} 
+                    />
                     <div>
-                      <strong>Renewal Expiry Date: {doc.expiryDate}</strong>
-                      <p>Tracked in your active deadlines calendar.</p>
+                      <h2 className="dv-detail-heading">{doc.title}</h2>
+                      <span className="dv-detail-original-filename">
+                        Original File: <code>{doc.originalName || doc.title}</code>
+                      </span>
                     </div>
                   </div>
+
+                  <div className="dv-detail-status-group">
+                    <Badge variant="primary" size="md">{doc.category || "General"}</Badge>
+                    <VerificationStatus 
+                      status={
+                        doc.privacyMode === "STORAGE_ONLY" 
+                          ? "storage_only" 
+                          : doc.processingStatus === "needs_review" 
+                          ? "needs_review" 
+                          : "accepted"
+                      } 
+                      size="md" 
+                    />
+                  </div>
+                </div>
+
+                {doc.summary && (
+                  <div className="dv-detail-summary-block">
+                    <span className="dv-detail-block-label">Automated Abstract</span>
+                    <p className="dv-detail-summary-text">{doc.summary}</p>
+                  </div>
                 )}
+
+                {/* Expiry Banner if present */}
+                {doc.expiryDate && (
+                  <div className="dv-detail-expiry-box">
+                    <div className="dv-detail-expiry-box__left">
+                      <Calendar size={20} color="#D97706" />
+                      <div>
+                        <strong>Renewal Expiry Date: {doc.expiryDate}</strong>
+                        <p>Tracked automatically in your active deadlines calendar.</p>
+                      </div>
+                    </div>
+                    <ExpiryBadge expiryDate={doc.expiryDate} size="md" />
+                  </div>
+                )}
+
+                {/* File Metadata Badges */}
+                <div className="dv-detail-meta-row">
+                  <div className="dv-meta-item">
+                    <span className="dv-meta-item__label">Format</span>
+                    <span className="dv-meta-item__val">{doc.format || "PDF"}</span>
+                  </div>
+                  <div className="dv-meta-item">
+                    <span className="dv-meta-item__label">File Size</span>
+                    <span className="dv-meta-item__val">{doc.fileSizeFormatted || "Stored"}</span>
+                  </div>
+                  <div className="dv-meta-item">
+                    <span className="dv-meta-item__label">Storage Location</span>
+                    <span className="dv-meta-item__val">MongoDB Internal Binary</span>
+                  </div>
+                  <div className="dv-meta-item">
+                    <span className="dv-meta-item__label">Uploaded On</span>
+                    <span className="dv-meta-item__val">{new Date(doc.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
               </Card>
 
-              {/* Evidence-Based Structured Fields with Verification Provenance */}
+              {/* Evidence-Based Structured Fields Ladder */}
               <Card padding="lg" className="dv-detail-entities-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div className="dv-entities-header">
                   <div>
-                    <h3 className="dv-entities-title" style={{ margin: 0 }}>Evidence-Based Extracted Fields</h3>
-                    <p className="dv-entities-sub" style={{ margin: '4px 0 0' }}>Calibrated extraction ladder with source grounding and confidence scoring.</p>
+                    <h3 className="dv-entities-title">Evidence-Based Extracted Fields</h3>
+                    <p className="dv-entities-sub">
+                      Calibrated extraction ladder with source grounding and human verification.
+                    </p>
                   </div>
                   {doc.pipelineVersion && (
-                    <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
-                      v{doc.pipelineVersion}
-                    </span>
+                    <span className="dv-pipeline-tag">Ladder v{doc.pipelineVersion}</span>
                   )}
                 </div>
 
                 {doc.extractedFields && doc.extractedFields.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div className="dv-fields-ladder">
                     {doc.extractedFields.map((field, idx) => (
                       <div
                         key={idx}
-                        style={{
-                          padding: '12px',
-                          borderRadius: '8px',
-                          background: 'var(--color-surface-secondary, rgba(255,255,255,0.03))',
-                          border: field.verificationStatus === 'needs_review' 
-                            ? '1px solid rgba(234, 179, 8, 0.4)' 
-                            : '1px solid var(--color-border-subtle, rgba(255,255,255,0.06))',
-                        }}
+                        className={`dv-field-item ${
+                          field.verificationStatus === "needs_review" ? "dv-field-item--needs-review" : ""
+                        }`}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                        <div className="dv-field-item__top">
                           <div>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                              {field.fieldName.replace(/_/g, ' ')}
+                            <span className="dv-field-item__name">
+                              {field.fieldName.replace(/_/g, " ")}
                             </span>
-                            <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-text-primary)', marginTop: '2px' }}>
+                            <div className="dv-field-item__value">
                               {String(field.value)}
                             </div>
                           </div>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{
-                              fontSize: '11px',
-                              padding: '2px 8px',
-                              borderRadius: '4px',
-                              fontWeight: 600,
-                              background: field.verificationStatus === 'accepted' || field.verificationStatus === 'user_corrected'
-                                ? 'rgba(16, 185, 129, 0.15)' 
-                                : 'rgba(234, 179, 8, 0.15)',
-                              color: field.verificationStatus === 'accepted' || field.verificationStatus === 'user_corrected'
-                                ? '#10b981' 
-                                : '#facc15',
-                            }}>
-                              {field.verificationStatus === 'user_corrected' 
-                                ? 'User Corrected' 
-                                : field.verificationStatus === 'accepted' 
-                                ? 'Accepted' 
-                                : 'Needs Review'}
-                            </span>
-                            <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>
-                              {(field.confidence * 100).toFixed(0)}% conf
-                            </span>
+                          <div className="dv-field-item__badges">
+                            <VerificationStatus status={field.verificationStatus} size="sm" />
+                            <ExtractionConfidence confidence={field.confidence} />
                           </div>
                         </div>
 
                         {field.evidence && (
-                          <div style={{
-                            fontSize: '11.5px',
-                            color: 'var(--color-text-secondary)',
-                            background: 'rgba(0,0,0,0.2)',
-                            padding: '6px 10px',
-                            borderRadius: '4px',
-                            fontFamily: 'monospace',
-                            marginTop: '6px'
-                          }}>
-                            <span style={{ color: 'var(--color-text-muted)' }}>Source Evidence: </span>
+                          <div className="dv-field-item__evidence">
+                            <span className="dv-evidence-label">Source Evidence: </span>
                             "{field.evidence}"
                           </div>
                         )}
 
                         {field.rejectionReason && (
-                          <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#f87171' }}>
+                          <div className="dv-field-item__rejection">
                             ⚠️ {field.rejectionReason}
-                          </p>
+                          </div>
                         )}
 
-                        {/* Review / Correction Actions */}
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'flex-end' }}>
-                          {field.verificationStatus === 'needs_review' && (
+                        {/* Verification Controls */}
+                        <div className="dv-field-item__actions">
+                          {field.verificationStatus === "needs_review" && (
                             <button
                               type="button"
-                              onClick={() => {
-                                setEditingField(field);
-                                handleFieldCorrection('confirmed', field.value);
-                              }}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                background: 'rgba(16, 185, 129, 0.12)',
-                                color: '#10b981',
-                                border: '1px solid rgba(16, 185, 129, 0.3)',
-                                borderRadius: '4px',
-                                padding: '4px 10px',
-                                fontSize: '11.5px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                              }}
+                              className="dv-field-action-btn dv-field-action-btn--confirm"
+                              onClick={() => handleFieldCorrection("confirmed", field, field.value)}
+                              disabled={savingCorrection}
                             >
-                              <Check size={12} /> Confirm Value
+                              <Check size={13} /> Confirm Value
                             </button>
                           )}
                           <button
                             type="button"
+                            className="dv-field-action-btn dv-field-action-btn--edit"
                             onClick={() => {
                               setEditingField(field);
                               setFieldValueInput(String(field.value));
                             }}
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              background: 'transparent',
-                              color: 'var(--color-text-secondary)',
-                              border: '1px solid var(--color-border)',
-                              borderRadius: '4px',
-                              padding: '4px 10px',
-                              fontSize: '11.5px',
-                              cursor: 'pointer',
-                            }}
                           >
-                            <Edit3 size={12} /> Edit / Correct
+                            <Edit3 size={13} /> Correct Value
                           </button>
+                          {field.verificationStatus !== "rejected" && (
+                            <button
+                              type="button"
+                              className="dv-field-action-btn dv-field-action-btn--reject"
+                              onClick={() => handleFieldCorrection("rejected", field)}
+                              disabled={savingCorrection}
+                            >
+                              <X size={13} /> Reject
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -346,16 +369,19 @@ export default function DocumentDetailPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="dv-text-muted">No specific keyDetails detected in this document.</p>
+                  <p className="dv-text-muted">No structured keyDetails extracted from this document.</p>
                 )}
               </Card>
             </div>
 
-            {/* Right Column: Asset Linkage & File Verification */}
-            <div className="dv-detail-col">
+            {/* Right Column: Asset Linkage & Storage Security Audit */}
+            <div className="dv-detail-sidebar-col">
+              {/* Asset Linkage Card */}
               <Card padding="lg" className="dv-detail-sidebar-card">
-                <h3 className="dv-sidebar-section-title">Link to Household or Vehicle Asset</h3>
-                <p className="dv-sidebar-section-desc">Associate this policy or invoice with an asset in your registry.</p>
+                <h3 className="dv-sidebar-section-title">Link to Tracked Asset</h3>
+                <p className="dv-sidebar-section-desc">
+                  Associate this policy or invoice with an existing vehicle, appliance, or property.
+                </p>
 
                 <div className="dv-link-asset-box">
                   <select
@@ -376,27 +402,35 @@ export default function DocumentDetailPage() {
                     loading={linking}
                     disabled={!selectedAssetId}
                     onClick={handleLinkAsset}
+                    style={{ width: "100%" }}
                   >
-                    Link Asset
+                    Link to Asset
                   </Button>
                 </div>
               </Card>
 
+              {/* Storage & Privacy Audit Card */}
               <Card padding="lg" className="dv-detail-sidebar-card">
                 <h3 className="dv-sidebar-section-title">Storage & Security Audit</h3>
                 <ul className="dv-detail-audit-list">
                   <li>
                     <ShieldCheck size={16} color="#059669" />
-                    <span>Database-backed binary file storage</span>
+                    <span>Database-backed binary storage</span>
                   </li>
                   <li>
                     <CheckCircle2 size={16} color="#2563EB" />
-                    <span>Tenant ID bound strictly to your account</span>
+                    <span>User-scoped tenant access constraint</span>
                   </li>
                   <li>
                     <CheckCircle2 size={16} color="#2563EB" />
-                    <span>Hugging Face dense vector embedded</span>
+                    <span>Hugging Face dense vector embedding</span>
                   </li>
+                  {doc.privacyMode === "STORAGE_ONLY" && (
+                    <li>
+                      <Lock size={16} color="#D97706" />
+                      <span>Isolated from external OCR/AI pipeline</span>
+                    </li>
+                  )}
                 </ul>
               </Card>
             </div>
@@ -408,43 +442,40 @@ export default function DocumentDetailPage() {
       <Modal
         isOpen={Boolean(editingField)}
         onClose={() => setEditingField(null)}
-        title={`Review Field: ${editingField?.fieldName.replace(/_/g, ' ').toUpperCase()}`}
+        title={`Edit Field: ${editingField?.fieldName.replace(/_/g, " ").toUpperCase()}`}
       >
-        <div style={{ marginBottom: '16px' }}>
-          <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
-            Verify or correct this extracted value. Original extraction confidence was <strong>{editingField ? (editingField.confidence * 100).toFixed(0) : 0}%</strong>.
+        <div style={{ marginBottom: "16px" }}>
+          <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginBottom: "8px" }}>
+            Verify or correct this extracted value. Original extraction confidence was{" "}
+            <strong>{editingField ? (editingField.confidence * 100).toFixed(0) : 0}%</strong>.
           </p>
 
           {editingField?.evidence && (
-            <div style={{ fontSize: '12px', background: 'rgba(0,0,0,0.25)', padding: '8px 12px', borderRadius: '6px', marginBottom: '14px', fontFamily: 'monospace' }}>
-              <span style={{ color: 'var(--color-text-muted)' }}>Evidence Quote: </span>
+            <div className="dv-field-modal-evidence">
+              <span style={{ color: "var(--color-text-muted)" }}>Evidence Quote: </span>
               "{editingField.evidence}"
             </div>
           )}
 
-          <label style={{ fontSize: '12px', fontWeight: 700, display: 'block', marginBottom: '6px', color: 'var(--color-text-primary)' }}>
+          <label className="dv-field-modal-label">
             Field Value
           </label>
           <input
             type="text"
-            className="dv-select-control"
+            className="dv-field-modal-input"
             value={fieldValueInput}
             onChange={(e) => setFieldValueInput(e.target.value)}
-            style={{ width: '100%', boxSizing: 'border-box' }}
           />
         </div>
 
-        <div className="dv-confirm-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+        <div className="dv-confirm-actions">
           <Button variant="ghost" onClick={() => setEditingField(null)}>
             Cancel
-          </Button>
-          <Button variant="danger" size="sm" onClick={() => handleFieldCorrection('rejected')}>
-            Reject Field
           </Button>
           <Button
             variant="primary"
             loading={savingCorrection}
-            onClick={() => handleFieldCorrection('corrected')}
+            onClick={() => handleFieldCorrection("corrected")}
           >
             Save Correction
           </Button>

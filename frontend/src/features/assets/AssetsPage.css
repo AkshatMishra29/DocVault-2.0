@@ -1,21 +1,20 @@
 .dv-assets-page {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .dv-assets-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  margin-top: var(--space-6);
+  gap: var(--space-5);
+  padding-top: var(--space-4);
 }
 
 .dv-assets-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-4);
 }
 
 .dv-assets-count {
@@ -25,6 +24,7 @@
 
 .dv-assets-count strong {
   color: var(--color-text-primary);
+  font-size: var(--text-base);
 }
 
 .dv-assets-error {
@@ -34,20 +34,27 @@
   padding: var(--space-3) var(--space-4);
   background-color: var(--color-danger-bg);
   border: 1px solid var(--color-danger-border);
-  color: var(--color-danger);
   border-radius: var(--radius-md);
+  color: var(--color-danger);
   font-size: var(--text-xs);
 }
 
 .dv-assets-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
   gap: var(--space-5);
 }
 
 .dv-asset-card {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.dv-asset-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .dv-asset-card__header {
@@ -57,72 +64,127 @@
   margin-bottom: var(--space-3);
 }
 
+.dv-asset-card__type {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dv-asset-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary-subtle);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .dv-asset-delete-btn {
   color: var(--color-text-muted);
   padding: 4px;
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
 }
+
 .dv-asset-delete-btn:hover {
   color: var(--color-danger);
   background-color: var(--color-danger-bg);
 }
 
 .dv-asset-card__body {
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-3);
 }
 
 .dv-asset-card__title {
   font-size: var(--text-base);
   font-weight: var(--font-bold);
   color: var(--color-text-primary);
+  letter-spacing: -0.01em;
 }
 
 .dv-asset-card__val {
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
+  display: inline-block;
+  font-size: 11.5px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  margin-top: 2px;
 }
 
 .dv-asset-card__dates {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  background-color: var(--color-surface-secondary);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-4);
+  gap: var(--space-1-5);
+  padding: var(--space-2-5) 0;
+  border-top: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+  margin-bottom: var(--space-3);
 }
 
 .dv-asset-date-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 11.5px;
+}
+
+.dv-asset-date-label {
+  color: var(--color-text-muted);
+}
+
+.dv-asset-date-flex {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dv-asset-date-val {
+  font-family: var(--font-mono);
+  color: var(--color-text-primary);
+  font-weight: var(--font-medium);
 }
 
 .dv-asset-card__footer {
-  border-top: 1px solid var(--color-border-subtle);
-  padding-top: var(--space-3);
-  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .dv-asset-linked-count {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 4px;
   font-size: 11px;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
+}
+
+.dv-asset-inspect-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+  color: var(--color-primary);
+}
+
+.dv-asset-inspect-link:hover {
+  text-decoration: underline;
 }
 
 /* Modal Form */
 .dv-asset-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3-5);
 }
 
 .dv-modal-form-actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: var(--space-3);
   margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-subtle);
 }

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { apiRequest } from "../../services/api";
-import { Plus, Trash2, Calendar, FileText, Layers, ShieldCheck, AlertCircle } from "lucide-react";
+import { 
+  Plus, Trash2, Calendar, FileText, Layers, ShieldCheck, 
+  AlertCircle, ChevronRight, Car, Tv, Laptop, Home, Box, ExternalLink
+} from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
 import Card from "../../components/common/Card/Card";
@@ -9,10 +13,21 @@ import Badge from "../../components/common/Badge/Badge";
 import Input from "../../components/common/Input/Input";
 import Modal from "../../components/common/Modal/Modal";
 import EmptyState from "../../components/common/EmptyState/EmptyState";
+import Skeleton from "../../components/common/Skeleton/Skeleton";
+import ExpiryBadge from "../../components/common/ExpiryBadge/ExpiryBadge";
 
 import "./AssetsPage.css";
 
 const ASSET_CATEGORIES = ["Vehicle", "Home Appliances", "Electronics", "Real Estate", "Other"];
+
+function getAssetIcon(category) {
+  const c = (category || "").toLowerCase();
+  if (c.includes("vehicle") || c.includes("car")) return Car;
+  if (c.includes("appliance")) return Tv;
+  if (c.includes("electronic") || c.includes("laptop")) return Laptop;
+  if (c.includes("real estate") || c.includes("property")) return Home;
+  return Box;
+}
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState([]);
@@ -87,8 +102,8 @@ export default function AssetsPage() {
     }
   };
 
-  const handleDeleteAsset = async (id) => {
-    if (!window.confirm("Are you sure you want to remove this tracked asset?")) return;
+  const handleDeleteAsset = async (id, assetName) => {
+    if (!window.confirm(`Are you sure you want to remove "${assetName || 'this asset'}" from your registry?`)) return;
     try {
       const res = await apiRequest(`/api/assets/${id}`, { method: "DELETE" });
       if (res.success) {
@@ -123,75 +138,110 @@ export default function AssetsPage() {
         </div>
 
         {error && (
-          <div className="dv-assets-error">
+          <div className="dv-assets-error" role="alert">
             <AlertCircle size={16} />
             <span>{error}</span>
           </div>
         )}
 
         {loading ? (
-          <div className="dv-docs-loading">
-            <div className="dv-btn__spinner" />
-            <span>Loading asset registry...</span>
+          <div className="dv-assets-grid">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} padding="md" className="dv-asset-card">
+                <Skeleton height="36px" width="36px" variant="circle" />
+                <Skeleton height="20px" width="70%" style={{ marginTop: "12px" }} />
+                <Skeleton height="14px" width="100%" style={{ marginTop: "8px" }} />
+                <Skeleton height="14px" width="50%" />
+              </Card>
+            ))}
           </div>
         ) : assets.length === 0 ? (
           <EmptyState
-            
-            title="No tracked assets yet"
+            title="No tracked assets in registry"
             description="Add your car, laptop, air conditioner, or property deeds to cross-link warranties and policy schedules."
             actionLabel="Add Your First Asset"
             onAction={() => setShowAddModal(true)}
           />
         ) : (
           <div className="dv-assets-grid">
-            {assets.map((asset) => (
-              <Card key={asset._id} hover padding="md" className="dv-asset-card">
-                <div className="dv-asset-card__header">
-                  <Badge variant="primary" size="sm">{asset.category}</Badge>
-                  <button
-                    className="dv-asset-delete-btn"
-                    onClick={() => handleDeleteAsset(asset._id)}
-                    aria-label="Delete Asset"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+            {assets.map((asset) => {
+              const AssetIcon = getAssetIcon(asset.category);
+              const linkedDocs = asset.linkedDocumentIds || [];
 
-                <div className="dv-asset-card__body">
-                  <h3 className="dv-asset-card__title">{asset.name}</h3>
-                  {asset.estimatedValue && (
-                    <span className="dv-asset-card__val">Value: {asset.estimatedValue}</span>
-                  )}
-                </div>
+              return (
+                <Card key={asset._id} hover padding="md" className="dv-asset-card">
+                  <div className="dv-asset-card__header">
+                    <div className="dv-asset-card__type">
+                      <div className="dv-asset-icon-box">
+                        <AssetIcon size={18} />
+                      </div>
+                      <Badge variant="primary" size="sm">{asset.category}</Badge>
+                    </div>
 
-                <div className="dv-asset-card__dates">
-                  {asset.warrantyExpiry && (
-                    <div className="dv-asset-date-row">
-                      <span className="dv-text-muted">Warranty Expiry:</span>
-                      <strong>{asset.warrantyExpiry}</strong>
-                    </div>
-                  )}
-                  {asset.insuranceExpiry && (
-                    <div className="dv-asset-date-row">
-                      <span className="dv-text-muted">Insurance Expiry:</span>
-                      <strong>{asset.insuranceExpiry}</strong>
-                    </div>
-                  )}
-                  {asset.nextService && (
-                    <div className="dv-asset-date-row">
-                      <span className="dv-text-muted">Next Service:</span>
-                      <strong>{asset.nextService}</strong>
-                    </div>
-                  )}
-                </div>
+                    <button
+                      type="button"
+                      className="dv-asset-delete-btn"
+                      onClick={() => handleDeleteAsset(asset._id, asset.name)}
+                      aria-label="Delete Asset"
+                      title="Remove Asset"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
 
-                <div className="dv-asset-card__footer">
-                  <span className="dv-asset-linked-count">
-                    <FileText size={13} /> {asset.linkedDocumentIds?.length || 0} Linked Document(s)
-                  </span>
-                </div>
-              </Card>
-            ))}
+                  <div className="dv-asset-card__body">
+                    <h3 className="dv-asset-card__title">{asset.name}</h3>
+                    {asset.estimatedValue && (
+                      <span className="dv-asset-card__val">Value: {asset.estimatedValue}</span>
+                    )}
+                  </div>
+
+                  <div className="dv-asset-card__dates">
+                    {asset.purchaseDate && (
+                      <div className="dv-asset-date-row">
+                        <span className="dv-asset-date-label">Purchased:</span>
+                        <span className="dv-asset-date-val">{asset.purchaseDate}</span>
+                      </div>
+                    )}
+                    {asset.warrantyExpiry && (
+                      <div className="dv-asset-date-row">
+                        <span className="dv-asset-date-label">Warranty Expiry:</span>
+                        <div className="dv-asset-date-flex">
+                          <ExpiryBadge expiryDate={asset.warrantyExpiry} size="sm" />
+                          <span className="dv-asset-date-val">{asset.warrantyExpiry}</span>
+                        </div>
+                      </div>
+                    )}
+                    {asset.insuranceExpiry && (
+                      <div className="dv-asset-date-row">
+                        <span className="dv-asset-date-label">Insurance Expiry:</span>
+                        <div className="dv-asset-date-flex">
+                          <ExpiryBadge expiryDate={asset.insuranceExpiry} size="sm" />
+                          <span className="dv-asset-date-val">{asset.insuranceExpiry}</span>
+                        </div>
+                      </div>
+                    )}
+                    {asset.nextService && (
+                      <div className="dv-asset-date-row">
+                        <span className="dv-asset-date-label">Next Service:</span>
+                        <span className="dv-asset-date-val">{asset.nextService}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="dv-asset-card__footer">
+                    <span className="dv-asset-linked-count">
+                      <FileText size={13} /> {linkedDocs.length} Linked Document(s)
+                    </span>
+                    {linkedDocs.length > 0 && typeof linkedDocs[0] === 'object' && linkedDocs[0]._id && (
+                      <Link to={`/documents/${linkedDocs[0]._id}`} className="dv-asset-inspect-link">
+                        Inspect <ChevronRight size={13} />
+                      </Link>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
@@ -200,7 +250,7 @@ export default function AssetsPage() {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Register New Household or Vehicle Asset"
+        title="Register Asset or Appliance"
       >
         <form onSubmit={handleCreateAsset} className="dv-asset-form">
           <Input
@@ -232,6 +282,13 @@ export default function AssetsPage() {
           />
 
           <Input
+            label="Purchase Date"
+            type="date"
+            value={formData.purchaseDate}
+            onChange={(e) => handleInputChange("purchaseDate", e.target.value)}
+          />
+
+          <Input
             label="Warranty Expiry Date"
             type="date"
             value={formData.warrantyExpiry}
@@ -243,6 +300,13 @@ export default function AssetsPage() {
             type="date"
             value={formData.insuranceExpiry}
             onChange={(e) => handleInputChange("insuranceExpiry", e.target.value)}
+          />
+
+          <Input
+            label="Next Service Schedule"
+            type="date"
+            value={formData.nextService}
+            onChange={(e) => handleInputChange("nextService", e.target.value)}
           />
 
           <div className="dv-modal-form-actions">

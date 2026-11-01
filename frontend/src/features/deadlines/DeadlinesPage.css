@@ -1,13 +1,14 @@
 .dv-deadlines-page {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .dv-deadlines-content {
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-  margin-top: var(--space-6);
+  padding-top: var(--space-4);
 }
 
 .dv-deadlines-toolbar {
@@ -15,7 +16,7 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .dv-deadlines-count {
@@ -25,6 +26,7 @@
 
 .dv-deadlines-count strong {
   color: var(--color-text-primary);
+  font-size: var(--text-base);
 }
 
 .dv-deadlines-error {
@@ -34,9 +36,53 @@
   padding: var(--space-3) var(--space-4);
   background-color: var(--color-danger-bg);
   border: 1px solid var(--color-danger-border);
-  color: var(--color-danger);
   border-radius: var(--radius-md);
+  color: var(--color-danger);
   font-size: var(--text-xs);
+}
+
+.dv-deadlines-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dv-deadlines-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.dv-deadline-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dv-deadline-group-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dv-urgent-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: var(--font-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-danger);
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  align-self: flex-start;
+}
+
+.dv-group-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
 }
 
 .dv-deadlines-list {
@@ -49,21 +95,30 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: var(--space-4);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.dv-deadline-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.dv-deadline-card--urgent {
+  border-left: 4px solid #DC2626;
+  background: linear-gradient(90deg, #FEF2F2 0%, var(--color-surface) 100%);
 }
 
 .dv-deadline-card__left {
   display: flex;
-  align-items: center;
-  gap: var(--space-4);
+  align-items: flex-start;
+  gap: var(--space-3-5);
   flex: 1;
-  min-width: 260px;
 }
 
 .dv-dicon-box {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -77,8 +132,8 @@
 }
 
 .dv-dicon-box--normal {
-  background-color: #FEF3C7;
-  color: #D97706;
+  background-color: var(--color-primary-subtle);
+  color: var(--color-primary);
 }
 
 .dv-deadline-card__info {
@@ -106,6 +161,22 @@
 }
 
 .dv-deadline-card__date {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--color-text-muted);
+  font-family: var(--font-mono);
+}
+
+.dv-deadline-card__date strong {
+  color: var(--color-text-primary);
+}
+
+.dv-deadline-card__right {
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .dv-deadline-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

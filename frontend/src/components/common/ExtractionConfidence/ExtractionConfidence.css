@@ -1,0 +1,47 @@
+.dv-confidence-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dv-confidence-bar {
+  width: 48px;
+  height: 5px;
+  background-color: var(--color-surface-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.dv-confidence-bar__fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.dv-confidence-meter--high .dv-confidence-bar__fill {
+  background-color: var(--color-success);
+}
+.dv-confidence-meter--high .dv-confidence-text {
+  color: var(--color-success);
+}
+
+.dv-confidence-meter--medium .dv-confidence-bar__fill {
+  background-color: var(--color-warning);
+}
+.dv-confidence-meter--medium .dv-confidence-text {
+  color: var(--color-warning);
+}
+
+.dv-confidence-meter--low .dv-confidence-bar__fill {
+  background-color: var(--color-danger);
+}
+.dv-confidence-meter--low .dv-confidence-text {
+  color: var(--color-danger);
+}
+
+.dv-confidence-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: var(--font-semibold);
+  letter-spacing: -0.02em;
+}

@@ -1,20 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/context/AuthContext";
 import { apiRequest } from "../../services/api";
 import { 
   ShieldCheck, Download, KeyRound, Smartphone, HardDrive, 
-  Clock, LogOut, CheckCircle2, ChevronRight, Sparkles
+  Clock, LogOut, CheckCircle2, ChevronRight, Sparkles, Lock, 
+  Sun, Moon, Shield, Fingerprint, FileText
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
 import Card from "../../components/common/Card/Card";
 import Button from "../../components/common/Button/Button";
 import Badge from "../../components/common/Badge/Badge";
+import Skeleton from "../../components/common/Skeleton/Skeleton";
+
 import "./MorePage.css";
 
 export default function MorePage() {
-  const { user, logout, updateSessionPreference, registerBiometrics } = useAuth();
+  const { user, lockVault, logout, updateSessionPreference, registerBiometrics } = useAuth();
+  const navigate = useNavigate();
+
   const [logs, setLogs] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -24,6 +29,7 @@ export default function MorePage() {
   const [savingSessionPref, setSavingSessionPref] = useState(false);
   const [savingAutoLockPref, setSavingAutoLockPref] = useState(false);
   const [registeringBio, setRegisteringBio] = useState(false);
+  const [theme, setTheme] = useState(() => document.documentElement.getAttribute("data-theme") || "dark");
   const [hasRegisteredBio, setHasRegisteredBio] = useState(() => {
     return Boolean(localStorage.getItem(`dv_bio_cred_${user?.email}`));
   });
@@ -42,6 +48,13 @@ export default function MorePage() {
       setHasRegisteredBio(Boolean(localStorage.getItem(`dv_bio_cred_${user?.email}`)));
     }
   }, [user?.singleSessionOnly, user?.autoLockEnabled, user?.biometricsEnabled, user?.email]);
+
+  const handleToggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("docvault_theme", next);
+    setTheme(next);
+  };
 
   const handleToggleSingleSession = async () => {
     const nextVal = !singleSession;
@@ -68,7 +81,6 @@ export default function MorePage() {
   };
 
   const handleToggleBiometrics = async () => {
-    // If not registered yet on this device, trigger enrollment first
     if (!hasRegisteredBio) {
       handleRegisterFingerprint();
       return;
@@ -90,10 +102,15 @@ export default function MorePage() {
     if (res.success) {
       setHasRegisteredBio(true);
       setBiometrics(true);
-      alert("Fingerprint / Touch ID enrolled and enabled successfully for this device!");
+      alert("Biometric sensor enrolled successfully for this device!");
     } else {
-      alert(res.error || "Failed to register fingerprint sensor.");
+      alert(res.error || "Failed to register biometric sensor.");
     }
+  };
+
+  const handleLockVault = () => {
+    lockVault();
+    navigate('/enter-pin', { state: { email: user?.email } });
   };
 
   useEffect(() => {
@@ -145,147 +162,127 @@ export default function MorePage() {
 
       <div className="dv-settings-content">
         <div className="dv-settings-grid">
-          {/* Profile & Vault Tier */}
+          {/* Profile & Security Tier */}
           <Card padding="lg" className="dv-setting-card">
             <h3 className="dv-setting-card__title">Vault Account & Custodian Identity</h3>
-            <div className="dv-setting-row">
-              <span className="dv-setting-label">Account Name:</span>
-              <span className="dv-setting-val"><strong>{user?.name || "Vault Custodian"}</strong></span>
-            </div>
-            <div className="dv-setting-row">
-              <span className="dv-setting-label">Registered Email:</span>
-              <span className="dv-setting-val">{user?.email}</span>
-            </div>
-            <div className="dv-setting-row">
-              <span className="dv-setting-label">Security Tier:</span>
-              <span className="dv-setting-val">
-                <Badge variant="success" size="sm">Vault Pro Isolated</Badge>
-              </span>
+            
+            <div className="dv-setting-rows">
+              <div className="dv-setting-row">
+                <span className="dv-setting-label">Custodian Name:</span>
+                <span className="dv-setting-val"><strong>{user?.name || "Vault Custodian"}</strong></span>
+              </div>
+              <div className="dv-setting-row">
+                <span className="dv-setting-label">Registered Email:</span>
+                <span className="dv-setting-val">{user?.email}</span>
+              </div>
+              <div className="dv-setting-row">
+                <span className="dv-setting-label">Protection Tier:</span>
+                <span className="dv-setting-val">
+                  <Badge variant="success" size="sm">Vault Pro Isolated</Badge>
+                </span>
+              </div>
             </div>
 
             {/* Dark Mode Theme Toggle */}
-            <div className="dv-setting-row dv-setting-row--toggle">
+            <div className="dv-setting-toggle-row">
               <div>
-                <span className="dv-setting-label" style={{ display: 'block', fontWeight: 'var(--font-medium)', color: 'var(--color-text-primary)' }}>
-                  Dark Mode Theme
-                </span>
-                <span className="dv-setting-sublabel" style={{ display: 'block', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                  Switch between Dark and Light mode for mobile and desktop
-                </span>
+                <span className="dv-toggle-title">Interface Appearance</span>
+                <span className="dv-toggle-sub">Switch between Dark and Light mode theme</span>
               </div>
-              <div className="dv-setting-val">
-                <button
-                  type="button"
-                  className={`dv-toggle-switch ${document.documentElement.getAttribute("data-theme") === "dark" ? "dv-toggle-switch--active" : ""}`}
-                  onClick={() => {
-                    const current = document.documentElement.getAttribute("data-theme");
-                    const next = current === "dark" ? "light" : "dark";
-                    document.documentElement.setAttribute("data-theme", next);
-                    localStorage.setItem("docvault_theme", next);
-                    // trigger re-render
-                    setSingleSession(s => !s);
-                    setTimeout(() => setSingleSession(s => !s), 0);
-                  }}
-                  role="switch"
-                  aria-checked={document.documentElement.getAttribute("data-theme") === "dark"}
-                  title="Toggle dark mode theme"
-                >
-                  <span className="dv-toggle-thumb" />
-                </button>
-              </div>
+              <button
+                type="button"
+                className={`dv-toggle-pill ${theme === "dark" ? "dv-toggle-pill--active" : ""}`}
+                onClick={handleToggleTheme}
+                title="Toggle Theme"
+              >
+                {theme === "dark" ? (
+                  <>
+                    <Moon size={14} color="#8AF0BC" />
+                    <span>Dark</span>
+                  </>
+                ) : (
+                  <>
+                    <Sun size={14} color="#D97706" />
+                    <span>Light</span>
+                  </>
+                )}
+              </button>
             </div>
 
             {/* Single Session Only Toggle */}
-            <div className="dv-setting-row dv-setting-row--toggle">
+            <div className="dv-setting-toggle-row">
               <div>
-                <span className="dv-setting-label" style={{ display: 'block', fontWeight: 'var(--font-medium)', color: 'var(--color-text-primary)' }}>
-                  Single Session Only
-                </span>
-                <span className="dv-setting-sublabel" style={{ display: 'block', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                  Terminate other devices (PC/Mobile) when a new login occurs
+                <span className="dv-toggle-title">Single Active Session</span>
+                <span className="dv-toggle-sub">Automatically sign out other devices on login</span>
+              </div>
+              <button
+                type="button"
+                className={`dv-switch ${singleSession ? "dv-switch--active" : ""}`}
+                disabled={savingSessionPref}
+                onClick={handleToggleSingleSession}
+                role="switch"
+                aria-checked={singleSession}
+              >
+                <span className="dv-switch-thumb" />
+              </button>
+            </div>
+
+            {/* Auto-Lock Toggle */}
+            <div className="dv-setting-toggle-row">
+              <div>
+                <span className="dv-toggle-title">Inactivity Auto-Lock (10 Min)</span>
+                <span className="dv-toggle-sub">Require PIN unlock after 10 minutes of inactivity</span>
+              </div>
+              <button
+                type="button"
+                className={`dv-switch ${autoLock ? "dv-switch--active" : ""}`}
+                disabled={savingAutoLockPref}
+                onClick={handleToggleAutoLock}
+                role="switch"
+                aria-checked={autoLock}
+              >
+                <span className="dv-switch-thumb" />
+              </button>
+            </div>
+
+            {/* Biometric Unlock */}
+            <div className="dv-setting-toggle-row">
+              <div>
+                <span className="dv-toggle-title">Fingerprint / Touch ID Sensor</span>
+                <span className="dv-toggle-sub">
+                  {hasRegisteredBio ? "Device sensor enrolled for quick PIN unlock" : "Enroll hardware authenticator on this device"}
                 </span>
               </div>
-              <div className="dv-setting-val">
+              {hasRegisteredBio ? (
                 <button
                   type="button"
-                  className={`dv-toggle-switch ${singleSession ? "dv-toggle-switch--active" : ""}`}
-                  disabled={savingSessionPref}
-                  onClick={handleToggleSingleSession}
+                  className={`dv-switch ${biometrics ? "dv-switch--active" : ""}`}
+                  onClick={handleToggleBiometrics}
                   role="switch"
-                  aria-checked={singleSession}
-                  title="Toggle single session enforcement"
+                  aria-checked={biometrics}
                 >
-                  <span className="dv-toggle-thumb" />
+                  <span className="dv-switch-thumb" />
                 </button>
-              </div>
-            </div>
-
-            {/* Auto-Lock on Rest & Sleep Toggle */}
-            <div className="dv-setting-row dv-setting-row--toggle">
-              <div>
-                <span className="dv-setting-label" style={{ display: 'block', fontWeight: 'var(--font-medium)', color: 'var(--color-text-primary)' }}>
-                  Auto-Lock on 10 Min Inactivity & Sleep
-                </span>
-                <span className="dv-setting-sublabel" style={{ display: 'block', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                  Require PIN unlock if left at rest or when phone sleeps for over 10 min
-                </span>
-              </div>
-              <div className="dv-setting-val">
-                <button
-                  type="button"
-                  className={`dv-toggle-switch ${autoLock ? "dv-toggle-switch--active" : ""}`}
-                  disabled={savingAutoLockPref}
-                  onClick={handleToggleAutoLock}
-                  role="switch"
-                  aria-checked={autoLock}
-                  title="Toggle 10-minute auto-lock"
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  loading={registeringBio}
+                  icon={Fingerprint}
+                  onClick={handleRegisterFingerprint}
                 >
-                  <span className="dv-toggle-thumb" />
-                </button>
-              </div>
+                  Enroll Sensor
+                </Button>
+              )}
             </div>
 
-            {/* Fingerprint / Touch ID Quick Unlock Toggle */}
-            <div className="dv-setting-row dv-setting-row--toggle">
-              <div>
-                <span className="dv-setting-label" style={{ display: 'block', fontWeight: 'var(--font-medium)', color: 'var(--color-text-primary)' }}>
-                  Fingerprint & Touch ID Unlock
-                </span>
-                <span className="dv-setting-sublabel" style={{ display: 'block', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                  {hasRegisteredBio 
-                    ? "Sensor enrolled. Toggle on/off for instant biometric vault unlock."
-                    : "Not enrolled on this device. Click to scan fingerprint and register."}
-                </span>
-              </div>
-              <div className="dv-setting-val">
-                {hasRegisteredBio ? (
-                  <button
-                    type="button"
-                    className={`dv-toggle-switch ${biometrics ? "dv-toggle-switch--active" : ""}`}
-                    onClick={handleToggleBiometrics}
-                    role="switch"
-                    aria-checked={biometrics}
-                    title="Toggle fingerprint authentication"
-                  >
-                    <span className="dv-toggle-thumb" />
-                  </button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    loading={registeringBio}
-                    onClick={handleRegisterFingerprint}
-                    style={{ whiteSpace: "nowrap" }}
-                  >
-                    Add Fingerprint
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="dv-setting-actions">
+            {/* Lock Vault & Sign Out Actions */}
+            <div className="dv-setting-card__actions">
+              <Button variant="outline" size="sm" icon={Lock} onClick={handleLockVault}>
+                Lock Vault Now
+              </Button>
               <Button variant="danger" size="sm" icon={LogOut} onClick={logout}>
-                Lock & Sign Out
+                Sign Out
               </Button>
             </div>
           </Card>
@@ -294,9 +291,16 @@ export default function MorePage() {
           <Card padding="lg" className="dv-setting-card">
             <h3 className="dv-setting-card__title">Portable Vault Backup (JSON)</h3>
             <p className="dv-setting-desc">
-              Download your complete encrypted metadata snapshot, asset links, and renewal deadlines as a standardized, offline-readable JSON file.
+              Download your complete encrypted metadata snapshot, asset links, and renewal deadlines as a standardized, offline-readable JSON bundle.
             </p>
-            <div className="dv-setting-actions">
+            <div className="dv-export-box">
+              <div className="dv-export-meta">
+                <ShieldCheck size={20} color="#015A47" />
+                <div>
+                  <strong>Complete Vault Snapshot</strong>
+                  <p>Includes document metadata, structured keyDetails, deadlines, and asset graph.</p>
+                </div>
+              </div>
               <Button
                 variant="primary"
                 size="md"
@@ -304,34 +308,41 @@ export default function MorePage() {
                 loading={exporting}
                 onClick={handleExportVault}
               >
-                Export Complete Vault Archive
+                Export Complete Archive (.JSON)
               </Button>
             </div>
           </Card>
         </div>
 
-        {/* Security Audit Trail */}
+        {/* Security Audit Trail Log */}
         <Card padding="lg" className="dv-audit-card">
           <div className="dv-audit-header">
-            <h3 className="dv-setting-card__title">Tamper-Proof Vault Access Log</h3>
-            <Badge variant="default" size="sm">{logs.length} Recent Event(s)</Badge>
+            <div>
+              <h3 className="dv-setting-card__title">Tamper-Proof Vault Access Log</h3>
+              <p className="dv-setting-desc">
+                Immutable ledger recording document inspection, downloads, uploads, and deletions.
+              </p>
+            </div>
+            <Badge variant="primary" size="sm">{logs.length} Recent Event(s)</Badge>
           </div>
-          <p className="dv-setting-desc">
-            Immutable log recording document inspection, downloads, uploads, and deletions.
-          </p>
 
           {loadingLogs ? (
-            <p className="dv-text-muted">Loading audit entries...</p>
+            <div className="dv-skeleton-list">
+              <Skeleton height="40px" />
+              <Skeleton height="40px" />
+              <Skeleton height="40px" />
+            </div>
           ) : logs.length === 0 ? (
-            <p className="dv-text-muted">No security events logged yet.</p>
+            <p className="dv-text-muted">No security events logged in audit trail yet.</p>
           ) : (
             <div className="dv-audit-table">
               {logs.map((log) => (
                 <div key={log._id} className="dv-audit-row">
-                  <span className={`dv-audit-action dv-audit-action--${log.action.toLowerCase()}`}>
+                  <span className={`dv-audit-action dv-audit-action--${(log.action || '').toLowerCase()}`}>
                     {log.action}
                   </span>
                   <span className="dv-audit-doc">{log.documentTitle || "Vault Access"}</span>
+                  <span className="dv-audit-device">{log.device ? log.device.slice(0, 30) : "Browser"}</span>
                   <span className="dv-audit-time">{new Date(log.timestamp).toLocaleString()}</span>
                 </div>
               ))}

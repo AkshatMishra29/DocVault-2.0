@@ -1,0 +1,46 @@
+.dv-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-body);
+  font-weight: var(--font-semibold);
+  border-radius: var(--radius-full);
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.dv-status-pill--sm {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.dv-status-pill--md {
+  padding: 5px 12px;
+  font-size: var(--text-xs);
+}
+
+.dv-status-pill--accepted,
+.dv-status-pill--corrected {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid var(--color-success-border);
+}
+
+.dv-status-pill--review {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning-border);
+}
+
+.dv-status-pill--rejected {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
+}
+
+.dv-status-pill--storage {
+  background-color: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}

@@ -1,21 +1,27 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../services/api";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Sparkles, Send, User, FileText, RotateCcw, AlertCircle } from "lucide-react";
+import { 
+  Sparkles, Send, User, FileText, RotateCcw, AlertCircle, 
+  ExternalLink, ShieldCheck, Info
+} from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
 import Card from "../../components/common/Card/Card";
 import Button from "../../components/common/Button/Button";
 import Badge from "../../components/common/Badge/Badge";
+import DocumentTypeIcon from "../../components/common/DocumentTypeIcon/DocumentTypeIcon";
+
 import "./AskAiPage.css";
 
 const SUGGESTED_PROMPTS = [
   "When does my motor policy expire?",
   "What is my zero-dep insurance deductible?",
   "What is covered under my health policy?",
-  "List all appliance warranty expiration dates.",
+  "Which appliances still have active warranties?",
+  "Find the important details in my latest invoice."
 ];
 
 export default function AskAiPage() {
@@ -23,14 +29,16 @@ export default function AskAiPage() {
     {
       role: "assistant",
       content: "Hello! I am your **DocVault AI Copilot**. Ask me any question regarding your stored policies, warranties, or IDs. All my answers are grounded strictly in your personal vault documents.",
+      referencedDocIds: [],
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [targetDoc, setTargetDoc] = useState(null);
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const linkedDocId = searchParams.get("docId");
+  const queryParam = searchParams.get("q");
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -42,6 +50,16 @@ export default function AskAiPage() {
         .catch((err) => console.warn(err));
     }
   }, [linkedDocId]);
+
+  useEffect(() => {
+    if (queryParam) {
+      handleSend(queryParam);
+      // Clean query parameter after trigger
+      const next = new URLSearchParams(searchParams);
+      next.delete("q");
+      setSearchParams(next, { replace: true });
+    }
+  }, [queryParam]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -101,6 +119,7 @@ export default function AskAiPage() {
       {
         role: "assistant",
         content: "Conversation history cleared. How may I assist you with your vault documents?",
+        referencedDocIds: [],
       },
     ]);
   };
@@ -115,8 +134,8 @@ export default function AskAiPage() {
       <div className="dv-ai-content">
         {targetDoc && (
           <div className="dv-ai-scoped-banner">
-            <Sparkles size={16} color="#7C3AED" />
-            <span>Scoped query mode: Concentrating on <strong>{targetDoc.title}</strong></span>
+            <Sparkles size={16} color="#015A47" />
+            <span>Scoped query mode: Concentrating strictly on <strong>{targetDoc.title}</strong></span>
             <Button variant="ghost" size="sm" onClick={() => setTargetDoc(null)}>
               Remove Scope
             </Button>
@@ -125,6 +144,27 @@ export default function AskAiPage() {
 
         {/* Chat Scroll Container */}
         <Card padding="none" className="dv-ai-chat-window">
+          <div className="dv-ai-chat-header">
+            <div className="dv-ai-chat-brand">
+              <div className="dv-ai-chat-icon">
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <h4 className="dv-ai-chat-title">DocVault Bounded RAG Assistant</h4>
+                <span className="dv-ai-chat-sub">Grounded exclusively on your authenticated vault collection</span>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={RotateCcw}
+              onClick={handleClear}
+              title="Reset Conversation"
+            >
+              Reset Chat
+            </Button>
+          </div>
+
           <div className="dv-ai-chat-history">
             {messages.map((m, idx) => (
               <div key={idx} className={`dv-chat-msg dv-chat-msg--${m.role}`}>
@@ -135,6 +175,28 @@ export default function AskAiPage() {
                   <div className="dv-markdown-wrapper">
                     <Markdown remarkPlugins={[remarkGfm]}>{m.content}</Markdown>
                   </div>
+
+                  {/* Reference Citation Links */}
+                  {m.referencedDocIds && m.referencedDocIds.length > 0 && (
+                    <div className="dv-chat-citations">
+                      <span className="dv-citations-label">Grounded Sources:</span>
+                      <div className="dv-citations-list">
+                        {m.referencedDocIds.slice(0, 3).map((refId, rIdx) => (
+                          <Link 
+                            key={rIdx} 
+                            to={`/documents/${refId}`} 
+                            className="dv-citation-pill"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <FileText size={11} />
+                            <span>Referenced Document #{rIdx + 1}</span>
+                            <ExternalLink size={10} />
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -146,7 +208,7 @@ export default function AskAiPage() {
                 </div>
                 <div className="dv-chat-msg__bubble dv-chat-loading-bubble">
                   <div className="dv-btn__spinner" />
-                  <span>Searching vault embeddings & synthesizing answer via Groq...</span>
+                  <span>Searching vault embeddings & synthesizing grounded response...</span>
                 </div>
               </div>
             )}
@@ -155,16 +217,20 @@ export default function AskAiPage() {
 
           {/* Suggested Prompts Bar */}
           <div className="dv-ai-prompts-bar">
-            {SUGGESTED_PROMPTS.map((prompt, pIdx) => (
-              <button
-                key={pIdx}
-                className="dv-prompt-chip"
-                onClick={() => handleSend(prompt)}
-                disabled={loading}
-              >
-                {prompt}
-              </button>
-            ))}
+            <span className="dv-ai-prompts-label">Suggestions:</span>
+            <div className="dv-ai-prompts-chips">
+              {SUGGESTED_PROMPTS.map((prompt, pIdx) => (
+                <button
+                  key={pIdx}
+                  type="button"
+                  className="dv-prompt-chip"
+                  onClick={() => handleSend(prompt)}
+                  disabled={loading}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Chat Composer */}
@@ -179,13 +245,6 @@ export default function AskAiPage() {
               disabled={loading}
             />
             <Button
-              variant="ghost"
-              size="sm"
-              icon={RotateCcw}
-              onClick={handleClear}
-              title="Reset Chat"
-            />
-            <Button
               variant="primary"
               size="md"
               icon={Send}
@@ -195,6 +254,12 @@ export default function AskAiPage() {
             >
               Ask
             </Button>
+          </div>
+
+          {/* Trust Disclaimer */}
+          <div className="dv-ai-footer-disclaimer">
+            <Info size={13} />
+            <span>AI responses are grounded in your stored documents. Please cross-verify critical figures against original contracts.</span>
           </div>
         </Card>
       </div>

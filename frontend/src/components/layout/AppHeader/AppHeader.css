@@ -1,8 +1,8 @@
 .dv-app-header {
-  height: 72px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  height: var(--header-height);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--color-border);
   padding: 0 var(--space-8);
   display: flex;
@@ -10,12 +10,13 @@
   justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index: var(--z-sticky);
+  z-index: 40;
 }
 
 .dv-app-header__title-group {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .dv-app-header__title {

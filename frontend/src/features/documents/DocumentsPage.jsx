@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../services/api";
 import { 
-  FileText, Search, Plus, Star, Filter, ArrowUpDown, Calendar,
-  Download, Eye, AlertCircle
+  FileText, Search, Plus, Filter, ArrowUpDown, Calendar,
+  LayoutGrid, List, ChevronRight, Download, Star, ShieldCheck,
+  AlertCircle, X
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -12,6 +13,10 @@ import Button from "../../components/common/Button/Button";
 import Badge from "../../components/common/Badge/Badge";
 import Input from "../../components/common/Input/Input";
 import EmptyState from "../../components/common/EmptyState/EmptyState";
+import Skeleton from "../../components/common/Skeleton/Skeleton";
+import DocumentTypeIcon from "../../components/common/DocumentTypeIcon/DocumentTypeIcon";
+import ExpiryBadge from "../../components/common/ExpiryBadge/ExpiryBadge";
+import VerificationStatus from "../../components/common/VerificationStatus/VerificationStatus";
 
 import "./DocumentsPage.css";
 
@@ -21,7 +26,10 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'table'
+  const [sortBy, setSortBy] = useState("newest");   // 'newest' | 'oldest' | 'title' | 'expiry'
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const selectedCategory = searchParams.get("category") || "All";
   const searchQuery = searchParams.get("q") || "";
@@ -69,34 +77,110 @@ export default function DocumentsPage() {
     setSearchParams(next);
   };
 
+  const handleClearFilters = () => {
+    setSearchParams({});
+  };
+
+  // Client-side sort on retrieved dataset
+  const sortedDocuments = [...documents].sort((a, b) => {
+    if (sortBy === "title") {
+      return (a.title || "").localeCompare(b.title || "");
+    }
+    if (sortBy === "oldest") {
+      return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+    }
+    if (sortBy === "expiry") {
+      if (!a.expiryDate) return 1;
+      if (!b.expiryDate) return -1;
+      return new Date(a.expiryDate) - new Date(b.expiryDate);
+    }
+    // Default newest
+    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+  });
+
   return (
     <div className="dv-docs-page">
       <AppHeader
         title="Document Repository"
-        subtitle="Manage, search, and inspect your structured personal policies and proofs."
+        subtitle="Manage, search, and inspect your structured personal policies, certificates, and proofs."
       />
 
       <div className="dv-docs-content">
-        {/* Top Controls: Search Bar & Upload CTA */}
+        {/* Controls Toolbar */}
         <div className="dv-docs-toolbar">
-          <div className="dv-docs-search">
+          <div className="dv-docs-search-wrap">
             <Input
               type="text"
               icon={Search}
-              placeholder="Search by title, policy clauses, or tags..."
+              placeholder="Search by title, policy number, or tag..."
               value={searchQuery}
               onChange={handleSearchChange}
             />
+            {searchQuery && (
+              <button 
+                type="button" 
+                className="dv-search-clear-btn" 
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams);
+                  next.delete("q");
+                  setSearchParams(next);
+                }}
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
 
-          <Link to="/upload">
-            <Button variant="primary" size="md" icon={Plus}>
-              Upload Document
-            </Button>
-          </Link>
+          <div className="dv-docs-actions">
+            {/* Sort Selector */}
+            <div className="dv-sort-wrapper">
+              <ArrowUpDown size={15} className="dv-sort-icon" />
+              <select
+                className="dv-sort-select"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                aria-label="Sort documents"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="title">Title (A-Z)</option>
+                <option value="expiry">Renewal Date</option>
+              </select>
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="dv-view-toggle">
+              <button
+                type="button"
+                className={`dv-view-btn ${viewMode === "grid" ? "dv-view-btn--active" : ""}`}
+                onClick={() => setViewMode("grid")}
+                title="Grid View"
+                aria-label="Grid View"
+              >
+                <LayoutGrid size={16} />
+              </button>
+              <button
+                type="button"
+                className={`dv-view-btn ${viewMode === "table" ? "dv-view-btn--active" : ""}`}
+                onClick={() => setViewMode("table")}
+                title="Table View"
+                aria-label="Table View"
+              >
+                <List size={16} />
+              </button>
+            </div>
+
+            {/* Upload Button */}
+            <Link to="/upload">
+              <Button variant="primary" size="md" icon={Plus}>
+                Upload Document
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        {/* Category Filter Pills */}
+        {/* Category Pills Bar */}
         <div className="dv-category-bar">
           {CATEGORIES.map((cat) => (
             <button
@@ -105,76 +189,192 @@ export default function DocumentsPage() {
               onClick={() => handleCategorySelect(cat)}
             >
               {cat}
+              {cat === "All" && documents.length > 0 && (
+                <span className="dv-cat-count">{documents.length}</span>
+              )}
             </button>
           ))}
         </div>
 
         {error && (
-          <div className="dv-docs-error">
+          <div className="dv-docs-error" role="alert">
             <AlertCircle size={16} />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Documents Grid */}
+        {/* Content Body */}
         {loading ? (
-          <div className="dv-docs-loading">
-            <div className="dv-btn__spinner" />
-            <span>Loading your vault documents...</span>
-          </div>
-        ) : documents.length === 0 ? (
+          viewMode === "grid" ? (
+            <div className="dv-docs-grid">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i} padding="md" className="dv-doc-card">
+                  <Skeleton height="36px" width="36px" variant="circle" />
+                  <Skeleton height="20px" width="80%" style={{ marginTop: "12px" }} />
+                  <Skeleton height="14px" width="100%" style={{ marginTop: "8px" }} />
+                  <Skeleton height="14px" width="60%" />
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="dv-skeleton-list">
+              <Skeleton height="50px" />
+              <Skeleton height="50px" />
+              <Skeleton height="50px" />
+            </div>
+          )
+        ) : sortedDocuments.length === 0 ? (
           searchQuery || selectedCategory !== "All" ? (
             <EmptyState
-              
               title="No documents matched your filter"
               description={`No documents found matching "${searchQuery || selectedCategory}". Try adjusting your keywords or clearing the filter.`}
               actionLabel="Clear Filters"
-              onAction={() => setSearchParams({})}
+              onAction={handleClearFilters}
             />
           ) : (
             <EmptyState
-              
               title="Your document repository is empty"
               description="Upload your vehicle insurance, health policies, passport copies, or appliance invoices to start tracking."
               actionLabel="Upload First Document"
-              onAction={() => window.location.href = "/upload"}
+              onAction={() => navigate("/upload")}
             />
           )
-        ) : (
+        ) : viewMode === "grid" ? (
           <div className="dv-docs-grid">
-            {documents.map((doc) => (
-              <Card key={doc._id} hover padding="md" className="dv-doc-card">
-                <div className="dv-doc-card__header">
-                  <Badge variant="primary" size="sm">{doc.category || "General"}</Badge>
-                  <span className="dv-doc-card__format">{doc.format || "PDF"}</span>
+            {sortedDocuments.map((doc) => (
+              <Card 
+                key={doc._id} 
+                hover 
+                padding="md" 
+                className="dv-doc-card"
+                onClick={() => navigate(`/documents/${doc._id}`)}
+              >
+                <div className="dv-doc-card__top">
+                  <DocumentTypeIcon 
+                    category={doc.category} 
+                    format={doc.format} 
+                    isStorageOnly={doc.privacyMode === "STORAGE_ONLY"} 
+                  />
+                  <div className="dv-doc-card__badges">
+                    <VerificationStatus 
+                      status={
+                        doc.privacyMode === "STORAGE_ONLY" 
+                          ? "storage_only" 
+                          : doc.processingStatus === "needs_review" 
+                          ? "needs_review" 
+                          : "accepted"
+                      } 
+                      size="sm" 
+                    />
+                  </div>
                 </div>
 
                 <div className="dv-doc-card__body">
-                  <h3 className="dv-doc-card__title">
-                    <Link to={`/documents/${doc._id}`}>{doc.title}</Link>
+                  <h3 className="dv-doc-card__title" title={doc.title}>
+                    {doc.title}
                   </h3>
                   <p className="dv-doc-card__summary">
-                    {doc.summary || "Metadata extracted via Groq LPU multimodal analysis."}
+                    {doc.summary || "Structured metadata extracted and indexed in vault."}
                   </p>
                 </div>
 
                 {doc.expiryDate && (
-                  <div className="dv-doc-card__expiry">
-                    <Calendar size={13} />
-                    <span>Expires: <strong>{doc.expiryDate}</strong></span>
+                  <div className="dv-doc-card__expiry-row">
+                    <ExpiryBadge expiryDate={doc.expiryDate} size="sm" />
+                    <span className="dv-doc-card__expiry-date">Exp: {doc.expiryDate}</span>
                   </div>
                 )}
 
                 <div className="dv-doc-card__footer">
-                  <span className="dv-doc-card__filesize">{doc.fileSizeFormatted || "Stored"}</span>
-                  <div className="dv-doc-card__actions">
-                    <Link to={`/documents/${doc._id}`}>
-                      <Button variant="ghost" size="sm">Inspect</Button>
-                    </Link>
-                  </div>
+                  <span className="dv-doc-card__meta-tag">
+                    {doc.category || "General"} • {doc.format || "PDF"}
+                  </span>
+                  <span className="dv-doc-card__filesize">
+                    {doc.fileSizeFormatted || "Stored"}
+                  </span>
                 </div>
               </Card>
             ))}
+          </div>
+        ) : (
+          /* Table View */
+          <div className="dv-docs-table-container">
+            <table className="dv-table">
+              <thead>
+                <tr>
+                  <th>Document</th>
+                  <th>Category</th>
+                  <th>Format</th>
+                  <th>Verification</th>
+                  <th>Renewal Status</th>
+                  <th>Date Added</th>
+                  <th style={{ textAlign: "right" }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedDocuments.map((doc) => (
+                  <tr 
+                    key={doc._id}
+                    onClick={() => navigate(`/documents/${doc._id}`)}
+                    className="dv-table-row"
+                  >
+                    <td>
+                      <div className="dv-table-doc-cell">
+                        <DocumentTypeIcon 
+                          category={doc.category} 
+                          format={doc.format} 
+                          size={16} 
+                          isStorageOnly={doc.privacyMode === "STORAGE_ONLY"} 
+                        />
+                        <div className="dv-table-doc-text">
+                          <span className="dv-table-doc-title">{doc.title}</span>
+                          <span className="dv-table-doc-original">{doc.originalName || "Uploaded file"}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <Badge variant="default" size="sm">{doc.category || "General"}</Badge>
+                    </td>
+                    <td>
+                      <span className="dv-table-mono">{doc.format || "PDF"}</span>
+                    </td>
+                    <td>
+                      <VerificationStatus 
+                        status={
+                          doc.privacyMode === "STORAGE_ONLY" 
+                            ? "storage_only" 
+                            : doc.processingStatus === "needs_review" 
+                            ? "needs_review" 
+                            : "accepted"
+                        } 
+                        size="sm" 
+                      />
+                    </td>
+                    <td>
+                      {doc.expiryDate ? (
+                        <ExpiryBadge expiryDate={doc.expiryDate} size="sm" />
+                      ) : (
+                        <span className="dv-text-muted" style={{ fontSize: "12px" }}>—</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className="dv-table-date">
+                        {new Date(doc.createdAt || Date.now()).toLocaleDateString()}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <Link 
+                        to={`/documents/${doc._id}`} 
+                        onClick={(e) => e.stopPropagation()}
+                        className="dv-table-inspect-link"
+                      >
+                        Inspect <ChevronRight size={14} />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
