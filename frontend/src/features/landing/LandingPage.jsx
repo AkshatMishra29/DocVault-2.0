@@ -108,6 +108,21 @@ export default function LandingPage() {
 
   return (
     <div className="dv-landing-root">
+      {isMobileOrTablet && forceDesktopWeb && (
+        <aside className="dv-lp-desktop-bar" role="complementary">
+          <div className="dv-lp-desktop-bar__content">
+            <Smartphone size={14} />
+            <span>Viewing Desktop Web Presentation</span>
+            <button
+              type="button"
+              onClick={() => setForceDesktopWeb(false)}
+              className="dv-lp-desktop-bar__btn"
+            >
+              Switch to Native App
+            </button>
+          </div>
+        </aside>
+      )}
       <PublicNavbar />
 
       {/* 1. HERO SECTION */}
@@ -709,17 +724,6 @@ export default function LandingPage() {
       </section>
 
       <PublicFooter />
-      {isMobileOrTablet && forceDesktopWeb && (
-        <button
-          type="button"
-          onClick={() => setForceDesktopWeb(false)}
-          className="dv-lp-switch-app-pill"
-          aria-label="Return to Mobile App View"
-        >
-          <Smartphone size={16} />
-          <span>Return to App View</span>
-        </button>
-      )}
     </div>
   );
 }

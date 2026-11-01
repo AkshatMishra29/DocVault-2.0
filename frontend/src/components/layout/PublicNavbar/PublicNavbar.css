@@ -308,7 +308,7 @@
 }
 
 /* ==========================================================================
-   BREAKPOINTS
+   BREAKPOINTS FOR CAPSULE NAVBAR
    ========================================================================== */
 
 @media (max-width: 1024px) {
@@ -329,24 +329,43 @@
   }
 
   .dv-nav-capsule {
-    height: 60px;
-    padding: 0 12px 0 18px;
+    height: 56px;
+    padding: 0 12px 0 16px;
+  }
+
+  .dv-nav-brand .dv-brand-logo__img {
+    height: 32px !important;
   }
 }
 
 @media (max-width: 600px) {
   .dv-nav-wrapper {
-    top: 12px;
+    top: 8px;
     padding: 0 12px;
   }
 
-  .dv-nav-auth-actions .dv-nav-btn-ghost {
+  .dv-nav-capsule {
+    height: 52px;
+    padding: 0 10px 0 14px;
+    gap: 8px;
+  }
+
+  .dv-nav-brand .dv-brand-logo__img {
+    height: 28px !important;
+    max-width: 125px !important;
+  }
+
+  /* On mobile phones, hide the action button inside the capsule to eliminate squishing;
+     the mobile drawer sheet contains full-width prominent sign-in and register buttons */
+  .dv-nav-auth-actions .dv-nav-btn-primary,
+  .dv-nav-auth-actions .dv-nav-btn-ghost,
+  .dv-nav-user-actions .dv-nav-btn-lock,
+  .dv-nav-user-actions .dv-nav-btn-primary {
     display: none;
   }
 
-  .dv-nav-btn-primary {
+  .dv-nav-mobile-toggle {
+    width: 38px;
     height: 38px;
-    padding: 0 14px;
-    font-size: 13px;
   }
 }

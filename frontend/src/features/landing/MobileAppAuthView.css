@@ -416,15 +416,22 @@
   padding: 4px;
 }
 
-/* Bottom Footer */
-.dv-native-footer {
-  margin-top: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #6B7280;
+@media (max-width: 480px) {
+  .dv-native-card {
+    padding: 20px 16px;
+    border-radius: 20px;
+  }
+  .dv-native-card__title {
+    font-size: 20px;
+  }
+  .dv-native-app-screen {
+    padding: max(8px, env(safe-area-inset-top)) 12px max(20px, env(safe-area-inset-bottom)) 12px;
+  }
+}
+
+@media (max-width: 350px) {
+  .dv-native-grid-2 {
+    grid-template-columns: 1fr;
+  }
 }
 

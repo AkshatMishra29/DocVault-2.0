@@ -4,14 +4,18 @@ import './PasswordStrengthMeter.css';
 export default function PasswordStrengthMeter({ advice }) {
   if (!advice) return null;
 
-  const { score, level, recommendations } = advice;
+  const score = typeof advice.score === 'number' ? advice.score : 0;
+  const level = advice.level || {};
+  const levelColor = level.color || '#F97316';
+  const levelLabel = level.label || 'Evaluating';
+  const recommendations = Array.isArray(advice.recommendations) ? advice.recommendations : [];
 
   return (
     <div className="dv-pwd-meter" aria-live="polite">
       <div className="dv-pwd-meter__header">
         <span className="dv-pwd-meter__label">Password Strength:</span>
-        <span className="dv-pwd-meter__status" style={{ color: level.color }}>
-          {level.label}
+        <span className="dv-pwd-meter__status" style={{ color: levelColor }}>
+          {levelLabel}
         </span>
       </div>
 
@@ -22,16 +26,15 @@ export default function PasswordStrengthMeter({ advice }) {
             <div
               key={step}
               className={`dv-pwd-bar ${isFilled ? 'dv-pwd-bar--filled' : ''}`}
-              style={{ backgroundColor: isFilled ? level.color : undefined }}
+              style={{ backgroundColor: isFilled ? levelColor : undefined }}
             />
           );
         })}
       </div>
 
-      {recommendations && recommendations.length > 0 && score < 3 && (
+      {recommendations.length > 0 && score < 3 && (
         <span className="dv-pwd-meter__hint">{recommendations[0]}</span>
       )}
     </div>
   );
 }
-

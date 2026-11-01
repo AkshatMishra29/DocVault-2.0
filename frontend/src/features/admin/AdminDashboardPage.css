@@ -507,7 +507,44 @@
   .dv-admin-hero {
     flex-direction: column;
     align-items: flex-start;
-    padding: 20px;
+    padding: 20px 16px;
+  }
+
+  .dv-admin-hero__title {
+    font-size: 22px;
+  }
+
+  .dv-admin-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .dv-admin-kpi-value {
+    font-size: 26px;
+  }
+
+  .dv-health-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .dv-admin-pane-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dv-admin-search-wrap {
+    max-width: 100%;
+  }
+
+  .dv-audit-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .dv-audit-item__time {
+    align-self: flex-end;
   }
 }
 

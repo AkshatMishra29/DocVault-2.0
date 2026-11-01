@@ -41,17 +41,17 @@ export class ErrorBoundary extends React.Component {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'var(--color-bg-base, #0b0f19)',
-          color: 'var(--color-text-primary, #f1f5f9)',
+          background: '#FAF8F5',
+          color: '#1C1310',
           padding: '24px',
           fontFamily: 'Inter, system-ui, sans-serif'
         }}>
           <div style={{
             maxWidth: '480px',
             width: '100%',
-            background: 'var(--color-surface, #131b2e)',
+            background: '#FFFFFF',
             borderRadius: '16px',
-            border: '1px solid var(--color-border, #1e293b)',
+            border: '1px solid #E5E7EB',
             padding: '36px 28px',
             textAlign: 'center',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4)'
@@ -77,7 +77,7 @@ export class ErrorBoundary extends React.Component {
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>
               Application Recovery
             </h2>
-            <p style={{ fontSize: '14px', color: 'var(--color-text-secondary, #94a3b8)', lineHeight: 1.6, marginBottom: '24px' }}>
+            <p style={{ fontSize: '14px', color: '#4B5563', lineHeight: 1.6, marginBottom: '24px' }}>
               DocVault encountered an unexpected display issue. Your vault data and encryption keys remain completely secure.
             </p>
 
@@ -93,7 +93,7 @@ export class ErrorBoundary extends React.Component {
                   width: '100%',
                   padding: '12px 18px',
                   borderRadius: '10px',
-                  background: 'var(--color-primary, #6366f1)',
+                  background: '#FD2B06',
                   color: '#ffffff',
                   border: 'none',
                   fontSize: '14px',
@@ -118,7 +118,7 @@ export class ErrorBoundary extends React.Component {
                   borderRadius: '10px',
                   background: 'transparent',
                   color: 'var(--color-text-secondary, #94a3b8)',
-                  border: '1px solid var(--color-border, #1e293b)',
+                  border: '1px solid #E5E7EB',
                   fontSize: '14px',
                   fontWeight: 500,
                   cursor: 'pointer'
