@@ -62,7 +62,7 @@ export default function LandingPage() {
             <div className="dv-m-hero__trust-points">
               <div className="dv-m-trust-point">
                 <CheckCircle2 size={16} className="dv-m-trust-icon" />
-                <span>Zero-knowledge client encryption</span>
+                <span>End-to-end encrypted storage</span>
               </div>
               <div className="dv-m-trust-point">
                 <CheckCircle2 size={16} className="dv-m-trust-icon" />
@@ -209,7 +209,7 @@ export default function LandingPage() {
               <div className="dv-m-card-icon dv-m-card-icon--emerald">
                 <Shield size={18} />
               </div>
-              <h4 className="dv-m-card-title">Zero-Knowledge Security</h4>
+              <h4 className="dv-m-card-title">Bank-Grade Security</h4>
               <p className="dv-m-card-desc">Secondary vault PIN prevents unauthorized access even on shared family devices.</p>
             </div>
           </div>
@@ -494,7 +494,7 @@ export default function LandingPage() {
               Everything you need to know about DocVault
             </h2>
             <p style={{ color: "#64748b", fontSize: "16px", marginTop: "8px" }}>
-              Learn how our zero-knowledge architecture, OCR extraction, and biometric protection keep your records secure.
+              Learn how our multi-tier encryption, OCR extraction, and biometric protection keep your records secure.
             </p>
           </div>
 

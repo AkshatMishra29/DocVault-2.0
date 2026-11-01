@@ -230,7 +230,7 @@ export default function RegisterPage() {
         <>
           <AuthHeader
             title="Create your account"
-            subtitle="Sign up for zero-knowledge secure document custody."
+            subtitle="Create an account to access your secure document vault."
           />
 
           {error && <AuthAlert type="error" message={error} />}
@@ -263,7 +263,7 @@ export default function RegisterPage() {
                   type="text"
                   name="name"
                   icon={User}
-                  placeholder="e.g. John Doe"
+                  placeholder="Enter your full name"
                   value={formData.name}
                   onChange={(e) => handleChange("name", e.target.value)}
                   required
@@ -278,7 +278,7 @@ export default function RegisterPage() {
                   type="email"
                   name="email"
                   icon={Mail}
-                  placeholder="your.email@domain.com"
+                  placeholder="name@example.com"
                   value={formData.email}
                   onChange={(e) => handleChange("email", e.target.value)}
                   required
@@ -294,7 +294,7 @@ export default function RegisterPage() {
                   type="password"
                   name="password"
                   icon={Lock}
-                  placeholder="Min. 8 characters"
+                  placeholder="Create master password"
                   value={formData.password}
                   onChange={(e) => handleChange("password", e.target.value)}
                   required
@@ -309,7 +309,7 @@ export default function RegisterPage() {
                   type="password"
                   name="confirmPassword"
                   icon={Lock}
-                  placeholder="Repeat password"
+                  placeholder="Confirm master password"
                   value={formData.confirmPassword}
                   onChange={(e) => handleChange("confirmPassword", e.target.value)}
                   required
@@ -350,7 +350,7 @@ export default function RegisterPage() {
                   type="password"
                   name="pin"
                   icon={KeyRound}
-                  placeholder={`${formData.pinLength}-digit PIN`}
+                  placeholder={`Enter ${formData.pinLength}-digit PIN`}
                   value={formData.pin}
                   onChange={(e) => handlePinChange("pin", e.target.value)}
                   maxLength={formData.pinLength}
@@ -392,7 +392,7 @@ export default function RegisterPage() {
                   type="tel"
                   name="phone"
                   icon={Phone}
-                  placeholder="+91 98765 43210"
+                  placeholder="Enter contact phone number"
                   value={formData.phone}
                   onChange={(e) => handleChange("phone", e.target.value)}
                   autoComplete="tel"

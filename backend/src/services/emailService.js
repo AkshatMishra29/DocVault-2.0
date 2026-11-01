@@ -105,7 +105,7 @@ export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b1512; color: #f8fafc; padding: 40px 20px; border-radius: 12px; max-width: 500px; margin: 0 auto; border: 1px solid rgba(52, 211, 153, 0.2);">
         <div style="text-align: center; margin-bottom: 24px;">
           <h1 style="color: #34d399; font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">DocVault</h1>
-          <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 0 0;">Zero-Knowledge Cryptographic Vault</p>
+          <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 0 0;">Secure Cryptographic Document Vault</p>
         </div>
 
         <div style="background: rgba(18, 40, 34, 0.85); border: 1px solid rgba(52, 211, 153, 0.25); border-radius: 10px; padding: 24px; text-align: center;">

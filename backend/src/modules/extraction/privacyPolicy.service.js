@@ -1,7 +1,7 @@
 /**
  * DocVault Centralized Privacy Policy Service
  *
- * Implements strict zero-knowledge document processing boundaries:
+ * Implements strict privacy-first document processing boundaries:
  *
  * Mode A: PROCESSABLE
  * - Invoices, receipts, appliance warranties, policies, certificates.

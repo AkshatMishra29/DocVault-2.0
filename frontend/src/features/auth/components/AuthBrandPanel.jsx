@@ -12,7 +12,7 @@ const VARIANT_CONFIGS = {
     imageSrc: "/assets/auth/hero-vault.jpg",
     imageAlt: "DocVault 3D document vault safe with spoke locker wheel handle and floating documents",
     bullets: [
-      { icon: ShieldCheck, text: "Client-side encrypted zero-knowledge custody" },
+      { icon: ShieldCheck, text: "Client-side encrypted document custody" },
       { icon: Sparkles, text: "Smart OCR and structured document metadata" },
       { icon: Lock, text: "Two-stage PIN and biometric hardware security" },
     ]
@@ -50,7 +50,7 @@ const VARIANT_CONFIGS = {
     bullets: [
       { icon: Lock, text: "Anti-tamper rate limiting and lockout defense" },
       { icon: KeyRound, text: "Hardware WebAuthn biometric fallback support" },
-      { icon: ShieldCheck, text: "Zero-knowledge local decryption keys" },
+      { icon: ShieldCheck, text: "Protected local decryption keys" },
     ]
   }
 };
@@ -127,7 +127,7 @@ export default function AuthBrandPanel({
       <div className="dv-editorial-footer">
         <span>DocVault • Sovereign Document Custody</span>
         <span className="dv-editorial-footer-sep">/</span>
-        <span>Zero-Knowledge Architecture</span>
+        <span>End-to-End Encryption</span>
       </div>
     </aside>
   );

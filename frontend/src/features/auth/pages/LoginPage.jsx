@@ -122,7 +122,7 @@ export default function LoginPage() {
           type="email"
           name="email"
           icon={Mail}
-          placeholder="your.email@domain.com"
+          placeholder="name@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -135,7 +135,7 @@ export default function LoginPage() {
           type="password"
           name="password"
           icon={Lock}
-          placeholder="••••••••••••"
+          placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

@@ -71,7 +71,7 @@ export const mockDocuments = [
       "Linked Mobile": "XXXXXX3210",
       "Address": "B-402, Green Valley Apts, Sector 62, Noida, UP"
     },
-    summary: "UIDAI issued e-Aadhaar with verified digital signature. Zero-knowledge encrypted with master biometric key."
+    summary: "UIDAI issued e-Aadhaar with verified digital signature. Client-side encrypted with master security key."
   },
   {
     id: "doc-4",
