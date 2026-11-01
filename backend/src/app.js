@@ -9,6 +9,7 @@ import assetRoutes from './modules/assets/asset.routes.js';
 import deadlineRoutes from './modules/deadlines/deadline.routes.js';
 import aiRoutes from './modules/ai/ai.routes.js';
 import vaultRoutes from './modules/vault/vault.routes.js';
+import extractionRoutes from './modules/extraction/extraction.routes.js';
 
 import mongoose from 'mongoose';
 import { config } from './config/index.js';
@@ -63,6 +64,7 @@ app.use('/api/assets', assetRoutes);
 app.use('/api/deadlines', deadlineRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/vault', vaultRoutes);
+app.use('/api/extraction', extractionRoutes);
 
 export default app;
 

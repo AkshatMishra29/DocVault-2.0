@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../../services/api";
 import { 
   UploadCloud, FileText, CheckCircle2, AlertCircle, ArrowRight,
-  ShieldCheck, Sparkles, Layers
+  ShieldCheck, Sparkles, Layers, Lock
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -65,18 +65,18 @@ export default function UploadPage() {
 
     setUploading(true);
     setError("");
-    setProgressStage("Pre-processing image / rendering PDF buffer via Sharp...");
+    setProgressStage("Validating magic bytes, casual photo filter & privacy policy gate...");
 
     const formData = new FormData();
     formData.append("file", file);
 
     try {
       setTimeout(() => {
-        setProgressStage("Running local Tesseract OCR & Groq multimodal vision...");
+        setProgressStage("Extracting text layer / local OCR & deterministic rules...");
       }, 1200);
 
       setTimeout(() => {
-        setProgressStage("Extracting keyDetails & calculating Hugging Face dense embeddings...");
+        setProgressStage("Running verification gates (Grounding, Format, Logic)...");
       }, 2400);
 
       const res = await apiRequest("/api/documents/upload", {
@@ -183,39 +183,39 @@ export default function UploadPage() {
 
             {/* Right: Pipeline Transparency Showcase */}
             <Card padding="lg" className="dv-upload-info-card">
-              <h3 className="dv-pipeline-title">DocVault OCR & Extraction Flow</h3>
-              <p className="dv-pipeline-sub">All processing adheres to strict tenant isolation.</p>
+              <h3 className="dv-pipeline-title">DocVault 4-Tier Privacy Extraction Flow</h3>
+              <p className="dv-pipeline-sub">Evidence-grounded pipeline with strict privacy isolation.</p>
 
               <div className="dv-pipeline-steps">
                 <div className="dv-pstep">
                   <span className="dv-pstep-num">1</span>
                   <div>
-                    <h4>Sharp Conditioning</h4>
-                    <p>Image grayscaling, dynamic range normalization, and contrast sharpening.</p>
+                    <h4>Privacy Gate & Magic Bytes</h4>
+                    <p>Enforces magic byte validation and isolates sensitive IDs (Aadhaar/PAN) into zero-AI Storage-Only mode.</p>
                   </div>
                 </div>
 
                 <div className="dv-pstep">
                   <span className="dv-pstep-num">2</span>
                   <div>
-                    <h4>Local Tesseract OCR</h4>
-                    <p>Wasm-based local text recognition ensuring rapid, private processing.</p>
+                    <h4>Hybrid Text Extraction</h4>
+                    <p>Native PDF text layer extraction prioritized, falling back to local OCR for private on-device processing.</p>
                   </div>
                 </div>
 
                 <div className="dv-pstep">
                   <span className="dv-pstep-num">3</span>
                   <div>
-                    <h4>Groq Multimodal Vision (Qwen 3.8 27B)</h4>
-                    <p>Multimodal fallback for heavily degraded, tilted, or blurry paperwork.</p>
+                    <h4>Tier 1 Deterministic Rules Engine</h4>
+                    <p>Free regex rules for Indian GSTIN, dates, invoice/policy numbers, amounts, stopping before cloud LLM.</p>
                   </div>
                 </div>
 
                 <div className="dv-pstep">
                   <span className="dv-pstep-num">4</span>
                   <div>
-                    <h4>Automated Deadline Scheduling</h4>
-                    <p>Detected expiration dates automatically populate renewal calendars.</p>
+                    <h4>Independent Verification Gates</h4>
+                    <p>5-gate verification (Grounding, Format, Logic) ensures zero silent errors and safeguards deadline alerts.</p>
                   </div>
                 </div>
               </div>
@@ -226,13 +226,43 @@ export default function UploadPage() {
           <Card padding="lg" className="dv-upload-success-card">
             <div className="dv-success-header">
               <div className="dv-success-badge-icon">
-                <CheckCircle2 size={32} color="#059669" />
+                {uploadedDoc.privacyMode === "STORAGE_ONLY" ? (
+                  <Lock size={32} color="#dc2626" />
+                ) : (
+                  <CheckCircle2 size={32} color="#059669" />
+                )}
               </div>
-              <h2 className="dv-success-title">Document Analyzed & Saved to Vault</h2>
-              <p className="dv-success-sub">All entities extracted, vectorized, and indexed.</p>
+              <h2 className="dv-success-title">
+                {uploadedDoc.privacyMode === "STORAGE_ONLY" 
+                  ? "Document Isolated & Securely Encrypted" 
+                  : "Document Analyzed & Saved to Vault"}
+              </h2>
+              <p className="dv-success-sub">
+                {uploadedDoc.privacyMode === "STORAGE_ONLY"
+                  ? "Zero-AI Storage-Only Mode active. Never processed via OCR or external LLMs."
+                  : "All entities extracted, verified against source grounding, and indexed."}
+              </p>
             </div>
 
             <div className="dv-success-meta-box">
+              <div className="dv-success-meta-row">
+                <span className="dv-smeta-label">Privacy Policy Mode:</span>
+                <span className="dv-smeta-val">
+                  <span style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    padding: "3px 8px",
+                    borderRadius: "6px",
+                    background: uploadedDoc.privacyMode === "STORAGE_ONLY" ? "#fee2e2" : "#dcfce7",
+                    color: uploadedDoc.privacyMode === "STORAGE_ONLY" ? "#991b1b" : "#166534"
+                  }}>
+                    {uploadedDoc.privacyMode === "STORAGE_ONLY" ? "🔒 STORAGE ONLY (Zero AI/OCR)" : "🛡️ PROCESSABLE (Verified Pipeline)"}
+                  </span>
+                </span>
+              </div>
               <div className="dv-success-meta-row">
                 <span className="dv-smeta-label">Document Title:</span>
                 <span className="dv-smeta-val"><strong>{uploadedDoc.title}</strong></span>
@@ -241,6 +271,14 @@ export default function UploadPage() {
                 <span className="dv-smeta-label">Detected Category:</span>
                 <span className="dv-smeta-val">{uploadedDoc.category}</span>
               </div>
+              {uploadedDoc.extractedFields && uploadedDoc.extractedFields.length > 0 && (
+                <div className="dv-success-meta-row">
+                  <span className="dv-smeta-label">Extracted Fields:</span>
+                  <span className="dv-smeta-val">
+                    <strong>{uploadedDoc.extractedFields.length} fields</strong> (Status: <code>{uploadedDoc.reviewStatus || 'accepted'}</code>)
+                  </span>
+                </div>
+              )}
               {uploadedDoc.expiryDate && (
                 <div className="dv-success-meta-row">
                   <span className="dv-smeta-label">Detected Expiry:</span>

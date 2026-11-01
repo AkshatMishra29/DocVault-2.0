@@ -6,6 +6,7 @@ import { extractDocumentMetadata } from '../../services/ai/groqService.js';
 import { generateEmbedding } from '../../services/ai/huggingFaceService.js';
 import { extractTextFromPDF, extractTextFromImage, convertPdfToImages } from '../../services/ocr/ocrService.js';
 import { sanitizeKeyDetails } from '../../utils/sanitize.js';
+import { executeDocumentExtractionPipeline } from '../extraction/extractionPipeline.service.js';
 
 const router = Router();
 
@@ -59,131 +60,52 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/documents/upload - Upload file with OCR & Groq AI extraction
+// POST /api/documents/upload - Upload file with Guardrails, Privacy Gate, Multi-Tier Extraction & Verification
 router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No file provided' });
     }
 
-    const { originalname, mimetype, buffer, size } = req.file;
-    const format = originalname.split('.').pop().toUpperCase();
-    const fileSizeFormatted = size < 1024 * 1024 
-      ? `${(size / 1024).toFixed(1)} KB` 
-      : `${(size / (1024 * 1024)).toFixed(1)} MB`;
+    const { originalname, mimetype, buffer } = req.file;
+    const userConsent = req.body.userConsent || 'PROCESSABLE';
 
-    console.log(`[Upload Pipeline] Processing file: ${originalname} (${format}, ${fileSizeFormatted})`);
-
-    let extractedText = '';
-    let visualBase64 = null;
-    let visualMimeType = null;
-
-    if (mimetype.includes('pdf')) {
-      extractedText = await extractTextFromPDF(buffer);
-
-      // Scanned PDF fallback
-      if (!extractedText || extractedText.length < 50) {
-        console.log('[OCR] PDF text layer minimal. Rendering PDF pages to image for visual OCR...');
-        const imagePages = await convertPdfToImages(buffer);
-        if (imagePages && imagePages.length > 0) {
-          const firstPage = imagePages[0];
-          extractedText = await extractTextFromImage(firstPage);
-          visualBase64 = firstPage.toString('base64');
-          visualMimeType = 'image/png';
-        }
-      }
-    } else if (mimetype.startsWith('image/')) {
-      extractedText = await extractTextFromImage(buffer);
-      visualBase64 = buffer.toString('base64');
-      visualMimeType = mimetype;
-    }
-
-    console.log(`[Upload Pipeline] Extracted text length: ${extractedText.length} characters`);
-
-    // AI Semantic Extraction via Groq
-    const metadata = await extractDocumentMetadata(extractedText, originalname, visualBase64, visualMimeType);
-    console.log('[Upload Pipeline] Groq AI metadata extraction complete:', metadata.title);
-
-    // Generate semantic embedding vector via Hugging Face
-    let embedding = [];
-    try {
-      const textToEmbed = `${metadata.title} ${metadata.summary} ${(metadata.tags || []).join(' ')}`;
-      embedding = await generateEmbedding(textToEmbed);
-    } catch (embErr) {
-      console.warn('[Embedding] Vector generation failed, continuing without embedding:', embErr.message);
-    }
-
-    const base64Data = buffer.toString('base64');
-
-    const newDoc = new Document({
+    // Execute Production Extraction & Verification Pipeline
+    const pipelineResult = await executeDocumentExtractionPipeline({
       userId: req.user.userId,
-      title: metadata.title || originalname,
-      originalName: originalname,
-      category: metadata.category || 'Other',
-      format: format,
-      mimetype: mimetype,
-      fileData: base64Data,
-      sizeBytes: size,
-      fileSizeFormatted: fileSizeFormatted,
-      storagePath: 'mongodb-embedded',
-      extractedText: extractedText || '',
-      summary: metadata.summary,
-      keyDetails: sanitizeKeyDetails(metadata.keyDetails),
-      tags: metadata.tags || [],
-      expiryDate: metadata.expiryDate,
-      isExpiringSoon: metadata.isExpiringSoon || false,
-      embedding: embedding,
+      buffer,
+      mimetype,
+      originalname,
+      userConsent,
     });
 
-    newDoc.downloadUrl = `/api/documents/${newDoc._id}/download`;
-    await newDoc.save();
-
-    // Auto-create deadline reminder if expiry date was detected
-    if (metadata.expiryDate) {
-      try {
-        const expiry = new Date(metadata.expiryDate);
-        const today = new Date();
-        const diffTime = expiry - today;
-        const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        let severity = 'normal';
-        if (daysLeft <= 15) severity = 'urgent';
-        else if (daysLeft <= 45) severity = 'upcoming';
-
-        await Deadline.create({
-          userId: req.user.userId,
-          title: `${newDoc.title} Renewal`,
-          date: metadata.expiryDate,
-          daysLeft: daysLeft,
-          severity: severity,
-          linkedDocId: newDoc._id,
-          action: `Renew ${newDoc.category} policy / license`,
-        });
-        console.log(`[Deadline Auto-Create] Scheduled reminder for: ${metadata.expiryDate}`);
-      } catch (dlErr) {
-        console.warn('[Deadline Auto-Create] Failed to create reminder:', dlErr.message);
-      }
-    }
+    const savedDoc = pipelineResult.document;
 
     // Record audit log
     await AuditLog.create({
       userId: req.user.userId,
       action: 'UPLOAD',
-      documentTitle: newDoc.title,
+      documentTitle: savedDoc.title,
       device: req.headers['user-agent'] || 'Web Client',
     }).catch(err => console.warn('[Audit Log] Failed to save upload audit:', err.message));
 
-    const responseDoc = newDoc.toObject();
+    const responseDoc = savedDoc.toObject ? savedDoc.toObject() : savedDoc;
     delete responseDoc.fileData;
 
     res.status(201).json({
       success: true,
-      message: 'Document uploaded and analyzed successfully',
+      message: pipelineResult.privacyMode === 'STORAGE_ONLY' 
+        ? 'Sensitive document secured in encrypted Storage-Only vault.' 
+        : 'Document verified and structured metadata extracted.',
       data: responseDoc,
+      privacyMode: pipelineResult.privacyMode,
+      tierUsed: pipelineResult.tierUsed,
+      processingStatus: pipelineResult.processingStatus,
     });
   } catch (err) {
-    console.error('[Upload Pipeline Error]', err);
-    res.status(500).json({ success: false, error: err.message });
+    console.error('[Upload Pipeline Error]', err.message);
+    const statusCode = err.message.startsWith('Security Guardrail:') ? 400 : 500;
+    res.status(statusCode).json({ success: false, error: err.message });
   }
 });
 
