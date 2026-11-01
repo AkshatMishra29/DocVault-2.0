@@ -584,7 +584,7 @@
 /* Registration Grid Layout (Zero-Scroll Compact Layout) */
 .dv-auth-form-card--register {
   max-width: 530px !important;
-  padding: 18px 28px 14px 28px !important;
+  padding: 23px 28px 19px 28px !important;
   box-sizing: border-box;
 }
 
