@@ -1,3 +1,8 @@
+// ============================================================================
+// Firebase Integration (Temporarily commented out to avoid missing dependency)
+// ============================================================================
+
+/*
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { 
   getAuth, 
@@ -18,64 +23,36 @@ const firebaseConfig = {
   measurementId: "G-FR59SHRYDL"
 };
 
-// Singleton App Initialization - guarantees default app exists across all modules
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-
-// Initialize Firebase Auth
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+*/
+
+export const app = null;
+export const auth = null;
+export const googleProvider = null;
 
 /**
- * Trigger Google OAuth popup
+ * Trigger Google OAuth popup (stubbed for now)
  */
 export async function signInWithGoogle() {
-  googleProvider.setCustomParameters({ prompt: 'select_account' });
-  const result = await signInWithPopup(auth, googleProvider);
-  const user = result.user;
-  const idToken = await user.getIdToken();
-  return {
-    email: user.email,
-    displayName: user.displayName,
-    photoURL: user.photoURL,
-    idToken,
-  };
+  console.warn("[Firebase] signInWithGoogle is currently disabled.");
+  return null;
 }
 
 /**
- * Send passwordless Email sign-in link
+ * Send passwordless Email sign-in link (stubbed for now)
  */
 export async function sendEmailLoginLink(email) {
-  const actionCodeSettings = {
-    // Route to dedicated verification page
-    url: `${window.location.origin}/auth/verify?emailLink=true`,
-    handleCodeInApp: true,
-  };
-
-  await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-  window.localStorage.setItem('docvault_emailForSignIn', email);
-  return true;
+  console.warn("[Firebase] sendEmailLoginLink is currently disabled.");
+  return false;
 }
 
 /**
- * Check and complete Email Link sign-in
+ * Check and complete Email Link sign-in (stubbed for now)
  */
 export async function verifyEmailLinkSignIn() {
-  if (isSignInWithEmailLink(auth, window.location.href)) {
-    let email = window.localStorage.getItem('docvault_emailForSignIn');
-    if (!email) {
-      email = window.prompt('Please confirm your email address for instant unlock');
-    }
-    if (email) {
-      const result = await signInWithEmailLink(auth, email, window.location.href);
-      window.localStorage.removeItem('docvault_emailForSignIn');
-      const idToken = await result.user.getIdToken();
-      return {
-        email: result.user.email,
-        displayName: result.user.displayName,
-        idToken,
-      };
-    }
-  }
+  console.warn("[Firebase] verifyEmailLinkSignIn is currently disabled.");
   return null;
 }
 
