@@ -3,7 +3,7 @@
    ========================================================================== */
 
 .dv-auth-header {
-  margin-bottom: 22px;
+  margin-bottom: 24px;
   display: flex;
   flex-direction: column;
 }
@@ -20,10 +20,11 @@
   color: var(--color-auth-cta, #FD2B06);
   background-color: rgba(253, 43, 6, 0.08);
   border: 1px solid rgba(253, 43, 6, 0.2);
-  padding: 3px 10px;
+  padding: 4px 11px;
   border-radius: 9999px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   align-self: flex-start;
+  line-height: 1;
 }
 
 [data-theme="dark"] .dv-auth-header__badge {
@@ -36,16 +37,17 @@
   height: 6px;
   border-radius: 50%;
   background-color: var(--color-auth-cta, #FD2B06);
+  flex-shrink: 0;
 }
 
 .dv-auth-header__title {
   font-family: var(--font-display, 'DM Serif Display', Georgia, serif);
-  font-size: clamp(26px, 2.3vw, 32px);
+  font-size: clamp(28px, 2.5vw, 34px);
   font-weight: 400;
   letter-spacing: -0.02em;
   color: var(--color-auth-text-dark, #1C1310);
-  margin: 0 0 4px 0;
-  line-height: 1.18;
+  margin: 0 0 6px 0;
+  line-height: 1.15;
 }
 
 [data-theme="dark"] .dv-auth-header__title {
@@ -54,7 +56,8 @@
 
 .dv-auth-header__subtitle {
   font-family: var(--font-ui, 'Manrope', sans-serif);
-  font-size: 13.5px;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--color-auth-muted, #766B65);
   line-height: 1.45;
   margin: 0;

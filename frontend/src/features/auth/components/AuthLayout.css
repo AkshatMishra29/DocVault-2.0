@@ -22,17 +22,33 @@
   overflow-y: auto;
   position: relative;
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-auth-border, #D8CCC3) transparent;
+}
+
+.dv-auth-form-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dv-auth-form-panel::-webkit-scrollbar-thumb {
+  background-color: var(--color-auth-border, #D8CCC3);
+  border-radius: 4px;
 }
 
 [data-theme="dark"] .dv-auth-form-panel {
   background-color: var(--color-auth-bg, #14100E);
+  scrollbar-color: #3D2F28 transparent;
+}
+
+[data-theme="dark"] .dv-auth-form-panel::-webkit-scrollbar-thumb {
+  background-color: #3D2F28;
 }
 
 .dv-auth-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 32px 12px 32px;
+  padding: 24px 36px 12px 36px;
   width: 100%;
   box-sizing: border-box;
   flex-shrink: 0;
@@ -44,8 +60,8 @@
 
 .dv-auth-theme-btn {
   margin-left: auto;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
   background-color: var(--color-auth-surface, #FFFFFF);
   border: 1px solid var(--color-auth-border, #D8CCC3);
@@ -63,17 +79,25 @@
   transform: translateY(-1px);
 }
 
+[data-theme="dark"] .dv-auth-theme-btn {
+  background-color: #1E1512;
+  border-color: #3D2F28;
+}
+
 .dv-auth-form-viewport {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 16px 24px 32px;
+  justify-content: flex-start;
+  padding: 16px 32px 36px 32px;
   box-sizing: border-box;
   width: 100%;
+  min-height: min-content;
 }
 
 .dv-auth-form-card {
+  margin: auto 0;
   width: 100%;
   max-width: 440px;
   display: flex;
@@ -81,7 +105,7 @@
   background: var(--color-auth-card-bg, #FFFFFF);
   border: 1px solid var(--color-auth-border, #D8CCC3);
   border-radius: 20px;
-  padding: 34px 36px 28px;
+  padding: 34px 38px 28px;
   box-shadow: 
     0 16px 36px -4px rgba(28, 19, 16, 0.06),
     0 4px 12px -2px rgba(28, 19, 16, 0.03);
@@ -127,13 +151,17 @@
     height: auto;
   }
 
+  .dv-auth-top-bar {
+    padding: 18px 20px 10px 20px;
+  }
+
   .dv-auth-mobile-logo {
     display: flex;
     align-items: center;
   }
 
   .dv-auth-form-viewport {
-    padding: 12px 16px 28px;
+    padding: 12px 18px 32px 18px;
   }
 
   .dv-auth-form-card {
