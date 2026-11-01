@@ -223,7 +223,7 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout 
-      cardClassName="dv-auth-form-card--wide" 
+      cardClassName="dv-auth-form-card--register" 
       brandVariant={step === "otp" ? "otp" : "register"}
     >
       {step === "form" ? (
@@ -254,10 +254,10 @@ export default function RegisterPage() {
             <span className="dv-auth-divider-line" />
           </div>
 
-          <form onSubmit={handleRequestOtp} className="dv-auth-form">
-            <div className="dv-auth-form-grid">
-              {/* Full Name */}
-              <div className="dv-auth-form-grid--full">
+          <form onSubmit={handleRequestOtp} className="dv-auth-form dv-auth-form--register">
+            <div className="dv-reg-grid">
+              {/* Row 1: Full Name & Email Address */}
+              <div>
                 <PasswordInput
                   label="Full Name"
                   type="text"
@@ -272,8 +272,7 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Email Address */}
-              <div className="dv-auth-form-grid--full">
+              <div>
                 <PasswordInput
                   label="Email Address"
                   type="email"
@@ -288,7 +287,7 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Master Password */}
+              {/* Row 2: Master Password & Confirm Password */}
               <div>
                 <PasswordInput
                   label="Master Password"
@@ -304,7 +303,6 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Confirm Password */}
               <div>
                 <PasswordInput
                   label="Confirm Password"
@@ -321,12 +319,12 @@ export default function RegisterPage() {
               </div>
 
               {/* Password Strength Meter */}
-              <div className="dv-auth-form-grid--full">
+              <div className="dv-reg-col-full">
                 <PasswordStrengthMeter advice={pwdAdvice} />
               </div>
 
-              {/* PIN Configuration Header */}
-              <div className="dv-auth-form-grid--full">
+              {/* Row 3: PIN Configuration Header */}
+              <div className="dv-reg-col-full">
                 <div className="dv-pin-config-header">
                   <label className="dv-auth-input-label" htmlFor="pin">
                     <span>Vault Security PIN</span>
@@ -351,7 +349,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Vault Security PIN */}
+              {/* Row 4: Vault PIN & Confirm PIN */}
               <div>
                 <PasswordInput
                   type="password"
@@ -368,7 +366,6 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Confirm Security PIN */}
               <div>
                 <PasswordInput
                   type="password"
@@ -386,12 +383,14 @@ export default function RegisterPage() {
               </div>
 
               {/* PIN Strength Indicator */}
-              <div className="dv-auth-form-grid--full">
-                <PinStrengthIndicator advice={pinAdvice} />
-              </div>
+              {pinAdvice && (
+                <div className="dv-reg-col-full">
+                  <PinStrengthIndicator advice={pinAdvice} />
+                </div>
+              )}
 
-              {/* Phone Number (Optional) */}
-              <div className="dv-auth-form-grid--full">
+              {/* Row 5: Phone Number (Optional) */}
+              <div className="dv-reg-col-full">
                 <PasswordInput
                   label="Phone Number (Optional)"
                   type="tel"
