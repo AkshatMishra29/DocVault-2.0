@@ -101,7 +101,6 @@ export default function AuthVerifiedPage() {
             <Loader2 size={32} className="spin-animation" />
           </div>
           <AuthHeader
-            badgeText="SECURITY VERIFICATION"
             title="Verifying link..."
             subtitle="Cryptographically validating your authentication session."
           />
@@ -127,7 +126,6 @@ export default function AuthVerifiedPage() {
           </div>
 
           <AuthHeader
-            badgeText="VERIFICATION SUCCESSFUL"
             title="Account verified!"
             subtitle={`Welcome back, ${userEmail}. Your credentials have been authenticated.`}
           />
@@ -178,7 +176,6 @@ export default function AuthVerifiedPage() {
           </div>
 
           <AuthHeader
-            badgeText="VERIFICATION ERROR"
             title="Link verification failed"
             subtitle={errorMessage}
           />

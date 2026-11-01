@@ -168,7 +168,6 @@ export default function RegisterPage() {
       {step === "form" ? (
         <>
           <AuthHeader
-            badgeText="CREATE YOUR ACCOUNT"
             title="Get started with DocVault."
             subtitle="Create an account and bring your important documents together."
           />
@@ -306,7 +305,6 @@ export default function RegisterPage() {
           </button>
 
           <AuthHeader
-            badgeText="EMAIL VERIFICATION"
             title="Check your inbox."
             subtitle={`Enter the 6-digit verification code sent to ${formData.email}`}
           />

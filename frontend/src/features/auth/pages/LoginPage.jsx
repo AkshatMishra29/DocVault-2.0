@@ -49,7 +49,6 @@ export default function LoginPage() {
   return (
     <AuthLayout brandVariant="login">
       <AuthHeader
-        badgeText="PRIVATE ACCESS"
         title="Welcome back."
         subtitle="Sign in to access your personal document vault."
       />

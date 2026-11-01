@@ -185,7 +185,6 @@ export default function EnterPinPage() {
   return (
     <AuthLayout brandVariant="pin">
       <AuthHeader
-        badgeText="VAULT SECURITY"
         title="Unlock your vault."
         subtitle="Enter your personal security PIN to decrypt your documents."
       />

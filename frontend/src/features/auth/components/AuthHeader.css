@@ -8,38 +8,6 @@
   flex-direction: column;
 }
 
-.dv-auth-header__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-ui, 'Manrope', sans-serif);
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-auth-cta, #FD2B06);
-  background-color: rgba(253, 43, 6, 0.08);
-  border: 1px solid rgba(253, 43, 6, 0.2);
-  padding: 4px 11px;
-  border-radius: 9999px;
-  margin-bottom: 12px;
-  align-self: flex-start;
-  line-height: 1;
-}
-
-[data-theme="dark"] .dv-auth-header__badge {
-  background-color: rgba(253, 43, 6, 0.15);
-  border-color: rgba(253, 43, 6, 0.3);
-}
-
-.dv-auth-header__badge-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--color-auth-cta, #FD2B06);
-  flex-shrink: 0;
-}
-
 .dv-auth-header__title {
   font-family: var(--font-display, 'DM Serif Display', Georgia, serif);
   font-size: clamp(28px, 2.5vw, 34px);
