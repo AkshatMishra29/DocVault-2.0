@@ -1,21 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import DocVaultLogo from '../../common/DocVaultLogo/DocVaultLogo';
-import { ArrowRight, Sun, Moon, Lock, LayoutDashboard } from 'lucide-react';
+import { ArrowRight, Lock, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../../../features/auth/context/AuthContext';
 import './PublicNavbar.css';
 
 export default function PublicNavbar() {
   const { user, isVaultUnlocked, lockVault } = useAuth();
   const navigate = useNavigate();
-  const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'dark');
-
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('docvault_theme', next);
-    setTheme(next);
-  };
 
   const handleManualLock = () => {
     lockVault();
@@ -37,29 +29,6 @@ export default function PublicNavbar() {
         </nav>
 
         <div className="dv-public-nav__actions">
-          {/* Theme Switcher Button */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '38px',
-              height: '38px',
-              borderRadius: '8px',
-              background: 'var(--color-surface, #ffffff)',
-              border: '1px solid var(--color-border, #e2e8f0)',
-              color: 'var(--color-text-primary, #0f172a)',
-              cursor: 'pointer',
-              marginRight: '8px',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            {theme === 'dark' ? <Sun size={18} color="#fbbf24" /> : <Moon size={18} color="#0f172a" />}
-          </button>
-
           {user && isVaultUnlocked ? (
             <>
               <button

@@ -5,7 +5,7 @@ import { apiRequest } from "../../services/api";
 import { 
   ShieldCheck, Download, KeyRound, Smartphone, HardDrive, 
   Clock, LogOut, CheckCircle2, ChevronRight, Sparkles, Lock, 
-  Sun, Moon, Shield, Fingerprint, FileText
+  Shield, Fingerprint, FileText
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -29,7 +29,6 @@ export default function MorePage() {
   const [savingSessionPref, setSavingSessionPref] = useState(false);
   const [savingAutoLockPref, setSavingAutoLockPref] = useState(false);
   const [registeringBio, setRegisteringBio] = useState(false);
-  const [theme, setTheme] = useState(() => document.documentElement.getAttribute("data-theme") || "dark");
   const [hasRegisteredBio, setHasRegisteredBio] = useState(() => {
     return Boolean(localStorage.getItem(`dv_bio_cred_${user?.email}`));
   });
@@ -48,13 +47,6 @@ export default function MorePage() {
       setHasRegisteredBio(Boolean(localStorage.getItem(`dv_bio_cred_${user?.email}`)));
     }
   }, [user?.singleSessionOnly, user?.autoLockEnabled, user?.biometricsEnabled, user?.email]);
-
-  const handleToggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("docvault_theme", next);
-    setTheme(next);
-  };
 
   const handleToggleSingleSession = async () => {
     const nextVal = !singleSession;
@@ -181,32 +173,6 @@ export default function MorePage() {
                   <Badge variant="success" size="sm">Vault Pro Isolated</Badge>
                 </span>
               </div>
-            </div>
-
-            {/* Dark Mode Theme Toggle */}
-            <div className="dv-setting-toggle-row">
-              <div>
-                <span className="dv-toggle-title">Interface Appearance</span>
-                <span className="dv-toggle-sub">Switch between Dark and Light mode theme</span>
-              </div>
-              <button
-                type="button"
-                className={`dv-toggle-pill ${theme === "dark" ? "dv-toggle-pill--active" : ""}`}
-                onClick={handleToggleTheme}
-                title="Toggle Theme"
-              >
-                {theme === "dark" ? (
-                  <>
-                    <Moon size={14} color="#8AF0BC" />
-                    <span>Dark</span>
-                  </>
-                ) : (
-                  <>
-                    <Sun size={14} color="#D97706" />
-                    <span>Light</span>
-                  </>
-                )}
-              </button>
             </div>
 
             {/* Single Session Only Toggle */}

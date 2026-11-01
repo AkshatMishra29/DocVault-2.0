@@ -1,21 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../features/auth/context/AuthContext';
-import { LogOut, ShieldCheck, Sun, Moon, Lock } from 'lucide-react';
+import { LogOut, ShieldCheck, Lock } from 'lucide-react';
 import Button from '../../common/Button/Button';
 import './AppHeader.css';
 
 export default function AppHeader({ title, subtitle }) {
   const { user, lockVault, logout } = useAuth();
   const navigate = useNavigate();
-  const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'dark');
-
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('docvault_theme', next);
-    setTheme(next);
-  };
 
   const handleLockVault = () => {
     lockVault();
@@ -30,28 +22,6 @@ export default function AppHeader({ title, subtitle }) {
       </div>
 
       <div className="dv-app-header__actions">
-        {/* Quick Theme Switcher */}
-        <button
-          type="button"
-          onClick={toggleTheme}
-          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '36px',
-            height: '36px',
-            borderRadius: '8px',
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            color: 'var(--color-text-primary)',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          {theme === 'dark' ? <Sun size={17} color="#fbbf24" /> : <Moon size={17} color="#0f172a" />}
-        </button>
-
         <div className="dv-app-header__user-pill">
           <ShieldCheck size={16} className="dv-app-header__shield-icon" />
           <span className="dv-app-header__user-email">{user?.email || 'Authenticated User'}</span>
@@ -70,4 +40,3 @@ export default function AppHeader({ title, subtitle }) {
     </header>
   );
 }
-

@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sun, Moon } from 'lucide-react';
 import AuthBrandPanel from './AuthBrandPanel';
 import DocVaultLogo from '../../../components/common/DocVaultLogo/DocVaultLogo';
 import './AuthLayout.css';
@@ -14,15 +13,6 @@ export default function AuthLayout({
   customImage,
   cardClassName = ''
 }) {
-  const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'light');
-
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('docvault_theme', next);
-    setTheme(next);
-  };
-
   return (
     <div className="dv-auth-split-layout">
       {/* 48% Left 3D Editorial Panel (Desktop) */}
@@ -44,21 +34,6 @@ export default function AuthLayout({
               <DocVaultLogo height={44} />
             </Link>
           </div>
-
-          {/* Theme switcher */}
-          <button
-            type="button"
-            className="dv-auth-theme-btn"
-            onClick={toggleTheme}
-            title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? (
-              <Sun size={17} color="#FBBF24" />
-            ) : (
-              <Moon size={17} color="#1C1310" />
-            )}
-          </button>
         </div>
 
         <div className="dv-auth-form-viewport">
