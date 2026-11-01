@@ -4,6 +4,7 @@ import './PasswordInput.css';
 
 export default function PasswordInput({
   label,
+  labelRight,
   icon: Icon,
   type = 'text',
   name,
@@ -26,10 +27,13 @@ export default function PasswordInput({
   return (
     <div className={`dv-auth-input-group ${error ? 'dv-auth-input-group--error' : ''} ${className}`}>
       {label && (
-        <label className="dv-auth-input-label" htmlFor={name}>
-          <span>{label}</span>
-          {required && <span className="dv-required-star">*</span>}
-        </label>
+        <div className="dv-auth-input-label-row">
+          <label className="dv-auth-input-label" htmlFor={name}>
+            <span>{label}</span>
+            {required && <span className="dv-required-star">*</span>}
+          </label>
+          {labelRight && <div className="dv-auth-input-label-right">{labelRight}</div>}
+        </div>
       )}
 
       <div className="dv-auth-input-wrapper">

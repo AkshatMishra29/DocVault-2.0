@@ -327,29 +327,26 @@ export default function RegisterPage() {
 
               {/* Row 3: Vault PIN & Confirm PIN with inline toggle */}
               <div>
-                <div className="dv-pin-inline-header">
-                  <label className="dv-auth-input-label" htmlFor="pin">
-                    <span>Vault PIN</span>
-                    <span className="dv-required-star">*</span>
-                  </label>
-                  <div className="dv-pin-len-toggle">
-                    <button
-                      type="button"
-                      className={`dv-pin-len-btn ${formData.pinLength === 4 ? "dv-pin-len-btn--active" : ""}`}
-                      onClick={() => handlePinLengthChange(4)}
-                    >
-                      4D
-                    </button>
-                    <button
-                      type="button"
-                      className={`dv-pin-len-btn ${formData.pinLength === 6 ? "dv-pin-len-btn--active" : ""}`}
-                      onClick={() => handlePinLengthChange(6)}
-                    >
-                      6D
-                    </button>
-                  </div>
-                </div>
                 <PasswordInput
+                  label="Vault PIN"
+                  labelRight={
+                    <div className="dv-pin-len-toggle">
+                      <button
+                        type="button"
+                        className={`dv-pin-len-btn ${formData.pinLength === 4 ? "dv-pin-len-btn--active" : ""}`}
+                        onClick={() => handlePinLengthChange(4)}
+                      >
+                        4D
+                      </button>
+                      <button
+                        type="button"
+                        className={`dv-pin-len-btn ${formData.pinLength === 6 ? "dv-pin-len-btn--active" : ""}`}
+                        onClick={() => handlePinLengthChange(6)}
+                      >
+                        6D
+                      </button>
+                    </div>
+                  }
                   type="password"
                   name="pin"
                   icon={KeyRound}
