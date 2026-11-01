@@ -26,7 +26,7 @@ export default function PublicFooter() {
           <div className="dv-public-footer__security-strip">
             <div className="dv-footer-badge">
               <ShieldCheck size={14} className="dv-footer-badge__icon" />
-              <span>AES-256 Multi-Tier</span>
+              <span>Multi-Tier Security</span>
             </div>
             <div className="dv-footer-badge">
               <Lock size={13} className="dv-footer-badge__icon" />

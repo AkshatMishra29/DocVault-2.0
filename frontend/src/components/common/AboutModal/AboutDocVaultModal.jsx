@@ -37,7 +37,7 @@ export default function AboutDocVaultModal({ isOpen, onClose }) {
           <div className="dv-about-hero-card">
             <img src={heroArtwork} alt="DocVault Safe" className="dv-about-hero-img" />
             <div className="dv-about-hero-scrim">
-              <span className="dv-about-hero-tag">Enclave v2.6 Core</span>
+              <span className="dv-about-hero-tag">DocVault v2.6 Core</span>
               <h4 className="dv-about-hero-heading">Where high security meets actionable intelligence.</h4>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function AboutDocVaultModal({ isOpen, onClose }) {
           <div className="dv-about-trust-bar">
             <div className="dv-about-trust-chip">
               <CheckCircle2 size={13} color="#16A34A" />
-              <span>AES-256-GCM Vault</span>
+              <span>Encrypted Vault Protection</span>
             </div>
             <div className="dv-about-trust-chip">
               <CheckCircle2 size={13} color="#16A34A" />
@@ -119,3 +119,4 @@ export default function AboutDocVaultModal({ isOpen, onClose }) {
     </div>
   );
 }
+

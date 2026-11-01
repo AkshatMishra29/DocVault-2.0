@@ -165,12 +165,7 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
       {/* Native App Top Bar */}
       <header className="dv-native-app-bar">
         <div className="dv-native-app-bar__brand">
-          <DocVaultLogo height={34} />
-          <span className="dv-native-app-bar__badge">Mobile Enclave</span>
-        </div>
-        <div className="dv-native-app-bar__status">
-          <span className="dv-native-ping-dot" />
-          <span>AES-256</span>
+          <DocVaultLogo height={36} />
         </div>
       </header>
 
@@ -213,7 +208,7 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
             <form onSubmit={handleLoginSubmit} className="dv-native-form">
               <div className="dv-native-card__intro">
                 <h2 className="dv-native-card__title">Sign In to Your Vault</h2>
-                <p className="dv-native-card__desc">Authenticate credentials to access your document enclave.</p>
+                <p className="dv-native-card__desc">Authenticate credentials to access your secure document vault.</p>
               </div>
 
               {loginError && (
@@ -499,7 +494,7 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
         {/* Bottom Security Assurance */}
         <footer className="dv-native-footer">
           <ShieldCheck size={14} color="#16A34A" />
-          <span>Hardware Isolated Enclave • End-to-End Vaulting</span>
+          <span>Hardware Isolated Protection • End-to-End Vaulting</span>
         </footer>
       </main>
 

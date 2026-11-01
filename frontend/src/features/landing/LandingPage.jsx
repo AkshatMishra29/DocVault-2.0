@@ -152,7 +152,7 @@ export default function LandingPage() {
             <div className="dv-lp-hero__trust-strip">
               <div className="dv-lp-trust-item">
                 <CheckCircle2 size={16} className="dv-lp-trust-icon" />
-                <span>AES-256 Multi-Tier Encryption</span>
+                <span>Multi-Tier Vault Encryption</span>
               </div>
               <div className="dv-lp-trust-item">
                 <CheckCircle2 size={16} className="dv-lp-trust-icon" />

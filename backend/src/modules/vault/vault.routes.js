@@ -108,8 +108,8 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
         systemHealth: {
           database: 'Operational (MongoDB Cloud)',
           ocrPipeline: 'Active (Tesseract + Sharp Engine)',
-          privacyGate: 'Enforced (Dual-Tier Enclave)',
-          encryptionEngine: 'AES-256-GCM Hardware accelerated',
+          privacyGate: 'Enforced (Dual-Tier Vault)',
+          encryptionEngine: 'Hardware Accelerated Vault Encryption',
           serverTime: new Date().toISOString()
         }
       }

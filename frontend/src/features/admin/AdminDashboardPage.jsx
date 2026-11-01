@@ -70,7 +70,7 @@ export default function AdminDashboardPage() {
           <div className="dv-admin-hero__info">
             <div className="dv-admin-badge">
               <span className="dv-admin-pulse" />
-              <span>Platform Core v2.6 • Hardware Enclave Online</span>
+              <span>Platform Core v2.6 • Hardware Security Online</span>
             </div>
             <h2 className="dv-admin-hero__title">System Administration & Telemetry</h2>
             <p className="dv-admin-hero__desc">
@@ -148,7 +148,7 @@ export default function AdminDashboardPage() {
               <span className="dv-health-label">Cryptographic Core</span>
               <span className="dv-health-value">
                 <span className="dv-health-dot dv-health-dot--green" />
-                {systemHealth.encryptionEngine || "AES-256-GCM Dual Tier"}
+                {systemHealth.encryptionEngine || "Dual-Tier Vault Encryption"}
               </span>
             </div>
           </div>
@@ -397,3 +397,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+

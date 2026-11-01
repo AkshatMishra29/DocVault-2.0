@@ -14,14 +14,14 @@
 .dv-native-app-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 4px 16px 4px;
+  justify-content: center;
+  padding: 12px 4px 18px 4px;
 }
 
 .dv-native-app-bar__brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
 }
 
 .dv-native-app-bar__badge {
@@ -427,3 +427,4 @@
   font-weight: 600;
   color: #6B7280;
 }
+
