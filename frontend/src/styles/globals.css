@@ -51,3 +51,15 @@ img, svg {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
+
+/* Suppress redundant browser native password reveal eye icons (Edge/Windows/WebKit) */
+input::-ms-reveal,
+input::-ms-clear,
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}

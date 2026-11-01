@@ -18,10 +18,12 @@ export default function PasswordInput({
   maxLength,
   disabled = false,
   className = '',
+  showToggle,
   ...props
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === 'password';
+  const hasToggle = showToggle !== undefined ? showToggle : isPassword;
   const effectiveType = isPassword ? (showPassword ? 'text' : 'password') : type;
 
   return (
@@ -54,11 +56,11 @@ export default function PasswordInput({
           autoComplete={autoComplete}
           maxLength={maxLength}
           disabled={disabled}
-          className={`dv-auth-input-field ${Icon ? 'dv-auth-input-field--has-icon' : ''} ${isPassword ? 'dv-auth-input-field--has-toggle' : ''}`}
+          className={`dv-auth-input-field ${Icon ? 'dv-auth-input-field--has-icon' : ''} ${hasToggle ? 'dv-auth-input-field--has-toggle' : ''}`}
           {...props}
         />
 
-        {isPassword && (
+        {hasToggle && (
           <button
             type="button"
             className="dv-auth-input-toggle-btn"
