@@ -1,31 +1,53 @@
 /* ==========================================================================
-   DOCVAULT EDITORIAL PUBLIC NAVBAR
+   DOCVAULT FLAGSHIP FLOATING CAPSULE NAVBAR (REDESIGNED FROM SCRATCH)
    ========================================================================== */
 
-.dv-public-nav {
+/* Outer Sticky Positioning Wrapper */
+.dv-nav-wrapper {
   position: sticky;
-  top: 0;
+  top: 16px;
   z-index: 1000;
-  background-color: rgba(248, 245, 241, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(216, 204, 195, 0.65);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  pointer-events: none; /* Allows clicks around the floating capsule */
+  padding: 0 24px;
+  box-sizing: border-box;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.dv-public-nav__container {
-  max-width: 1360px;
+/* Floating Dynamic Island Capsule */
+.dv-nav-capsule {
+  pointer-events: auto; /* Re-enable click on the navbar itself */
+  max-width: 1240px;
   margin: 0 auto;
-  height: 80px;
-  padding: 0 36px;
+  height: 64px;
+  padding: 0 20px 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(216, 204, 195, 0.75);
+  border-radius: 9999px;
+  box-shadow: 
+    0 10px 30px -8px rgba(28, 19, 16, 0.08),
+    0 2px 6px -1px rgba(28, 19, 16, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Brand Logo */
-.dv-public-nav__logo {
+/* Scrolled Elevation State */
+.dv-nav-wrapper--scrolled .dv-nav-capsule {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(216, 204, 195, 0.95);
+  box-shadow: 
+    0 16px 40px -8px rgba(28, 19, 16, 0.12),
+    0 4px 12px -2px rgba(28, 19, 16, 0.04);
+  transform: translateY(-2px);
+}
+
+/* Brand Identity Wrap */
+.dv-nav-brand {
   display: flex;
   align-items: center;
   text-decoration: none;
@@ -33,74 +55,68 @@
   transition: transform 0.2s ease;
 }
 
-.dv-public-nav__logo:hover {
+.dv-nav-brand:hover {
   transform: scale(1.02);
 }
 
-/* Center Navigation Links - Floating Editorial Pill Style */
-.dv-public-nav__links {
+/* Center Desktop Navigation Menu */
+.dv-nav-menu {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.6);
-  padding: 4px 8px;
-  border-radius: 9999px;
-  border: 1px solid rgba(216, 204, 195, 0.5);
-  box-shadow: 0 2px 8px rgba(28, 19, 16, 0.03);
+  gap: 4px;
 }
 
-.dv-public-nav__link {
-  font-family: var(--font-ui, 'Manrope', sans-serif);
+.dv-nav-link {
+  font-family: var(--font-ui, 'Manrope', -apple-system, sans-serif);
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-text-secondary, #5C524C);
+  color: #5C524C;
   text-decoration: none;
   padding: 8px 16px;
   border-radius: 9999px;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
 }
 
-.dv-public-nav__link:hover {
-  color: var(--color-text-primary, #1C1310);
-  background-color: #FFFFFF;
-  box-shadow: 0 1px 4px rgba(28, 19, 16, 0.06);
+.dv-nav-link:hover {
+  color: #1C1310;
+  background-color: rgba(28, 19, 16, 0.05);
 }
 
-/* Action Controls & Live Status Pill */
-.dv-public-nav__actions {
+/* Right Action Controls */
+.dv-nav-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-shrink: 0;
 }
 
-/* Live Security Status Pill */
-.dv-public-nav__security-pill {
+/* Live Security Status Badge */
+.dv-nav-status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   padding: 6px 12px;
   background-color: rgba(40, 122, 82, 0.08);
-  border: 1px solid rgba(40, 122, 82, 0.25);
+  border: 1px solid rgba(40, 122, 82, 0.22);
   border-radius: 9999px;
+  font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 12px;
   font-weight: 700;
   color: #287A52;
-  letter-spacing: 0.02em;
   user-select: none;
 }
 
-.dv-nav-pulse-dot {
-  width: 7px;
-  height: 7px;
+.dv-nav-status-pulse {
+  width: 6.5px;
+  height: 6.5px;
   border-radius: 50%;
   background-color: #287A52;
   box-shadow: 0 0 0 0 rgba(40, 122, 82, 0.6);
-  animation: dv-nav-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  animation: dv-capsule-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
-@keyframes dv-nav-pulse {
+@keyframes dv-capsule-pulse {
   0% {
     transform: scale(0.95);
     box-shadow: 0 0 0 0 rgba(40, 122, 82, 0.6);
@@ -115,104 +131,222 @@
   }
 }
 
-.dv-nav-shield-icon {
+.dv-nav-status-icon {
   color: #287A52;
 }
 
-/* Sign In Link */
-.dv-public-nav__login {
+/* Auth Buttons Container */
+.dv-nav-auth-actions,
+.dv-nav-user-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Sign In Ghost Button */
+.dv-nav-btn-ghost {
   font-family: var(--font-ui, 'Manrope', sans-serif);
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--color-text-primary, #1C1310);
+  color: #1C1310;
   text-decoration: none;
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: 9999px;
   transition: all 0.2s ease;
 }
 
-.dv-public-nav__login:hover {
-  color: var(--color-primary, #FD2B06);
-  background-color: rgba(28, 19, 16, 0.04);
+.dv-nav-btn-ghost:hover {
+  color: #FD2B06;
+  background-color: rgba(253, 43, 6, 0.05);
 }
 
-/* Primary CTA Button */
-.dv-public-nav__btn-primary {
+/* Primary Capsule CTA Button */
+.dv-nav-btn-primary {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 22px;
-  background-color: var(--color-primary, #FD2B06);
+  gap: 7px;
+  height: 40px;
+  padding: 0 18px;
+  background-color: #FD2B06;
   color: #FFFFFF !important;
   border-radius: 9999px;
   font-family: var(--font-ui, 'Manrope', sans-serif);
-  font-size: 14.5px;
+  font-size: 13.5px;
   font-weight: 700;
   letter-spacing: 0.01em;
   text-decoration: none;
+  box-shadow: 0 3px 12px rgba(253, 43, 6, 0.28);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 14px rgba(253, 43, 6, 0.28);
+  white-space: nowrap;
 }
 
-.dv-public-nav__btn-primary:hover {
-  background-color: var(--color-primary-hover, #E02504);
-  transform: translateY(-1.5px);
-  box-shadow: 0 6px 18px rgba(253, 43, 6, 0.36);
+.dv-nav-btn-primary:hover {
+  background-color: #E02504;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(253, 43, 6, 0.36);
 }
 
-.dv-public-nav__btn-primary:active {
+.dv-nav-btn-primary:active {
   transform: translateY(0);
 }
 
 /* Lock Vault Button (Authenticated State) */
-.dv-public-nav__btn-lock {
+.dv-nav-btn-lock {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 40px;
+  height: 38px;
   padding: 0 14px;
   border-radius: 9999px;
   background: rgba(198, 59, 46, 0.08);
   color: #C63B2E;
   border: 1px solid rgba(198, 59, 46, 0.22);
   font-family: var(--font-ui, 'Manrope', sans-serif);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.dv-public-nav__btn-lock:hover {
+.dv-nav-btn-lock:hover {
   background: rgba(198, 59, 46, 0.14);
   border-color: #C63B2E;
 }
 
-/* Tablet & Mobile Media Queries */
-@media (max-width: 1040px) {
-  .dv-public-nav__links {
-    display: none;
-  }
+/* Mobile Toggle Hamburger Button */
+.dv-nav-mobile-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(28, 19, 16, 0.04);
+  border: 1px solid rgba(216, 204, 195, 0.7);
+  color: #1C1310;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
-  .dv-public-nav__container {
-    padding: 0 24px;
-    height: 72px;
+.dv-nav-mobile-toggle:hover {
+  background-color: rgba(28, 19, 16, 0.08);
+}
+
+/* ==========================================================================
+   MOBILE DROPDOWN SHEET
+   ========================================================================== */
+
+.dv-nav-mobile-sheet {
+  pointer-events: auto;
+  max-width: 1240px;
+  margin: 10px auto 0 auto;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(216, 204, 195, 0.85);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 
+    0 20px 48px -12px rgba(28, 19, 16, 0.14),
+    0 2px 8px rgba(28, 19, 16, 0.04);
+  animation: dv-sheet-entrance 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes dv-sheet-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
-@media (max-width: 640px) {
-  .dv-public-nav__security-pill {
+.dv-nav-mobile-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.dv-nav-mobile-link {
+  font-family: var(--font-ui, 'Manrope', sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: #1C1310;
+  text-decoration: none;
+  padding: 12px 16px;
+  border-radius: 12px;
+  transition: background-color 0.15s ease;
+}
+
+.dv-nav-mobile-link:hover {
+  background-color: #F8F5F1;
+  color: #FD2B06;
+}
+
+.dv-nav-mobile-footer {
+  padding-top: 14px;
+  border-top: 1px solid rgba(216, 204, 195, 0.6);
+}
+
+.dv-nav-mobile-cta-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dv-nav-btn-ghost--full,
+.dv-nav-btn-primary--full,
+.dv-nav-btn-lock--full {
+  width: 100%;
+  justify-content: center;
+  height: 46px;
+  font-size: 14.5px;
+}
+
+/* ==========================================================================
+   BREAKPOINTS
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .dv-nav-menu {
     display: none;
   }
 
-  .dv-public-nav__container {
-    padding: 0 16px;
-    height: 66px;
+  .dv-nav-status-badge {
+    display: none;
   }
 
-  .dv-public-nav__btn-primary {
-    height: 40px;
+  .dv-nav-mobile-toggle {
+    display: flex;
+  }
+
+  .dv-nav-wrapper {
     padding: 0 16px;
-    font-size: 13.5px;
+  }
+
+  .dv-nav-capsule {
+    height: 60px;
+    padding: 0 12px 0 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .dv-nav-wrapper {
+    top: 12px;
+    padding: 0 12px;
+  }
+
+  .dv-nav-auth-actions .dv-nav-btn-ghost {
+    display: none;
+  }
+
+  .dv-nav-btn-primary {
+    height: 38px;
+    padding: 0 14px;
+    font-size: 13px;
   }
 }
