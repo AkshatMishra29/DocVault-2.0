@@ -20,11 +20,16 @@
 .dv-brand-logo__img {
   object-fit: contain;
   display: block;
-  transition: transform 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
 }
 
 .dv-brand-logo:hover .dv-brand-logo__img {
-  transform: scale(1.05);
+  transform: scale(1.04);
+  filter: drop-shadow(0 4px 16px rgba(253, 43, 6, 0.25));
+}
+
+[data-theme="dark"] .dv-brand-logo__img {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.85)) brightness(1.08);
 }
 
 .dv-brand-logo__text {

@@ -48,7 +48,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 36px 12px 36px;
+  padding: 14px 32px 4px 32px;
   width: 100%;
   box-sizing: border-box;
   flex-shrink: 0;
@@ -60,9 +60,9 @@
 
 .dv-auth-theme-btn {
   margin-left: auto;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
   background-color: var(--color-auth-surface, #FFFFFF);
   border: 1px solid var(--color-auth-border, #D8CCC3);
   display: flex;
@@ -89,8 +89,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 16px 32px 36px 32px;
+  justify-content: center;
+  padding: 4px 24px 14px 24px;
   box-sizing: border-box;
   width: 100%;
   min-height: min-content;

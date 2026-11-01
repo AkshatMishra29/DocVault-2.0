@@ -1,4 +1,5 @@
 import React from 'react';
+import DocVaultLogoImg from '../../../assets/DocVault Logo.png';
 import './DocVaultLogo.css';
 
 export function DocVaultLogoIcon({ size = 36, className = "" }) {
@@ -105,15 +106,33 @@ export function DocVaultLogoIcon({ size = 36, className = "" }) {
 export default function DocVaultLogo({ 
   height = 40, 
   variant = 'default', // 'default' (dark text), 'light' (white text), 'icon-only'
-  className = ''
+  className = '',
+  useImage = true
 }) {
+  if (variant === 'icon-only') {
+    return (
+      <div className={`dv-brand-logo dv-brand-logo--icon-only ${className}`}>
+        <DocVaultLogoIcon size={height} />
+      </div>
+    );
+  }
+
   return (
     <div className={`dv-brand-logo dv-brand-logo--${variant} ${className}`}>
-      <DocVaultLogoIcon size={height} />
-      {variant !== 'icon-only' && (
-        <span className="dv-brand-logo__text" style={{ fontSize: `${Math.round(height * 0.52)}px` }}>
-          Doc<span className="dv-brand-logo__accent">Vault</span>
-        </span>
+      {useImage ? (
+        <img 
+          src={DocVaultLogoImg} 
+          alt="DocVault - Secure • Organize • Access" 
+          style={{ height: `${height}px`, width: 'auto' }}
+          className="dv-brand-logo__img" 
+        />
+      ) : (
+        <>
+          <DocVaultLogoIcon size={height} />
+          <span className="dv-brand-logo__text" style={{ fontSize: `${Math.round(height * 0.52)}px` }}>
+            Doc<span className="dv-brand-logo__accent">Vault</span>
+          </span>
+        </>
       )}
     </div>
   );
