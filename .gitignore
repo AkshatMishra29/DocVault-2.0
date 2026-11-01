@@ -32,6 +32,10 @@ progress-report.md
 PROGRESS_REPORT*
 progress_report*
 
+# OCR Models & Tesseract Cache
+*.traineddata
+*.traineddata.gz
+
 # OS Files & Logs
 .DS_Store
 *.log
