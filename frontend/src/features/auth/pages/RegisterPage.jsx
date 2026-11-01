@@ -221,8 +221,9 @@ export default function RegisterPage() {
             {/* PIN Configuration: 4 vs 6 Digits */}
             <div className="dv-pin-config-section">
               <div className="dv-pin-config-header">
-                <label className="dv-input-label">
-                  Vault Security PIN <span className="dv-required-star">*</span>
+                <label className="dv-auth-input-label" htmlFor="pin">
+                  <span>Vault Security PIN</span>
+                  <span className="dv-required-star">*</span>
                 </label>
                 <div className="dv-pin-len-toggle">
                   <button

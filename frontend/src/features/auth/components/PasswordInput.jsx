@@ -24,15 +24,20 @@ export default function PasswordInput({
   const effectiveType = isPassword ? (showPassword ? 'text' : 'password') : type;
 
   return (
-    <div className={`dv-input-group ${error ? 'dv-input-group--error' : ''} ${className}`}>
+    <div className={`dv-auth-input-group ${error ? 'dv-auth-input-group--error' : ''} ${className}`}>
       {label && (
-        <label className="dv-input-label" htmlFor={name}>
-          {label} {required && <span className="dv-required-star">*</span>}
+        <label className="dv-auth-input-label" htmlFor={name}>
+          <span>{label}</span>
+          {required && <span className="dv-required-star">*</span>}
         </label>
       )}
 
-      <div className="dv-input-wrapper">
-        {Icon && <Icon size={16} className="dv-input-prefix-icon" />}
+      <div className="dv-auth-input-wrapper">
+        {Icon && (
+          <span className="dv-auth-input-prefix-icon" aria-hidden="true">
+            <Icon size={18} />
+          </span>
+        )}
 
         <input
           id={name}
@@ -45,30 +50,29 @@ export default function PasswordInput({
           autoComplete={autoComplete}
           maxLength={maxLength}
           disabled={disabled}
-          className={`dv-input-field ${Icon ? 'dv-input-field--has-icon' : ''} ${isPassword ? 'dv-input-field--has-toggle' : ''}`}
+          className={`dv-auth-input-field ${Icon ? 'dv-auth-input-field--has-icon' : ''} ${isPassword ? 'dv-auth-input-field--has-toggle' : ''}`}
           {...props}
         />
 
         {isPassword && (
           <button
             type="button"
-            className="dv-password-toggle-btn"
+            className="dv-auth-input-toggle-btn"
             onClick={() => setShowPassword(!showPassword)}
             title={showPassword ? 'Hide password' : 'Show password'}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
             tabIndex={-1}
           >
-            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         )}
       </div>
 
       {error ? (
-        <span className="dv-input-error-msg">{error}</span>
+        <span className="dv-auth-input-error-msg">{error}</span>
       ) : helperText ? (
-        <span className="dv-input-helper-msg">{helperText}</span>
+        <span className="dv-auth-input-helper-msg">{helperText}</span>
       ) : null}
     </div>
   );
 }
-
