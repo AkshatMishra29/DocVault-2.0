@@ -61,3 +61,4 @@ export default function PinKeypad({ onDigit, onBackspace, onClear, disabled = fa
     </div>
   );
 }
+

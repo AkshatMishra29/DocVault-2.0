@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { CheckCircle2, ShieldCheck, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
-import DocVaultLogo from "../../../components/common/DocVaultLogo/DocVaultLogo";
-import Card from "../../../components/common/Card/Card";
-import Button from "../../../components/common/Button/Button";
+import AuthLayout from "../components/AuthLayout";
+import AuthHeader from "../components/AuthHeader";
 import { verifyEmailLinkSignIn } from "../../../services/firebase";
 import { useAuth } from "../context/AuthContext";
 import "./Auth.css";
@@ -83,139 +82,122 @@ export default function AuthVerifiedPage() {
   }, []);
 
   return (
-    <div className="dv-auth-page-centered">
-      <div className="dv-auth-container--pin" style={{ maxWidth: "440px" }}>
-        <div className="dv-auth-brand" style={{ textAlign: "center", marginBottom: "24px" }}>
-          <Link to="/">
-            <DocVaultLogo height={42} />
-          </Link>
+    <AuthLayout brandVariant="otp">
+      {status === "verifying" && (
+        <div style={{ textAlign: "center", padding: "20px 8px" }}>
+          <div
+            style={{
+              width: "64px",
+              height: "64px",
+              borderRadius: "50%",
+              background: "rgba(253, 43, 6, 0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 20px",
+              color: "var(--color-auth-cta, #FD2B06)",
+            }}
+          >
+            <Loader2 size={32} className="spin-animation" />
+          </div>
+          <AuthHeader
+            badgeText="SECURITY VERIFICATION"
+            title="Verifying link..."
+            subtitle="Cryptographically validating your authentication session."
+          />
         </div>
+      )}
 
-        <Card padding="lg" className="dv-auth-card" style={{ textAlign: "center" }}>
-          {status === "verifying" && (
-            <div style={{ padding: "24px 8px" }}>
-              <div
-                style={{
-                  width: "64px",
-                  height: "64px",
-                  borderRadius: "50%",
-                  background: "rgba(1, 90, 71, 0.12)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 20px",
-                  color: "var(--color-primary)",
-                }}
-              >
-                <Loader2 size={32} className="spin-animation" />
-              </div>
-              <h2 className="dv-auth-card__title" style={{ fontSize: "20px", marginBottom: "8px" }}>
-                Verifying Secure Link...
-              </h2>
-              <p className="dv-auth-card__subtitle">
-                Cryptographically authenticating your DocVault session without passwords.
-              </p>
-            </div>
-          )}
+      {status === "verified" && (
+        <div style={{ textAlign: "center", padding: "16px 8px" }}>
+          <div
+            style={{
+              width: "64px",
+              height: "64px",
+              borderRadius: "50%",
+              background: "rgba(40, 122, 82, 0.12)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 20px",
+              color: "var(--color-auth-success, #287A52)",
+            }}
+          >
+            <CheckCircle2 size={36} />
+          </div>
 
-          {status === "verified" && (
-            <div style={{ padding: "16px 8px" }}>
-              <div
-                style={{
-                  width: "64px",
-                  height: "64px",
-                  borderRadius: "50%",
-                  background: "rgba(16, 185, 129, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 20px",
-                  color: "#10b981",
-                }}
-              >
-                <CheckCircle2 size={36} />
-              </div>
+          <AuthHeader
+            badgeText="VERIFICATION SUCCESSFUL"
+            title="Account verified!"
+            subtitle={`Welcome back, ${userEmail}. Your credentials have been authenticated.`}
+          />
 
-              <h2 className="dv-auth-card__title" style={{ fontSize: "22px", color: "var(--color-text-primary)", marginBottom: "8px" }}>
-                Account Verified!
-              </h2>
+          <div
+            style={{
+              padding: "12px",
+              borderRadius: "10px",
+              background: "var(--color-auth-panel-light, #F2ECE6)",
+              border: "1px solid var(--color-auth-border, #D8CCC3)",
+              fontFamily: "var(--font-ui, 'Manrope', sans-serif)",
+              fontSize: "13px",
+              color: "var(--color-auth-text-dark, #1C1310)",
+              marginBottom: "20px",
+            }}
+          >
+            Redirecting in <strong>{countdown}s</strong>...
+          </div>
 
-              <p className="dv-auth-card__subtitle" style={{ fontSize: "14px", marginBottom: "20px" }}>
-                Welcome back, <strong style={{ color: "var(--color-primary)" }}>{userEmail}</strong>.<br />
-                Your credentials have been securely verified.
-              </p>
-
-              <div
-                style={{
-                  padding: "12px",
-                  borderRadius: "8px",
-                  background: "var(--color-surface-secondary)",
-                  border: "1px solid var(--color-border)",
-                  fontSize: "13px",
-                  color: "var(--color-text-secondary)",
-                  marginBottom: "20px",
-                }}
-              >
-                Redirecting to your vault overview in <strong>{countdown}s</strong>...
-              </div>
-
-              <Button
-                variant="primary"
-                size="lg"
-                fullWidth
-                icon={ArrowRight}
-                iconPosition="right"
-                onClick={() => navigate("/enter-pin", { state: { email: userEmail } })}
-              >
-                Proceed to Vault Unlock
-              </Button>
-            </div>
-          )}
-
-          {status === "error" && (
-            <div style={{ padding: "16px 8px" }}>
-              <div
-                style={{
-                  width: "64px",
-                  height: "64px",
-                  borderRadius: "50%",
-                  background: "rgba(220, 38, 38, 0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 20px",
-                  color: "#dc2626",
-                }}
-              >
-                <AlertCircle size={36} />
-              </div>
-
-              <h2 className="dv-auth-card__title" style={{ fontSize: "20px", color: "#dc2626", marginBottom: "8px" }}>
-                Verification Failed
-              </h2>
-
-              <p className="dv-auth-card__subtitle" style={{ fontSize: "13.5px", marginBottom: "24px" }}>
-                {errorMessage}
-              </p>
-
-              <Button
-                variant="primary"
-                size="md"
-                fullWidth
-                onClick={() => navigate("/login")}
-              >
-                Return to Login
-              </Button>
-            </div>
-          )}
-        </Card>
-
-        <div className="dv-auth-security-notice" style={{ marginTop: "24px" }}>
-          <ShieldCheck size={16} color="var(--color-primary)" />
-          <span>Zero-Knowledge Architecture • Enterprise Encrypted Vault</span>
+          <button
+            type="button"
+            className="dv-auth-submit-btn"
+            onClick={() => navigate("/enter-pin", { state: { email: userEmail } })}
+          >
+            <span>Proceed to vault unlock</span>
+            <ArrowRight size={16} />
+          </button>
         </div>
+      )}
+
+      {status === "error" && (
+        <div style={{ textAlign: "center", padding: "16px 8px" }}>
+          <div
+            style={{
+              width: "64px",
+              height: "64px",
+              borderRadius: "50%",
+              background: "#FEF2F2",
+              border: "1px solid #FECACA",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 20px",
+              color: "var(--color-auth-error, #C63B2E)",
+            }}
+          >
+            <AlertCircle size={36} />
+          </div>
+
+          <AuthHeader
+            badgeText="VERIFICATION ERROR"
+            title="Link verification failed"
+            subtitle={errorMessage}
+          />
+
+          <button
+            type="button"
+            className="dv-auth-submit-btn"
+            onClick={() => navigate("/login")}
+          >
+            <span>Return to sign in</span>
+            <ArrowRight size={16} />
+          </button>
+        </div>
+      )}
+
+      <div className="dv-auth-security-note">
+        <ShieldCheck size={14} className="dv-auth-security-note-icon" />
+        <span>Your documents. Your privacy. Your control.</span>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
-

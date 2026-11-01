@@ -74,3 +74,4 @@ export default function OtpInput({ value = '', onChange, disabled = false, hasEr
     </div>
   );
 }
+

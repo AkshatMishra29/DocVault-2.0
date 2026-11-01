@@ -11,7 +11,6 @@ import AuthHeader from "../components/AuthHeader";
 import AuthAlert from "../components/AuthAlert";
 import PinInput from "../components/PinInput";
 import PinKeypad from "../components/PinKeypad";
-import Button from "../../../components/common/Button/Button";
 
 export default function EnterPinPage() {
   const [pin, setPin] = useState("");
@@ -184,11 +183,11 @@ export default function EnterPinPage() {
   const isLocked = lockoutRemaining > 0;
 
   return (
-    <AuthLayout>
+    <AuthLayout brandVariant="pin">
       <AuthHeader
-        badgeText="Security Barrier 2"
-        title="Unlock your vault"
-        subtitle="Step 2: Enter your personal security PIN to decrypt your documents."
+        badgeText="VAULT SECURITY"
+        title="Unlock your vault."
+        subtitle="Enter your personal security PIN to decrypt your documents."
       />
 
       {/* Account Email Identification Pill */}
@@ -204,7 +203,7 @@ export default function EnterPinPage() {
       {/* Lockout Warning State */}
       {isLocked ? (
         <div className="dv-lockout-box" role="alert">
-          <Clock size={36} color="#DC2626" />
+          <Clock size={36} color="#C63B2E" />
           <h3 className="dv-lockout-title">Vault Temporarily Locked</h3>
           <p className="dv-lockout-desc">
             Too many consecutive incorrect attempts. Protection protocol active.
@@ -228,14 +227,14 @@ export default function EnterPinPage() {
           <p className="dv-biometric-title">Touch ID / Fingerprint Ready</p>
           <span className="dv-biometric-sub">Tap the sensor to unlock your personal vault</span>
 
-          <Button
-            variant="outline"
-            size="md"
+          <button
+            type="button"
             onClick={() => setUsePinFallback(true)}
+            className="dv-auth-switch-btn"
             style={{ marginTop: "16px" }}
           >
             Use Security PIN Instead
-          </Button>
+          </button>
         </div>
       ) : (
         /* PIN Input & Numeric Keypad */
@@ -254,18 +253,19 @@ export default function EnterPinPage() {
             disabled={loading || isLocked}
           />
 
-          <Button
-            variant="primary"
-            size="lg"
+          <button
+            type="button"
             onClick={() => handleUnlock(pin)}
-            loading={loading}
             disabled={pin.length !== pinLength || loading || isLocked}
-            icon={ArrowRight}
-            iconPosition="right"
             className="dv-auth-submit-btn"
           >
-            {loading ? "Decrypting Vault..." : "Unlock Vault"}
-          </Button>
+            {loading ? "Decrypting vault..." : (
+              <>
+                <span>Unlock vault</span>
+                <ArrowRight size={16} />
+              </>
+            )}
+          </button>
 
           {hasBiometrics && (
             <button
@@ -292,8 +292,8 @@ export default function EnterPinPage() {
       </div>
 
       <div className="dv-auth-security-note">
-        <ShieldCheck size={14} color="#059669" />
-        <span>Protected by two-stage cryptographic authentication & PIN lock</span>
+        <ShieldCheck size={14} className="dv-auth-security-note-icon" />
+        <span>Your documents. Your privacy. Your control.</span>
       </div>
     </AuthLayout>
   );

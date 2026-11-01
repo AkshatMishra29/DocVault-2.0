@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../../../services/api";
 import { 
   User, Mail, Lock, Phone, KeyRound, ShieldCheck, ArrowRight, 
-  ArrowLeft, RefreshCw, Sparkles 
+  ArrowLeft 
 } from "lucide-react";
 
 import AuthLayout from "../components/AuthLayout";
@@ -14,7 +14,6 @@ import PasswordInput from "../components/PasswordInput";
 import PasswordStrengthMeter from "../components/PasswordStrengthMeter";
 import PinStrengthIndicator from "../components/PinStrengthIndicator";
 import OtpInput from "../components/OtpInput";
-import Button from "../../../components/common/Button/Button";
 import { analyzePasswordStrength } from "../../shield/services/passwordStrengthService";
 import { analyzePinSecurity } from "../../shield/services/pinSecurityService";
 
@@ -165,13 +164,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthLayout>
+    <AuthLayout brandVariant={step === "otp" ? "otp" : "register"}>
       {step === "form" ? (
         <>
           <AuthHeader
-            badgeText="Sovereign Vault Account"
-            title="Create your vault"
-            subtitle="Set up two-stage cryptographic protection for your personal records."
+            badgeText="CREATE YOUR ACCOUNT"
+            title="Get started with DocVault."
+            subtitle="Create an account and bring your important documents together."
           />
 
           {error && <AuthAlert type="error" message={error} />}
@@ -271,21 +270,22 @@ export default function RegisterPage() {
               disabled={loading}
             />
 
-            <Button
-              variant="primary"
-              size="lg"
+            <button
               type="submit"
-              loading={loading}
-              icon={ArrowRight}
-              iconPosition="right"
+              disabled={loading}
               className="dv-auth-submit-btn"
             >
-              {loading ? "Dispatching OTP..." : "Continue to Verification"}
-            </Button>
+              {loading ? "Dispatching code..." : (
+                <>
+                  <span>Create account</span>
+                  <ArrowRight size={16} />
+                </>
+              )}
+            </button>
           </form>
 
           <div className="dv-auth-footer-nav">
-            <span className="dv-auth-footer-text">Already registered your vault? </span>
+            <span className="dv-auth-footer-text">Already have an account? </span>
             <Link to="/login" className="dv-auth-footer-link">
               Sign in
             </Link>
@@ -305,9 +305,9 @@ export default function RegisterPage() {
           </button>
 
           <AuthHeader
-            badgeText="Step 2: Email Verification"
-            title="Verify your email"
-            subtitle={`Enter the six-digit code sent to ${formData.email}`}
+            badgeText="EMAIL VERIFICATION"
+            title="Check your inbox."
+            subtitle={`Enter the 6-digit verification code sent to ${formData.email}`}
           />
 
           {error && <AuthAlert type="error" message={error} />}
@@ -321,18 +321,18 @@ export default function RegisterPage() {
               hasError={Boolean(error)}
             />
 
-            <Button
-              variant="primary"
-              size="lg"
+            <button
               type="submit"
-              loading={loading}
               disabled={otp.length !== 6 || loading}
-              icon={ArrowRight}
-              iconPosition="right"
               className="dv-auth-submit-btn"
             >
-              {loading ? "Creating Vault Account..." : "Complete Vault Setup"}
-            </Button>
+              {loading ? "Creating vault..." : (
+                <>
+                  <span>Verify & complete setup</span>
+                  <ArrowRight size={16} />
+                </>
+              )}
+            </button>
           </form>
 
           <div className="dv-resend-box">
@@ -356,8 +356,8 @@ export default function RegisterPage() {
       )}
 
       <div className="dv-auth-security-note">
-        <ShieldCheck size={14} color="#059669" />
-        <span>Protected by two-stage cryptographic authentication & PIN lock</span>
+        <ShieldCheck size={14} className="dv-auth-security-note-icon" />
+        <span>Your documents. Your privacy. Your control.</span>
       </div>
     </AuthLayout>
   );

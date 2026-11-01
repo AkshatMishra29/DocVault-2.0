@@ -1,17 +1,19 @@
 .dv-auth-alert {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-2-5);
+  gap: 10px;
   padding: 10px 14px;
-  border-radius: var(--radius-md);
+  border-radius: 12px;
+  font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 12.5px;
   line-height: 1.45;
-  margin-bottom: var(--space-4);
+  margin-bottom: 16px;
+  box-sizing: border-box;
 }
 
 .dv-auth-alert__icon {
   flex-shrink: 0;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .dv-auth-alert__text {
@@ -19,19 +21,37 @@
 }
 
 .dv-auth-alert--error {
-  background-color: var(--color-danger-bg);
-  border: 1px solid var(--color-danger-border);
-  color: var(--color-danger);
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: var(--color-auth-error, #C63B2E);
+}
+
+[data-theme="dark"] .dv-auth-alert--error {
+  background-color: rgba(198, 59, 46, 0.15);
+  border-color: rgba(198, 59, 46, 0.35);
+  color: #F87171;
 }
 
 .dv-auth-alert--success {
-  background-color: var(--color-success-bg);
-  border: 1px solid var(--color-success-border);
-  color: var(--color-success);
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  color: var(--color-auth-success, #287A52);
+}
+
+[data-theme="dark"] .dv-auth-alert--success {
+  background-color: rgba(40, 122, 82, 0.15);
+  border-color: rgba(40, 122, 82, 0.35);
+  color: #4ADE80;
 }
 
 .dv-auth-alert--info {
-  background-color: var(--color-primary-subtle);
-  border: 1px solid rgba(1, 90, 71, 0.25);
-  color: var(--color-primary);
+  background-color: rgba(253, 43, 6, 0.08);
+  border: 1px solid rgba(253, 43, 6, 0.2);
+  color: var(--color-auth-cta, #FD2B06);
+}
+
+[data-theme="dark"] .dv-auth-alert--info {
+  background-color: rgba(253, 43, 6, 0.14);
+  border-color: rgba(253, 43, 6, 0.3);
+  color: #FF6647;
 }

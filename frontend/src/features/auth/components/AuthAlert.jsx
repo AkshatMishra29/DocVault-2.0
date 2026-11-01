@@ -14,3 +14,4 @@ export default function AuthAlert({ type = 'error', message, className = '' }) {
     </div>
   );
 }
+

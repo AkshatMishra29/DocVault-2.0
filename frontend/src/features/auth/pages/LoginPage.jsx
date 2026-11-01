@@ -47,11 +47,11 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthLayout>
+    <AuthLayout brandVariant="login">
       <AuthHeader
-        badgeText="Secure Authentication"
-        title="Welcome back"
-        subtitle="Sign in to continue to your secure document vault."
+        badgeText="PRIVATE ACCESS"
+        title="Welcome back."
+        subtitle="Sign in to access your personal document vault."
       />
 
       {error && <AuthAlert type="error" message={error} />}
@@ -72,7 +72,7 @@ export default function LoginPage() {
         />
 
         <PasswordInput
-          label="Vault Password"
+          label="Password"
           type="password"
           name="password"
           icon={Lock}
@@ -97,29 +97,30 @@ export default function LoginPage() {
           </label>
         </div>
 
-        <Button
-          variant="primary"
-          size="lg"
+        <button
           type="submit"
-          loading={loading}
-          icon={ArrowRight}
-          iconPosition="right"
+          disabled={loading}
           className="dv-auth-submit-btn"
         >
-          {loading ? "Verifying Credentials..." : "Continue to Vault"}
-        </Button>
+          {loading ? "Verifying credentials..." : (
+            <>
+              <span>Continue securely</span>
+              <ArrowRight size={16} />
+            </>
+          )}
+        </button>
       </form>
 
       <div className="dv-auth-footer-nav">
-        <span className="dv-auth-footer-text">Don't have a vault account? </span>
+        <span className="dv-auth-footer-text">Don't have an account? </span>
         <Link to="/register" className="dv-auth-footer-link">
-          Create vault
+          Create account
         </Link>
       </div>
 
       <div className="dv-auth-security-note">
-        <ShieldCheck size={14} color="#059669" />
-        <span>Protected by two-stage cryptographic authentication & PIN lock</span>
+        <ShieldCheck size={14} className="dv-auth-security-note-icon" />
+        <span>Your documents. Your privacy. Your control.</span>
       </div>
     </AuthLayout>
   );

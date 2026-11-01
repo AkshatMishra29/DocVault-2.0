@@ -2,56 +2,66 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
-  margin: var(--space-4) 0 var(--space-6);
+  gap: 12px;
+  margin: 16px 0 24px;
 }
 
 .dv-pin-slot {
-  width: 48px;
-  height: 54px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
+  width: 50px;
+  height: 56px;
+  border: 1.5px solid var(--color-auth-border, #D8CCC3);
+  border-radius: 12px;
+  background-color: var(--color-auth-input-bg, #FFFFFF);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
   box-sizing: border-box;
 }
 
+[data-theme="dark"] .dv-pin-slot {
+  background-color: var(--color-auth-input-bg, #1C1310);
+  border-color: var(--color-auth-border, #3D2F28);
+}
+
 .dv-pin-slot--current {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(1, 90, 71, 0.12);
+  border-color: var(--color-auth-cta, #FD2B06);
+  box-shadow: 0 0 0 3.5px var(--color-auth-focus-ring, rgba(253, 43, 6, 0.15));
 }
 
 .dv-pin-slot--filled {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-subtle);
+  border-color: var(--color-auth-coral, #EB6C3B);
+  background-color: var(--color-auth-panel-light, #F2ECE6);
+}
+
+[data-theme="dark"] .dv-pin-slot--filled {
+  background-color: #241A17;
+  border-color: var(--color-auth-coral, #EB6C3B);
 }
 
 .dv-pin-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background-color: var(--color-primary);
-  box-shadow: 0 0 6px rgba(1, 90, 71, 0.3);
+  background-color: var(--color-auth-cta, #FD2B06);
+  box-shadow: 0 0 8px rgba(253, 43, 6, 0.35);
   animation: dv-pin-pop 0.18s ease-out;
 }
 
 .dv-pin-digit {
-  font-family: var(--font-heading);
+  font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 22px;
-  font-weight: var(--font-extrabold);
-  color: var(--color-primary);
+  font-weight: 800;
+  color: var(--color-auth-cta, #FD2B06);
 }
 
 .dv-pin-display--error .dv-pin-slot {
-  border-color: var(--color-danger);
-  background-color: var(--color-danger-bg);
+  border-color: var(--color-auth-error, #C63B2E);
+  background-color: #FEF2F2;
 }
 
 .dv-pin-display--error .dv-pin-dot {
-  background-color: var(--color-danger);
+  background-color: var(--color-auth-error, #C63B2E);
 }
 
 @keyframes dv-pin-pop {

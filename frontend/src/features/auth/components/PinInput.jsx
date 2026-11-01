@@ -28,3 +28,4 @@ export default function PinInput({ length = 4, value = '', hasError = false, isM
     </div>
   );
 }
+

@@ -1,4 +1,32 @@
 :root {
+  /* 3D Editorial Authentication Palette (Dribbble 3D Reference) */
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-ui: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  --color-auth-bg: #F8F5F1;
+  --color-auth-panel: #D0AC9A;
+  --color-auth-panel-deep: #B8927E;
+  --color-auth-panel-light: #F2ECE6;
+  --color-auth-text-dark: #1C1310;
+  --color-auth-cta: #FD2B06;
+  --color-auth-cta-hover: #E02504;
+  --color-auth-cta-active: #C42003;
+  --color-auth-coral: #EB6C3B;
+  --color-auth-taupe: #BFB3AA;
+  --color-auth-soft-grey: #E4E4E3;
+  --color-auth-blue: #1A44CE;
+  --color-auth-muted: #766B65;
+  --color-auth-border: #D8CCC3;
+  --color-auth-border-focus: #FD2B06;
+  --color-auth-input-bg: #FFFFFF;
+  --color-auth-surface: #FFFFFF;
+  --color-auth-card-bg: #FFFFFF;
+  --color-auth-disabled: #EAE5E0;
+  --color-auth-disabled-text: #A89F98;
+  --color-auth-success: #287A52;
+  --color-auth-error: #C63B2E;
+  --color-auth-focus-ring: rgba(253, 43, 6, 0.16);
+
   /* DocVault Signature Brand Palette (Deep Emerald Green, Slate Black, White) */
   --color-primary: #015A47;          /* Primary Deep Emerald */
   --color-primary-hover: #014335;    /* Darker Emerald */
@@ -104,6 +132,20 @@
 }
 
 [data-theme="dark"] {
+  --color-auth-bg: #14100E;
+  --color-auth-panel: #2A1F1B;
+  --color-auth-panel-deep: #1F1613;
+  --color-auth-panel-light: #241A17;
+  --color-auth-text-dark: #F8F5F1;
+  --color-auth-muted: #A89F98;
+  --color-auth-border: #3D2F28;
+  --color-auth-input-bg: #1C1310;
+  --color-auth-surface: #1E1512;
+  --color-auth-card-bg: #1E1512;
+  --color-auth-disabled: #2B201B;
+  --color-auth-disabled-text: #665851;
+  --color-auth-soft-grey: #261D19;
+
   --color-bg: #090D16;
   --color-surface: #0F172A;
   --color-surface-white: #0F172A;

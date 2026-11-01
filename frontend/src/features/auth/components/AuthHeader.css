@@ -1,5 +1,9 @@
+/* ==========================================================================
+   DOCVAULT AUTH HEADER COMPONENT
+   ========================================================================== */
+
 .dv-auth-header {
-  margin-bottom: var(--space-5);
+  margin-bottom: 22px;
   display: flex;
   flex-direction: column;
 }
@@ -7,38 +11,55 @@
 .dv-auth-header__badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1-5);
+  gap: 6px;
+  font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-primary);
-  background-color: var(--color-primary-subtle);
-  border: 1px solid rgba(1, 90, 71, 0.2);
+  letter-spacing: 0.08em;
+  color: var(--color-auth-cta, #FD2B06);
+  background-color: rgba(253, 43, 6, 0.08);
+  border: 1px solid rgba(253, 43, 6, 0.2);
   padding: 3px 10px;
-  border-radius: var(--radius-full);
-  margin-bottom: var(--space-2);
+  border-radius: 9999px;
+  margin-bottom: 10px;
   align-self: flex-start;
+}
+
+[data-theme="dark"] .dv-auth-header__badge {
+  background-color: rgba(253, 43, 6, 0.15);
+  border-color: rgba(253, 43, 6, 0.3);
 }
 
 .dv-auth-header__badge-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: var(--color-accent);
+  background-color: var(--color-auth-cta, #FD2B06);
 }
 
 .dv-auth-header__title {
-  font-size: clamp(24px, 2.2vw, 30px);
-  font-weight: var(--font-extrabold);
-  letter-spacing: -0.03em;
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-1);
-  line-height: 1.2;
+  font-family: var(--font-display, 'DM Serif Display', Georgia, serif);
+  font-size: clamp(26px, 2.3vw, 32px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--color-auth-text-dark, #1C1310);
+  margin: 0 0 4px 0;
+  line-height: 1.18;
+}
+
+[data-theme="dark"] .dv-auth-header__title {
+  color: #F8F5F1;
 }
 
 .dv-auth-header__subtitle {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  font-family: var(--font-ui, 'Manrope', sans-serif);
+  font-size: 13.5px;
+  color: var(--color-auth-muted, #766B65);
   line-height: 1.45;
+  margin: 0;
+}
+
+[data-theme="dark"] .dv-auth-header__subtitle {
+  color: #A89F98;
 }

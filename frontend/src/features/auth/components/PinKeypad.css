@@ -1,56 +1,66 @@
 .dv-pin-keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-3);
-  max-width: 280px;
-  margin: 0 auto var(--space-5);
+  gap: 12px;
+  max-width: 290px;
+  margin: 0 auto 20px;
   width: 100%;
 }
 
 .dv-keypad-btn {
-  height: 54px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
+  height: 52px;
+  border-radius: 12px;
+  border: 1px solid var(--color-auth-border, #D8CCC3);
+  background-color: var(--color-auth-input-bg, #FFFFFF);
+  color: var(--color-auth-text-dark, #1C1310);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-heading);
+  font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 20px;
-  font-weight: var(--font-bold);
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--shadow-xs);
-  transition: all var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(28, 19, 16, 0.04);
+  transition: all 0.15s ease;
   user-select: none;
 }
 
+[data-theme="dark"] .dv-keypad-btn {
+  background-color: var(--color-auth-input-bg, #1C1310);
+  border-color: var(--color-auth-border, #3D2F28);
+  color: #F8F5F1;
+}
+
 .dv-keypad-btn:hover:not(:disabled) {
-  background-color: var(--color-surface-hover);
-  border-color: var(--color-border-hover);
+  background-color: var(--color-auth-panel-light, #F2ECE6);
+  border-color: var(--color-auth-coral, #EB6C3B);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 8px rgba(28, 19, 16, 0.08);
+}
+
+[data-theme="dark"] .dv-keypad-btn:hover:not(:disabled) {
+  background-color: #241A17;
 }
 
 .dv-keypad-btn:active:not(:disabled) {
   transform: translateY(0);
-  background-color: var(--color-primary-subtle);
-  border-color: var(--color-primary);
+  background-color: var(--color-auth-disabled, #EAE5E0);
+  border-color: var(--color-auth-cta, #FD2B06);
 }
 
 .dv-keypad-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .dv-keypad-btn--action {
   font-size: 13px;
-  font-weight: var(--font-semibold);
-  color: var(--color-text-secondary);
+  font-weight: 600;
+  color: var(--color-auth-muted, #766B65);
 }
 
 .dv-keypad-action-text {
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   font-size: 11px;
 }

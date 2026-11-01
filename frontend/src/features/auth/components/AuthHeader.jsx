@@ -15,3 +15,4 @@ export default function AuthHeader({ title, subtitle, badgeText }) {
     </div>
   );
 }
+
