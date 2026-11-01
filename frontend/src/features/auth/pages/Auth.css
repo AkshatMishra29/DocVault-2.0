@@ -581,55 +581,62 @@
   text-decoration: underline;
 }
 
-/* Registration Grid Layout (Zero-Scroll Compact Layout) */
+/* Registration Grid Layout (Managed 652.983px Container) */
 .dv-auth-form-card--register {
   max-width: 530px !important;
   padding: 23px 28px 19px 28px !important;
   box-sizing: border-box;
+  height: 652.983px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden !important;
 }
 
 .dv-auth-form-card--register .dv-auth-header {
-  margin-bottom: 8px !important;
+  margin-bottom: 6px !important;
 }
 
 .dv-auth-form-card--register .dv-auth-header__title {
-  font-size: 22px !important;
+  font-size: 23px !important;
   margin-bottom: 2px !important;
 }
 
 .dv-auth-form-card--register .dv-auth-header__subtitle {
-  font-size: 12.5px !important;
+  font-size: 13px !important;
   line-height: 1.35 !important;
 }
 
 .dv-auth-form-card--register .dv-auth-google-btn {
-  height: 38px !important;
-  font-size: 13px !important;
-  gap: 8px !important;
-  border-radius: 10px !important;
+  height: 40px !important;
+  font-size: 13.5px !important;
+  gap: 10px !important;
+  border-radius: 11px !important;
 }
 
 .dv-auth-form-card--register .dv-auth-divider {
-  margin: 8px 0 8px !important;
-  gap: 8px !important;
+  margin: 10px 0 10px !important;
+  gap: 10px !important;
 }
 
 .dv-auth-form-card--register .dv-auth-divider-text {
-  font-size: 10.5px !important;
+  font-size: 11px !important;
 }
 
-/* Registration Form Compact Grid */
+/* Registration Form Managed Layout */
 .dv-auth-form--register {
   display: flex;
   flex-direction: column;
-  gap: 8px !important;
+  flex: 1;
+  justify-content: space-between;
+  gap: 0 !important;
   width: 100%;
 }
 
 .dv-auth-form--register .dv-reg-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px 12px;
+  gap: 10px 14px;
   width: 100%;
 }
 
@@ -642,7 +649,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .dv-pin-inline-header .dv-auth-input-label {
@@ -653,15 +660,15 @@
   display: flex;
   align-items: center;
   gap: 1px;
-  padding: 1px 2px;
+  padding: 1px 3px;
   border-radius: 6px;
   background-color: var(--color-auth-panel-light, #F2ECE6);
 }
 
 .dv-auth-form--register .dv-pin-len-btn {
-  padding: 2px 6px !important;
-  font-size: 10px !important;
-  border-radius: 4px !important;
+  padding: 2px 7px !important;
+  font-size: 10.5px !important;
+  border-radius: 5px !important;
   line-height: 1 !important;
 }
 
@@ -669,11 +676,11 @@
 .dv-auth-form--register .dv-auth-input-group {
   display: flex;
   flex-direction: column;
-  gap: 3px !important;
+  gap: 4px !important;
 }
 
 .dv-auth-form--register .dv-auth-input-label {
-  font-size: 12px !important;
+  font-size: 12.5px !important;
   font-weight: 700;
   margin-bottom: 0 !important;
   color: var(--color-auth-text-dark, #1C1310);
@@ -684,29 +691,29 @@
 }
 
 .dv-auth-form--register .dv-auth-input-field {
-  height: 38px !important;
-  font-size: 13px !important;
-  line-height: 38px !important;
-  border-radius: 9px !important;
-  padding: 0 12px !important;
+  height: 40px !important;
+  font-size: 13.5px !important;
+  line-height: 40px !important;
+  border-radius: 10px !important;
+  padding: 0 14px !important;
 }
 
 .dv-auth-form--register .dv-auth-input-field--has-icon {
-  padding-left: 36px !important;
+  padding-left: 38px !important;
 }
 
 .dv-auth-form--register .dv-auth-input-field--has-toggle {
-  padding-right: 36px !important;
+  padding-right: 38px !important;
 }
 
 .dv-auth-form--register .dv-auth-input-prefix-icon {
-  left: 11px !important;
-  width: 15px !important;
-  height: 15px !important;
+  left: 12px !important;
+  width: 16px !important;
+  height: 16px !important;
 }
 
 .dv-auth-form--register .dv-auth-input-toggle-btn {
-  right: 6px !important;
+  right: 7px !important;
   width: 26px !important;
   height: 26px !important;
 }
@@ -717,7 +724,7 @@
 }
 
 .dv-auth-form--register .dv-pwd-meter__bars {
-  height: 3px !important;
+  height: 3.5px !important;
   gap: 4px !important;
 }
 
@@ -734,17 +741,17 @@
   border-radius: 6px !important;
 }
 
-/* Compact Submit Button */
+/* Submit Button in Managed Layout */
 .dv-auth-form--register .dv-auth-submit-btn {
-  height: 40px !important;
-  font-size: 14px !important;
-  margin-top: 4px !important;
-  border-radius: 10px !important;
+  height: 42px !important;
+  font-size: 14.5px !important;
+  margin-top: 8px !important;
+  border-radius: 11px !important;
 }
 
 .dv-auth-form-card--register .dv-auth-footer-nav {
   margin-top: 8px !important;
-  font-size: 12.5px !important;
+  font-size: 13px !important;
 }
 
 .dv-auth-form-card--register .dv-auth-security-note {
@@ -754,6 +761,11 @@
 }
 
 @media (max-width: 580px) {
+  .dv-auth-form-card--register {
+    height: auto !important;
+    min-height: 652.983px;
+  }
+
   .dv-auth-form--register .dv-reg-grid {
     grid-template-columns: 1fr;
     gap: 8px;
