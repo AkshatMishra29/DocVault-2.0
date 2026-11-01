@@ -34,7 +34,8 @@ function getSmtpTransporter() {
  */
 async function sendViaResend({ apiKey, from, to, subject, html, text }) {
   console.log(`[EmailService] Attempting HTTPS dispatch via Resend API to: ${to}`);
-  const sender = from || process.env.RESEND_FROM || 'DocVault <onboarding@resend.dev>';
+  // If user has not configured a custom verified domain, default to Resend's free onboarding domain
+  const sender = process.env.RESEND_FROM || 'DocVault <onboarding@resend.dev>';
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
