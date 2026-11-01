@@ -1,9 +1,20 @@
 .dv-brand-logo {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   text-decoration: none;
   user-select: none;
+}
+
+.dv-brand-logo__svg {
+  display: block;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+}
+
+.dv-brand-logo:hover .dv-brand-logo__svg {
+  transform: scale(1.05);
+  filter: drop-shadow(0 4px 12px rgba(1, 90, 71, 0.3));
 }
 
 .dv-brand-logo__img {
@@ -24,8 +35,16 @@
   line-height: 1;
 }
 
+[data-theme="dark"] .dv-brand-logo__text {
+  color: #F8FAFC;
+}
+
 .dv-brand-logo__accent {
   color: #015A47; /* Logo Emerald Green */
+}
+
+[data-theme="dark"] .dv-brand-logo__accent {
+  color: #10B981;
 }
 
 .dv-brand-logo--light .dv-brand-logo__text {

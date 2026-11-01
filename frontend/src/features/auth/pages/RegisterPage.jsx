@@ -255,153 +255,183 @@ export default function RegisterPage() {
           </div>
 
           <form onSubmit={handleRequestOtp} className="dv-auth-form dv-auth-form--register">
-            <div className="dv-reg-grid">
-              {/* Row 1: Full Name & Email Address */}
-              <div>
-                <PasswordInput
-                  label="Full Name"
-                  type="text"
-                  name="name"
-                  icon={User}
-                  placeholder="e.g. John Doe"
-                  value={formData.name}
-                  onChange={(e) => handleChange("name", e.target.value)}
-                  required
-                  autoComplete="name"
-                  disabled={loading || googleLoading}
-                />
+            {/* Section 1: Account Details */}
+            <div className="dv-reg-section">
+              <div className="dv-reg-section-tag">
+                <span className="dv-reg-section-num">01</span>
+                <span className="dv-reg-section-name">Account Details</span>
               </div>
+              <div className="dv-reg-grid">
+                <div>
+                  <PasswordInput
+                    label="Full Name"
+                    type="text"
+                    name="name"
+                    icon={User}
+                    placeholder="e.g. John Doe"
+                    value={formData.name}
+                    onChange={(e) => handleChange("name", e.target.value)}
+                    required
+                    autoComplete="name"
+                    disabled={loading || googleLoading}
+                  />
+                </div>
 
-              <div>
-                <PasswordInput
-                  label="Email Address"
-                  type="email"
-                  name="email"
-                  icon={Mail}
-                  placeholder="your.email@domain.com"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  required
-                  autoComplete="email"
-                  disabled={loading || googleLoading}
-                />
-              </div>
-
-              {/* Row 2: Master Password & Confirm Password */}
-              <div>
-                <PasswordInput
-                  label="Master Password"
-                  type="password"
-                  name="password"
-                  icon={Lock}
-                  placeholder="Min. 8 characters"
-                  value={formData.password}
-                  onChange={(e) => handleChange("password", e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  disabled={loading || googleLoading}
-                />
-              </div>
-
-              <div>
-                <PasswordInput
-                  label="Confirm Password"
-                  type="password"
-                  name="confirmPassword"
-                  icon={Lock}
-                  placeholder="Repeat password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleChange("confirmPassword", e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  disabled={loading || googleLoading}
-                />
-              </div>
-
-              {/* Password Strength Meter */}
-              <div className="dv-reg-col-full">
-                <PasswordStrengthMeter advice={pwdAdvice} />
-              </div>
-
-              {/* Row 3: PIN Configuration Header */}
-              <div className="dv-reg-col-full">
-                <div className="dv-pin-config-header">
-                  <label className="dv-auth-input-label" htmlFor="pin">
-                    <span>Vault Security PIN</span>
-                    <span className="dv-required-star">*</span>
-                  </label>
-                  <div className="dv-pin-len-toggle">
-                    <button
-                      type="button"
-                      className={`dv-pin-len-btn ${formData.pinLength === 4 ? "dv-pin-len-btn--active" : ""}`}
-                      onClick={() => handlePinLengthChange(4)}
-                    >
-                      4 Digits
-                    </button>
-                    <button
-                      type="button"
-                      className={`dv-pin-len-btn ${formData.pinLength === 6 ? "dv-pin-len-btn--active" : ""}`}
-                      onClick={() => handlePinLengthChange(6)}
-                    >
-                      6 Digits
-                    </button>
-                  </div>
+                <div>
+                  <PasswordInput
+                    label="Email Address"
+                    type="email"
+                    name="email"
+                    icon={Mail}
+                    placeholder="your.email@domain.com"
+                    value={formData.email}
+                    onChange={(e) => handleChange("email", e.target.value)}
+                    required
+                    autoComplete="email"
+                    disabled={loading || googleLoading}
+                  />
                 </div>
               </div>
+            </div>
 
-              {/* Row 4: Vault PIN & Confirm PIN */}
-              <div>
-                <PasswordInput
-                  type="password"
-                  name="pin"
-                  icon={KeyRound}
-                  placeholder={`${formData.pinLength}-digit PIN`}
-                  value={formData.pin}
-                  onChange={(e) => handlePinChange("pin", e.target.value)}
-                  maxLength={formData.pinLength}
-                  required
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  disabled={loading || googleLoading}
-                />
+            {/* Section 2: Master Credentials */}
+            <div className="dv-reg-section">
+              <div className="dv-reg-section-tag">
+                <span className="dv-reg-section-num">02</span>
+                <span className="dv-reg-section-name">Master Credentials</span>
               </div>
+              <div className="dv-reg-grid">
+                <div>
+                  <PasswordInput
+                    label="Master Password"
+                    type="password"
+                    name="password"
+                    icon={Lock}
+                    placeholder="Min. 8 characters"
+                    value={formData.password}
+                    onChange={(e) => handleChange("password", e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    disabled={loading || googleLoading}
+                  />
+                </div>
 
-              <div>
-                <PasswordInput
-                  type="password"
-                  name="confirmPin"
-                  icon={KeyRound}
-                  placeholder={`Confirm ${formData.pinLength}-digit PIN`}
-                  value={formData.confirmPin}
-                  onChange={(e) => handlePinChange("confirmPin", e.target.value)}
-                  maxLength={formData.pinLength}
-                  required
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  disabled={loading || googleLoading}
-                />
-              </div>
+                <div>
+                  <PasswordInput
+                    label="Confirm Password"
+                    type="password"
+                    name="confirmPassword"
+                    icon={Lock}
+                    placeholder="Repeat password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleChange("confirmPassword", e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    disabled={loading || googleLoading}
+                  />
+                </div>
 
-              {/* PIN Strength Indicator */}
-              {pinAdvice && (
+                {/* Password Strength Meter */}
                 <div className="dv-reg-col-full">
-                  <PinStrengthIndicator advice={pinAdvice} />
+                  <PasswordStrengthMeter advice={pwdAdvice} />
                 </div>
-              )}
+              </div>
+            </div>
 
-              {/* Row 5: Phone Number (Optional) */}
-              <div className="dv-reg-col-full">
-                <PasswordInput
-                  label="Phone Number (Optional)"
-                  type="tel"
-                  name="phone"
-                  icon={Phone}
-                  placeholder="+91 98765 43210"
-                  value={formData.phone}
-                  onChange={(e) => handleChange("phone", e.target.value)}
-                  autoComplete="tel"
-                  disabled={loading || googleLoading}
-                />
+            {/* Section 3: Vault Security PIN */}
+            <div className="dv-reg-section">
+              <div className="dv-reg-section-tag">
+                <span className="dv-reg-section-num">03</span>
+                <span className="dv-reg-section-name">Vault Security PIN</span>
+              </div>
+
+              <div className="dv-pin-config-header">
+                <label className="dv-auth-input-label" htmlFor="pin">
+                  <span>PIN Complexity</span>
+                  <span className="dv-required-star">*</span>
+                </label>
+                <div className="dv-pin-len-toggle">
+                  <button
+                    type="button"
+                    className={`dv-pin-len-btn ${formData.pinLength === 4 ? "dv-pin-len-btn--active" : ""}`}
+                    onClick={() => handlePinLengthChange(4)}
+                  >
+                    4 Digits
+                  </button>
+                  <button
+                    type="button"
+                    className={`dv-pin-len-btn ${formData.pinLength === 6 ? "dv-pin-len-btn--active" : ""}`}
+                    onClick={() => handlePinLengthChange(6)}
+                  >
+                    6 Digits
+                  </button>
+                </div>
+              </div>
+
+              <div className="dv-reg-grid">
+                <div>
+                  <PasswordInput
+                    label="Vault PIN"
+                    type="password"
+                    name="pin"
+                    icon={KeyRound}
+                    placeholder={`${formData.pinLength}-digit PIN`}
+                    value={formData.pin}
+                    onChange={(e) => handlePinChange("pin", e.target.value)}
+                    maxLength={formData.pinLength}
+                    required
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    disabled={loading || googleLoading}
+                  />
+                </div>
+
+                <div>
+                  <PasswordInput
+                    label="Confirm PIN"
+                    type="password"
+                    name="confirmPin"
+                    icon={KeyRound}
+                    placeholder={`Repeat ${formData.pinLength}-digit PIN`}
+                    value={formData.confirmPin}
+                    onChange={(e) => handlePinChange("confirmPin", e.target.value)}
+                    maxLength={formData.pinLength}
+                    required
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    disabled={loading || googleLoading}
+                  />
+                </div>
+
+                {/* PIN Strength Indicator */}
+                {pinAdvice && (
+                  <div className="dv-reg-col-full">
+                    <PinStrengthIndicator advice={pinAdvice} />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Section 4: Recovery Contact */}
+            <div className="dv-reg-section">
+              <div className="dv-reg-section-tag">
+                <span className="dv-reg-section-num">04</span>
+                <span className="dv-reg-section-name">Recovery Contact</span>
+              </div>
+              <div className="dv-reg-grid">
+                <div className="dv-reg-col-full">
+                  <PasswordInput
+                    label="Phone Number (Optional)"
+                    type="tel"
+                    name="phone"
+                    icon={Phone}
+                    placeholder="+91 98765 43210"
+                    value={formData.phone}
+                    onChange={(e) => handleChange("phone", e.target.value)}
+                    autoComplete="tel"
+                    disabled={loading || googleLoading}
+                  />
+                </div>
               </div>
             </div>
 
