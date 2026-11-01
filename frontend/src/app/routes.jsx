@@ -6,6 +6,7 @@ import AppLayout from "../components/layout/AppLayout";
 import LandingPage from "../features/landing/LandingPage";
 import LoginPage from "../features/auth/pages/LoginPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
+import VerifyOtpPage from "../features/auth/pages/VerifyOtpPage";
 import EnterPinPage from "../features/auth/pages/EnterPinPage";
 import AuthVerifiedPage from "../features/auth/pages/AuthVerifiedPage";
 
@@ -27,6 +28,7 @@ export function AppRoutes() {
       {/* Public Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify-otp" element={<VerifyOtpPage />} />
       <Route path="/enter-pin" element={<EnterPinPage />} />
       <Route path="/auth/verify" element={<AuthVerifiedPage />} />
 
@@ -58,7 +60,7 @@ export function AppRoutes() {
         <Route path="/more" element={<MorePage />} />
       </Route>
 
-      {/* Wildcard Fallback */}
+      {/* Catch-all Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

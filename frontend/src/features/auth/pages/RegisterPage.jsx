@@ -1,10 +1,9 @@
 import React, { useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../../../services/api";
 import { 
-  User, Mail, Lock, Phone, KeyRound, ShieldCheck, ArrowRight, 
-  ArrowLeft, CheckCircle2 
+  User, Mail, Lock, Phone, KeyRound, ShieldCheck, ArrowRight 
 } from "lucide-react";
 import { signInWithGoogle } from "../../../services/firebase";
 
@@ -14,7 +13,6 @@ import AuthAlert from "../components/AuthAlert";
 import PasswordInput from "../components/PasswordInput";
 import PasswordStrengthMeter from "../components/PasswordStrengthMeter";
 import PinStrengthIndicator from "../components/PinStrengthIndicator";
-import OtpInput from "../components/OtpInput";
 import { analyzePasswordStrength } from "../../shield/services/passwordStrengthService";
 import { analyzePinSecurity } from "../../shield/services/pinSecurityService";
 
@@ -30,25 +28,26 @@ function GoogleIcon() {
 }
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    pinLength: 4, // 4 or 6 digits
-    pin: "",
-    confirmPin: "",
-    phone: "",
-  });
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { loginWithFirebaseToken } = useAuth();
 
-  const [step, setStep] = useState("form"); // "form" | "otp"
-  const [otp, setOtp] = useState("");
+  // Pre-fill state if returning from /verify-otp
+  const [formData, setFormData] = useState(() => ({
+    name: location.state?.formData?.name || "",
+    email: location.state?.formData?.email || "",
+    password: location.state?.formData?.password || "",
+    confirmPassword: location.state?.formData?.confirmPassword || "",
+    pinLength: location.state?.formData?.pinLength || 4,
+    pin: location.state?.formData?.pin || "",
+    confirmPin: location.state?.formData?.confirmPin || "",
+    phone: location.state?.formData?.phone || "",
+  }));
+
   const [error, setError] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [resending, setResending] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
 
   // Live Heuristic Password Advice
   const pwdAdvice = useMemo(() => {
@@ -61,9 +60,6 @@ export default function RegisterPage() {
     if (!formData.pin || formData.pin.length < 2) return null;
     return analyzePinSecurity(formData.pin, formData.pinLength);
   }, [formData.pin, formData.pinLength]);
-
-  const { register, loginWithFirebaseToken } = useAuth();
-  const navigate = useNavigate();
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -106,7 +102,7 @@ export default function RegisterPage() {
     }
   };
 
-  // Step 1: Send 6-Digit OTP to User's Email
+  // Submit registration form -> Send OTP and navigate to /verify-otp
   const handleRequestOtp = async (e) => {
     e.preventDefault();
     setError("");
@@ -148,19 +144,13 @@ export default function RegisterPage() {
         throw new Error(res.error || res.message || "Failed to dispatch verification code.");
       }
 
-      setStep("otp");
-      setResendCooldown(60);
-      const timer = setInterval(() => {
-        setResendCooldown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      setInfoMessage(`A 6-digit verification code has been dispatched to ${formData.email}.`);
+      // Navigate to dedicated OTP verification page
+      navigate("/verify-otp", {
+        state: {
+          formData,
+          infoMessage: `A 6-digit verification code has been dispatched to ${formData.email}.`
+        }
+      });
     } catch (err) {
       setError(err.message || "Failed to send verification code. Please check your email.");
     } finally {
@@ -168,322 +158,204 @@ export default function RegisterPage() {
     }
   };
 
-  // Step 2: Verify OTP and Provision Cryptographic Vault Account
-  const handleVerifyOtpAndRegister = async (e) => {
-    e.preventDefault();
-    setError("");
-
-    if (!otp || otp.length !== 6) {
-      setError("Please enter the complete 6-digit verification code.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const result = await register({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        pinLength: formData.pinLength,
-        pin: formData.pin,
-        phone: formData.phone,
-        otp: otp.trim(),
-      });
-
-      if (result.success) {
-        navigate("/dashboard");
-      } else {
-        setError(result.error || "Verification failed. Please re-check the OTP.");
-      }
-    } catch (err) {
-      setError(err.message || "An unexpected error occurred during account registration.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResendOtp = async () => {
-    if (resendCooldown > 0 || resending) return;
-    setError("");
-    setResending(true);
-    try {
-      const res = await apiRequest("/api/auth/send-otp", {
-        method: "POST",
-        body: JSON.stringify({ email: formData.email, purpose: "register" }),
-      });
-      if (!res.ok) throw new Error(res.error || "Failed to resend code.");
-      setInfoMessage("A fresh verification code has been dispatched!");
-      setResendCooldown(60);
-    } catch (err) {
-      setError(err.message || "Failed to resend verification code.");
-    } finally {
-      setResending(false);
-    }
-  };
-
   return (
     <AuthLayout 
       cardClassName="dv-auth-form-card--register" 
-      brandVariant={step === "otp" ? "otp" : "register"}
+      brandVariant="register"
     >
-      {step === "form" ? (
-        <>
-          <AuthHeader
-            title="Create your account"
-            subtitle="Create an account to access your secure document vault."
-          />
+      <AuthHeader
+        title="Create your account"
+        subtitle="Create an account to access your secure document vault."
+      />
 
-          {error && <AuthAlert type="error" message={error} />}
-          {infoMessage && <AuthAlert type="info" message={infoMessage} />}
+      {error && <AuthAlert type="error" message={error} />}
+      {infoMessage && <AuthAlert type="info" message={infoMessage} />}
 
-          {/* Continue with Google */}
-          <button
-            type="button"
-            className="dv-auth-google-btn"
-            onClick={handleGoogleSignUp}
-            disabled={googleLoading || loading}
-          >
-            <GoogleIcon />
-            <span>{googleLoading ? "Connecting to Google..." : "Continue with Google"}</span>
-          </button>
+      {/* Continue with Google */}
+      <button
+        type="button"
+        className="dv-auth-google-btn"
+        onClick={handleGoogleSignUp}
+        disabled={googleLoading || loading}
+      >
+        <GoogleIcon />
+        <span>{googleLoading ? "Connecting to Google..." : "Continue with Google"}</span>
+      </button>
 
-          {/* Divider */}
-          <div className="dv-auth-divider">
-            <span className="dv-auth-divider-line" />
-            <span className="dv-auth-divider-text">or create account with email</span>
-            <span className="dv-auth-divider-line" />
-          </div>
+      {/* Divider */}
+      <div className="dv-auth-divider">
+        <span className="dv-auth-divider-line" />
+        <span className="dv-auth-divider-text">or create account with email</span>
+        <span className="dv-auth-divider-line" />
+      </div>
 
-          <form onSubmit={handleRequestOtp} className="dv-auth-form dv-auth-form--register">
-            <div className="dv-reg-grid">
-              {/* Row 1: Full Name & Email Address */}
-              <div>
-                <PasswordInput
-                  label="Full Name"
-                  type="text"
-                  name="name"
-                  icon={User}
-                  placeholder="Enter your full name"
-                  value={formData.name}
-                  onChange={(e) => handleChange("name", e.target.value)}
-                  required
-                  autoComplete="name"
-                  disabled={loading || googleLoading}
-                />
-              </div>
-
-              <div>
-                <PasswordInput
-                  label="Email Address"
-                  type="email"
-                  name="email"
-                  icon={Mail}
-                  placeholder="name@example.com"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  required
-                  autoComplete="email"
-                  disabled={loading || googleLoading}
-                />
-              </div>
-
-              {/* Row 2: Master Password & Confirm Password */}
-              <div>
-                <PasswordInput
-                  label="Master Password"
-                  type="password"
-                  name="password"
-                  icon={Lock}
-                  placeholder="Create master password"
-                  value={formData.password}
-                  onChange={(e) => handleChange("password", e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  disabled={loading || googleLoading}
-                />
-              </div>
-
-              <div>
-                <PasswordInput
-                  label="Confirm Password"
-                  type="password"
-                  name="confirmPassword"
-                  icon={Lock}
-                  placeholder="Confirm master password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleChange("confirmPassword", e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  disabled={loading || googleLoading}
-                />
-              </div>
-
-              {/* Password Strength Meter (Only when typing) */}
-              {formData.password && (
-                <div className="dv-reg-col-full">
-                  <PasswordStrengthMeter advice={pwdAdvice} />
-                </div>
-              )}
-
-              {/* Row 3: Vault PIN & Confirm PIN with inline toggle */}
-              <div>
-                <PasswordInput
-                  label="Vault PIN"
-                  labelRight={
-                    <div className="dv-pin-len-toggle">
-                      <button
-                        type="button"
-                        className={`dv-pin-len-btn ${formData.pinLength === 4 ? "dv-pin-len-btn--active" : ""}`}
-                        onClick={() => handlePinLengthChange(4)}
-                      >
-                        4D
-                      </button>
-                      <button
-                        type="button"
-                        className={`dv-pin-len-btn ${formData.pinLength === 6 ? "dv-pin-len-btn--active" : ""}`}
-                        onClick={() => handlePinLengthChange(6)}
-                      >
-                        6D
-                      </button>
-                    </div>
-                  }
-                  type="password"
-                  name="pin"
-                  icon={KeyRound}
-                  placeholder={`Enter ${formData.pinLength}-digit PIN`}
-                  value={formData.pin}
-                  onChange={(e) => handlePinChange("pin", e.target.value)}
-                  maxLength={formData.pinLength}
-                  required
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  disabled={loading || googleLoading}
-                />
-              </div>
-
-              <div>
-                <PasswordInput
-                  label="Confirm PIN"
-                  type="password"
-                  name="confirmPin"
-                  icon={KeyRound}
-                  placeholder={`Confirm ${formData.pinLength}-digit PIN`}
-                  value={formData.confirmPin}
-                  onChange={(e) => handlePinChange("confirmPin", e.target.value)}
-                  maxLength={formData.pinLength}
-                  required
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  disabled={loading || googleLoading}
-                />
-              </div>
-
-              {/* PIN Strength Indicator (Only when typing) */}
-              {pinAdvice && (
-                <div className="dv-reg-col-full">
-                  <PinStrengthIndicator advice={pinAdvice} />
-                </div>
-              )}
-
-              {/* Row 4: Phone Number (Optional) */}
-              <div className="dv-reg-col-full">
-                <PasswordInput
-                  label="Phone Number (Optional)"
-                  type="tel"
-                  name="phone"
-                  icon={Phone}
-                  placeholder="Enter contact phone number"
-                  value={formData.phone}
-                  onChange={(e) => handleChange("phone", e.target.value)}
-                  autoComplete="tel"
-                  disabled={loading || googleLoading}
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
+      <form onSubmit={handleRequestOtp} className="dv-auth-form dv-auth-form--register">
+        <div className="dv-reg-grid">
+          {/* Row 1: Full Name & Email Address */}
+          <div>
+            <PasswordInput
+              label="Full Name"
+              type="text"
+              name="name"
+              icon={User}
+              placeholder="Enter your full name"
+              value={formData.name}
+              onChange={(e) => handleChange("name", e.target.value)}
+              required
+              autoComplete="name"
               disabled={loading || googleLoading}
-              className="dv-auth-submit-btn"
-            >
-              {loading ? "Dispatching code..." : (
-                <>
-                  <span>Create account</span>
-                  <ArrowRight size={16} />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="dv-auth-footer-nav">
-            <span className="dv-auth-footer-text">Already have an account? </span>
-            <Link to="/login" className="dv-auth-footer-link">
-              Sign in
-            </Link>
-          </div>
-        </>
-      ) : (
-        /* Step 2: Email OTP Verification */
-        <>
-          <button
-            type="button"
-            className="dv-step-back-btn"
-            onClick={() => setStep("form")}
-            title="Edit registration details"
-          >
-            <ArrowLeft size={15} />
-            <span>Edit details</span>
-          </button>
-
-          <AuthHeader
-            title="Check your inbox."
-            subtitle={`Enter the 6-digit verification code sent to ${formData.email}`}
-          />
-
-          {error && <AuthAlert type="error" message={error} />}
-          {infoMessage && <AuthAlert type="info" message={infoMessage} />}
-
-          <form onSubmit={handleVerifyOtpAndRegister} className="dv-auth-form">
-            <OtpInput
-              value={otp}
-              onChange={setOtp}
-              disabled={loading}
-              hasError={Boolean(error)}
             />
-
-            <button
-              type="submit"
-              disabled={otp.length !== 6 || loading}
-              className="dv-auth-submit-btn"
-            >
-              {loading ? "Creating vault..." : (
-                <>
-                  <span>Verify & complete setup</span>
-                  <ArrowRight size={16} />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="dv-resend-box">
-            <span className="dv-resend-text">Didn't receive the code? </span>
-            <button
-              type="button"
-              className="dv-resend-btn"
-              onClick={handleResendOtp}
-              disabled={resendCooldown > 0 || resending}
-            >
-              {resending ? (
-                "Sending..."
-              ) : resendCooldown > 0 ? (
-                `Resend in ${resendCooldown}s`
-              ) : (
-                "Resend verification code"
-              )}
-            </button>
           </div>
-        </>
-      )}
+
+          <div>
+            <PasswordInput
+              label="Email Address"
+              type="email"
+              name="email"
+              icon={Mail}
+              placeholder="name@example.com"
+              value={formData.email}
+              onChange={(e) => handleChange("email", e.target.value)}
+              required
+              autoComplete="email"
+              disabled={loading || googleLoading}
+            />
+          </div>
+
+          {/* Row 2: Master Password & Confirm Password */}
+          <div>
+            <PasswordInput
+              label="Master Password"
+              type="password"
+              name="password"
+              icon={Lock}
+              placeholder="Create master password"
+              value={formData.password}
+              onChange={(e) => handleChange("password", e.target.value)}
+              required
+              autoComplete="new-password"
+              disabled={loading || googleLoading}
+            />
+          </div>
+
+          <div>
+            <PasswordInput
+              label="Confirm Password"
+              type="password"
+              name="confirmPassword"
+              icon={Lock}
+              placeholder="Confirm master password"
+              value={formData.confirmPassword}
+              onChange={(e) => handleChange("confirmPassword", e.target.value)}
+              required
+              autoComplete="new-password"
+              disabled={loading || googleLoading}
+            />
+          </div>
+
+          {/* Password Strength Meter (Only when typing) */}
+          {formData.password && (
+            <div className="dv-reg-col-full">
+              <PasswordStrengthMeter advice={pwdAdvice} />
+            </div>
+          )}
+
+          {/* Row 3: Vault PIN & Confirm PIN with inline toggle */}
+          <div>
+            <PasswordInput
+              label="Vault PIN"
+              labelRight={
+                <div className="dv-pin-len-toggle">
+                  <button
+                    type="button"
+                    className={`dv-pin-len-btn ${formData.pinLength === 4 ? "dv-pin-len-btn--active" : ""}`}
+                    onClick={() => handlePinLengthChange(4)}
+                  >
+                    4D
+                  </button>
+                  <button
+                    type="button"
+                    className={`dv-pin-len-btn ${formData.pinLength === 6 ? "dv-pin-len-btn--active" : ""}`}
+                    onClick={() => handlePinLengthChange(6)}
+                  >
+                    6D
+                  </button>
+                </div>
+              }
+              type="password"
+              name="pin"
+              icon={KeyRound}
+              placeholder={`Enter ${formData.pinLength}-digit PIN`}
+              value={formData.pin}
+              onChange={(e) => handlePinChange("pin", e.target.value)}
+              maxLength={formData.pinLength}
+              required
+              inputMode="numeric"
+              pattern="[0-9]*"
+              disabled={loading || googleLoading}
+            />
+          </div>
+
+          <div>
+            <PasswordInput
+              label="Confirm PIN"
+              type="password"
+              name="confirmPin"
+              icon={KeyRound}
+              placeholder={`Confirm ${formData.pinLength}-digit PIN`}
+              value={formData.confirmPin}
+              onChange={(e) => handlePinChange("confirmPin", e.target.value)}
+              maxLength={formData.pinLength}
+              required
+              inputMode="numeric"
+              pattern="[0-9]*"
+              disabled={loading || googleLoading}
+            />
+          </div>
+
+          {/* PIN Strength Indicator (Only when typing) */}
+          {pinAdvice && (
+            <div className="dv-reg-col-full">
+              <PinStrengthIndicator advice={pinAdvice} />
+            </div>
+          )}
+
+          {/* Row 4: Phone Number (Optional) */}
+          <div className="dv-reg-col-full">
+            <PasswordInput
+              label="Phone Number (Optional)"
+              type="tel"
+              name="phone"
+              icon={Phone}
+              placeholder="Enter contact phone number"
+              value={formData.phone}
+              onChange={(e) => handleChange("phone", e.target.value)}
+              autoComplete="tel"
+              disabled={loading || googleLoading}
+            />
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading || googleLoading}
+          className="dv-auth-submit-btn"
+        >
+          {loading ? "Dispatching code..." : (
+            <>
+              <span>Create account</span>
+              <ArrowRight size={16} />
+            </>
+          )}
+        </button>
+      </form>
+
+      <div className="dv-auth-footer-nav">
+        <span className="dv-auth-footer-text">Already have an account? </span>
+        <Link to="/login" className="dv-auth-footer-link">
+          Sign in
+        </Link>
+      </div>
 
       <div className="dv-auth-security-note">
         <ShieldCheck size={14} className="dv-auth-security-note-icon" />
