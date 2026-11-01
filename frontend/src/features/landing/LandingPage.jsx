@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import PublicNavbar from '../../components/layout/PublicNavbar/PublicNavbar';
 import PublicFooter from '../../components/layout/PublicFooter/PublicFooter';
@@ -10,12 +10,75 @@ import {
   FolderLock, HardDrive, FileCheck, CheckCircle2, 
   UploadCloud, Cpu, Layers, Search, Lock, Shield,
   KeyRound, ChevronRight, FileSpreadsheet,
-  FileText, LayoutDashboard, Fingerprint, AlertCircle
+  FileText, LayoutDashboard, Fingerprint, AlertCircle,
+  ChevronDown, FileCheck2, ShieldAlert, Smartphone, HelpCircle,
+  MessageSquare, Mail
 } from 'lucide-react';
 import './LandingPage.css';
 
+const FAQ_ITEMS = [
+  {
+    id: 1,
+    tag: "Security Protocol",
+    category: "security",
+    icon: KeyRound,
+    question: "How does the Two-Tier Vault PIN defense operate?",
+    answer: "DocVault establishes a two-stage barrier. Tier 1 authenticates your master account credentials or verified Google OAuth session. Tier 2 strictly requires your personal 4 or 6-digit cryptographic Vault PIN or hardware biometrics (Touch ID / Face ID) to unlock the document workspace. Without the second-tier PIN, document content remains locked in restricted custody."
+  },
+  {
+    id: 2,
+    tag: "OCR & Processing",
+    category: "intelligence",
+    icon: FileCheck2,
+    question: "What document formats and files are supported by automated extraction?",
+    answer: "DocVault natively processes multi-page PDFs, scanned paperwork, camera captures, and high-resolution images (PNG, JPG, WebP). The ingestion pipeline applies Sharp contrast conditioning and noise reduction before deterministic rules extract Indian GSTINs, invoice totals, document dates, and policy identifiers."
+  },
+  {
+    id: 3,
+    tag: "Brute-Force Defense",
+    category: "security",
+    icon: ShieldAlert,
+    question: "What happens if an unauthorized party attempts to guess my Vault PIN?",
+    answer: "DocVault enforces an automated anti-tamper protocol: after 5 consecutive incorrect PIN entries, an immediate 5-minute cooldown lockout activates. Keypad interactions are disabled, and the security attempt is committed to your tamper-evident security audit log."
+  },
+  {
+    id: 4,
+    tag: "Device Hygiene",
+    category: "session",
+    icon: Smartphone,
+    question: "Does the vault lock automatically when the device sleeps or stays idle?",
+    answer: "Yes. To protect against physical intrusion on shared or unattended devices, the background inactivity monitor automatically relocks the vault whenever your device sleeps, the browser tab remains idle for over 10 minutes, or you switch workspaces."
+  },
+  {
+    id: 5,
+    tag: "Data Privacy",
+    category: "security",
+    icon: ShieldCheck,
+    question: "How does DocVault handle sensitive national identity cards like Aadhaar or PAN?",
+    answer: "Our centralized Privacy Policy Gate automatically identifies Indian National IDs (Aadhaar, PAN, Voter IDs) upon ingestion and routes them to a strict STORAGE_ONLY mode. These sensitive records are stored under client encryption keys and are never dispatched to external OCR APIs."
+  },
+  {
+    id: 6,
+    tag: "AI Intelligence",
+    category: "intelligence",
+    icon: Sparkles,
+    question: "How does the AI Copilot prevent hallucinations when answering questions?",
+    answer: "The DocVault Copilot operates on strict Retrieval-Augmented Generation (RAG) grounding gates. Every answer must reference an exact, verified text snippet from your uploaded documents. If the requested information is absent or ambiguous, the copilot explicitly declines rather than inventing details."
+  }
+];
+
 export default function LandingPage() {
   const { user, isVaultUnlocked } = useAuth();
+  const [openFaq, setOpenFaq] = useState(1);
+  const [faqFilter, setFaqFilter] = useState('all');
+
+  const toggleFaq = (id) => {
+    setOpenFaq(prev => prev === id ? null : id);
+  };
+
+  const filteredFaqs = faqFilter === 'all' 
+    ? FAQ_ITEMS 
+    : FAQ_ITEMS.filter(item => item.category === faqFilter);
 
   return (
     <div className="dv-landing-root">
@@ -495,45 +558,106 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 6. CURATED FAQ SECTION */}
+      {/* 6. PROFESSIONAL SHADCN-STYLE ACCORDION FAQ */}
       <section className="dv-lp-faq" id="faq">
         <div className="dv-lp-container dv-lp-container--narrow">
           <div className="dv-lp-section-header">
             <span className="dv-lp-tagline">FREQUENTLY ASKED QUESTIONS</span>
             <h2 className="dv-lp-section-title">Everything you need to know about DocVault</h2>
             <p className="dv-lp-section-sub">
-              Learn how our multi-tier encryption, OCR extraction, and biometric protection safeguard your records.
+              Clear, substantiated answers regarding our cryptographic architecture, OCR extraction gates, and privacy protocols.
             </p>
           </div>
 
-          <div className="dv-lp-faq-grid">
-            <div className="dv-lp-faq-card">
-              <h4>🔒 How does the Two-Tier Vault PIN security work?</h4>
-              <p>
-                DocVault uses a two-step defense: Step 1 verifies your master account credentials or Google OAuth. Step 2 requires your personal 4 or 6-digit Vault PIN or hardware biometrics (Touch ID / Fingerprint) before granting access to encrypted files.
-              </p>
-            </div>
+          {/* Category Tabs (shadcn/ui Pill Style) */}
+          <div className="dv-lp-faq-tabs" role="tablist">
+            <button
+              type="button"
+              className={`dv-lp-faq-tab ${faqFilter === 'all' ? 'dv-lp-faq-tab--active' : ''}`}
+              onClick={() => setFaqFilter('all')}
+            >
+              All Topics
+            </button>
+            <button
+              type="button"
+              className={`dv-lp-faq-tab ${faqFilter === 'security' ? 'dv-lp-faq-tab--active' : ''}`}
+              onClick={() => setFaqFilter('security')}
+            >
+              Security & PIN
+            </button>
+            <button
+              type="button"
+              className={`dv-lp-faq-tab ${faqFilter === 'intelligence' ? 'dv-lp-faq-tab--active' : ''}`}
+              onClick={() => setFaqFilter('intelligence')}
+            >
+              OCR & Intelligence
+            </button>
+            <button
+              type="button"
+              className={`dv-lp-faq-tab ${faqFilter === 'session' ? 'dv-lp-faq-tab--active' : ''}`}
+              onClick={() => setFaqFilter('session')}
+            >
+              Session Defense
+            </button>
+          </div>
 
-            <div className="dv-lp-faq-card">
-              <h4>📄 What document formats are supported by automated OCR?</h4>
-              <p>
-                DocVault supports multi-page PDFs, scanned images, photos (PNG, JPG, WebP), and receipts. Our Sharp image normalization pipeline and fallback OCR extract text and detect renewal deadlines automatically.
-              </p>
-            </div>
+          {/* Interactive Accordion */}
+          <div className="dv-lp-accordion">
+            {filteredFaqs.map((faq) => {
+              const Icon = faq.icon;
+              const isOpen = openFaq === faq.id;
 
-            <div className="dv-lp-faq-card">
-              <h4>🛡️ What happens if someone tries to guess my PIN?</h4>
-              <p>
-                DocVault enforces an automated 5-minute brute-force lockout after 5 consecutive incorrect PIN attempts, disabling keypad inputs and logging the security event in your immutable audit trail.
-              </p>
-            </div>
+              return (
+                <div 
+                  key={faq.id} 
+                  className={`dv-lp-accordion-item ${isOpen ? 'dv-lp-accordion-item--open' : ''}`}
+                >
+                  <button
+                    type="button"
+                    className="dv-lp-accordion-trigger"
+                    onClick={() => toggleFaq(faq.id)}
+                    aria-expanded={isOpen}
+                  >
+                    <div className="dv-lp-accordion-left">
+                      <div className="dv-lp-accordion-icon">
+                        <Icon size={18} />
+                      </div>
+                      <div className="dv-lp-accordion-heading">
+                        <span className="dv-lp-accordion-tag">{faq.tag}</span>
+                        <h4 className="dv-lp-accordion-question">{faq.question}</h4>
+                      </div>
+                    </div>
 
-            <div className="dv-lp-faq-card">
-              <h4>📱 Does DocVault automatically lock when my device sleeps?</h4>
-              <p>
-                Yes. If your phone sleeps, your laptop lid closes, or your session is left resting for over 10 minutes, the auto-lock engine returns the vault to the PIN challenge to protect against unauthorized physical access.
-              </p>
+                    <div className={`dv-lp-accordion-chevron ${isOpen ? 'dv-lp-accordion-chevron--rotated' : ''}`}>
+                      <ChevronDown size={18} />
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="dv-lp-accordion-content">
+                      <p>{faq.answer}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Still have questions? Help Card */}
+          <div className="dv-lp-faq-footer-card">
+            <div className="dv-lp-faq-footer-left">
+              <div className="dv-lp-faq-footer-icon">
+                <HelpCircle size={22} />
+              </div>
+              <div>
+                <h5>Still have technical questions?</h5>
+                <p>Our security engineers are available to review implementation specs and privacy guarantees.</p>
+              </div>
             </div>
+            <a href="mailto:security@docvault.local" className="dv-lp-faq-footer-btn">
+              <Mail size={15} />
+              <span>Contact Security Team</span>
+            </a>
           </div>
         </div>
       </section>

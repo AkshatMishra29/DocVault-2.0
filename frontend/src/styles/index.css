@@ -5,3 +5,9 @@
     -ms-user-select: none;
     user-select: none;
 } */
+
+::selection,
+*::selection {
+  background-color: #e9280633;
+  color: #1C1310;
+}
