@@ -17,7 +17,7 @@ router.get('/', requireAuth, async (req, res) => {
     const filter = { userId: req.user.userId };
 
     if (category && category !== 'All') {
-      filter.category = category;
+      filter.category = { $regex: new RegExp(`^${category}`, 'i') };
     }
 
     if (q) {

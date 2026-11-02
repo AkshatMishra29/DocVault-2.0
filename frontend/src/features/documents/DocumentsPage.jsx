@@ -20,7 +20,7 @@ import VerificationStatus from "../../components/common/VerificationStatus/Verif
 
 import "./DocumentsPage.css";
 
-const CATEGORIES = ["All", "Insurance", "Identity", "Appliances", "Property", "Medical", "Other"];
+const CATEGORIES = ["All", "Tax Invoice", "Purchase Receipt", "Insurance", "Identity", "Appliances", "Medical", "Other"];
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState([]);

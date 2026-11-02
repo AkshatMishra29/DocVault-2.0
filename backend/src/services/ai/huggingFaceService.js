@@ -14,6 +14,7 @@ export async function generateEmbedding(text) {
       body: JSON.stringify({
         inputs: text.slice(0, 1000), // Max chunk
       }),
+      signal: AbortSignal.timeout(3500),
     });
 
     if (!response.ok) {

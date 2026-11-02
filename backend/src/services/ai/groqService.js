@@ -17,7 +17,7 @@ export async function extractDocumentMetadata(rawText, filename, imageBase64 = n
 Analyze the provided document image and extract its complete content and metadata. Return ONLY a valid JSON object (no markdown, no backticks):
 {
   "title": "A short, descriptive title for this document (e.g., 'Honda City Comprehensive Insurance Policy')",
-  "category": "One of: ['Insurance', 'Appliances', 'Identity', 'Property', 'Medical', 'Other']",
+  "category": "Document category (e.g. 'Tax Invoice', 'Purchase Receipt', 'Insurance Policy', 'Warranty Document', 'Medical Report', 'Admit Card', 'Academic Certificate', 'Bank Statement', 'Identity Document', 'Other')",
   "summary": "A concise 2-3 sentence executive summary explaining what this document is and any critical policy numbers or conditions.",
   "expiryDate": "YYYY-MM-DD format if an expiration, renewal, or warranty end date is present, otherwise null",
   "keyDetails": {
@@ -62,7 +62,7 @@ Analyze the following document text and return ONLY a valid JSON object (no mark
 Extract the following fields:
 {
   "title": "A short, descriptive title for this document (e.g., 'Honda City Comprehensive Insurance Policy')",
-  "category": "One of: ['Insurance', 'Appliances', 'Identity', 'Property', 'Medical', 'Other']",
+  "category": "Document category (e.g. 'Tax Invoice', 'Purchase Receipt', 'Insurance Policy', 'Warranty Document', 'Medical Report', 'Admit Card', 'Academic Certificate', 'Bank Statement', 'Identity Document', 'Other')",
   "summary": "A concise 2-3 sentence executive summary explaining what this document is and any critical policy numbers or conditions.",
   "expiryDate": "YYYY-MM-DD format if an expiration, renewal, or warranty end date is present, otherwise null",
   "keyDetails": {

@@ -6,8 +6,9 @@ const DocumentSchema = new mongoose.Schema({
   originalName: { type: String, required: true },
   category: { 
     type: String, 
-    enum: ['Insurance', 'Appliances', 'Identity', 'Property', 'Medical', 'Other'],
-    default: 'Other'
+    trim: true,
+    default: 'Other',
+    index: true
   },
   format: { type: String, default: 'PDF' },
   mimetype: { type: String },
