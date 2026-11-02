@@ -197,11 +197,17 @@ export function detectSensitiveDocument({ filename = '', text = '', buffer = nul
   // 4. PAN Pattern Check (5 letters, 4 digits, 1 letter)
   const panMatches = content.match(PAN_REGEX);
   if (panMatches && panMatches.length > 0) {
-    return {
-      isSensitive: true,
-      reason: 'Indian Income Tax PAN identifier pattern detected',
-      entityType: 'pan',
-    };
+    // Distinguish between a personal/sensitive PAN Card and a business Tax Invoice containing corporate registration numbers
+    const isCommercialInvoice = /(tax\s+invoice|bill\s+of\s+supply|commercial\s+invoice|proforma\s+invoice|description\s+of\s+goods)/i.test(content);
+    const hasPanCardContext = /(income\s+tax\s+department|permanent\s+account\s+number\s+card|father['’]?s\s+name|govt\s+of\s+india.*pan|form\s+no\.\s*49a)/i.test(content);
+
+    if (hasPanCardContext || !isCommercialInvoice) {
+      return {
+        isSensitive: true,
+        reason: 'Indian Income Tax PAN identifier pattern detected',
+        entityType: 'pan',
+      };
+    }
   }
 
   // 5. Passport Detection (MRZ lines or Indian passport format)
