@@ -500,16 +500,16 @@ export async function authenticateWithFirebaseIdToken(idToken) {
   // Dynamically import or verify using Firebase Admin SDK
   const { getAuth } = await import('firebase-admin/auth');
   const decoded = await getAuth().verifyIdToken(idToken);
-  const email = decoded.email;
-  const name = decoded.name || email.split('@')[0];
+  const cleanEmail = (decoded.email || '').toLowerCase().trim();
+  const name = decoded.name || cleanEmail.split('@')[0];
 
-  if (!email) {
+  if (!cleanEmail) {
     const error = new Error('No verified email found in Firebase token.');
     error.status = 400;
     throw error;
   }
 
-  let user = await User.findOne({ email });
+  let user = await User.findOne({ email: cleanEmail });
 
   // If user does not exist yet, provision an initial vault account
   if (!user) {
@@ -517,14 +517,15 @@ export async function authenticateWithFirebaseIdToken(idToken) {
     // Random dummy password hash; user signs in via OAuth
     const dummyPassword = Math.random().toString(36).slice(-10) + '!A1';
     const passwordHash = await bcrypt.hash(dummyPassword, salt);
-    // Default PIN: 0000 (user will be prompted or can unlock)
+    // Default PIN: 1234
     const pinHash = await bcrypt.hash('1234', salt);
 
     user = new User({
       name,
-      email,
+      email: cleanEmail,
       passwordHash,
       pinHash,
+      pinLength: 4,
       tier: 'Vault Pro (Personal)',
       sessionVersion: 1,
       singleSessionOnly: false,

@@ -158,13 +158,23 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
       if (cred && cred.idToken) {
         const result = await loginWithFirebaseToken(cred.idToken);
         if (result.success) {
-          navigate("/enter-pin", { state: { email: cred.email } });
+          const targetEmail = cred.email || result.user?.email;
+          const pinLen = result.user?.pinLength || 4;
+          localStorage.setItem('pending_pin_email', targetEmail);
+          sessionStorage.setItem('docvault_pending_email', targetEmail);
+          sessionStorage.setItem('docvault_pin_length', pinLen.toString());
+          navigate("/enter-pin", { 
+            state: { 
+              email: targetEmail, 
+              pinLength: pinLen 
+            } 
+          });
         } else {
           setLoginError(result.error || "Google sign-in could not complete.");
         }
       }
     } catch (err) {
-      setLoginError("Google Sign-In canceled or blocked.");
+      setLoginError(err.message || "Google Sign-In canceled or blocked.");
     }
   };
 

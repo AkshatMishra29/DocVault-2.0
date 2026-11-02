@@ -84,18 +84,27 @@ export default function RegisterPage() {
 
   const handleGoogleSignUp = async () => {
     setError("");
+    setInfoMessage("");
     setGoogleLoading(true);
     try {
       const cred = await signInWithGoogle();
       if (cred && cred.idToken) {
         const result = await loginWithFirebaseToken(cred.idToken);
         if (result.success) {
-          navigate("/enter-pin", { state: { email: cred.email } });
+          const targetEmail = cred.email || result.user?.email;
+          const pinLen = result.user?.pinLength || 4;
+          localStorage.setItem('pending_pin_email', targetEmail);
+          sessionStorage.setItem('docvault_pending_email', targetEmail);
+          sessionStorage.setItem('docvault_pin_length', pinLen.toString());
+          navigate("/enter-pin", { 
+            state: { 
+              email: targetEmail, 
+              pinLength: pinLen 
+            } 
+          });
         } else {
           setError(result.error || "Google authentication failed.");
         }
-      } else {
-        setInfoMessage("Google OAuth will activate once client credentials are configured. Please create account with email.");
       }
     } catch (err) {
       setError(err.message || "Google authentication failed.");
