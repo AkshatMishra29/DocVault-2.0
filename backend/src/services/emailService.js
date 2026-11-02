@@ -37,10 +37,16 @@ async function sendViaResend({ apiKey, from, to, subject, html, text }) {
   // If user has not configured a custom verified domain, default to Resend's free onboarding domain
   const sender = process.env.RESEND_FROM || 'DocVault <onboarding@resend.dev>';
 
+  // Auto-heal accidental leading characters (e.g. "ire_..." -> "re_...")
+  let cleanKey = (apiKey || '').trim();
+  if (cleanKey.startsWith('ire_')) {
+    cleanKey = cleanKey.slice(1);
+  }
+
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey.trim()}`,
+      'Authorization': `Bearer ${cleanKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -54,6 +60,12 @@ async function sendViaResend({ apiKey, from, to, subject, html, text }) {
 
   const data = await res.json();
   if (!res.ok) {
+    if (res.status === 403 && data.message?.includes('only send testing emails to your own email address')) {
+      console.warn(`[EmailService] Resend Sandbox restriction: ${data.message}`);
+      const sandboxErr = new Error(data.message);
+      sandboxErr.isResendSandbox = true;
+      throw sandboxErr;
+    }
     throw new Error(data.message || `Resend API Error: ${res.statusText}`);
   }
 
@@ -142,6 +154,19 @@ export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
       });
     } catch (err) {
       console.error('[EmailService] Resend dispatch failed:', err.message);
+      if (err.isResendSandbox) {
+        console.warn('========================================================================');
+        console.warn(`[EmailService RESEND SANDBOX NOTIFICATION] Recipient: ${email}`);
+        console.warn('Resend testing mode only delivers to account owner: akshatmishra2904@gmail.com');
+        console.warn(`FALLBACK VERIFICATION CODE FOR [ ${email} ]: >>> ${otpCode} <<<`);
+        console.warn('========================================================================');
+        return {
+          messageId: 'resend-sandbox-' + Date.now(),
+          mocked: true,
+          devOtp: otpCode,
+          warning: 'Resend free testing domain is restricted to account owner email.'
+        };
+      }
     }
   }
 
