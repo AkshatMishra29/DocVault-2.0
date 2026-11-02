@@ -189,3 +189,4 @@ export async function deleteEntity(entityId, userId) {
 
   return true;
 }
+

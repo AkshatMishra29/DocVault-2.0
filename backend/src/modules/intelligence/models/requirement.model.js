@@ -36,3 +36,4 @@ RequirementTemplateSchema.index({ entityType: 1, isSystemDefault: 1 });
 RequirementTemplateSchema.index({ userId: 1, entityType: 1 });
 
 export const RequirementTemplate = mongoose.model('RequirementTemplate', RequirementTemplateSchema);
+

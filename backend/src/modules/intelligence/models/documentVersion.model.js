@@ -35,3 +35,4 @@ DocumentVersionGroupSchema.index({ userId: 1, documentGroupId: 1 }, { unique: tr
 DocumentVersionGroupSchema.index({ userId: 1, 'versions.documentId': 1 });
 
 export const DocumentVersionGroup = mongoose.model('DocumentVersionGroup', DocumentVersionGroupSchema);
+

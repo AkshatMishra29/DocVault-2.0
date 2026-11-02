@@ -65,3 +65,4 @@ IntelligenceAlertSchema.index({ userId: 1, deduplicationKey: 1 }, { unique: true
 IntelligenceAlertSchema.index({ userId: 1, status: 1, severity: 1 });
 
 export const IntelligenceAlert = mongoose.model('IntelligenceAlert', IntelligenceAlertSchema);
+

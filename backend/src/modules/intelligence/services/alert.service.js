@@ -225,3 +225,4 @@ export async function resolveAlert(alertId, userId) {
   await alert.save();
   return alert;
 }
+

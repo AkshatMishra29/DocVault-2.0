@@ -41,3 +41,4 @@ const ConflictRecordSchema = new mongoose.Schema(
 ConflictRecordSchema.index({ userId: 1, entityId: 1, fieldName: 1, status: 1 });
 
 export const ConflictRecord = mongoose.model('ConflictRecord', ConflictRecordSchema);
+

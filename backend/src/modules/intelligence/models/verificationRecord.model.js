@@ -43,3 +43,4 @@ const VerificationRecordSchema = new mongoose.Schema(
 VerificationRecordSchema.index({ userId: 1, documentId: 1, verificationMethod: 1 });
 
 export const VerificationRecord = mongoose.model('VerificationRecord', VerificationRecordSchema);
+

@@ -481,3 +481,4 @@ router.post('/family-query', async (req, res) => {
 });
 
 export default router;
+

@@ -108,7 +108,7 @@ export default function HomePage() {
               Secure Documents. Actionable Intelligence.
             </h2>
             <p className="dv-dash-hero__desc">
-              Your policies, warranties, and identity proofs are indexed with bounded RAG. Never miss critical renewals.
+              Your policies, warranties, and identity records are organized, verified, and protected. Never miss critical renewals.
             </p>
           </div>
 
@@ -257,10 +257,10 @@ export default function HomePage() {
           <div className="dv-review-queue-section">
             <div className="dv-dash-pane__header">
               <div className="dv-dash-pane__title-wrap">
-                <div className="dv-review-pill">Human Verification Required</div>
-                <h3 className="dv-dash-pane__title">Extraction Review Queue</h3>
+                <div className="dv-review-pill">Attention Needed</div>
+                <h3 className="dv-dash-pane__title">Documents Needing Review</h3>
                 <p className="dv-dash-pane__subtitle">
-                  Calibrated AI extractions below high-confidence thresholds require custodian sign-off.
+                  Important details flagged for your quick confirmation.
                 </p>
               </div>
               <Link to="/documents" className="dv-dash-pane__action">
@@ -461,7 +461,7 @@ export default function HomePage() {
               <div>
                 <h4 className="dv-upload-entry-card__title">Ready to secure a new document?</h4>
                 <p className="dv-upload-entry-card__desc">
-                  Accepted formats: <strong>PDF, JPG, JPEG, PNG, WEBP</strong> (up to 25 MB). Automatic OCR, structured key extraction, and renewal tracking.
+                  Accepted formats: <strong>PDF, JPG, JPEG, PNG, WEBP</strong> (up to 25 MB). Automatic details organization, renewal schedules, and smart search.
                 </p>
               </div>
             </div>
@@ -510,7 +510,7 @@ export default function HomePage() {
               </div>
               <div className="dv-trust-item__content">
                 <h5>Storage-Only Isolation</h5>
-                <p>Sensitive IDs (Aadhaar, PAN) can be isolated from OCR and AI ingestion pipelines.</p>
+                <p>Sensitive IDs (Aadhaar, PAN) can be isolated from AI and indexing pipelines.</p>
               </div>
             </div>
 

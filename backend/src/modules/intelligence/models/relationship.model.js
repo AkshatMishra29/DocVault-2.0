@@ -47,3 +47,4 @@ RelationshipSchema.index(
 );
 
 export const Relationship = mongoose.model('Relationship', RelationshipSchema);
+

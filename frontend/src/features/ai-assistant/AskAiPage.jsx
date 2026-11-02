@@ -128,16 +128,16 @@ export default function AskAiPage() {
     <div className="dv-ai-page">
       <AppHeader
         title="Ask AI Copilot"
-        subtitle="Zero-hallucination bounded RAG answering queries exclusively using your verified policy clauses."
+        subtitle="Ask questions and get answers grounded strictly in your personal vault documents."
       />
 
       <div className="dv-ai-content">
         {targetDoc && (
           <div className="dv-ai-scoped-banner">
             <Sparkles size={16} color="#015A47" />
-            <span>Scoped query mode: Concentrating strictly on <strong>{targetDoc.title}</strong></span>
+            <span>Targeting document: <strong>{targetDoc.title}</strong></span>
             <Button variant="ghost" size="sm" onClick={() => setTargetDoc(null)}>
-              Remove Scope
+              Clear
             </Button>
           </div>
         )}
@@ -150,8 +150,8 @@ export default function AskAiPage() {
                 <Sparkles size={18} />
               </div>
               <div>
-                <h4 className="dv-ai-chat-title">DocVault Bounded RAG Assistant</h4>
-                <span className="dv-ai-chat-sub">Grounded exclusively on your authenticated vault collection</span>
+                <h4 className="dv-ai-chat-title">DocVault AI Assistant</h4>
+                <span className="dv-ai-chat-sub">Answers strictly grounded in your private vault</span>
               </div>
             </div>
             <Button
@@ -179,7 +179,7 @@ export default function AskAiPage() {
                   {/* Reference Citation Links */}
                   {m.referencedDocIds && m.referencedDocIds.length > 0 && (
                     <div className="dv-chat-citations">
-                      <span className="dv-citations-label">Grounded Sources:</span>
+                      <span className="dv-citations-label">Sources:</span>
                       <div className="dv-citations-list">
                         {m.referencedDocIds.slice(0, 3).map((refId, rIdx) => (
                           <Link 
@@ -208,7 +208,7 @@ export default function AskAiPage() {
                 </div>
                 <div className="dv-chat-msg__bubble dv-chat-loading-bubble">
                   <div className="dv-btn__spinner" />
-                  <span>Searching vault embeddings & synthesizing grounded response...</span>
+                  <span>Reviewing vault documents and generating answer...</span>
                 </div>
               </div>
             )}

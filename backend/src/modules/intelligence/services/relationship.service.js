@@ -163,3 +163,4 @@ export async function deleteRelationship(relationshipId, userId) {
   const result = await Relationship.deleteOne({ _id: relationshipId, userId });
   return result.deletedCount > 0;
 }
+

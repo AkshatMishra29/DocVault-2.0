@@ -38,3 +38,4 @@ DocumentFactSchema.index({ userId: 1, documentId: 1, fieldName: 1 });
 DocumentFactSchema.index({ userId: 1, entityId: 1, fieldName: 1 });
 
 export const DocumentFact = mongoose.model('DocumentFact', DocumentFactSchema);
+

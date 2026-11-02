@@ -298,7 +298,7 @@ export default function DocumentDetailPage() {
                   </div>
                   <div className="dv-meta-item">
                     <span className="dv-meta-item__label">Storage Location</span>
-                    <span className="dv-meta-item__val">MongoDB Internal Binary</span>
+                    <span className="dv-meta-item__val">Encrypted Vault Storage</span>
                   </div>
                   <div className="dv-meta-item">
                     <span className="dv-meta-item__label">Uploaded On</span>
@@ -311,14 +311,11 @@ export default function DocumentDetailPage() {
               <Card padding="lg" className="dv-detail-entities-card">
                 <div className="dv-entities-header">
                   <div>
-                    <h3 className="dv-entities-title">Evidence-Based Extracted Fields</h3>
+                    <h3 className="dv-entities-title">Document Information</h3>
                     <p className="dv-entities-sub">
-                      Calibrated extraction ladder with source grounding and human verification.
+                      Key details identified and organized from this document.
                     </p>
                   </div>
-                  {doc.pipelineVersion && (
-                    <span className="dv-pipeline-tag">Ladder v{doc.pipelineVersion}</span>
-                  )}
                 </div>
 
                 {doc.extractedFields && doc.extractedFields.length > 0 ? (
@@ -451,7 +448,7 @@ export default function DocumentDetailPage() {
                 <ul className="dv-detail-audit-list">
                   <li>
                     <ShieldCheck size={16} color="#059669" />
-                    <span>Database-backed binary storage</span>
+                    <span>Database-backed encrypted storage</span>
                   </li>
                   <li>
                     <CheckCircle2 size={16} color="#2563EB" />
@@ -459,12 +456,12 @@ export default function DocumentDetailPage() {
                   </li>
                   <li>
                     <CheckCircle2 size={16} color="#2563EB" />
-                    <span>Hugging Face dense vector embedding</span>
+                    <span>Intelligent semantic search index</span>
                   </li>
                   {doc.privacyMode === "STORAGE_ONLY" && (
                     <li>
                       <Lock size={16} color="#D97706" />
-                      <span>Isolated from external OCR/AI pipeline</span>
+                      <span>Isolated from external processing pipeline</span>
                     </li>
                   )}
                 </ul>

@@ -128,3 +128,4 @@ export async function getEntityFacts(entityId, userId) {
     .sort({ fieldName: 1 })
     .lean();
 }
+

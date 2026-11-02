@@ -227,3 +227,4 @@ export async function evaluateEntityCompleteness(entityId, userId) {
     items: evaluatedItems,
   };
 }
+

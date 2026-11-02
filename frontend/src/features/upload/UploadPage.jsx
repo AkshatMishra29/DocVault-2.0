@@ -71,7 +71,7 @@ export default function UploadPage() {
 
     setUploading(true);
     setError("");
-    setProgressStage("Validating magic bytes and privacy guardrails...");
+    setProgressStage("Preparing your document for secure upload...");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -84,14 +84,14 @@ export default function UploadPage() {
       const stageTimer1 = setTimeout(() => {
         setProgressStage(
           privacyMode === "STORAGE_ONLY"
-            ? "Encrypting and isolating in zero-AI storage..."
-            : "Extracting text layer and running deterministic rule engine..."
+            ? "Securing document in your private vault..."
+            : "Reading and analysing document contents..."
         );
       }, 1200);
 
       const stageTimer2 = setTimeout(() => {
         if (privacyMode !== "STORAGE_ONLY") {
-          setProgressStage("Executing verification gates (grounding & confidence scoring)...");
+          setProgressStage("Verifying and structuring key information...");
         }
       }, 2400);
 
@@ -108,7 +108,7 @@ export default function UploadPage() {
 
         // If background processing is active, poll until completed or max 5 seconds
         if (finalDoc.status === "queued" || finalDoc.status === "processing") {
-          setProgressStage("Finalizing extraction and structuring verified fields...");
+          setProgressStage("Finalizing document details and reminders...");
           for (let attempt = 0; attempt < 5; attempt++) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
             try {
@@ -140,8 +140,8 @@ export default function UploadPage() {
   return (
     <div className="dv-upload-page">
       <AppHeader
-        title="Document Ingestion & OCR"
-        subtitle="Multi-tier text extraction, automated policy classification, and renewal schedule derivation."
+        title="Upload Documents"
+        subtitle="Add policies, warranties, invoices, and certificates to your secure personal vault."
       />
 
       <div className="dv-upload-content">
@@ -170,9 +170,9 @@ export default function UploadPage() {
                     <div className="dv-dropzone-icon-box">
                       <UploadCloud size={36} color="#015A47" />
                     </div>
-                    <h3 className="dv-dropzone-title">Click to upload or drag and drop</h3>
+                    <h3 className="dv-dropzone-title">Click to select or drag and drop files</h3>
                     <p className="dv-dropzone-sub">
-                      PDF, Scanned PDFs, PNG, JPG, WEBP (Max 25 MB)
+                      PDF, Scanned Documents, PNG, JPG, WEBP (Up to 25 MB)
                     </p>
                   </label>
                 ) : (
@@ -195,7 +195,7 @@ export default function UploadPage() {
 
               {/* Privacy Mode Option Selector */}
               <div className="dv-privacy-selector-box">
-                <span className="dv-privacy-selector-title">Select Privacy Ingestion Mode</span>
+                <span className="dv-privacy-selector-title">Processing & Privacy Preferences</span>
                 <div className="dv-privacy-options">
                   <label 
                     className={`dv-privacy-option ${privacyMode === "PROCESSABLE" ? "dv-privacy-option--active" : ""}`}
@@ -210,9 +210,9 @@ export default function UploadPage() {
                     <div className="dv-popt-text">
                       <div className="dv-popt-header">
                         <Sparkles size={16} color="#015A47" />
-                        <strong>Standard Ingestion (OCR & Verification)</strong>
+                        <strong>Standard Intelligent Processing</strong>
                       </div>
-                      <p>Full text extraction, automated metadata structuring, deadline derivation, and Copilot Q&A.</p>
+                      <p>Automatically organizes dates, renewal deadlines, key policy terms, and enables Copilot questions.</p>
                     </div>
                   </label>
 
@@ -229,9 +229,9 @@ export default function UploadPage() {
                     <div className="dv-popt-text">
                       <div className="dv-popt-header">
                         <Lock size={16} color="#D97706" />
-                        <strong>Storage-Only Mode (Zero-AI Isolation)</strong>
+                        <strong>Secure Vault Storage Only</strong>
                       </div>
-                      <p>Strictly encrypted storage for sensitive identity documents (Aadhaar, PAN). Excluded from OCR and external LLMs.</p>
+                      <p>Encrypted personal storage for sensitive identity documents (Aadhaar, PAN). Excluded from automated indexing.</p>
                     </div>
                   </label>
                 </div>
@@ -261,51 +261,51 @@ export default function UploadPage() {
                 onClick={handleUpload}
                 className="dv-upload-submit-btn"
               >
-                {privacyMode === "STORAGE_ONLY" ? "Secure in Storage-Only Vault" : "Execute Document Pipeline"}
+                {privacyMode === "STORAGE_ONLY" ? "Save to Secure Vault" : "Upload & Process Document"}
               </Button>
             </Card>
 
-            {/* Right: Pipeline Transparency Showcase */}
+            {/* Right: Customer Benefit Showcase */}
             <Card padding="lg" className="dv-upload-info-card">
               <div className="dv-upload-info-badge">
                 <ShieldCheck size={16} />
-                <span>DocVault Architecture</span>
+                <span>DocVault Protection</span>
               </div>
-              <h3 className="dv-pipeline-title">4-Tier Grounded Extraction Flow</h3>
+              <h3 className="dv-pipeline-title">How DocVault Protects & Organizes</h3>
               <p className="dv-pipeline-sub">
-                Every uploaded document flows through deterministic rules and multi-gate verification before entering your vault.
+                Every document added to your vault is processed securely with zero data sharing and privacy safeguards.
               </p>
 
               <div className="dv-pipeline-steps">
                 <div className="dv-pstep">
                   <span className="dv-pstep-num">1</span>
                   <div>
-                    <h4>Privacy Gate & Magic Bytes</h4>
-                    <p>Enforces magic byte verification, casual photo filtering, and routes sensitive IDs to storage-only isolation.</p>
+                    <h4>Privacy First Inspection</h4>
+                    <p>Validates file integrity and ensures sensitive personal identity documents remain strictly isolated.</p>
                   </div>
                 </div>
 
                 <div className="dv-pstep">
                   <span className="dv-pstep-num">2</span>
                   <div>
-                    <h4>Hybrid Text Extraction</h4>
-                    <p>Native PDF text layer extraction prioritized, falling back to local OCR for private on-device processing.</p>
+                    <h4>Smart Document Reading</h4>
+                    <p>Extracts text cleanly and identifies important contract terms, policy numbers, and validity periods.</p>
                   </div>
                 </div>
 
                 <div className="dv-pstep">
                   <span className="dv-pstep-num">3</span>
                   <div>
-                    <h4>Tier 1 Deterministic Rules Engine</h4>
-                    <p>Regex matching for GSTIN, dates, invoice/policy numbers, stopping early before cloud inference.</p>
+                    <h4>Automated Deadline Tracking</h4>
+                    <p>Detects renewal dates and sets proactive calendar reminders so you never miss an expiry.</p>
                   </div>
                 </div>
 
                 <div className="dv-pstep">
                   <span className="dv-pstep-num">4</span>
                   <div>
-                    <h4>Independent Verification Gates</h4>
-                    <p>5-gate verification (Grounding, Format, Logic) flags low-confidence data into your Review Queue.</p>
+                    <h4>Grounded AI Copilot</h4>
+                    <p>Enables instant Q&A grounded exclusively in your own vault documents with zero hallucination.</p>
                   </div>
                 </div>
               </div>
@@ -324,24 +324,24 @@ export default function UploadPage() {
               </div>
               <h2 className="dv-success-title">
                 {uploadedDoc.privacyMode === "STORAGE_ONLY" 
-                  ? "Document Isolated & Securely Stored" 
-                  : "Document Analyzed & Saved to Vault"}
+                  ? "Document Safely Stored" 
+                  : "Document Successfully Added"}
               </h2>
               <p className="dv-success-sub">
                 {uploadedDoc.privacyMode === "STORAGE_ONLY"
-                  ? "Zero-AI Storage-Only Mode active. Document content is protected from OCR or external AI models."
-                  : "Metadata extracted, verified against source evidence, and indexed for Copilot retrieval."}
+                  ? "Document stored in encrypted personal isolation. Excluded from AI processing."
+                  : "Key details organized, verified, and ready for search and Copilot assistance."}
               </p>
             </div>
 
             <div className="dv-success-meta-box">
               <div className="dv-success-meta-row">
-                <span className="dv-smeta-label">Privacy Policy Mode:</span>
+                <span className="dv-smeta-label">Storage Mode:</span>
                 <span className="dv-smeta-val">
                   {uploadedDoc.privacyMode === "STORAGE_ONLY" ? (
-                    <Badge variant="warning" size="sm">🔒 Storage Only (Zero AI)</Badge>
+                    <Badge variant="warning" size="sm">🔒 Secure Storage Only</Badge>
                   ) : (
-                    <Badge variant="success" size="sm">✓ Processable Pipeline</Badge>
+                    <Badge variant="success" size="sm">✓ Intelligent Vault</Badge>
                   )}
                 </span>
               </div>
@@ -355,15 +355,15 @@ export default function UploadPage() {
               </div>
               {uploadedDoc.extractedFields && uploadedDoc.extractedFields.length > 0 && (
                 <div className="dv-success-meta-row">
-                  <span className="dv-smeta-label">Extracted Fields:</span>
+                  <span className="dv-smeta-label">Identified Details:</span>
                   <span className="dv-smeta-val">
-                    <strong>{uploadedDoc.extractedFields.length} entities</strong> (Status: <code>{uploadedDoc.reviewStatus || 'accepted'}</code>)
+                    <strong>{uploadedDoc.extractedFields.length} key fields</strong>
                   </span>
                 </div>
               )}
               {uploadedDoc.expiryDate && (
                 <div className="dv-success-meta-row">
-                  <span className="dv-smeta-label">Detected Expiry:</span>
+                  <span className="dv-smeta-label">Renewal Due:</span>
                   <span className="dv-smeta-val dv-text-warning">
                     <ExpiryBadge expiryDate={uploadedDoc.expiryDate} size="sm" />
                     <span style={{ marginLeft: "8px" }}>{uploadedDoc.expiryDate} (Added to Deadlines)</span>
@@ -372,7 +372,7 @@ export default function UploadPage() {
               )}
               {uploadedDoc.summary && (
                 <div className="dv-success-meta-row">
-                  <span className="dv-smeta-label">Automated Abstract:</span>
+                  <span className="dv-smeta-label">Summary:</span>
                   <span className="dv-smeta-val">{uploadedDoc.summary}</span>
                 </div>
               )}
@@ -391,7 +391,7 @@ export default function UploadPage() {
                 size="md"
                 onClick={() => navigate(`/documents/${uploadedDoc._id}`)}
               >
-                Inspect Extracted Details
+                View Document
               </Button>
             </div>
           </Card>

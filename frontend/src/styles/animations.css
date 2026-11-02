@@ -40,6 +40,34 @@
   animation: spinLoader 1.5s linear infinite;
 }
 
+/* iOS-Smooth Spring / Ease Transitions */
+.dv-page-enter {
+  animation: iosSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes iosSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Smooth interactive transitions on cards, buttons and interactive rows */
+.dv-card, .dv-btn, .dv-doc-row, .dv-sidebar__item {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), 
+              box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.15s ease,
+              border-color 0.15s ease !important;
+}
+
+.dv-card:active, .dv-btn:active, .dv-doc-row:active {
+  transform: scale(0.985);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-duration: 0.01ms !important;

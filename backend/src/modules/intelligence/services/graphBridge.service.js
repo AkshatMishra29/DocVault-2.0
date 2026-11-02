@@ -151,3 +151,4 @@ export async function syncUserVaultToKnowledgeGraph(userId) {
     relationshipsCreated: createdRelationships.length,
   };
 }
+

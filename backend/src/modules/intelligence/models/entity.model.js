@@ -50,3 +50,4 @@ EntitySchema.pre('validate', function () {
 });
 
 export const Entity = mongoose.model('Entity', EntitySchema);
+

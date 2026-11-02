@@ -6,14 +6,14 @@ import './AppSidebar.css';
 
 const navItems = [
   { to: '/dashboard', label: 'Vault Overview', icon: LayoutDashboard },
-  { to: '/documents', label: 'Documents', icon: FileText },
-  { to: '/intelligence', label: 'Intelligence & Graph', icon: Activity, badge: 'DIHE' },
-  { to: '/upload', label: 'Upload & OCR', icon: UploadCloud },
-  { to: '/assets', label: 'Asset Registry', icon: Layers },
-  { to: '/deadlines', label: 'Deadlines', icon: Calendar },
-  { to: '/ask-ai', label: 'Ask AI Copilot', icon: Sparkles, badge: 'RAG' },
-  { to: '/admin', label: 'Admin Console', icon: ShieldCheck, badge: 'System' },
-  { to: '/more', label: 'Settings & Audit', icon: Settings },
+  { to: '/documents', label: 'My Documents', icon: FileText },
+  { to: '/intelligence', label: 'Document Intelligence', icon: Activity, badge: 'NEW' },
+  { to: '/upload', label: 'Upload Document', icon: UploadCloud },
+  { to: '/assets', label: 'My Assets', icon: Layers },
+  { to: '/deadlines', label: 'Renewals & Deadlines', icon: Calendar },
+  { to: '/ask-ai', label: 'Ask AI Copilot', icon: Sparkles, badge: 'AI' },
+  { to: '/admin', label: 'Admin Console', icon: ShieldCheck },
+  { to: '/more', label: 'Settings', icon: Settings },
 ];
 
 export default function AppSidebar() {
