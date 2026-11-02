@@ -6,6 +6,7 @@ import {
   User, Mail, Lock, Phone, KeyRound, ShieldCheck, ArrowRight, HelpCircle 
 } from "lucide-react";
 import { signInWithGoogle } from "../../../services/firebase";
+import AboutDocVaultModal from "../../../components/common/AboutModal/AboutDocVaultModal";
 
 import AuthLayout from "../components/AuthLayout";
 import AuthHeader from "../components/AuthHeader";
@@ -48,6 +49,7 @@ export default function RegisterPage() {
   const [infoMessage, setInfoMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
 
   // Live Heuristic Password Advice
   const pwdAdvice = useMemo(() => {
