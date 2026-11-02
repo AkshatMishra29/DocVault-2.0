@@ -311,7 +311,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-top: 3px solid #D97706;
+  border-top: 3px solid #0070F2;
 }
 
 .dv-review-card__header {
@@ -692,7 +692,7 @@
 
 .dv-trust-item__icon--amber {
   background-color: rgba(217, 119, 6, 0.1);
-  color: #D97706;
+  color: #0070F2;
 }
 
 .dv-trust-item__content h5 {
@@ -779,13 +779,13 @@
 }
 
 .dv-mobile-quick-btn--primary {
-  background: #FD2B06;
+  background: #0070F2;
   color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(253, 43, 6, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 112, 242, 0.25);
 }
 
 .dv-mobile-quick-btn--dark {
-  background: #1C1310;
+  background: #1D2D3E;
   color: #FFFFFF;
 }
 
@@ -796,8 +796,8 @@
 }
 
 .dv-stat-card__icon-box--brand {
-  background: #FFF1EE;
-  color: #FD2B06;
+  background: #EDF6FF;
+  color: #0070F2;
 }
 
 @media (max-width: 1024px) {

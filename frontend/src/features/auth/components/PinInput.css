@@ -25,25 +25,25 @@
 }
 
 .dv-pin-slot--current {
-  border-color: var(--color-auth-cta, #FD2B06);
+  border-color: var(--color-auth-cta, #0070F2);
   box-shadow: 0 0 0 3.5px var(--color-auth-focus-ring, rgba(253, 43, 6, 0.15));
 }
 
 .dv-pin-slot--filled {
-  border-color: var(--color-auth-coral, #EB6C3B);
+  border-color: var(--color-auth-coral, #0051B4);
   background-color: var(--color-auth-panel-light, #F2ECE6);
 }
 
 [data-theme="dark"] .dv-pin-slot--filled {
   background-color: #241A17;
-  border-color: var(--color-auth-coral, #EB6C3B);
+  border-color: var(--color-auth-coral, #0051B4);
 }
 
 .dv-pin-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background-color: var(--color-auth-cta, #FD2B06);
+  background-color: var(--color-auth-cta, #0070F2);
   box-shadow: 0 0 8px rgba(253, 43, 6, 0.35);
   animation: dv-pin-pop 0.18s ease-out;
 }
@@ -52,7 +52,7 @@
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 22px;
   font-weight: 800;
-  color: var(--color-auth-cta, #FD2B06);
+  color: var(--color-auth-cta, #0070F2);
 }
 
 .dv-pin-display--error .dv-pin-slot {

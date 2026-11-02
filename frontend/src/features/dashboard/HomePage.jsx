@@ -178,7 +178,7 @@ export default function HomePage() {
 
           <Card padding="md" className="dv-stat-card">
             <div className="dv-stat-card__icon-box dv-stat-card__icon-box--amber">
-              <Calendar size={22} color="#D97706" />
+              <Calendar size={22} color="#0070F2" />
             </div>
             <div className="dv-stat-card__meta">
               <span className="dv-stat-card__label">Upcoming Deadlines</span>

@@ -36,19 +36,19 @@
 }
 
 .dv-otp-box:focus {
-  border-color: var(--color-auth-cta, #FD2B06);
+  border-color: var(--color-auth-cta, #0070F2);
   box-shadow: 0 0 0 3.5px var(--color-auth-focus-ring, rgba(253, 43, 6, 0.15));
   transform: translateY(-2px);
 }
 
 .dv-otp-box--filled {
-  border-color: var(--color-auth-coral, #EB6C3B);
+  border-color: var(--color-auth-coral, #0051B4);
   background-color: var(--color-auth-panel-light, #F2ECE6);
 }
 
 [data-theme="dark"] .dv-otp-box--filled {
   background-color: #241A17;
-  border-color: var(--color-auth-coral, #EB6C3B);
+  border-color: var(--color-auth-coral, #0051B4);
 }
 
 .dv-otp-container--error .dv-otp-box {

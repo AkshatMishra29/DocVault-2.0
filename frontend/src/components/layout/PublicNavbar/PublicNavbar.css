@@ -120,7 +120,7 @@
   gap: 7px;
   height: 38px;
   padding: 0 18px;
-  background-color: #FD2B06;
+  background-color: #0070F2;
   color: #FFFFFF !important;
   border-radius: 8px;
   border: 1px solid transparent;
@@ -129,16 +129,16 @@
   font-weight: 600;
   letter-spacing: -0.01em;
   text-decoration: none;
-  box-shadow: 0 2px 8px rgba(253, 43, 6, 0.22);
+  box-shadow: 0 2px 8px rgba(0, 112, 242, 0.22);
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
   box-sizing: border-box;
 }
 
 .dv-nav-btn-primary:hover {
-  background-color: #E02504;
+  background-color: #0064D9;
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(253, 43, 6, 0.32);
+  box-shadow: 0 4px 14px rgba(0, 112, 242, 0.32);
 }
 
 .dv-nav-btn-primary:active {
@@ -240,7 +240,7 @@
 
 .dv-nav-mobile-link:hover {
   background-color: #F3F4F6;
-  color: #FD2B06;
+  color: #0070F2;
 }
 
 .dv-nav-mobile-footer {

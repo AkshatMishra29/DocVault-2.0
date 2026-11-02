@@ -4,7 +4,7 @@
 
 .dv-public-footer {
   background-color: #F2ECE6;
-  border-top: 1px solid var(--color-border, #D8CCC3);
+  border-top: 1px solid var(--color-border, #D5DADD);
   padding: 80px 0 0 0;
   width: 100%;
 }
@@ -35,7 +35,7 @@
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 14.5px;
   line-height: 1.65;
-  color: var(--color-text-secondary, #5C524C);
+  color: var(--color-text-secondary, #556B82);
   max-width: 380px;
   margin: 0;
 }
@@ -59,12 +59,12 @@
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 12px;
   font-weight: 700;
-  color: var(--color-text-primary, #1C1310);
+  color: var(--color-text-primary, #1D2D3E);
   box-shadow: 0 1px 3px rgba(28, 19, 16, 0.04);
 }
 
 .dv-footer-badge__icon {
-  color: var(--color-primary, #FD2B06);
+  color: var(--color-primary, #0070F2);
 }
 
 /* Navigation Columns */
@@ -80,7 +80,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-text-primary, #1C1310);
+  color: var(--color-text-primary, #1D2D3E);
   margin: 0 0 18px 0;
 }
 
@@ -96,14 +96,14 @@
 .dv-footer-links a {
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 14px;
-  color: var(--color-text-secondary, #5C524C);
+  color: var(--color-text-secondary, #556B82);
   text-decoration: none;
   transition: color 0.15s ease, transform 0.15s ease;
   display: inline-block;
 }
 
 .dv-footer-links a:hover {
-  color: var(--color-primary, #FD2B06);
+  color: var(--color-primary, #0070F2);
   transform: translateX(2px);
 }
 
@@ -148,7 +148,7 @@
   gap: 10px;
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 13px;
-  color: var(--color-text-secondary, #5C524C);
+  color: var(--color-text-secondary, #556B82);
 }
 
 .dv-public-footer__copyright p {
@@ -175,17 +175,17 @@
   border-radius: 9px;
   background-color: #FFFFFF;
   border: 1px solid rgba(216, 204, 195, 0.8);
-  color: var(--color-text-primary, #1C1310);
+  color: var(--color-text-primary, #1D2D3E);
   text-decoration: none;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(28, 19, 16, 0.04);
 }
 
 .dv-footer-social-btn:hover {
-  color: var(--color-primary, #FD2B06);
-  border-color: var(--color-primary, #FD2B06);
+  color: var(--color-primary, #0070F2);
+  border-color: var(--color-primary, #0070F2);
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(253, 43, 6, 0.15);
+  box-shadow: 0 4px 10px rgba(0, 112, 242, 0.15);
 }
 
 /* Responsive */

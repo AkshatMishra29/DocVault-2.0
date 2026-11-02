@@ -159,7 +159,7 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-auth-cta, #FD2B06);
+  color: var(--color-auth-cta, #0070F2);
 }
 
 .dv-editorial-title {
@@ -214,7 +214,7 @@
   height: 22px;
   border-radius: 6px;
   background: rgba(253, 43, 6, 0.12);
-  color: var(--color-auth-cta, #FD2B06);
+  color: var(--color-auth-cta, #0070F2);
   display: flex;
   align-items: center;
   justify-content: center;

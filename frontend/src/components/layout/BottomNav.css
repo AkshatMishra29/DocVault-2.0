@@ -50,7 +50,7 @@
 }
 
 .nav-item.active {
-  color: #FD2B06;
+  color: #0070F2;
   font-weight: 700;
 }
 
@@ -68,23 +68,23 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #FD2B06 0%, #E02604 100%);
+  background: linear-gradient(135deg, #0070F2 0%, #0064D9 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 18px rgba(253, 43, 6, 0.38);
+  box-shadow: 0 6px 18px rgba(0, 112, 242, 0.38);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
   border: 3px solid #FFFFFF;
 }
 
 .nav-item-upload:active .upload-icon-circle {
   transform: scale(0.92);
-  box-shadow: 0 2px 8px rgba(253, 43, 6, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 112, 242, 0.25);
 }
 
 .nav-item-upload .nav-label {
   font-size: 10.5px;
   margin-top: 2px;
   font-weight: 700;
-  color: #FD2B06;
+  color: #0070F2;
 }

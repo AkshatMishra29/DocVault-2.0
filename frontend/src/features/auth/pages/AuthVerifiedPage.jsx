@@ -95,7 +95,7 @@ export default function AuthVerifiedPage() {
               alignItems: "center",
               justifyContent: "center",
               margin: "0 auto 20px",
-              color: "var(--color-auth-cta, #FD2B06)",
+              color: "var(--color-auth-cta, #0070F2)",
             }}
           >
             <Loader2 size={32} className="spin-animation" />

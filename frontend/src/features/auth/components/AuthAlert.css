@@ -47,7 +47,7 @@
 .dv-auth-alert--info {
   background-color: rgba(253, 43, 6, 0.08);
   border: 1px solid rgba(253, 43, 6, 0.2);
-  color: var(--color-auth-cta, #FD2B06);
+  color: var(--color-auth-cta, #0070F2);
 }
 
 [data-theme="dark"] .dv-auth-alert--info {

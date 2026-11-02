@@ -43,14 +43,14 @@
 }
 
 .dv-brand-logo__accent {
-  background: linear-gradient(135deg, #FD2B06 0%, #EB6C3B 100%);
+  background: linear-gradient(135deg, #0070F2 0%, #0051B4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
 }
 
 [data-theme="dark"] .dv-brand-logo__accent {
-  background: linear-gradient(135deg, #FF4D26 0%, #EB6C3B 100%);
+  background: linear-gradient(135deg, #4DB1FF 0%, #0070F2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -60,7 +60,7 @@
 }
 
 .dv-brand-logo--light .dv-brand-logo__accent {
-  background: linear-gradient(135deg, #FFA07A 0%, #EB6C3B 100%);
+  background: linear-gradient(135deg, #A8D4FF 0%, #4DB1FF 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

@@ -45,7 +45,7 @@
   width: 18px;
   height: 18px;
   border-radius: 6px;
-  border: 1.5px solid var(--color-auth-border, #D8CCC3);
+  border: 1.5px solid var(--color-auth-border, #D5DADD);
   background-color: var(--color-auth-input-bg, #FFFFFF);
   display: flex;
   align-items: center;
@@ -55,17 +55,17 @@
 }
 
 [data-theme="dark"] .dv-checkbox-custom {
-  background-color: var(--color-auth-input-bg, #1C1310);
+  background-color: var(--color-auth-input-bg, #1D2D3E);
   border-color: var(--color-auth-border, #3D2F28);
 }
 
 .dv-checkbox-label:hover .dv-checkbox-custom {
-  border-color: var(--color-auth-cta, #FD2B06);
+  border-color: var(--color-auth-cta, #0070F2);
 }
 
 .dv-checkbox-label input:checked ~ .dv-checkbox-custom {
-  background-color: var(--color-auth-cta, #FD2B06);
-  border-color: var(--color-auth-cta, #FD2B06);
+  background-color: var(--color-auth-cta, #0070F2);
+  border-color: var(--color-auth-cta, #0070F2);
 }
 
 .dv-checkbox-label input:checked ~ .dv-checkbox-custom::after {
@@ -82,11 +82,11 @@
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-auth-text-dark, #1C1310);
+  color: var(--color-auth-text-dark, #1D2D3E);
 }
 
 [data-theme="dark"] .dv-checkbox-text {
-  color: #F8F5F1;
+  color: #F5F6F7;
 }
 
 /* Primary Auth Submit Button */
@@ -99,11 +99,11 @@
   font-size: 14.5px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  background-color: var(--color-auth-cta, #FD2B06);
+  background-color: var(--color-auth-cta, #0070F2);
   color: #FFFFFF;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(253, 43, 6, 0.25);
+  box-shadow: 0 4px 14px rgba(0, 112, 242, 0.25);
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   display: inline-flex;
   align-items: center;
@@ -113,9 +113,9 @@
 }
 
 .dv-auth-submit-btn:hover:not(:disabled) {
-  background-color: var(--color-auth-cta-hover, #E02504);
+  background-color: var(--color-auth-cta-hover, #0064D9);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(253, 43, 6, 0.32);
+  box-shadow: 0 6px 18px rgba(0, 112, 242, 0.32);
 }
 
 .dv-auth-submit-btn:active:not(:disabled) {
@@ -149,7 +149,7 @@
 }
 
 .dv-auth-footer-link {
-  color: var(--color-auth-text-dark, #1C1310);
+  color: var(--color-auth-text-dark, #1D2D3E);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -157,11 +157,11 @@
 }
 
 [data-theme="dark"] .dv-auth-footer-link {
-  color: #F8F5F1;
+  color: #F5F6F7;
 }
 
 .dv-auth-footer-link:hover {
-  color: var(--color-auth-cta, #FD2B06);
+  color: var(--color-auth-cta, #0070F2);
 }
 
 .dv-auth-switch-btn {
@@ -178,7 +178,7 @@
 }
 
 .dv-auth-switch-btn:hover {
-  color: var(--color-auth-cta, #FD2B06);
+  color: var(--color-auth-cta, #0070F2);
 }
 
 /* Bottom Security Trust Note */
@@ -189,7 +189,7 @@
   gap: 8px;
   margin-top: 24px;
   padding-top: 16px;
-  border-top: 1px solid var(--color-auth-border, #D8CCC3);
+  border-top: 1px solid var(--color-auth-border, #D5DADD);
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 12px;
   color: var(--color-auth-muted, #766B65);
@@ -225,7 +225,7 @@
   display: flex;
   align-items: center;
   background-color: var(--color-auth-panel-light, #F2ECE6);
-  border: 1px solid var(--color-auth-border, #D8CCC3);
+  border: 1px solid var(--color-auth-border, #D5DADD);
   border-radius: 8px;
   padding: 2px;
 }
@@ -249,9 +249,9 @@
 }
 
 .dv-pin-len-btn--active {
-  background-color: var(--color-auth-cta, #FD2B06);
+  background-color: var(--color-auth-cta, #0070F2);
   color: #FFFFFF;
-  box-shadow: 0 1px 4px rgba(253, 43, 6, 0.3);
+  box-shadow: 0 1px 4px rgba(0, 112, 242, 0.3);
 }
 
 /* Step 2 Back Button */
@@ -274,7 +274,7 @@
 }
 
 .dv-step-back-btn:hover {
-  color: var(--color-auth-cta, #FD2B06);
+  color: var(--color-auth-cta, #0070F2);
   background-color: var(--color-auth-panel-light, #F2ECE6);
 }
 
@@ -298,7 +298,7 @@
 }
 
 .dv-resend-btn {
-  color: var(--color-auth-cta, #FD2B06);
+  color: var(--color-auth-cta, #0070F2);
   font-weight: 700;
   cursor: pointer;
   background: transparent;
@@ -325,7 +325,7 @@
   padding: 6px 16px;
   border-radius: 9999px;
   background-color: var(--color-auth-panel-light, #F2ECE6);
-  border: 1px solid var(--color-auth-border, #D8CCC3);
+  border: 1px solid var(--color-auth-border, #D5DADD);
   margin-bottom: 18px;
   align-self: center;
 }
@@ -336,7 +336,7 @@
 }
 
 .dv-account-pill-icon {
-  color: var(--color-auth-cta, #FD2B06);
+  color: var(--color-auth-cta, #0070F2);
   flex-shrink: 0;
 }
 
@@ -344,11 +344,11 @@
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 12.5px;
   font-weight: 700;
-  color: var(--color-auth-text-dark, #1C1310);
+  color: var(--color-auth-text-dark, #1D2D3E);
 }
 
 [data-theme="dark"] .dv-account-pill-email {
-  color: #F8F5F1;
+  color: #F5F6F7;
 }
 
 .dv-pin-entry-container {
@@ -365,7 +365,7 @@
   margin-top: 14px;
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 13px;
-  color: var(--color-auth-cta, #FD2B06);
+  color: var(--color-auth-cta, #0070F2);
   font-weight: 700;
   cursor: pointer;
   background: transparent;
@@ -376,7 +376,7 @@
 }
 
 .dv-switch-bio-btn:hover {
-  background-color: rgba(253, 43, 6, 0.08);
+  background-color: rgba(0, 112, 242, 0.08);
 }
 
 /* Biometric Prompt */
@@ -393,34 +393,34 @@
   width: 88px;
   height: 88px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(253, 43, 6, 0.12) 0%, rgba(235, 108, 59, 0.05) 100%);
-  border: 2px solid rgba(253, 43, 6, 0.3);
+  background: radial-gradient(circle, rgba(0, 112, 242, 0.12) 0%, rgba(0, 112, 242, 0.05) 100%);
+  border: 2px solid rgba(0, 112, 242, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-auth-cta, #FD2B06);
+  color: var(--color-auth-cta, #0070F2);
   cursor: pointer;
   margin-bottom: 16px;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 8px 24px rgba(253, 43, 6, 0.16);
+  box-shadow: 0 8px 24px rgba(0, 112, 242, 0.16);
 }
 
 .dv-biometric-circle:hover:not(:disabled) {
   transform: scale(1.05);
-  border-color: var(--color-auth-cta, #FD2B06);
-  box-shadow: 0 12px 28px rgba(253, 43, 6, 0.26);
+  border-color: var(--color-auth-cta, #0070F2);
+  box-shadow: 0 12px 28px rgba(0, 112, 242, 0.26);
 }
 
 .dv-biometric-title {
   font-family: var(--font-display, 'DM Serif Display', Georgia, serif);
   font-size: 20px;
   font-weight: 400;
-  color: var(--color-auth-text-dark, #1C1310);
+  color: var(--color-auth-text-dark, #1D2D3E);
   margin-bottom: 4px;
 }
 
 [data-theme="dark"] .dv-biometric-title {
-  color: #F8F5F1;
+  color: #F5F6F7;
 }
 
 .dv-biometric-sub {
@@ -478,7 +478,7 @@
 }
 
 [data-theme="dark"] .dv-lockout-timer {
-  background-color: #1C1310;
+  background-color: #1D2D3E;
   border-color: rgba(198, 59, 46, 0.4);
 }
 
@@ -492,8 +492,8 @@
   height: 46px;
   border-radius: 10px;
   background-color: var(--color-auth-surface, #FFFFFF);
-  border: 1px solid var(--color-auth-border, #D8CCC3);
-  color: var(--color-auth-text-dark, #1C1310);
+  border: 1px solid var(--color-auth-border, #D5DADD);
+  color: var(--color-auth-text-dark, #1D2D3E);
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 14px;
   font-weight: 600;
@@ -509,14 +509,14 @@
 }
 
 [data-theme="dark"] .dv-auth-google-btn {
-  background-color: var(--color-auth-input-bg, #1C1310);
+  background-color: var(--color-auth-input-bg, #1D2D3E);
   border-color: var(--color-auth-border, #3D2F28);
-  color: #F8F5F1;
+  color: #F5F6F7;
 }
 
 .dv-auth-google-btn:hover:not(:disabled) {
   background-color: var(--color-auth-panel-light, #F2ECE6);
-  border-color: var(--color-auth-coral, #EB6C3B);
+  border-color: var(--color-auth-coral, #0051B4);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(28, 19, 16, 0.08);
 }
@@ -546,7 +546,7 @@
 .dv-auth-divider-line {
   flex: 1;
   height: 1px;
-  background-color: var(--color-auth-border, #D8CCC3);
+  background-color: var(--color-auth-border, #D5DADD);
 }
 
 [data-theme="dark"] .dv-auth-divider-line {
@@ -578,7 +578,7 @@
 }
 
 .dv-auth-forgot-link:hover {
-  color: var(--color-auth-cta, #FD2B06);
+  color: var(--color-auth-cta, #0070F2);
   text-decoration: underline;
 }
 
@@ -673,7 +673,7 @@
   font-weight: 600 !important;
   letter-spacing: 0.01em;
   margin-bottom: 0 !important;
-  color: var(--color-auth-text-dark, #1C1310);
+  color: var(--color-auth-text-dark, #1D2D3E);
 }
 
 [data-theme="dark"] .dv-auth-form--register .dv-auth-input-label {
@@ -783,7 +783,7 @@
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-auth-text, #1C1310);
+  color: var(--color-auth-text, #1D2D3E);
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 6px;
@@ -791,6 +791,6 @@
 }
 
 .dv-auth-about-trigger:hover {
-  background: rgba(253, 43, 6, 0.08);
-  color: #FD2B06;
+  background: rgba(0, 112, 242, 0.08);
+  color: #0070F2;
 }

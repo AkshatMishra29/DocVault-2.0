@@ -85,7 +85,7 @@
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: #FFF1EE;
+  background: #EDF6FF;
   border: 1px solid #FFE4DF;
   display: flex;
   align-items: center;
@@ -170,7 +170,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: #FD2B06;
+  background: #0070F2;
   color: #FFFFFF;
   padding: 3px 8px;
   border-radius: 6px;
@@ -220,8 +220,8 @@
 }
 
 .dv-about-pillar-icon--orange {
-  background: #FFF1EE;
-  color: #FD2B06;
+  background: #EDF6FF;
+  color: #0070F2;
 }
 
 .dv-about-pillar-icon--blue {
@@ -288,7 +288,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #FD2B06;
+  background: #0070F2;
   color: #FFFFFF;
   border: none;
   font-family: 'Manrope', sans-serif;
@@ -298,11 +298,11 @@
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(253, 43, 6, 0.25);
+  box-shadow: 0 4px 14px rgba(0, 112, 242, 0.25);
 }
 
 .dv-about-cta-btn:hover {
-  background: #E02604;
+  background: #0064D9;
   transform: translateY(-1px);
 }
 

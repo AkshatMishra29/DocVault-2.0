@@ -493,7 +493,7 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
               className="dv-native-about-btn"
               onClick={() => setIsAboutOpen(true)}
             >
-              <HelpCircle size={15} color="#FD2B06" />
+              <HelpCircle size={15} color="#0070F2" />
               <span>Know about DocVault & Privacy Architecture</span>
               <ChevronRight size={14} className="dv-native-about-chevron" />
             </button>

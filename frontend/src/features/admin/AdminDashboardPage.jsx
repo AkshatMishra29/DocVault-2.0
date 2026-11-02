@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
           <Card padding="md" className="dv-admin-kpi-card">
             <div className="dv-admin-kpi-header">
               <span className="dv-admin-kpi-label">Vault Custodians</span>
-              <Users size={18} color="#FD2B06" />
+              <Users size={18} color="#0070F2" />
             </div>
             <div className="dv-admin-kpi-value">
               {loading ? <Skeleton width="50px" height="32px" /> : (stats.totalCustodians || 1)}
@@ -376,7 +376,7 @@ export default function AdminDashboardPage() {
                   {categoryStats.map((item, index) => (
                     <div key={index} className="dv-category-card">
                       <div className="dv-category-card__header">
-                        <Layers size={18} color="#FD2B06" />
+                        <Layers size={18} color="#0070F2" />
                         <span className="dv-category-card__count">{item.count}</span>
                       </div>
                       <h4 className="dv-category-card__name">{item.category}</h4>

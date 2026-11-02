@@ -33,7 +33,7 @@
 
 .dv-keypad-btn:hover:not(:disabled) {
   background-color: var(--color-auth-panel-light, #F2ECE6);
-  border-color: var(--color-auth-coral, #EB6C3B);
+  border-color: var(--color-auth-coral, #0051B4);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(28, 19, 16, 0.08);
 }
@@ -45,7 +45,7 @@
 .dv-keypad-btn:active:not(:disabled) {
   transform: translateY(0);
   background-color: var(--color-auth-disabled, #EAE5E0);
-  border-color: var(--color-auth-cta, #FD2B06);
+  border-color: var(--color-auth-cta, #0070F2);
 }
 
 .dv-keypad-btn:disabled {

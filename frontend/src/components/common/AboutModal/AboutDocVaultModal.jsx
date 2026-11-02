@@ -20,7 +20,7 @@ export default function AboutDocVaultModal({ isOpen, onClose }) {
         <div className="dv-about-header">
           <div className="dv-about-header__branding">
             <div className="dv-about-logo-badge">
-              <ShieldCheck size={22} color="#FD2B06" />
+              <ShieldCheck size={22} color="#0070F2" />
             </div>
             <div>
               <h3 className="dv-about-title">About DocVault</h3>
