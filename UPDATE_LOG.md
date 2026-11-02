@@ -4,6 +4,48 @@ All notable changes, security updates, and new feature implementations for the *
 
 ---
 
+## [2026-11-02] – Version 2.8.0: Senior Frontend Geometric Standardization, Minimalist Glass Navigation, Banner De-Cluttering & Cloud Email Resilience
+
+**Session Completed At:** 2026-11-02T14:32:00+05:30 (Asia/Kolkata / Indian Standard Time)  
+**Engineering Lead & Author:** DocVault Core Engineering Team
+
+---
+
+### 1. Minimalist Glass Navigation & Public Navbar Architecture
+* **Enterprise Full-Width Sticky Navigation (`PublicNavbar.jsx` & `PublicNavbar.css`):**
+  - Replaced the disconnected floating capsule pill (`border-radius: 9999px; top: 16px; pointer-events: none`) with a full-width sticky navigation bar (`height: 68px; top: 0; backdrop-filter: blur(16px)`).
+  - Eliminated the unanchored capsule borders and unclickable dead zones across desktop viewports.
+  - Stripped out the artificial pulsating `256-Bit Active` status badge to provide a clean, production-grade interface.
+  - Connected the mobile dropdown menu directly to the navbar bottom border with smooth entry transitions.
+
+### 2. Geometric Standardization & Vertical Button Alignment
+* **Unified Button Component (`Button.jsx` & `Button.css`):**
+  - Standardized all button corners to enterprise-standard `8px` (`sm`/`md`) and `10px` (`lg`), removing mismatched pill/rectangle collisions.
+  - Synchronized control heights: `sm: 34px`, `md: 40px`, and `lg: 46px/48px` matching input fields and dropdown selectors.
+  - Enforced `display: inline-flex; align-items: center; justify-content: center; line-height: 1;` ensuring SVG icons and text labels sit on identical vertical baselines.
+  - Styled `<Link>` and `<a>` parent elements with `display: inline-flex; text-decoration: none;` preventing inline baseline distortion.
+
+### 3. Removal of Unwanted Banners & Gimmick Pills
+* **Landing Page De-Cluttering (`LandingPage.jsx` & `LandingPage.css`):**
+  - Removed intrusive `dv-lp-desktop-bar` announcement banner.
+  - Removed floating cartoon badges over the 3D ceramic safe hero art (`"OCR Engine Verified"` & `"Dual-Tier Lock Active"` with pulsing dots).
+* **Dashboard Command Center (`HomePage.jsx` & `HomePage.css`):**
+  - Removed artificial `"Vault Protocol Active • Multi-Tier Grounded Extraction"` pill.
+  - Simplified hero layout to an understated, professional command banner.
+
+### 4. Registration Container Height Bug Fix
+* **Responsive Natural Flow (`Auth.css`):**
+  - Removed forced decimal pixel height (`height: 652.983px !important; overflow: hidden !important;`) in `.dv-auth-form-card--register`.
+  - Replaced with dynamic sizing (`height: auto; max-width: 520px;`) preventing button clipping and layout distortion across zoom levels and mobile screens.
+
+### 5. Resend API & Cloud Email Delivery Resilience
+* **Auto-Healing Key Sanitizer (`emailService.js`):**
+  - Added prefix auto-healing for environment variables (`ire_...` $\rightarrow$ `re_...`).
+  - Successfully verified live email dispatch via Resend REST API over HTTPS Port 443 with confirmed `delivered` status on Resend servers.
+  - Added immediate sandbox fallback handling for free-tier domain recipient restrictions, ensuring registration never hangs on blocked SMTP ports (25, 465, 587) on Render Free Tier.
+
+---
+
 ## [2026-11-02] – Version 2.7.0: Native Mobile & Tablet App Experience, Enterprise Admin Console, Social Preview Metadata & Fluid Responsive Hardening
 
 **Session Completed At:** 2026-11-02T01:05:00+05:30 (Asia/Kolkata / Indian Standard Time)  
