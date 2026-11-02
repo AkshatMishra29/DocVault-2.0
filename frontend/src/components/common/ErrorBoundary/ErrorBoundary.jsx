@@ -20,13 +20,11 @@ export class ErrorBoundary extends React.Component {
   handleReset = () => {
     try {
       sessionStorage.clear();
-      localStorage.removeItem('docvault_user');
-      localStorage.removeItem('docvault_token');
-      localStorage.removeItem('token');
+      localStorage.clear();
     } catch (e) {
-      console.warn('Failed clearing session storage:', e);
+      console.warn('Failed clearing storage:', e);
     }
-    window.location.href = '/';
+    window.location.href = '/login';
   };
 
   handleReload = () => {
@@ -117,7 +115,7 @@ export class ErrorBoundary extends React.Component {
                   padding: '12px 18px',
                   borderRadius: '10px',
                   background: 'transparent',
-                  color: 'var(--color-text-secondary, #94a3b8)',
+                  color: '#4B5563',
                   border: '1px solid #E5E7EB',
                   fontSize: '14px',
                   fontWeight: 500,
@@ -125,19 +123,33 @@ export class ErrorBoundary extends React.Component {
                 }}
               >
                 <Home size={16} />
-                <span>Reset Session & Go to Home</span>
+                <span>Clear Session & Sign In</span>
               </button>
             </div>
 
-            {process.env.NODE_ENV !== 'production' && this.state.error && (
-              <details style={{ marginTop: '20px', textAlign: 'left', fontSize: '11px', color: '#ef4444', background: 'rgba(0,0,0,0.3)', padding: '10px', borderRadius: '6px', overflowX: 'auto' }}>
-                <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Error Details (Dev)</summary>
-                <pre style={{ marginTop: '6px', whiteSpace: 'pre-wrap' }}>
-                  {this.state.error.toString()}
-                  {'\n'}
-                  {this.state.errorInfo?.componentStack}
-                </pre>
-              </details>
+            {this.state.error && (
+              <div style={{
+                marginTop: '20px',
+                textAlign: 'left',
+                fontSize: '12px',
+                color: '#991B1B',
+                background: '#FEF2F2',
+                border: '1px solid #FECACA',
+                padding: '14px',
+                borderRadius: '8px',
+                maxHeight: '220px',
+                overflowY: 'auto'
+              }}>
+                <div style={{ fontWeight: 700, marginBottom: '6px' }}>Diagnostic Trace:</div>
+                <div style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                  {this.state.error?.message || String(this.state.error)}
+                </div>
+                {this.state.errorInfo?.componentStack && (
+                  <pre style={{ marginTop: '8px', fontSize: '11px', color: '#6B7280', whiteSpace: 'pre-wrap' }}>
+                    {this.state.errorInfo.componentStack}
+                  </pre>
+                )}
+              </div>
             )}
           </div>
         </div>

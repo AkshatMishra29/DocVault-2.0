@@ -66,12 +66,16 @@ export default function HomePage() {
     fetchDashboardData();
   }, []);
 
-  const urgentDeadlines = deadlines.filter(
+  const safeDeadlines = Array.isArray(deadlines) ? deadlines : [];
+  const safeDocs = Array.isArray(documents) ? documents : [];
+  const safeReviewQueue = Array.isArray(reviewQueue) ? reviewQueue : [];
+
+  const urgentDeadlines = safeDeadlines.filter(
     (d) => d.severity === "urgent" || (d.daysLeft !== undefined && d.daysLeft <= 15)
   );
 
-  const recentDocs = documents.slice(0, 5);
-  const pendingReviewDocs = reviewQueue.slice(0, 4);
+  const recentDocs = safeDocs.slice(0, 5);
+  const pendingReviewDocs = safeReviewQueue.slice(0, 4);
 
   const userName = user?.name ? user.name.split(" ")[0] : "Vault Custodian";
 
@@ -292,7 +296,7 @@ export default function HomePage() {
                       <div className="dv-review-card__field-box">
                         <div className="dv-review-field-meta">
                           <span className="dv-review-field-label">
-                            {sampleField.fieldName.replace(/_/g, " ")}:
+                            {String(sampleField.fieldName || sampleField.field_name || "Field").replace(/_/g, " ")}:
                           </span>
                           <ExtractionConfidence confidence={sampleField.confidence} />
                         </div>

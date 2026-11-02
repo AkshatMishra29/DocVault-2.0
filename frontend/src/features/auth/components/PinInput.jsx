@@ -2,13 +2,15 @@ import React from 'react';
 import './PinInput.css';
 
 export default function PinInput({ length = 4, value = '', hasError = false, isMasked = true }) {
-  const slots = Array(length).fill(0);
+  const safeLength = Number.isInteger(Number(length)) && Number(length) > 0 ? Number(length) : 4;
+  const safeValue = typeof value === 'string' ? value : '';
+  const slots = Array(safeLength).fill(0);
 
   return (
     <div className={`dv-pin-display ${hasError ? 'dv-pin-display--error' : ''}`}>
       {slots.map((_, idx) => {
-        const isFilled = idx < value.length;
-        const isCurrent = idx === value.length;
+        const isFilled = idx < safeValue.length;
+        const isCurrent = idx === safeValue.length;
 
         return (
           <div
@@ -19,7 +21,7 @@ export default function PinInput({ length = 4, value = '', hasError = false, isM
               isMasked ? (
                 <span className="dv-pin-dot" />
               ) : (
-                <span className="dv-pin-digit">{value[idx]}</span>
+                <span className="dv-pin-digit">{safeValue[idx]}</span>
               )
             ) : null}
           </div>

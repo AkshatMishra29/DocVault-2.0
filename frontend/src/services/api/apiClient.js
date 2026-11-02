@@ -41,12 +41,26 @@ export async function apiRequest(endpoint, options = {}) {
   if (contentType && contentType.includes('application/json')) {
     const data = await response.json();
 
-    // Detect session termination by another device
+    // Detect session termination by another device or invalid session token
     if (data.code === 'SESSION_TERMINATED' || (response.status === 401 && data.error?.includes('terminated'))) {
       localStorage.removeItem('token');
       localStorage.removeItem('docvault_token');
+      localStorage.removeItem('docvault_user');
       sessionStorage.removeItem('docvault_unlocked');
       alert('Your DocVault session was terminated because another device signed into your vault.');
+      window.location.href = '/login';
+    } else if (
+      response.status === 401 &&
+      !endpoint.includes('/auth/login') &&
+      !endpoint.includes('/auth/verify-pin') &&
+      !endpoint.includes('/auth/send-otp') &&
+      !endpoint.includes('/auth/verify-otp')
+    ) {
+      // Invalid or expired session credentials on authenticated resource
+      localStorage.removeItem('token');
+      localStorage.removeItem('docvault_token');
+      localStorage.removeItem('docvault_user');
+      sessionStorage.removeItem('docvault_unlocked');
       window.location.href = '/login';
     }
 
