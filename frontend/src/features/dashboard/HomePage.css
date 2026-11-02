@@ -66,53 +66,40 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
-  background: linear-gradient(135deg, rgba(253, 43, 6, 0.05) 0%, rgba(255, 255, 255, 0.95) 50%, #FAF8F5 100%);
-  border: 1px solid rgba(253, 43, 6, 0.15);
-  border-radius: var(--radius-xl);
-  padding: var(--space-6) var(--space-8);
-}
-
-.dv-dash-hero__pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  background-color: var(--color-primary-subtle);
-  border: 1px solid rgba(1, 90, 71, 0.2);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--color-primary);
-  margin-bottom: var(--space-2);
-}
-
-.dv-dash-hero__pill-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--color-accent);
-  box-shadow: 0 0 6px var(--color-accent);
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .dv-dash-hero__title {
-  font-size: var(--text-2xl);
-  font-weight: var(--font-extrabold);
-  color: var(--color-text-primary);
-  letter-spacing: -0.03em;
-  margin-bottom: var(--space-1);
+  font-family: var(--font-display, 'DM Serif Display', Georgia, serif);
+  font-size: 24px;
+  font-weight: 500;
+  color: #111827;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px 0;
 }
 
 .dv-dash-hero__desc {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  max-width: 650px;
+  font-size: 13.5px;
+  color: #4B5563;
+  max-width: 620px;
+  margin: 0;
+  line-height: 1.5;
 }
 
 .dv-dash-hero__actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 10px;
   flex-shrink: 0;
+}
+
+.dv-dash-hero__actions a {
+  text-decoration: none;
+  display: inline-flex;
 }
 
 /* Section B: Stats Grid */
@@ -390,6 +377,17 @@
   color: var(--color-text-muted);
   font-style: italic;
   margin-top: 4px;
+}
+
+.dv-review-card__footer {
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.dv-review-card__footer a {
+  display: block;
+  width: 100%;
+  text-decoration: none;
 }
 
 /* Dual Column Layout (Recent Docs & Renewal Attention) */

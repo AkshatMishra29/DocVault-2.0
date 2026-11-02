@@ -83,14 +83,15 @@
   color: #FFFFFF;
   border: none;
   padding: 10px 18px;
-  border-radius: 12px;
+  border-radius: 8px;
   font-family: 'Manrope', sans-serif;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(253, 43, 6, 0.3);
+  box-shadow: 0 2px 8px rgba(253, 43, 6, 0.25);
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .dv-admin-refresh-btn:hover:not(:disabled) {

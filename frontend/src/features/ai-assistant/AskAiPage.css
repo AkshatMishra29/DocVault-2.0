@@ -260,12 +260,14 @@
 
 .dv-ai-composer__input {
   flex: 1;
+  height: 40px;
   border: 1px solid var(--color-border);
   background-color: var(--color-surface-secondary);
-  border-radius: var(--radius-md);
-  padding: 10px 14px;
+  border-radius: 8px;
+  padding: 0 14px;
   font-size: var(--text-sm);
   outline: none;
+  box-sizing: border-box;
   transition: border-color var(--transition-fast);
 }
 

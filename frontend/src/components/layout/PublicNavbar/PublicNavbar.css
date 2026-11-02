@@ -1,89 +1,79 @@
 /* ==========================================================================
-   DOCVAULT FLAGSHIP FLOATING CAPSULE NAVBAR (REDESIGNED FROM SCRATCH)
+   DOCVAULT PUBLIC NAVIGATION BAR (ENTERPRISE MINIMALIST GLASS)
    ========================================================================== */
 
-/* Outer Sticky Positioning Wrapper */
-.dv-nav-wrapper {
+.dv-public-navbar {
   position: sticky;
-  top: 16px;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 1000;
   width: 100%;
-  pointer-events: none; /* Allows clicks around the floating capsule */
-  padding: 0 24px;
+  height: 68px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.85);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Floating Dynamic Island Capsule */
-.dv-nav-capsule {
-  pointer-events: auto; /* Re-enable click on the navbar itself */
+.dv-public-navbar--scrolled {
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom-color: rgba(216, 204, 195, 0.7);
+  box-shadow: 0 4px 20px -2px rgba(28, 19, 16, 0.06);
+}
+
+.dv-public-navbar__inner {
   max-width: 1240px;
   margin: 0 auto;
-  height: 64px;
-  padding: 0 20px 0 24px;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(216, 204, 195, 0.75);
-  border-radius: 9999px;
-  box-shadow: 
-    0 10px 30px -8px rgba(28, 19, 16, 0.08),
-    0 2px 6px -1px rgba(28, 19, 16, 0.03);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0 24px;
+  box-sizing: border-box;
+  position: relative;
 }
 
-/* Scrolled Elevation State */
-.dv-nav-wrapper--scrolled .dv-nav-capsule {
-  background: rgba(255, 255, 255, 0.94);
-  border-color: rgba(216, 204, 195, 0.95);
-  box-shadow: 
-    0 16px 40px -8px rgba(28, 19, 16, 0.12),
-    0 4px 12px -2px rgba(28, 19, 16, 0.04);
-  transform: translateY(-2px);
-}
-
-/* Brand Identity Wrap */
+/* Brand Identity */
 .dv-nav-brand {
   display: flex;
   align-items: center;
   text-decoration: none;
   flex-shrink: 0;
-  transition: transform 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .dv-nav-brand:hover {
-  transform: scale(1.02);
+  opacity: 0.9;
 }
 
 /* Center Desktop Navigation Menu */
 .dv-nav-menu {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .dv-nav-link {
-  font-family: var(--font-ui, 'Manrope', -apple-system, sans-serif);
+  font-family: var(--font-ui, 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif);
   font-size: 14px;
   font-weight: 600;
-  color: #5C524C;
+  color: #4B5563;
   text-decoration: none;
-  padding: 8px 16px;
-  border-radius: 9999px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .dv-nav-link:hover {
-  color: #1C1310;
-  background-color: rgba(28, 19, 16, 0.05);
+  color: #111827;
+  background-color: rgba(17, 24, 39, 0.05);
 }
 
-/* Right Action Controls */
+/* Right Actions */
 .dv-nav-actions {
   display: flex;
   align-items: center;
@@ -91,51 +81,6 @@
   flex-shrink: 0;
 }
 
-/* Live Security Status Badge */
-.dv-nav-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background-color: rgba(40, 122, 82, 0.08);
-  border: 1px solid rgba(40, 122, 82, 0.22);
-  border-radius: 9999px;
-  font-family: var(--font-ui, 'Manrope', sans-serif);
-  font-size: 12px;
-  font-weight: 700;
-  color: #287A52;
-  user-select: none;
-}
-
-.dv-nav-status-pulse {
-  width: 6.5px;
-  height: 6.5px;
-  border-radius: 50%;
-  background-color: #287A52;
-  box-shadow: 0 0 0 0 rgba(40, 122, 82, 0.6);
-  animation: dv-capsule-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
-}
-
-@keyframes dv-capsule-pulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(40, 122, 82, 0.6);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(40, 122, 82, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(40, 122, 82, 0);
-  }
-}
-
-.dv-nav-status-icon {
-  color: #287A52;
-}
-
-/* Auth Buttons Container */
 .dv-nav-auth-actions,
 .dv-nav-user-actions {
   display: flex;
@@ -145,45 +90,55 @@
 
 /* Sign In Ghost Button */
 .dv-nav-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-ui, 'Manrope', sans-serif);
-  font-size: 14px;
-  font-weight: 700;
-  color: #1C1310;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #374151;
   text-decoration: none;
-  padding: 8px 14px;
-  border-radius: 9999px;
-  transition: all 0.2s ease;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
 }
 
 .dv-nav-btn-ghost:hover {
-  color: #FD2B06;
-  background-color: rgba(253, 43, 6, 0.05);
+  color: #111827;
+  background-color: rgba(17, 24, 39, 0.05);
+  border-color: rgba(229, 231, 235, 0.9);
 }
 
-/* Primary Capsule CTA Button */
+/* Primary Action CTA Button */
 .dv-nav-btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  height: 40px;
+  height: 38px;
   padding: 0 18px;
   background-color: #FD2B06;
   color: #FFFFFF !important;
-  border-radius: 9999px;
+  border-radius: 8px;
+  border: 1px solid transparent;
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 13.5px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   text-decoration: none;
-  box-shadow: 0 3px 12px rgba(253, 43, 6, 0.28);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(253, 43, 6, 0.22);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .dv-nav-btn-primary:hover {
   background-color: #E02504;
   transform: translateY(-1px);
-  box-shadow: 0 5px 16px rgba(253, 43, 6, 0.36);
+  box-shadow: 0 4px 14px rgba(253, 43, 6, 0.32);
 }
 
 .dv-nav-btn-primary:active {
@@ -194,24 +149,26 @@
 .dv-nav-btn-lock {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   height: 38px;
   padding: 0 14px;
-  border-radius: 9999px;
-  background: rgba(198, 59, 46, 0.08);
-  color: #C63B2E;
-  border: 1px solid rgba(198, 59, 46, 0.22);
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.08);
+  color: #DC2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .dv-nav-btn-lock:hover {
-  background: rgba(198, 59, 46, 0.14);
-  border-color: #C63B2E;
+  background: rgba(220, 38, 38, 0.14);
+  border-color: #DC2626;
 }
 
 /* Mobile Toggle Hamburger Button */
@@ -221,16 +178,16 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  background-color: rgba(28, 19, 16, 0.04);
-  border: 1px solid rgba(216, 204, 195, 0.7);
-  color: #1C1310;
+  border-radius: 8px;
+  background-color: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  color: #111827;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .dv-nav-mobile-toggle:hover {
-  background-color: rgba(28, 19, 16, 0.08);
+  background-color: #E5E7EB;
 }
 
 /* ==========================================================================
@@ -238,29 +195,28 @@
    ========================================================================== */
 
 .dv-nav-mobile-sheet {
-  pointer-events: auto;
-  max-width: 1240px;
-  margin: 10px auto 0 auto;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(216, 204, 195, 0.85);
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow: 
-    0 20px 48px -12px rgba(28, 19, 16, 0.14),
-    0 2px 8px rgba(28, 19, 16, 0.04);
-  animation: dv-sheet-entrance 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  position: absolute;
+  top: 68px;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid #E5E7EB;
+  padding: 20px 24px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.12);
+  animation: dv-sheet-entrance 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-sizing: border-box;
 }
 
 @keyframes dv-sheet-entrance {
   0% {
     opacity: 0;
-    transform: translateY(-8px) scale(0.98);
+    transform: translateY(-6px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
@@ -274,22 +230,22 @@
 .dv-nav-mobile-link {
   font-family: var(--font-ui, 'Manrope', sans-serif);
   font-size: 15px;
-  font-weight: 700;
-  color: #1C1310;
+  font-weight: 600;
+  color: #1F2937;
   text-decoration: none;
-  padding: 12px 16px;
-  border-radius: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
   transition: background-color 0.15s ease;
 }
 
 .dv-nav-mobile-link:hover {
-  background-color: #F8F5F1;
+  background-color: #F3F4F6;
   color: #FD2B06;
 }
 
 .dv-nav-mobile-footer {
   padding-top: 14px;
-  border-top: 1px solid rgba(216, 204, 195, 0.6);
+  border-top: 1px solid #E5E7EB;
 }
 
 .dv-nav-mobile-cta-group {
@@ -303,12 +259,12 @@
 .dv-nav-btn-lock--full {
   width: 100%;
   justify-content: center;
-  height: 46px;
-  font-size: 14.5px;
+  height: 44px;
+  font-size: 14px;
 }
 
 /* ==========================================================================
-   BREAKPOINTS FOR CAPSULE NAVBAR
+   BREAKPOINTS
    ========================================================================== */
 
 @media (max-width: 1024px) {
@@ -316,21 +272,21 @@
     display: none;
   }
 
-  .dv-nav-status-badge {
-    display: none;
-  }
-
   .dv-nav-mobile-toggle {
     display: flex;
   }
 
-  .dv-nav-wrapper {
+  .dv-public-navbar {
+    height: 60px;
+  }
+
+  .dv-public-navbar__inner {
     padding: 0 16px;
   }
 
-  .dv-nav-capsule {
-    height: 56px;
-    padding: 0 12px 0 16px;
+  .dv-nav-mobile-sheet {
+    top: 60px;
+    padding: 16px;
   }
 
   .dv-nav-brand .dv-brand-logo__img {
@@ -339,24 +295,19 @@
 }
 
 @media (max-width: 600px) {
-  .dv-nav-wrapper {
-    top: 8px;
+  .dv-public-navbar {
+    height: 56px;
+  }
+
+  .dv-public-navbar__inner {
     padding: 0 12px;
   }
 
-  .dv-nav-capsule {
-    height: 52px;
-    padding: 0 10px 0 14px;
-    gap: 8px;
+  .dv-nav-mobile-sheet {
+    top: 56px;
   }
 
-  .dv-nav-brand .dv-brand-logo__img {
-    height: 28px !important;
-    max-width: 125px !important;
-  }
-
-  /* On mobile phones, hide the action button inside the capsule to eliminate squishing;
-     the mobile drawer sheet contains full-width prominent sign-in and register buttons */
+  /* Keep mobile navbar super clean and let the dropdown sheet provide full action buttons */
   .dv-nav-auth-actions .dv-nav-btn-primary,
   .dv-nav-auth-actions .dv-nav-btn-ghost,
   .dv-nav-user-actions .dv-nav-btn-lock,
@@ -364,8 +315,13 @@
     display: none;
   }
 
+  .dv-nav-brand .dv-brand-logo__img {
+    height: 28px !important;
+    max-width: 130px !important;
+  }
+
   .dv-nav-mobile-toggle {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
   }
 }

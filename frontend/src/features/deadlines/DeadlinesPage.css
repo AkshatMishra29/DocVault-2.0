@@ -19,6 +19,11 @@
   gap: var(--space-3);
 }
 
+.dv-deadlines-toolbar a {
+  display: inline-flex;
+  text-decoration: none;
+}
+
 .dv-deadlines-count {
   font-size: var(--text-sm);
   color: var(--color-text-secondary);

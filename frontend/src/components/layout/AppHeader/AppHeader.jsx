@@ -43,7 +43,7 @@ export default function AppHeader({ title, subtitle }) {
           className="dv-app-header__lock-btn"
           title="Lock Vault"
         >
-          <span className="dv-btn-text">Lock Vault</span>
+          Lock Vault
         </Button>
 
         {/* Complete Sign Out */}
@@ -55,7 +55,7 @@ export default function AppHeader({ title, subtitle }) {
           title="Sign Out of Session"
           className="dv-app-header__logout-btn"
         >
-          <span className="dv-btn-text">Sign Out</span>
+          Sign Out
         </Button>
       </div>
     </header>

@@ -108,21 +108,6 @@ export default function LandingPage() {
 
   return (
     <div className="dv-landing-root">
-      {isMobileOrTablet && forceDesktopWeb && (
-        <aside className="dv-lp-desktop-bar" role="complementary">
-          <div className="dv-lp-desktop-bar__content">
-            <Smartphone size={14} />
-            <span>Viewing Desktop Web Presentation</span>
-            <button
-              type="button"
-              onClick={() => setForceDesktopWeb(false)}
-              className="dv-lp-desktop-bar__btn"
-            >
-              Switch to Native App
-            </button>
-          </div>
-        </aside>
-      )}
       <PublicNavbar />
 
       {/* 1. HERO SECTION */}
@@ -188,31 +173,6 @@ export default function LandingPage() {
                 alt="DocVault 3D Ceramic Safe with Spoke Locker Wheel and Floating Documents" 
                 className="dv-lp-hero__art-img"
               />
-
-              {/* Floating Live Badge 1: Vault Security Status */}
-              <div className="dv-lp-float-badge dv-lp-float-badge--top">
-                <div className="dv-lp-float-badge__icon dv-lp-float-badge__icon--green">
-                  <ShieldCheck size={18} />
-                </div>
-                <div className="dv-lp-float-badge__info">
-                  <div className="dv-lp-float-badge__header">
-                    <span className="dv-lp-pulse-dot" />
-                    <strong>Dual-Tier Lock Active</strong>
-                  </div>
-                  <span>Hardware PIN & Biometrics Enforced</span>
-                </div>
-              </div>
-
-              {/* Floating Live Badge 2: OCR Intelligence */}
-              <div className="dv-lp-float-badge dv-lp-float-badge--bottom">
-                <div className="dv-lp-float-badge__icon dv-lp-float-badge__icon--coral">
-                  <Sparkles size={18} />
-                </div>
-                <div className="dv-lp-float-badge__info">
-                  <strong>OCR Engine Verified</strong>
-                  <span>Tax Invoice & Expiry Detected (14d)</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>

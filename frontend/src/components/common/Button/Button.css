@@ -1,20 +1,30 @@
+/* ==========================================================================
+   DOCVAULT SYSTEM BUTTON COMPONENT (ENTERPRISE GEOMETRIC STANDARDIZATION)
+   ========================================================================== */
+
 .dv-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  font-family: var(--font-body);
-  font-weight: var(--font-medium);
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
+  gap: 8px;
+  font-family: var(--font-body, 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif);
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
   user-select: none;
   cursor: pointer;
   position: relative;
   outline: none;
+  box-sizing: border-box;
+  line-height: 1;
+  vertical-align: middle;
+  text-decoration: none;
 }
 
-.dv-btn:disabled {
+.dv-btn:disabled,
+.dv-btn--disabled {
   opacity: 0.55;
   cursor: not-allowed;
   pointer-events: none;
@@ -23,83 +33,118 @@
 /* Sizes */
 .dv-btn--sm {
   height: 34px;
-  padding: 0 var(--space-3);
-  font-size: var(--text-xs);
+  padding: 0 12px;
+  font-size: 13px;
+  border-radius: 7px;
   letter-spacing: -0.01em;
 }
 
 .dv-btn--md {
-  height: 42px;
-  padding: 0 var(--space-4);
-  font-size: var(--text-sm);
+  height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+  border-radius: 8px;
   letter-spacing: -0.01em;
 }
 
 .dv-btn--lg {
-  height: 48px;
-  padding: 0 var(--space-6);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
+  height: 46px;
+  padding: 0 22px;
+  font-size: 15px;
+  border-radius: 10px;
   letter-spacing: -0.01em;
+}
+
+/* Icon & Text Alignment */
+.dv-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.dv-btn__text {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 /* Variants */
 .dv-btn--primary {
-  background: var(--gradient-ai);
+  background-color: #FD2B06;
   color: #FFFFFF;
-  box-shadow: 0 4px 14px 0 rgba(253, 43, 6, 0.32);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-color: #FD2B06;
+  box-shadow: 0 2px 6px rgba(253, 43, 6, 0.22);
 }
+
 .dv-btn--primary:hover:not(:disabled) {
+  background-color: #E02504;
+  border-color: #E02504;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px 0 rgba(253, 43, 6, 0.42);
-  filter: brightness(1.08);
+  box-shadow: 0 4px 12px rgba(253, 43, 6, 0.32);
 }
+
 .dv-btn--primary:active:not(:disabled) {
   transform: translateY(0);
 }
 
 .dv-btn--secondary {
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-xs);
+  background-color: #FFFFFF;
+  color: #1F2937;
+  border: 1px solid #D1D5DB;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
+
 .dv-btn--secondary:hover:not(:disabled) {
-  background-color: var(--color-surface-hover);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  background-color: #F9FAFB;
+  border-color: #9CA3AF;
+  color: #111827;
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+}
+
+.dv-btn--secondary:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .dv-btn--outline {
-  background-color: transparent;
-  color: var(--color-primary);
-  border: 1.5px solid var(--color-primary);
+  background-color: #FFFFFF;
+  color: #374151;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
+
 .dv-btn--outline:hover:not(:disabled) {
-  background-color: var(--color-primary-subtle);
+  background-color: #F9FAFB;
+  border-color: #D1D5DB;
+  color: #111827;
   transform: translateY(-1px);
 }
 
 .dv-btn--ghost {
   background-color: transparent;
-  color: var(--color-text-secondary);
+  color: #4B5563;
+  border-color: transparent;
 }
+
 .dv-btn--ghost:hover:not(:disabled) {
-  background-color: var(--color-surface-hover);
-  color: var(--color-text-primary);
+  background-color: rgba(17, 24, 39, 0.05);
+  color: #111827;
 }
 
 .dv-btn--danger {
-  background-color: var(--color-danger);
+  background-color: #DC2626;
   color: #FFFFFF;
-  box-shadow: 0 4px 14px 0 rgba(220, 38, 38, 0.3);
+  border-color: #DC2626;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
 }
+
 .dv-btn--danger:hover:not(:disabled) {
   background-color: #B91C1C;
+  border-color: #B91C1C;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
 }
 
 .dv-btn--full {
@@ -109,10 +154,11 @@
 .dv-btn__spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
   border-top-color: currentColor;
   animation: dv-spin 0.8s linear infinite;
+  display: inline-block;
 }
 
 @keyframes dv-spin {

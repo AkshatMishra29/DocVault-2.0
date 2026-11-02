@@ -104,10 +104,6 @@ export default function HomePage() {
         {/* Section A: Welcome Hero Bar with Direct Action CTAs */}
         <div className="dv-dash-hero">
           <div className="dv-dash-hero__info">
-            <div className="dv-dash-hero__pill">
-              <span className="dv-dash-hero__pill-dot" />
-              <span>Vault Protocol Active • Multi-Tier Grounded Extraction</span>
-            </div>
             <h2 className="dv-dash-hero__title">
               Secure Documents. Actionable Intelligence.
             </h2>

@@ -37,11 +37,11 @@ export default function PublicNavbar() {
   };
 
   return (
-    <div className={`dv-nav-wrapper ${scrolled ? 'dv-nav-wrapper--scrolled' : ''}`}>
-      <header className="dv-nav-capsule" role="banner">
+    <header className={`dv-public-navbar ${scrolled ? 'dv-public-navbar--scrolled' : ''}`} role="banner">
+      <div className="dv-public-navbar__inner">
         {/* Brand Identity */}
         <Link to="/" className="dv-nav-brand" title="DocVault - Sovereign Document Vault">
-          <DocVaultLogo height={44} />
+          <DocVaultLogo height={42} />
         </Link>
 
         {/* Center Desktop Navigation */}
@@ -63,15 +63,8 @@ export default function PublicNavbar() {
           </a>
         </nav>
 
-        {/* Right Actions & Status */}
+        {/* Right Actions */}
         <div className="dv-nav-actions">
-          {/* Live Protection Status Indicator */}
-          <div className="dv-nav-status-badge" title="Cryptographic Custody Protocol Active">
-            <span className="dv-nav-status-pulse" />
-            <ShieldCheck size={14} className="dv-nav-status-icon" />
-            <span>256-Bit Active</span>
-          </div>
-
           {user && isVaultUnlocked ? (
             <div className="dv-nav-user-actions">
               <button
@@ -80,7 +73,7 @@ export default function PublicNavbar() {
                 className="dv-nav-btn-lock"
                 title="Lock vault session immediately"
               >
-                <Lock size={13} />
+                <Lock size={14} />
                 <span>Lock Vault</span>
               </button>
 
@@ -92,7 +85,7 @@ export default function PublicNavbar() {
           ) : (
             <div className="dv-nav-auth-actions">
               <Link to="/login" className="dv-nav-btn-ghost">
-                Sign in
+                Sign In
               </Link>
 
               <Link to="/register" className="dv-nav-btn-primary">
@@ -113,7 +106,7 @@ export default function PublicNavbar() {
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
-      </header>
+      </div>
 
       {/* Mobile Drawer Dropdown Sheet */}
       {mobileMenuOpen && (
@@ -186,7 +179,7 @@ export default function PublicNavbar() {
                   className="dv-nav-btn-ghost dv-nav-btn-ghost--full"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Sign in
+                  Sign In
                 </Link>
                 <Link 
                   to="/register" 
@@ -201,6 +194,6 @@ export default function PublicNavbar() {
           </div>
         </div>
       )}
-    </div>
+    </header>
   );
 }
