@@ -299,3 +299,4 @@ runRigorousOcrBenchmark().catch(err => {
   console.error('\n[BENCHMARK FATAL ERROR]:', err);
   process.exit(1);
 });
+

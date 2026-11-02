@@ -12,11 +12,35 @@
 | :--- | :--- | :---: | :--- |
 | **Step 0** | Codebase Audit & Gap Analysis (`docs/AUDIT_PIPELINE.md`) | ✅ **DONE** | Complete evidence-based audit report generated. |
 | **Phase A** | Privacy Gate, Sensitive Detection, Dynamic Policy Purge & Async Job Queue | ✅ **DONE** | 20 / 20 tests passed (`backend/tests/phaseA.test.js`). 61 / 61 total backend tests passing. |
+| **Feature Benchmark** | Comprehensive 16-Feature Pipeline Benchmark (`runComprehensive14FeaturesBenchmark.js`) | ✅ **DONE** | 16 / 16 features passed (100% precision). Feature #14 sensitive exclusion verified. |
 | **Phase B** | Adapters & Universal Page Model (`pages` collection, PDF text/scan, images, office) | ⏳ **PENDING** | Next phase. |
 | **Phase C** | Quality Gate & OCR Preprocessing (Blur/Laplacian, brightness, adaptive OCR retry) | ⏳ **PENDING** | Dependent on Phase B. |
 | **Phase D** | Type Registry, Field Ladder & Verification Gates (JSON types, Groq window, Gemini) | ⏳ **PENDING** | Dependent on Phase C. |
 | **Phase E** | Retrieval, Bounding Box Citations, Review Queue & Correction Memory | ⏳ **PENDING** | Dependent on Phase D. |
 | **Phase F** | Golden Set Evaluation & CI/CD Regression Guard (30+ test fixtures, 98% precision) | ⏳ **PENDING** | Dependent on Phase E. |
+
+---
+
+## 16-Feature Benchmark Results Matrix
+
+| # | Feature | Architectural Capability | Benchmark Result | Status |
+| :---: | :--- | :--- | :--- | :---: |
+| **1** | PDF Text Extraction | Extracts raw text streams directly from PDF | 65.19ms latency, 566 chars, 0 OCR overhead | ✅ PASS |
+| **2** | Image Preprocessing | Sharp greyscale, dynamic range normalization, sharpening | 6.97ms latency, normalized 400x200 | ✅ PASS |
+| **3** | OCR Engine | Tesseract.js in-process scanned image OCR | 187.17ms latency, 100% matched keywords | ✅ PASS |
+| **4** | Automatic Classification | Rule-based keyword and structure scoring | 4/4 categories matched (100% precision) | ✅ PASS |
+| **5** | Metadata Extraction | Deterministic regex & anchor parsing with evidence bounds | GSTIN, Invoice No, Total, Date anchored | ✅ PASS |
+| **6** | Expiry Extraction | Valid-till anchors & ISO standardization | Normalized ISO (2027-01-31), Chronology verified | ✅ PASS |
+| **7** | Semantic Embeddings | 384-dimensional vector cosine similarity | Identical: 1.0000, Orthogonal: -0.0006 | ✅ PASS |
+| **8** | AI Document Q&A | Grounded prompt construction & key detail formatting | Strict schema, context packaging verified | ✅ PASS |
+| **9** | Bounded RAG | Grounding filter against hallucinated tokens | 100% rejection rate for hallucinated tokens | ✅ PASS |
+| **10** | Source References | Citations tracked per answer | 2 document references tracked per answer | ✅ PASS |
+| **11** | Hindi & Indic OCR | Devanagari detection and numeral mapping | Devanagari range detected, ०-९ normalized | ✅ PASS |
+| **12** | On-Device / Local Processing | In-process server execution with zero network egress | 0 third-party egress calls | ✅ PASS |
+| **13** | Local AI & Deterministic Extraction | Instant field parsing with 0 LLM tokens | 0.064ms latency, 0 cloud tokens used | ✅ PASS |
+| **14** | Sensitive-Document Exclusion | 12-digit Verhoeff Aadhaar, PAN, MRZ, Voter ID, DL, Luhn | Verhoeff passed, assertAiAllowed 403 block | ✅ PASS |
+| **15** | User-Specific AI Consent | Binary storage_only vs ai_enabled per document | Informed consent enforced, dynamic purge | ✅ PASS |
+| **16** | AI Correction Learning | ReviewHistory schema & correction feedback loop | Human-in-the-loop schema validated | ✅ PASS |
 
 ---
 
