@@ -97,7 +97,17 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     });
 
     // 4. Determine AI Policy: Sensitive files are strictly FORCED to storage_only
-    let requestedPolicy = req.body.aiPolicy || config.pipeline?.defaultAiPolicy || AI_POLICIES.STORAGE_ONLY;
+    let requestedPolicy = req.body.aiPolicy;
+    if (!requestedPolicy) {
+      if (req.body.userConsent === 'PROCESSABLE' || req.body.privacyMode === 'PROCESSABLE' || req.body.userConsent === 'ai_enabled') {
+        requestedPolicy = AI_POLICIES.AI_ENABLED;
+      } else if (req.body.userConsent === 'STORAGE_ONLY' || req.body.privacyMode === 'STORAGE_ONLY' || req.body.userConsent === 'storage_only') {
+        requestedPolicy = AI_POLICIES.STORAGE_ONLY;
+      } else {
+        requestedPolicy = config.pipeline?.defaultAiPolicy || AI_POLICIES.STORAGE_ONLY;
+      }
+    }
+
     if (sensitiveCheck.isSensitive) {
       requestedPolicy = AI_POLICIES.STORAGE_ONLY;
     }
@@ -170,6 +180,15 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
         status: enqueueResult.job.status,
         isDuplicate: enqueueResult.isDuplicate,
       };
+
+      // Trigger immediate background worker dispatch
+      import('../pipeline/jobQueue.service.js').then(({ executeSingleJob }) => {
+        setImmediate(() => {
+          executeSingleJob(enqueueResult.job).catch(err =>
+            console.error('[Immediate Job Execution Error]:', err.message)
+          );
+        });
+      }).catch(err => console.warn('[Job Dispatch Warning]:', err.message));
     }
 
     // 7. Audit log

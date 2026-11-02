@@ -46,11 +46,14 @@ async function handleAiQuery(req, res) {
       assertAiAllowed(doc, 'Single document AI query');
       documents.push(doc);
     } else {
-      // Vault-Wide Query: Filter strictly by aiPolicy === 'ai_enabled' and sensitiveFlag === false BEFORE ranking
+      // Vault-Wide Query: Filter strictly by aiPolicy === 'ai_enabled' (or legacy PROCESSABLE) and sensitiveFlag !== true
       const candidates = await Document.find({
         userId: req.user.userId,
-        aiPolicy: 'ai_enabled',
-        sensitiveFlag: false,
+        $or: [
+          { aiPolicy: 'ai_enabled' },
+          { privacyMode: 'PROCESSABLE' },
+        ],
+        sensitiveFlag: { $ne: true },
       }).select('-fileData');
 
       // Double-check with in-memory privacy gate

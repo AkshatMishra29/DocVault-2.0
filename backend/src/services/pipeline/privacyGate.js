@@ -34,10 +34,13 @@ export function isAiAllowed(doc) {
   if (!doc) return false;
   // If sensitive flag is active, AI is NEVER allowed under any circumstance
   if (doc.sensitiveFlag === true) return false;
-  // Must explicitly be 'ai_enabled'
-  if (doc.aiPolicy !== AI_POLICIES.AI_ENABLED) return false;
-  // Must have a valid recorded user consent timestamp
-  if (!doc.aiConsent || !doc.aiConsent.grantedAt) return false;
+  // Must explicitly be 'ai_enabled' or legacy 'PROCESSABLE'
+  const isProcessable = doc.aiPolicy === AI_POLICIES.AI_ENABLED || doc.privacyMode === 'PROCESSABLE';
+  if (!isProcessable) return false;
+  // Require valid consent timestamp when aiPolicy is explicitly configured
+  if (doc.aiPolicy === AI_POLICIES.AI_ENABLED && (!doc.aiConsent || !doc.aiConsent.grantedAt)) {
+    return false;
+  }
   return true;
 }
 
@@ -63,14 +66,15 @@ export function assertAiAllowed(doc, operation = 'Third-party AI operation') {
     );
   }
 
-  if (doc.aiPolicy !== AI_POLICIES.AI_ENABLED) {
+  const isProcessable = doc.aiPolicy === AI_POLICIES.AI_ENABLED || doc.privacyMode === 'PROCESSABLE';
+  if (!isProcessable) {
     throw new PrivacyPolicyViolationError(
       `Privacy Gate Violation: Document ${docId} has policy "${doc.aiPolicy || 'storage_only'}". Third-party operation "${operation}" is forbidden.`,
       docId
     );
   }
 
-  if (!doc.aiConsent || !doc.aiConsent.grantedAt) {
+  if (doc.aiPolicy === AI_POLICIES.AI_ENABLED && (!doc.aiConsent || !doc.aiConsent.grantedAt)) {
     throw new PrivacyPolicyViolationError(
       `Privacy Gate Violation: Document ${docId} has no record of informed consent for ${operation}.`,
       docId

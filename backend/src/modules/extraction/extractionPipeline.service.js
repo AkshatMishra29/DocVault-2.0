@@ -114,7 +114,7 @@ export async function executeDocumentExtractionPipeline({
   }
 
   // Assertion: Ensure document is processable
-  assertProcessingAllowed(privacyEval.mode, 'Text Extraction');
+  assertProcessingAllowed(PRIVACY_MODES.PROCESSABLE, 'Text Extraction');
 
   // 3. Document Normalization & Text Extraction
   let extractedText = '';

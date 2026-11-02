@@ -76,6 +76,9 @@ export default function UploadPage() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("userConsent", privacyMode);
+    formData.append("privacyMode", privacyMode);
+    formData.append("aiPolicy", privacyMode === "STORAGE_ONLY" ? "storage_only" : "ai_enabled");
+    formData.append("noticeVersion", "1.0.0");
 
     try {
       const stageTimer1 = setTimeout(() => {
@@ -101,7 +104,28 @@ export default function UploadPage() {
       clearTimeout(stageTimer2);
 
       if (res.success && res.data) {
-        setUploadedDoc(res.data);
+        let finalDoc = res.data;
+
+        // If background processing is active, poll until completed or max 5 seconds
+        if (finalDoc.status === "queued" || finalDoc.status === "processing") {
+          setProgressStage("Finalizing extraction and structuring verified fields...");
+          for (let attempt = 0; attempt < 5; attempt++) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            try {
+              const pollRes = await apiRequest(`/api/documents/${finalDoc._id}`);
+              if (pollRes.success && pollRes.data) {
+                finalDoc = pollRes.data;
+                if (finalDoc.status === "completed" || finalDoc.status === "needs_review") {
+                  break;
+                }
+              }
+            } catch {
+              // Ignore polling network glitches
+            }
+          }
+        }
+
+        setUploadedDoc(finalDoc);
       } else {
         setError(res.error || "Document upload failed.");
       }
