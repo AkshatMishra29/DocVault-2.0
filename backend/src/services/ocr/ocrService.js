@@ -40,8 +40,12 @@ export async function extractTextFromImage(buffer) {
 
 export async function convertPdfToImages(buffer) {
   try {
-    const { default: pdfImgConvert } = await import('pdf-img-convert');
-    return await pdfImgConvert.convert(buffer, {
+    const pdfImgConvert = await import('pdf-img-convert');
+    const convertFn = pdfImgConvert.convert || pdfImgConvert.default?.convert;
+    if (!convertFn) {
+      throw new Error('convert function not found on pdf-img-convert module');
+    }
+    return await convertFn(buffer, {
       width: 1600,
       page_numbers: [1, 2],
     });

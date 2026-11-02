@@ -148,7 +148,7 @@ router.patch('/:id', requireAuth, async (req, res) => {
     const doc = await Document.findOneAndUpdate(
       { _id: req.params.id, userId: req.user.userId },
       { $set: updates },
-      { new: true }
+      { returnDocument: 'after' }
     ).select('-fileData');
 
     if (!doc) {

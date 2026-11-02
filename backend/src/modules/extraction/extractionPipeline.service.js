@@ -81,7 +81,7 @@ export async function executeDocumentExtractionPipeline({
 
     let savedDoc;
     if (existingDocumentId) {
-      savedDoc = await Document.findByIdAndUpdate(existingDocumentId, docData, { new: true });
+      savedDoc = await Document.findByIdAndUpdate(existingDocumentId, docData, { returnDocument: 'after' });
     } else {
       savedDoc = await Document.create(docData);
       savedDoc.downloadUrl = `/api/documents/${savedDoc._id}/download`;
@@ -280,7 +280,7 @@ export async function executeDocumentExtractionPipeline({
 
   let savedDoc;
   if (existingDocumentId) {
-    savedDoc = await Document.findByIdAndUpdate(existingDocumentId, docPayload, { new: true });
+    savedDoc = await Document.findByIdAndUpdate(existingDocumentId, docPayload, { returnDocument: 'after' });
   } else {
     savedDoc = await Document.create(docPayload);
     savedDoc.downloadUrl = `/api/documents/${savedDoc._id}/download`;
