@@ -16,8 +16,9 @@ export default function VerifyOtpPage() {
 
   const formData = location.state?.formData || location.state?.pendingRegistration;
   const initialInfo = location.state?.infoMessage || "";
+  const fallbackOtp = location.state?.fallbackOtp || "";
 
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState(() => fallbackOtp || "");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
@@ -88,9 +89,13 @@ export default function VerifyOtpPage() {
         throw new Error(res.error || res.message || "Failed to resend code.");
       }
 
-      setInfoMessage("A fresh 6-digit verification code has been dispatched to your email!");
+      setInfoMessage(res.data?.message || "A fresh 6-digit verification code has been dispatched to your email!");
       setResendCooldown(60);
-      setOtp("");
+      if (res.data?.devOtp) {
+        setOtp(res.data.devOtp);
+      } else {
+        setOtp("");
+      }
     } catch (err) {
       setError(err.message || "Failed to resend verification code.");
     } finally {

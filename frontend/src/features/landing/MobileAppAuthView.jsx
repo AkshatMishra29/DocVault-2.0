@@ -139,7 +139,8 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
           formData: registrationData,
           pendingRegistration: registrationData,
           targetEmail: cleanEmail,
-          infoMessage: `A 6-digit verification code has been dispatched to ${cleanEmail}.`
+          infoMessage: otpRes?.data?.message || `A 6-digit verification code has been dispatched to ${cleanEmail}.`,
+          fallbackOtp: otpRes?.data?.devOtp
         },
       });
     } catch (err) {

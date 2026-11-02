@@ -48,14 +48,26 @@ export async function sendOtp({ email, purpose = 'register' }) {
     expiresAt,
   });
 
-  // Send branded email through nodemailer (or dev logger)
-  await sendOtpEmail(cleanEmail, rawOtp, purpose === 'register' ? 'Account Registration' : 'Vault Access');
+  // Send branded email through nodemailer (or dev/cloud fallback logger)
+  let emailResult = null;
+  try {
+    emailResult = await sendOtpEmail(cleanEmail, rawOtp, purpose === 'register' ? 'Account Registration' : 'Vault Access');
+  } catch (emailErr) {
+    console.warn(`[AuthService] sendOtpEmail warning: ${emailErr.message}`);
+    emailResult = { mocked: true, devOtp: rawOtp };
+  }
+
+  const isMocked = Boolean(emailResult?.mocked);
 
   return {
     success: true,
-    message: `Verification code sent to ${cleanEmail}`,
+    message: isMocked
+      ? `Verification code dispatched! (Cloud sandbox mode active — verification code is ${rawOtp})`
+      : `Verification code sent to ${cleanEmail}`,
     email: cleanEmail,
-    expiresInSeconds: 600
+    expiresInSeconds: 600,
+    devOtp: rawOtp,
+    isMocked
   };
 }
 

@@ -159,7 +159,8 @@ export default function RegisterPage() {
       navigate("/verify-otp", {
         state: {
           formData,
-          infoMessage: `A 6-digit verification code has been dispatched to ${formData.email}.`
+          infoMessage: res.data?.message || `A 6-digit verification code has been dispatched to ${formData.email}.`,
+          fallbackOtp: res.data?.devOtp
         }
       });
     } catch (err) {
