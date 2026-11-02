@@ -296,3 +296,4 @@ export function stopJobWorker() {
   isWorkerRunning = false;
   activeJobCount = 0;
 }
+

@@ -63,3 +63,4 @@
   * *Mitigation:* Leases expire automatically (`leaseExpiresAt`), and uncompleted jobs are atomically recovered and resumed by the next active worker on startup.
 * **Risk:** Memory spikes during multi-page OCR.  
   * *Mitigation:* Memory guard in `jobQueue.service.js` checks `process.memoryUsage().heapUsed` before claiming new jobs.
+

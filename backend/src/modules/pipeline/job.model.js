@@ -88,3 +88,4 @@ const JobSchema = new mongoose.Schema(
 JobSchema.index({ status: 1, nextRetryAt: 1, leaseExpiresAt: 1, createdAt: 1 });
 
 export const Job = mongoose.model('Job', JobSchema);
+

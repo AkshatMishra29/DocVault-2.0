@@ -117,7 +117,7 @@ const DocumentSchema = new mongoose.Schema({
 });
 
 // Middleware to sync sha256 <-> fileHash and aiPolicy <-> privacyMode
-DocumentSchema.pre('save', function (next) {
+DocumentSchema.pre('save', function () {
   this.updatedAt = new Date();
   if (this.sha256 && !this.fileHash) {
     this.fileHash = this.sha256;
@@ -130,7 +130,6 @@ DocumentSchema.pre('save', function (next) {
   } else if (this.aiPolicy === 'ai_enabled') {
     this.privacyMode = 'PROCESSABLE';
   }
-  next();
 });
 
 export const Document = mongoose.model('Document', DocumentSchema);
