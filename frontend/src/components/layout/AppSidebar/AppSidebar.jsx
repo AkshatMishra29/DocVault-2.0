@@ -1,12 +1,13 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, FileText, UploadCloud, Layers, Calendar, Sparkles, Settings, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, FileText, UploadCloud, Layers, Calendar, Sparkles, Settings, ShieldCheck, Activity } from 'lucide-react';
 import DocVaultLogo from '../../common/DocVaultLogo/DocVaultLogo';
 import './AppSidebar.css';
 
 const navItems = [
   { to: '/dashboard', label: 'Vault Overview', icon: LayoutDashboard },
   { to: '/documents', label: 'Documents', icon: FileText },
+  { to: '/intelligence', label: 'Intelligence & Graph', icon: Activity, badge: 'DIHE' },
   { to: '/upload', label: 'Upload & OCR', icon: UploadCloud },
   { to: '/assets', label: 'Asset Registry', icon: Layers },
   { to: '/deadlines', label: 'Deadlines', icon: Calendar },

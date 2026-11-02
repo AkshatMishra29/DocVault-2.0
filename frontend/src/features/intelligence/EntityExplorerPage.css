@@ -1,0 +1,245 @@
+.entity-explorer-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.entity-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.filter-tab-group {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.filter-tab-pill {
+  padding: 6px 14px;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--color-surface, #131b26);
+  border: 1px solid var(--color-border, #1f2937);
+  color: var(--color-text-muted, #9ca3af);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-tab-pill:hover {
+  border-color: var(--color-primary, #10b981);
+  color: var(--color-text-main, #f3f4f6);
+}
+
+.filter-tab-pill.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--color-primary, #10b981);
+  color: var(--color-primary, #10b981);
+  font-weight: 600;
+}
+
+.entity-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 260px;
+}
+
+.entity-search-box .search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--color-text-muted, #9ca3af);
+}
+
+.entity-search-box input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface, #131b26);
+  border: 1px solid var(--color-border, #1f2937);
+  color: var(--color-text-main, #f3f4f6);
+  font-size: 0.88rem;
+}
+
+.entity-search-box input:focus {
+  outline: none;
+  border-color: var(--color-primary, #10b981);
+}
+
+.entity-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+
+.entity-profile-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface, #131b26);
+  border: 1px solid var(--color-border, #1f2937);
+  transition: all 0.2s ease;
+}
+
+.entity-profile-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary, #10b981);
+}
+
+.entity-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.entity-type-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.type-vehicle {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.type-person {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.type-property {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.type-product {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+}
+
+.type-insurance_policy {
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+}
+
+.type-other {
+  background: rgba(107, 114, 128, 0.15);
+  color: #9ca3af;
+}
+
+.entity-doc-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #9ca3af);
+  background: var(--color-background, #0b0f17);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border, #1f2937);
+}
+
+.entity-card-name {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-text-main, #f3f4f6);
+  margin-bottom: var(--space-3);
+}
+
+.entity-attributes-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--space-4);
+  flex: 1;
+}
+
+.attr-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.82rem;
+}
+
+.attr-key {
+  color: var(--color-text-muted, #9ca3af);
+}
+
+.attr-val {
+  color: var(--color-text-main, #f3f4f6);
+  font-weight: 500;
+}
+
+.font-mono {
+  font-family: var(--font-mono, monospace);
+}
+
+.entity-card-bottom {
+  border-top: 1px solid var(--color-border, #1f2937);
+  padding-top: var(--space-3);
+}
+
+.view-entity-btn {
+  width: 100%;
+  justify-content: center;
+  gap: 6px;
+}
+
+.entity-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-muted, #9ca3af);
+}
+
+.dv-select-input,
+.dv-text-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-background, #0b0f17);
+  border: 1px solid var(--color-border, #1f2937);
+  color: var(--color-text-main, #f3f4f6);
+  font-size: 0.9rem;
+}
+
+.dv-select-input:focus,
+.dv-text-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #10b981);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}

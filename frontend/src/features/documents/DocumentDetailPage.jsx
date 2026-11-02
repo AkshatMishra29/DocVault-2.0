@@ -4,7 +4,7 @@ import { apiRequest, API_BASE_URL } from "../../services/api";
 import { 
   ArrowLeft, Download, Trash2, Calendar, FileText, CheckCircle2,
   ShieldCheck, AlertTriangle, ExternalLink, Link2, Sparkles,
-  Lock, Edit3, Check, X, Shield, Cpu, Tag
+  Lock, Edit3, Check, X, Shield, Cpu, Tag, Activity, FileCheck2, Clock
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -38,13 +38,24 @@ export default function DocumentDetailPage() {
   const [fieldValueInput, setFieldValueInput] = useState("");
   const [savingCorrection, setSavingCorrection] = useState(false);
 
+  // Document Intelligence & Health Engine (DIHE) State
+  const [docHealth, setDocHealth] = useState(null);
+  const [docFacts, setDocFacts] = useState([]);
+  const [docVersions, setDocVersions] = useState(null);
+  const [docVerification, setDocVerification] = useState([]);
+  const [verifying, setVerifying] = useState(false);
+
   useEffect(() => {
     async function loadDocAndAssets() {
       try {
         setLoading(true);
-        const [docRes, assetsRes] = await Promise.all([
+        const [docRes, assetsRes, healthRes, factsRes, verifRes, versRes] = await Promise.all([
           apiRequest(`/api/documents/${id}`).catch(() => ({ success: false })),
           apiRequest("/api/assets").catch(() => ({ data: [] })),
+          apiRequest(`/api/intelligence/documents/${id}/health`).catch(() => null),
+          apiRequest(`/api/intelligence/documents/${id}/facts`).catch(() => null),
+          apiRequest(`/api/intelligence/documents/${id}/verification`).catch(() => null),
+          apiRequest(`/api/intelligence/documents/${id}/versions`).catch(() => null),
         ]);
 
         if (docRes?.success && docRes.data) {
@@ -59,6 +70,11 @@ export default function DocumentDetailPage() {
         if (assetsRes?.success && assetsRes.data) {
           setAssets(assetsRes.data);
         }
+
+        if (healthRes?.success && healthRes.data) setDocHealth(healthRes.data);
+        if (factsRes?.success && factsRes.data) setDocFacts(factsRes.data);
+        if (verifRes?.success && verifRes.data) setDocVerification(verifRes.data);
+        if (versRes?.success && versRes.data) setDocVersions(versRes.data);
       } catch (err) {
         setError("Failed to retrieve document details.");
       } finally {
@@ -67,6 +83,26 @@ export default function DocumentDetailPage() {
     }
     loadDocAndAssets();
   }, [id]);
+
+  const handleVerifyAuthenticity = async () => {
+    try {
+      setVerifying(true);
+      const res = await apiRequest(`/api/intelligence/documents/${id}/verify`, { method: "POST" });
+      if (res.success) {
+        const verifRes = await apiRequest(`/api/intelligence/documents/${id}/verification`);
+        if (verifRes?.success && verifRes.data) {
+          setDocVerification(verifRes.data);
+        }
+        alert("Authenticity and cryptographic verification completed.");
+      } else {
+        alert(res?.error || "Verification failed");
+      }
+    } catch (err) {
+      alert("Verification error: " + err.message);
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const handleDelete = async () => {
     try {
@@ -433,6 +469,86 @@ export default function DocumentDetailPage() {
                   )}
                 </ul>
               </Card>
+
+              {/* Document Health Engine Card */}
+              {docHealth && (
+                <Card padding="lg" className="dv-detail-sidebar-card">
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                    <h3 className="dv-sidebar-section-title" style={{ margin: 0 }}>Document Health</h3>
+                    <Badge variant={
+                      docHealth.status === "VALID" ? "success" :
+                      docHealth.status === "EXPIRING_SOON" ? "warning" :
+                      docHealth.status === "EXPIRED" ? "danger" : "outline"
+                    }>
+                      {docHealth.status}
+                    </Badge>
+                  </div>
+                  <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginBottom: "8px" }}>
+                    {docHealth.reason}
+                  </p>
+                  {docHealth.daysLeft !== null && (
+                    <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
+                      Days remaining: <strong>{docHealth.daysLeft}</strong> (Warning threshold: {docHealth.warningPeriodDays}d)
+                    </div>
+                  )}
+                </Card>
+              )}
+
+              {/* Authenticity Verification Card */}
+              <Card padding="lg" className="dv-detail-sidebar-card">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                  <h3 className="dv-sidebar-section-title" style={{ margin: 0 }}>Authenticity Verification</h3>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={handleVerifyAuthenticity}
+                    disabled={verifying}
+                  >
+                    {verifying ? "Checking..." : "Verify Now"}
+                  </Button>
+                </div>
+                <p style={{ fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "8px" }}>
+                  Cryptographic PKCS#7 signature and statutory checksum inspection.
+                </p>
+                {docVerification && docVerification.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {docVerification.map((v, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "12px", padding: "6px 8px", background: "var(--color-background)", borderRadius: "4px" }}>
+                        <span>{v.provider}:</span>
+                        <Badge variant={v.result === "VERIFIED" ? "success" : "outline"}>
+                          {v.result}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
+                    No verification check executed yet.
+                  </div>
+                )}
+              </Card>
+
+              {/* Version History Card */}
+              {docVersions?.hasVersionHistory && (
+                <Card padding="lg" className="dv-detail-sidebar-card">
+                  <h3 className="dv-sidebar-section-title">Version History</h3>
+                  <p style={{ fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "8px" }}>
+                    Tracked revisions ({docVersions.versions.length} versions)
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {docVersions.versions.map((ver, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "12px", padding: "6px 8px", background: "var(--color-background)", borderRadius: "4px" }}>
+                        <span>Version {ver.versionNumber} {ver.isCurrentVersion && "(Current)"}</span>
+                        {ver.documentId?._id !== id && (
+                          <Link to={`/documents/${ver.documentId?._id}`} style={{ color: "var(--color-primary)", textDecoration: "none" }}>
+                            View
+                          </Link>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
             </div>
           </div>
         )}

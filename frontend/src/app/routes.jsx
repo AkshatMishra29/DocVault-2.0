@@ -20,6 +20,12 @@ import UploadPage from "../features/upload/UploadPage";
 import MorePage from "../features/dashboard/MorePage";
 import AdminDashboardPage from "../features/admin/AdminDashboardPage";
 
+import IntelligenceDashboardPage from "../features/intelligence/IntelligenceDashboardPage";
+import EntityExplorerPage from "../features/intelligence/EntityExplorerPage";
+import EntityDetailPage from "../features/intelligence/EntityDetailPage";
+import AlertsCenterPage from "../features/intelligence/AlertsCenterPage";
+import ConflictsCenterPage from "../features/intelligence/ConflictsCenterPage";
+
 export function AppRoutes() {
   return (
     <Routes>
@@ -58,6 +64,11 @@ export function AppRoutes() {
         <Route path="/assets" element={<AssetsPage />} />
         <Route path="/deadlines" element={<DeadlinesPage />} />
         <Route path="/upload" element={<UploadPage />} />
+        <Route path="/intelligence" element={<IntelligenceDashboardPage />} />
+        <Route path="/intelligence/entities" element={<EntityExplorerPage />} />
+        <Route path="/intelligence/entities/:id" element={<EntityDetailPage />} />
+        <Route path="/intelligence/alerts" element={<AlertsCenterPage />} />
+        <Route path="/intelligence/conflicts" element={<ConflictsCenterPage />} />
         <Route path="/more" element={<MorePage />} />
         <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/dashboard/admin" element={<AdminDashboardPage />} />

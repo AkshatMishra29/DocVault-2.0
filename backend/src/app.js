@@ -13,6 +13,7 @@ import deadlineRoutes from './modules/deadlines/deadline.routes.js';
 import aiRoutes from './modules/ai/ai.routes.js';
 import vaultRoutes from './modules/vault/vault.routes.js';
 import extractionRoutes from './modules/extraction/extraction.routes.js';
+import intelligenceRoutes from './modules/intelligence/intelligence.routes.js';
 
 import mongoose from 'mongoose';
 import { config } from './config/index.js';
@@ -68,6 +69,7 @@ app.use('/api/deadlines', deadlineRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/vault', vaultRoutes);
 app.use('/api/extraction', extractionRoutes);
+app.use('/api/intelligence', intelligenceRoutes);
 
 /* ==========================================================================
    Static Frontend Production Serve (Unified Deployment)
