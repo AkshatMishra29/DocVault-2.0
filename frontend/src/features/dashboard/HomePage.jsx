@@ -166,7 +166,7 @@ export default function HomePage() {
         <div className="dv-stats-grid">
           <Card padding="md" className="dv-stat-card">
             <div className="dv-stat-card__icon-box dv-stat-card__icon-box--brand">
-              <FileText size={22} color="#FD2B06" />
+              <FileText size={22} color="#0070F2" />
             </div>
             <div className="dv-stat-card__meta">
               <span className="dv-stat-card__label">Total Documents</span>

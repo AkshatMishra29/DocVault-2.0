@@ -1,81 +1,80 @@
 :root {
-  /* SAP Horizon (Fiori) Typography & Fonts */
-  --font-display: '72', '72-Bold', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-ui: '72', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* 3D Editorial Authentication Palette (Dribbble 3D Reference) */
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-ui: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   
-  /* SAP Learning Hub & Horizon Auth Palette */
-  --color-auth-bg: #F5F6F7;
-  --color-auth-panel: #EAECEF;
-  --color-auth-panel-deep: #D5DADD;
-  --color-auth-panel-light: #F5F6F7;
-  --color-auth-text-dark: #1D2D3E;
-  --color-auth-cta: #0070F2;
-  --color-auth-cta-hover: #0064D9;
-  --color-auth-cta-active: #0051B4;
-  --color-auth-coral: #E9730C;
-  --color-auth-taupe: #89A0B4;
-  --color-auth-soft-grey: #EDEFF0;
-  --color-auth-blue: #0070F2;
-  --color-auth-muted: #556B82;
-  --color-auth-border: #D5DADD;
-  --color-auth-border-focus: #0070F2;
+  --color-auth-bg: #F8F5F1;
+  --color-auth-panel: #D0AC9A;
+  --color-auth-panel-deep: #B8927E;
+  --color-auth-panel-light: #F2ECE6;
+  --color-auth-text-dark: #1C1310;
+  --color-auth-cta: #FD2B06;
+  --color-auth-cta-hover: #E02504;
+  --color-auth-cta-active: #C42003;
+  --color-auth-coral: #EB6C3B;
+  --color-auth-taupe: #BFB3AA;
+  --color-auth-soft-grey: #E4E4E3;
+  --color-auth-blue: #1A44CE;
+  --color-auth-muted: #766B65;
+  --color-auth-border: #D8CCC3;
+  --color-auth-border-focus: #FD2B06;
   --color-auth-input-bg: #FFFFFF;
   --color-auth-surface: #FFFFFF;
   --color-auth-card-bg: #FFFFFF;
-  --color-auth-disabled: #EDEFF0;
-  --color-auth-disabled-text: #89A0B4;
-  --color-auth-success: #188918;
-  --color-auth-error: #BB0000;
-  --color-auth-focus-ring: rgba(0, 112, 242, 0.25);
+  --color-auth-disabled: #EAE5E0;
+  --color-auth-disabled-text: #A89F98;
+  --color-auth-success: #287A52;
+  --color-auth-error: #C63B2E;
+  --color-auth-focus-ring: rgba(253, 43, 6, 0.16);
 
-  /* SAP Learning Hub Official Brand Palette (Morning Horizon) */
-  --color-primary: #0070F2;          /* SAP Signature Horizon Blue / sapBrandColor */
-  --color-primary-hover: #0064D9;    /* SAP Active Blue */
-  --color-primary-light: #4DB1FF;    /* SAP Horizon Light Blue Accent */
-  --color-secondary: #1D2D3E;        /* SAP Horizon Deep Navy / Slate */
-  --color-secondary-hover: #131E29;  /* SAP Shell Deep Navy */
-  --color-accent: #0070F2;           /* Primary Highlight Color */
-  --color-accent-hover: #0064D9;
-  --color-accent-subtle: #EDF6FF;
-  --color-primary-subtle: #EDF6FF;   /* Crisp Subtle Blue Tint */
+  /* DocVault Signature Brand Palette (3D Editorial Sunset, Warm Espresso, Linen) */
+  --color-primary: #FD2B06;          /* Primary Electric Ember / Sunset */
+  --color-primary-hover: #E02504;    /* Darker Ember */
+  --color-primary-light: #EB6C3B;    /* Warm Terracotta Accent */
+  --color-secondary: #1C1310;        /* Deep Warm Espresso */
+  --color-secondary-hover: #120B09;  /* Pitch Espresso */
+  --color-accent: #EB6C3B;           /* Terracotta / Coral Accent */
+  --color-accent-hover: #D95627;
+  --color-accent-subtle: #FDF2ED;
+  --color-primary-subtle: #FFF3EE;   /* Very Light Tint of Sunset Coral */
   
-  /* SAP Foundation Surfaces */
-  --color-bg: #F5F6F7;               /* SAP Canvas / Group Content Background */
-  --color-surface: #FFFFFF;          /* Pure White Card / Tile Background */
+  /* Foundation Surfaces */
+  --color-bg: #F8F5F1;               /* Editorial Linen Sand */
+  --color-surface: #FFFFFF;          /* Pure White */
   --color-surface-white: #FFFFFF;
-  --color-surface-hover: #F0F2F5;
-  --color-surface-secondary: #EAECEF;
-  --color-surface-tertiary: #D5DADD;
-  --color-surface-dark: #1D2D3E;     /* SAP Deep Slate Surface */
-  --color-surface-dark-card: #131E29;
+  --color-surface-hover: #F2ECE6;
+  --color-surface-secondary: #EDE5DE;
+  --color-surface-tertiary: #E4DBD2;
+  --color-surface-dark: #1C1310;     /* Deep Espresso Surface */
+  --color-surface-dark-card: #140E0C;
 
-  /* SAP Typography Colors */
-  --color-text-primary: #1D2D3E;     /* sapTextColor */
-  --color-text-secondary: #556B82;   /* sapContent_LabelColor */
-  --color-text-muted: #788FA6;       /* sapContent_PlaceholderColor */
+  /* Typography Colors */
+  --color-text-primary: #1C1310;     /* Deep Espresso Primary */
+  --color-text-secondary: #5C524C;   /* Warm Taupe Medium */
+  --color-text-muted: #8C8077;       /* Soft Sand Muted */
   --color-text-inverse: #FFFFFF;     /* Pure White */
 
-  /* SAP Borders & Dividers */
-  --color-border: #D5DADD;           /* Standard Content Border */
-  --color-border-subtle: #EAECEF;
-  --color-border-focus: #0070F2;
-  --color-border-hover: #89A0B4;
+  /* Borders & Dividers */
+  --color-border: #D8CCC3;
+  --color-border-subtle: #EAE3DB;
+  --color-border-focus: #FD2B06;
+  --color-border-hover: #C2B4AA;
 
-  /* SAP Semantic Feedback Colors */
-  --color-success: #188918;          /* sapPositiveColor */
-  --color-success-bg: #F1FDF1;
-  --color-success-subtle: #F1FDF1;
-  --color-success-border: #BCE8BC;
+  /* Feedback Colors */
+  --color-success: #059669;
+  --color-success-bg: #ECFDF5;
+  --color-success-subtle: #ECFDF5;
+  --color-success-border: #A7F3D0;
 
-  --color-warning: #E9730C;          /* sapCriticalColor */
-  --color-warning-bg: #FFF7ED;
-  --color-warning-subtle: #FFF7ED;
-  --color-warning-border: #FED7AA;
+  --color-warning: #D97706;
+  --color-warning-bg: #FFFBEB;
+  --color-warning-subtle: #FFFBEB;
+  --color-warning-border: #FDE68A;
 
-  --color-danger: #BB0000;           /* sapNegativeColor */
-  --color-danger-bg: #FFF2F2;
-  --color-danger-subtle: #FFF2F2;
-  --color-danger-border: #F8B4B4;
+  --color-danger: #DC2626;
+  --color-danger-bg: #FEF2F2;
+  --color-danger-subtle: #FEF2F2;
+  --color-danger-border: #FECACA;
 
   /* Layout Dimensions */
   --sidebar-width: 260px;
@@ -98,33 +97,33 @@
   --space-16: 64px;
   --space-20: 80px;
 
-  /* Radii (SAP Horizon Fiori specifies elegant 8px - 12px radii) */
+  /* Radii */
   --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
   --radius-full: 9999px;
 
-  /* Elevation & Shadows (Clean enterprise elevation) */
-  --shadow-xs: 0 1px 2px 0 rgba(29, 45, 62, 0.04);
-  --shadow-sm: 0 1px 3px 0 rgba(29, 45, 62, 0.06), 0 1px 2px 0 rgba(29, 45, 62, 0.04);
-  --shadow-md: 0 4px 8px -1px rgba(29, 45, 62, 0.08), 0 2px 4px -1px rgba(29, 45, 62, 0.04);
-  --shadow-lg: 0 10px 18px -3px rgba(29, 45, 62, 0.10), 0 4px 6px -2px rgba(29, 45, 62, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(29, 45, 62, 0.12), 0 10px 10px -5px rgba(29, 45, 62, 0.03);
-  --shadow-glow: 0 0 20px -2px rgba(0, 112, 242, 0.28);
-  --shadow-glow-mint: 0 0 20px -3px rgba(0, 112, 242, 0.20);
+  /* Elevation & Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 10px 10px -5px rgba(15, 23, 42, 0.02);
+  --shadow-glow: 0 0 24px -4px rgba(253, 43, 6, 0.28);
+  --shadow-glow-mint: 0 0 20px -3px rgba(235, 108, 59, 0.25);
 
   /* Glassmorphism tokens */
-  --glass-bg: rgba(255, 255, 255, 0.94);
-  --glass-border: rgba(213, 218, 221, 0.75);
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.6);
   --glass-blur: blur(16px);
 
   /* Gradients */
-  --gradient-ai: linear-gradient(135deg, #0070F2 0%, #0051B4 100%);
-  --gradient-card: linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%);
-  --gradient-hero: radial-gradient(circle at 50% 15%, rgba(0, 112, 242, 0.08) 0%, rgba(0, 112, 242, 0.02) 40%, transparent 70%);
+  --gradient-ai: linear-gradient(135deg, #FD2B06 0%, #EB6C3B 60%, #FF6E4A 100%);
+  --gradient-card: linear-gradient(180deg, #FFFFFF 0%, #F8F5F1 100%);
+  --gradient-hero: radial-gradient(circle at 50% 15%, rgba(253, 43, 6, 0.12) 0%, rgba(235, 108, 59, 0.05) 40%, transparent 70%);
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -133,38 +132,37 @@
 }
 
 [data-theme="dark"] {
-  /* SAP Evening Horizon Dark Palette */
-  --color-auth-bg: #14171A;
-  --color-auth-panel: #1D232A;
-  --color-auth-panel-deep: #161B21;
-  --color-auth-panel-light: #232B34;
-  --color-auth-text-dark: #F5F6F7;
-  --color-auth-muted: #89A0B4;
-  --color-auth-border: #2D3748;
-  --color-auth-input-bg: #1D232A;
-  --color-auth-surface: #1D232A;
-  --color-auth-card-bg: #1D232A;
-  --color-auth-disabled: #232B34;
-  --color-auth-disabled-text: #556B82;
-  --color-auth-soft-grey: #232B34;
+  --color-auth-bg: #14100E;
+  --color-auth-panel: #2A1F1B;
+  --color-auth-panel-deep: #1F1613;
+  --color-auth-panel-light: #241A17;
+  --color-auth-text-dark: #F8F5F1;
+  --color-auth-muted: #A89F98;
+  --color-auth-border: #3D2F28;
+  --color-auth-input-bg: #1C1310;
+  --color-auth-surface: #1E1512;
+  --color-auth-card-bg: #1E1512;
+  --color-auth-disabled: #2B201B;
+  --color-auth-disabled-text: #665851;
+  --color-auth-soft-grey: #261D19;
 
-  --color-bg: #14171A;
-  --color-surface: #1D232A;
-  --color-surface-white: #1D232A;
-  --color-surface-hover: #232B34;
-  --color-surface-secondary: #232B34;
-  --color-surface-tertiary: #2D3748;
-  --color-border: #2D3748;
-  --color-border-subtle: #232B34;
-  --color-border-hover: #4A5568;
-  --color-text-primary: #F5F6F7;
-  --color-text-secondary: #A0AEC0;
-  --color-text-muted: #718096;
-  --glass-bg: rgba(29, 35, 42, 0.92);
+  --color-bg: #14100E;
+  --color-surface: #1E1512;
+  --color-surface-white: #1E1512;
+  --color-surface-hover: #281D19;
+  --color-surface-secondary: #281D19;
+  --color-surface-tertiary: #3D2E27;
+  --color-border: #3D2F28;
+  --color-border-subtle: #2A1F1B;
+  --color-border-hover: #544138;
+  --color-text-primary: #F8F5F1;
+  --color-text-secondary: #A89F98;
+  --color-text-muted: #766B65;
+  --glass-bg: rgba(30, 21, 18, 0.88);
   --glass-border: rgba(255, 255, 255, 0.08);
-  --color-primary-subtle: rgba(0, 112, 242, 0.18);
-  --color-accent-subtle: rgba(0, 112, 242, 0.18);
-  --color-success-bg: rgba(24, 137, 24, 0.18);
-  --color-warning-bg: rgba(233, 115, 12, 0.15);
-  --color-danger-bg: rgba(187, 0, 0, 0.15);
+  --color-primary-subtle: rgba(253, 43, 6, 0.18);
+  --color-accent-subtle: rgba(235, 108, 59, 0.18);
+  --color-success-bg: rgba(40, 122, 82, 0.18);
+  --color-warning-bg: rgba(217, 119, 6, 0.15);
+  --color-danger-bg: rgba(220, 38, 38, 0.15);
 }

@@ -168,13 +168,14 @@
   line-height: 1.2;
 }
 
-/* Section D: AI Copilot Card */
+/* Section D: AI Copilot Card - SAP Learning Hub Horizon Theme */
 .dv-ai-copilot-card {
-  background: linear-gradient(135deg, #1C1310 0%, #2A1D18 60%, #150E0C 100%);
+  background: linear-gradient(135deg, #1D2D3E 0%, #172433 60%, #131E29 100%);
   border-radius: var(--radius-xl);
   padding: var(--space-6) var(--space-7);
   color: #FFFFFF;
-  box-shadow: 0 10px 30px rgba(28, 19, 16, 0.3);
+  border: 1px solid rgba(0, 112, 242, 0.2);
+  box-shadow: 0 10px 30px rgba(29, 45, 62, 0.25);
   position: relative;
   overflow: hidden;
 }
@@ -187,7 +188,7 @@
   width: 350px;
   height: 350px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(253, 43, 6, 0.22) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 112, 242, 0.25) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -204,11 +205,11 @@
   width: 44px;
   height: 44px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #FD2B06, #E02604);
+  background: linear-gradient(135deg, #0070F2, #0051B4);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 112, 242, 0.35);
   flex-shrink: 0;
 }
 
@@ -270,13 +271,13 @@
 }
 
 .dv-ai-chip:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 112, 242, 0.35);
+  border-color: rgba(77, 177, 255, 0.6);
   transform: translateY(-1px);
 }
 
 .dv-ai-chip__icon {
-  color: #8AF0BC;
+  color: #4DB1FF;
 }
 
 /* Section F: Extraction Review Queue */

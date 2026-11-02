@@ -17,7 +17,7 @@
   justify-content: space-between;
   padding: var(--space-3) var(--space-4);
   background-color: var(--color-primary-subtle);
-  border: 1px solid rgba(1, 90, 71, 0.2);
+  border: 1px solid rgba(0, 112, 242, 0.25);
   border-radius: var(--radius-md);
   font-size: var(--text-xs);
   color: var(--color-primary);
@@ -29,6 +29,7 @@
   height: calc(100vh - 200px);
   min-height: 520px;
   background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -50,14 +51,15 @@
 }
 
 .dv-ai-chat-icon {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #015A47, #10B981);
+  background: linear-gradient(135deg, #0070F2, #0051B4);
   color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 112, 242, 0.3);
 }
 
 .dv-ai-chat-title {
@@ -108,7 +110,7 @@
 .dv-chat-msg--assistant .dv-chat-msg__avatar {
   background-color: var(--color-primary-subtle);
   color: var(--color-primary);
-  border: 1px solid rgba(1, 90, 71, 0.2);
+  border: 1px solid rgba(0, 112, 242, 0.25);
 }
 
 .dv-chat-msg--user .dv-chat-msg__avatar {

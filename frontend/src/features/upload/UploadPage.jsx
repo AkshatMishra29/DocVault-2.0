@@ -168,7 +168,7 @@ export default function UploadPage() {
                 {!file ? (
                   <label htmlFor="dv-file-input" className="dv-dropzone-label">
                     <div className="dv-dropzone-icon-box">
-                      <UploadCloud size={36} color="#015A47" />
+                      <UploadCloud size={36} color="#0070F2" />
                     </div>
                     <h3 className="dv-dropzone-title">Click to select or drag and drop files</h3>
                     <p className="dv-dropzone-sub">
@@ -177,7 +177,7 @@ export default function UploadPage() {
                   </label>
                 ) : (
                   <div className="dv-file-selected-box">
-                    <FileText size={36} color="#015A47" />
+                    <FileText size={36} color="#0070F2" />
                     <div className="dv-file-selected-meta">
                       <span className="dv-file-selected-name">{file.name}</span>
                       <span className="dv-file-selected-size">
@@ -209,7 +209,7 @@ export default function UploadPage() {
                     />
                     <div className="dv-popt-text">
                       <div className="dv-popt-header">
-                        <Sparkles size={16} color="#015A47" />
+                        <Sparkles size={16} color="#0070F2" />
                         <strong>Standard Intelligent Processing</strong>
                       </div>
                       <p>Automatically organizes dates, renewal deadlines, key policy terms, and enables Copilot questions.</p>
@@ -228,7 +228,7 @@ export default function UploadPage() {
                     />
                     <div className="dv-popt-text">
                       <div className="dv-popt-header">
-                        <Lock size={16} color="#D97706" />
+                        <Lock size={16} color="#E9730C" />
                         <strong>Secure Vault Storage Only</strong>
                       </div>
                       <p>Encrypted personal storage for sensitive identity documents (Aadhaar, PAN). Excluded from automated indexing.</p>

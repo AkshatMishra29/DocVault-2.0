@@ -36,12 +36,12 @@
 }
 
 [data-theme="dark"] .dv-auth-form-panel {
-  background-color: var(--color-auth-bg, #14100E);
-  scrollbar-color: #3D2F28 transparent;
+  background-color: var(--color-auth-bg, #14171A);
+  scrollbar-color: #2D3748 transparent;
 }
 
 [data-theme="dark"] .dv-auth-form-panel::-webkit-scrollbar-thumb {
-  background-color: #3D2F28;
+  background-color: #2D3748;
 }
 
 .dv-auth-top-bar {
@@ -92,8 +92,8 @@
 }
 
 [data-theme="dark"] .dv-auth-form-card {
-  background: var(--color-auth-card-bg, #1E1512);
-  border-color: var(--color-auth-border, #3D2F28);
+  background: var(--color-auth-card-bg, #1D232A);
+  border-color: var(--color-auth-border, #2D3748);
   box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.5);
 }
 
