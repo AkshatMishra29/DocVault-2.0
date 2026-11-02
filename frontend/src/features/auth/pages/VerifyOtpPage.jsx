@@ -14,7 +14,7 @@ export default function VerifyOtpPage() {
   const navigate = useNavigate();
   const { register } = useAuth();
 
-  const formData = location.state?.formData;
+  const formData = location.state?.formData || location.state?.pendingRegistration;
   const initialInfo = location.state?.infoMessage || "";
 
   const [otp, setOtp] = useState("");

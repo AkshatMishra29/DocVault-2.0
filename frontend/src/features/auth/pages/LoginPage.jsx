@@ -44,14 +44,15 @@ export default function LoginPage() {
       return;
     }
 
+    const cleanEmail = email.trim().toLowerCase();
     setLoading(true);
-    const result = await login(email, password);
+    const result = await login(cleanEmail, password);
     setLoading(false);
 
     if (result.success) {
       navigate("/enter-pin", { 
         state: { 
-          email, 
+          email: cleanEmail, 
           pinLength: result.user?.pinLength || 4 
         } 
       });

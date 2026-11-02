@@ -1,4 +1,19 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+function getApiBaseUrl() {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined') {
+    // If deployed on Render or production domain
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return window.location.origin;
+    }
+    // Local development (Vite on :5173, Backend on :5001)
+    return `http://${window.location.hostname}:5001`;
+  }
+  return 'http://localhost:5001';
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Standard HTTP API Request Wrapper

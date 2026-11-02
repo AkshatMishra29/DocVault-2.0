@@ -12,7 +12,9 @@ export default function ProtectedRoute({ children }) {
 
   // If user is logged in with password but vault PIN is locked, go to PIN entry screen
   if (!isVaultUnlocked) {
-    return <Navigate to="/enter-pin" replace />;
+    const emailToPass = user?.email || pendingEmail || sessionStorage.getItem('docvault_pending_email') || localStorage.getItem('pending_pin_email') || '';
+    const lenToPass = user?.pinLength || Number(sessionStorage.getItem('docvault_pin_length')) || 4;
+    return <Navigate to="/enter-pin" replace state={{ email: emailToPass, pinLength: lenToPass }} />;
   }
 
   return children;

@@ -107,18 +107,21 @@ export async function registerUser({ name, email, password, pin, phone, otp }) {
     throw error;
   }
 
+  const cleanEmail = email.toLowerCase().trim();
+  const cleanPin = pin.toString().trim();
+
   // If OTP is provided, verify it first before creating user
   if (otp) {
-    await verifyOtpCode({ email, otp, purpose: 'register' });
+    await verifyOtpCode({ email: cleanEmail, otp, purpose: 'register' });
   }
 
-  if (pin.length < 4 || pin.length > 6) {
+  if (cleanPin.length < 4 || cleanPin.length > 6) {
     const error = new Error('PIN must be between 4 and 6 digits.');
     error.status = 400;
     throw error;
   }
 
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email: cleanEmail });
   if (existingUser) {
     const error = new Error('An account with this email already exists.');
     error.status = 400;
@@ -127,17 +130,17 @@ export async function registerUser({ name, email, password, pin, phone, otp }) {
 
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash(password, salt);
-  const pinHash = await bcrypt.hash(pin, salt);
+  const pinHash = await bcrypt.hash(cleanPin, salt);
 
   const user = new User({
-    name,
-    email,
+    name: name.trim(),
+    email: cleanEmail,
     passwordHash,
     pinHash,
-    pinLength: pin.length === 6 ? 6 : 4,
+    pinLength: cleanPin.length === 6 ? 6 : 4,
     sessionVersion: 1,
     singleSessionOnly: false,
-    phone: phone || '',
+    phone: phone ? phone.trim() : '',
   });
 
   await user.save();
@@ -172,7 +175,8 @@ export async function loginUser({ email, password }) {
     throw error;
   }
 
-  const user = await User.findOne({ email });
+  const cleanEmail = email.toLowerCase().trim();
+  const user = await User.findOne({ email: cleanEmail });
   if (!user) {
     const error = new Error('Invalid email or password.');
     error.status = 401;
@@ -223,7 +227,9 @@ export async function verifyUserPin({ email, pin }) {
     throw error;
   }
 
-  const user = await User.findOne({ email });
+  const cleanEmail = email.toLowerCase().trim();
+  const cleanPin = pin.toString().trim();
+  const user = await User.findOne({ email: cleanEmail });
   if (!user) {
     const error = new Error('User not found.');
     error.status = 404;
@@ -240,7 +246,7 @@ export async function verifyUserPin({ email, pin }) {
     throw error;
   }
 
-  const isPinMatch = await bcrypt.compare(pin, user.pinHash);
+  const isPinMatch = await bcrypt.compare(cleanPin, user.pinHash);
   if (!isPinMatch) {
     user.failedAttempts = (user.failedAttempts || 0) + 1;
     
@@ -292,6 +298,7 @@ export async function verifyUserPin({ email, pin }) {
       name: user.name,
       email: user.email,
       tier: user.tier,
+      pinLength: user.pinLength || 4,
       singleSessionOnly: Boolean(user.singleSessionOnly),
       autoLockEnabled: user.autoLockEnabled !== false,
       biometricsEnabled: user.biometricsEnabled,

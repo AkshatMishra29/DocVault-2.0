@@ -19,17 +19,43 @@ export default function EnterPinPage() {
   const [bioLoading, setBioLoading] = useState(false);
   const [lockoutRemaining, setLockoutRemaining] = useState(0);
 
-  const { verifyPin, unlockWithBiometrics, logout } = useAuth();
+  const { user, pendingEmail, pinLength: ctxPinLength, verifyPin, unlockWithBiometrics, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const email = location.state?.email || localStorage.getItem("pending_pin_email") || "";
-  const initialPinLength = Number(location.state?.pinLength || localStorage.getItem(`dv_pin_len_${email}`) || 4);
+  const email = (
+    location.state?.email ||
+    pendingEmail ||
+    user?.email ||
+    sessionStorage.getItem("docvault_pending_email") ||
+    localStorage.getItem("pending_pin_email") ||
+    ""
+  ).toLowerCase().trim();
+
+  const initialPinLength = Number(
+    location.state?.pinLength ||
+    ctxPinLength ||
+    user?.pinLength ||
+    sessionStorage.getItem("docvault_pin_length") ||
+    localStorage.getItem(`dv_pin_len_${email}`) ||
+    4
+  );
   const [pinLength, setPinLength] = useState(initialPinLength === 6 ? 6 : 4);
 
   // Check if this device has registered biometrics
   const hasBiometrics = Boolean(email && localStorage.getItem(`dv_bio_cred_${email}`));
   const [usePinFallback, setUsePinFallback] = useState(!hasBiometrics);
+
+  // Redirect to login if no email exists anywhere
+  useEffect(() => {
+    if (email) {
+      localStorage.setItem("pending_pin_email", email);
+      sessionStorage.setItem("docvault_pending_email", email);
+    } else {
+      console.warn("[EnterPinPage] No email found for PIN verification. Redirecting to login.");
+      navigate("/login", { replace: true, state: { message: "Please sign in with your email and password first." } });
+    }
+  }, [email, navigate]);
 
   // Check stored lockout state
   useEffect(() => {
@@ -62,11 +88,7 @@ export default function EnterPinPage() {
     return () => clearInterval(interval);
   }, [lockoutRemaining, email]);
 
-  useEffect(() => {
-    if (email) {
-      localStorage.setItem("pending_pin_email", email);
-    }
-  }, [email]);
+
 
   // Physical Keyboard support (standard digits, numpad, backspace, enter)
   useEffect(() => {

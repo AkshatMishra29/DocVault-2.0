@@ -67,14 +67,15 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
       return;
     }
 
+    const cleanEmail = loginEmail.trim().toLowerCase();
     setLoginLoading(true);
-    const result = await login(loginEmail, loginPassword);
+    const result = await login(cleanEmail, loginPassword);
     setLoginLoading(false);
 
     if (result.success) {
       navigate("/enter-pin", { 
         state: { 
-          email: loginEmail, 
+          email: cleanEmail, 
           pinLength: result.user?.pinLength || 4 
         } 
       });
@@ -110,28 +111,35 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
       return;
     }
 
+    const cleanEmail = regEmail.trim().toLowerCase();
     setRegLoading(true);
     try {
       const otpRes = await apiRequest("/api/auth/send-otp", {
         method: "POST",
-        body: JSON.stringify({ email: regEmail.trim().toLowerCase() }),
+        body: JSON.stringify({ email: cleanEmail, purpose: "register" }),
       });
 
-      if (!otpRes?.success) {
-        throw new Error(otpRes?.error || "Failed to dispatch verification code.");
+      if (!otpRes?.success && !otpRes?.ok) {
+        throw new Error(otpRes?.error || otpRes?.message || "Failed to dispatch verification code.");
       }
+
+      const registrationData = {
+        name: regName.trim(),
+        email: cleanEmail,
+        password: regPassword,
+        confirmPassword: regConfirmPassword,
+        pin: regPin,
+        confirmPin: regConfirmPin,
+        pinLength,
+        phone: regPhone.trim(),
+      };
 
       navigate("/verify-otp", {
         state: {
-          pendingRegistration: {
-            name: regName.trim(),
-            email: regEmail.trim().toLowerCase(),
-            password: regPassword,
-            pin: regPin,
-            pinLength,
-            phone: regPhone.trim(),
-          },
-          targetEmail: regEmail.trim().toLowerCase(),
+          formData: registrationData,
+          pendingRegistration: registrationData,
+          targetEmail: cleanEmail,
+          infoMessage: `A 6-digit verification code has been dispatched to ${cleanEmail}.`
         },
       });
     } catch (err) {

@@ -107,6 +107,8 @@ export const AuthProvider = ({ children }) => {
     setPinLength(len);
     sessionStorage.setItem('docvault_pin_length', len.toString());
     sessionStorage.setItem('docvault_pending_email', userData.email);
+    localStorage.setItem('pending_pin_email', userData.email);
+    localStorage.setItem(`dv_pin_len_${userData.email.toLowerCase()}`, len.toString());
     setIsVaultUnlocked(false);
     sessionStorage.removeItem('docvault_unlocked');
   };

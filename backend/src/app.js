@@ -1,5 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { authenticateToken } from './middleware/auth.middleware.js';
 
 // Modular routes
@@ -65,6 +68,23 @@ app.use('/api/deadlines', deadlineRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/vault', vaultRoutes);
 app.use('/api/extraction', extractionRoutes);
+
+/* ==========================================================================
+   Static Frontend Production Serve (Unified Deployment)
+   ========================================================================== */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
+
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+}
 
 export default app;
 
