@@ -28,4 +28,17 @@ export const config = {
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'docvault-app-f867f.firebasestorage.app',
   },
   jwtSecret: process.env.JWT_SECRET || 'docvault_fallback_secret',
+  pipeline: {
+    version: process.env.PIPELINE_VERSION || '1.0.0',
+    noticeVersion: process.env.NOTICE_VERSION || '1.0.0',
+    defaultAiPolicy: process.env.AI_POLICY_DEFAULT || 'storage_only',
+    geminiDailyCap: parseInt(process.env.GEMINI_DAILY_CAP || '15', 10),
+    groqDailyTokenCap: parseInt(process.env.GROQ_DAILY_TOKEN_CAP || '100000', 10),
+    userDailyTokenCap: parseInt(process.env.USER_DAILY_TOKEN_CAP || '25000', 10),
+    leaseTimeoutMs: parseInt(process.env.JOB_LEASE_TIMEOUT_MS || '60000', 10),
+    maxConcurrency: parseInt(process.env.JOB_MAX_CONCURRENCY || '2', 10),
+    maxPages: parseInt(process.env.JOB_PAGE_CAP || '25', 10),
+    perPageTimeoutMs: parseInt(process.env.PAGE_TIMEOUT_MS || '15000', 10),
+    memoryGuardBytes: parseInt(process.env.JOB_MEMORY_GUARD_BYTES || `${450 * 1024 * 1024}`, 10),
+  },
 };

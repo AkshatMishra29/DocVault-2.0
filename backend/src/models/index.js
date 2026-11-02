@@ -6,3 +6,4 @@ export { AuditLog } from '../modules/vault/auditLog.model.js';
 export { TokenLedger } from '../modules/extraction/tokenLedger.model.js';
 export { ExtractionJob } from '../modules/extraction/extractionJob.model.js';
 export { ReviewHistory } from '../modules/extraction/reviewHistory.model.js';
+export { Job } from '../modules/pipeline/job.model.js';

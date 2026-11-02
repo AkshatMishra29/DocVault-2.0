@@ -10,6 +10,7 @@ import mongoose from 'mongoose';
 import app from './app.js';
 import { config } from './config/index.js';
 import { initFirebaseAdmin } from './services/storage/firebaseService.js';
+import { startJobWorker } from './modules/pipeline/jobQueue.service.js';
 
 /* ==========================================================================
    Server Initialization
@@ -19,6 +20,9 @@ async function startServer() {
     console.log('[MongoDB] Connecting to cluster...');
     await mongoose.connect(config.mongoUri);
     console.log('[MongoDB] Connected successfully to Atlas cluster!');
+
+    // Initialize Universal Pipeline Background Job Worker
+    startJobWorker();
 
     app.listen(config.port, () => {
       console.log(`[DocVault Server] API running on http://localhost:${config.port}`);

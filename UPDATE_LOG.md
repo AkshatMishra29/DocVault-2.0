@@ -4,6 +4,67 @@ All notable changes, security updates, and new feature implementations for the *
 
 ---
 
+## [2026-11-02] – Version 2.9.0: Universal Document Pipeline Phase A: Privacy Gates, Verhoeff Checksum Sensitive Detector & Asynchronous MongoDB Job Queue
+
+**Session Completed At:** 2026-11-02T18:12:00+05:30 (Asia/Kolkata / Indian Standard Time)  
+**Engineering Lead & Author:** Senior Node.js & React Systems Engineer  
+**Branch:** `feature/universal-pipeline`  
+
+---
+
+### 1. Document Model Architectural Evolution
+* **Privacy & Consent State Machine (`document.model.js`):**
+  - Added `aiPolicy` (`'storage_only'` \| `'ai_enabled'`), defaulting strictly to `'storage_only'`.
+  - Added `policyVersion` (defaulting to `'1.0.0'`, incremented on every policy change).
+  - Added `sensitiveFlag` (boolean indexed) and `sensitiveReason`.
+  - Added `aiConsent: { grantedAt: Date, noticeVersion: String }` recording explicit informed consent.
+  - Added `status: 'queued' | 'processing' | 'completed' | 'needs_review' | 'needs_retake' | 'failed' | 'storage_only'`.
+  - Added `sha256` (deterministic content hash) and `pageCount`.
+  - Preserved backward-compatibility hooks mapping `fileHash` $\leftrightarrow$ `sha256` and `privacyMode` $\leftrightarrow$ `aiPolicy`.
+
+### 2. Local In-Process Sensitive Document Detector (`sensitiveDetector.js`)
+* **Mathematical Verhoeff Checksum Algorithm:**
+  - Implemented in-process dihedral group $D_5$ multiplication (`d`), permutation (`p`), and inverse (`inv`) tables to evaluate 12-digit Indian Aadhaar numbers.
+  - Distinguishes authentic Aadhaar numbers from random 12-digit order numbers or numeric sequences without false positives.
+* **National Identity & Financial Heuristics:**
+  - Added regex matching for Indian Income Tax PAN card pattern (`\b[A-Z]{5}[0-9]{4}[A-Z]\b`).
+  - Added ICAO Doc 9303 Type 3 Passport Machine Readable Zone (MRZ) line validation (`P<IND...`).
+  - Added Election Commission of India Voter ID (EPIC) detector (`[A-Z]{3}[0-9]{7}`).
+  - Added Indian Driving Licence patterns and payment card Luhn checksum validation.
+  - Added binary inspection for encrypted or password-protected PDF headers (`/Encrypt`).
+* **Strict Privacy Invariant:**
+  - Any detected sensitive document is immediately forced to `aiPolicy = 'storage_only'` with `sensitiveFlag = true`.
+  - Text is purged, and zero bytes are transmitted to any third-party network service.
+
+### 3. Centralized Privacy Gatekeeper (`privacyGate.js`)
+* **Hard Assertion `assertAiAllowed(doc)`:**
+  - Runs before ANY document text or image is passed to Groq, Gemini, Hugging Face, or RAG query endpoints.
+  - Throws `PrivacyPolicyViolationError` (HTTP 403) if `doc.aiPolicy !== 'ai_enabled'`, `doc.sensitiveFlag === true`, or `doc.aiConsent` is missing.
+* **Atomic Pre-Save Consistency Check (`assertPolicyUnchangedBeforeSave`):**
+  - Queries MongoDB right before saving background processing results.
+  - Guarantees that if a user switched policy to `storage_only` while a background job was running, the stale results are aborted and will not overwrite the user's revocation.
+
+### 4. Asynchronous MongoDB Job Queue (`job.model.js` & `jobQueue.service.js`)
+* **Non-Blocking Ingestion:**
+  - Moved heavy OCR, image rendering, and AI calls out of `POST /api/documents/upload`.
+  - The upload endpoint now creates the document record, enqueues a background job, and returns `201 Created` with `status: 'queued'` in $< 200\text{ms}$, completely eliminating cloud gateway timeouts.
+* **Worker Resilience & Concurrency Control:**
+  - Implemented atomic job claims using `Job.findOneAndUpdate` with worker lease expiration (`leaseTimeoutMs: 60000`).
+  - 3-attempt exponential backoff retry cycle (2s, 8s) before terminal `status: 'failed'`.
+  - Enforced 25-page cap, per-page timeouts, maximum 2 concurrent workers, and heap memory guard (`process.memoryUsage().heapUsed`).
+  - Generated deterministic idempotency keys (`sha256 + '_' + pipelineVersion`).
+
+### 5. Policy Management & Multi-Tenant Isolation
+* **Dynamic Policy Endpoint (`PATCH /api/documents/:id/ai-policy`):**
+  - Switching to `storage_only` immediately purges `extractedText`, `embedding`, `extractedFields`, cancels active background jobs via `cancelJobsForDocument()`, increments `policyVersion`, and writes an immutable audit log.
+* **Tenant Isolation:**
+  - Enforced strict ownership checks returning `404 Not Found` for other users across all document endpoints including stream download (`GET /api/documents/:id/download`).
+* **RAG Q&A Protection (`ai.routes.js`):**
+  - `/api/ai/query` and alias `/api/ai/ask` strictly filter documents by `{ aiPolicy: 'ai_enabled', sensitiveFlag: false }` before vector ranking or Groq prompt generation.
+
+---
+
+
 ## [2026-11-02] – Version 2.8.0: Senior Frontend Geometric Standardization, Minimalist Glass Navigation, Banner De-Cluttering & Cloud Email Resilience
 
 **Session Completed At:** 2026-11-02T14:32:00+05:30 (Asia/Kolkata / Indian Standard Time)  

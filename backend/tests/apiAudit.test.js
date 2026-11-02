@@ -69,7 +69,16 @@ async function runApiAudit() {
   if (!user) {
     user = await User.findOne({});
   }
-  assert.ok(user, 'At least one user must exist in the database for API testing');
+  if (!user) {
+    user = await User.create({
+      name: 'API Audit Test User',
+      email: testUserEmail,
+      passwordHash: '$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012',
+      pinHash: '$2a$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012',
+      sessionVersion: 1,
+    });
+    console.log('[Setup] Seeded test user for API audit suite');
+  }
   testUserId = user._id.toString();
   testUserEmail = user.email;
 

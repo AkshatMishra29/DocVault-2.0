@@ -8,6 +8,8 @@ import { extractDocumentMetadata } from '../../services/ai/groqService.js';
 import { generateEmbedding } from '../../services/ai/huggingFaceService.js';
 import { Document } from '../documents/document.model.js';
 import { Deadline } from '../deadlines/deadline.model.js';
+import { detectSensitiveDocument } from '../../services/pipeline/sensitiveDetector.js';
+import { assertAiAllowed, isAiAllowed, assertPolicyUnchangedBeforeSave, AI_POLICIES } from '../../services/pipeline/privacyGate.js';
 
 export const PIPELINE_VERSION = '1.0.0';
 
@@ -30,6 +32,7 @@ export async function executeDocumentExtractionPipeline({
   originalname,
   userConsent = 'PROCESSABLE',
   existingDocumentId = null,
+  expectedPolicyVersion = '1.0.0',
 }) {
   console.log(`[Extraction Pipeline] Starting pipeline v${PIPELINE_VERSION} for: "${originalname}"`);
 
@@ -37,29 +40,34 @@ export async function executeDocumentExtractionPipeline({
   const signature = validateMagicBytes(buffer, mimetype, originalname);
   const fileHash = calculateDocumentHash(buffer);
 
+  let pageCount = 1;
   if (signature.detectedType === 'application/pdf') {
-    estimatePdfPageCount(buffer); // Enforces max 25 pages
+    pageCount = estimatePdfPageCount(buffer); // Enforces max 25 pages
   } else if (signature.detectedType.startsWith('image/')) {
     // Inspect for casual images (family photos, selfies, landscapes)
     await inspectImageGuardrails(buffer, originalname);
   }
 
-  // 2. Privacy Policy Gate
-  const privacyEval = evaluatePrivacyPolicy({
+  // 2. Local Sensitive Detector (Aadhaar Verhoeff, PAN, Passport MRZ, Voter ID, DL, Card Luhn)
+  const sensitiveCheck = detectSensitiveDocument({
     filename: originalname,
     buffer,
-    userConsent,
   });
 
-  console.log(`[Privacy Gate] Document classified as: ${privacyEval.mode} (${privacyEval.reason})`);
+  const isExplicitStorageOnly = userConsent === 'STORAGE_ONLY' || userConsent === AI_POLICIES.STORAGE_ONLY;
+  const shouldIsolate = sensitiveCheck.isSensitive || isExplicitStorageOnly;
 
   // STORAGE_ONLY Invariant: NEVER enter OCR, AI, LLM, or Embeddings!
-  if (privacyEval.mode === PRIVACY_MODES.STORAGE_ONLY) {
+  if (shouldIsolate) {
+    const reason = sensitiveCheck.isSensitive
+      ? sensitiveCheck.reason
+      : 'User explicitly marked document for Storage-Only vault protection.';
+
     const docData = {
       userId,
       title: originalname.replace(/\.[^/.]+$/, ''),
       originalName: originalname,
-      category: 'Identity',
+      category: sensitiveCheck.isSensitive ? 'Identity' : 'Other',
       format: signature.extension,
       mimetype: signature.detectedType,
       fileData: buffer.toString('base64'),
@@ -67,13 +75,20 @@ export async function executeDocumentExtractionPipeline({
       fileSizeFormatted: `${(buffer.length / 1024).toFixed(1)} KB`,
       storagePath: 'mongodb-embedded',
       extractedText: '[REDACTED - STORAGE ONLY DOCUMENT]',
-      summary: 'Cryptographically protected Storage-Only document. Content extraction disallowed by Privacy Policy.',
+      summary: `Cryptographically protected Storage-Only document (${reason}). Content extraction disallowed by Privacy Policy.`,
       keyDetails: { 'Privacy Policy': 'Storage-Only Isolated (Zero AI Processing)' },
-      tags: ['Identity', 'Storage-Only', 'Encrypted'],
+      tags: sensitiveCheck.isSensitive ? ['Identity', 'Storage-Only', 'Protected'] : ['Document', 'Storage-Only'],
       privacyMode: PRIVACY_MODES.STORAGE_ONLY,
+      aiPolicy: AI_POLICIES.STORAGE_ONLY,
       processingStatus: 'storage_only',
-      policyVersion: privacyEval.policyVersion,
+      status: 'storage_only',
+      policyVersion: expectedPolicyVersion || '1.0.0',
+      sensitiveFlag: sensitiveCheck.isSensitive,
+      sensitiveReason: sensitiveCheck.reason,
+      aiConsent: { grantedAt: null, noticeVersion: null },
       fileHash,
+      sha256: fileHash,
+      pageCount,
       pipelineVersion: PIPELINE_VERSION,
       extractedFields: [],
       reviewStatus: 'not_required',
@@ -91,6 +106,7 @@ export async function executeDocumentExtractionPipeline({
     return {
       document: savedDoc,
       privacyMode: PRIVACY_MODES.STORAGE_ONLY,
+      aiPolicy: AI_POLICIES.STORAGE_ONLY,
       processingStatus: 'storage_only',
       extractedFields: [],
       tierUsed: 'None (Storage-Only)',
@@ -125,23 +141,23 @@ export async function executeDocumentExtractionPipeline({
     visualMimeType = signature.detectedType;
   }
 
-  // Re-verify Privacy Gate with extracted text content
-  const contentPrivacyCheck = evaluatePrivacyPolicy({
+  // Re-verify Privacy Gate with extracted text content (Verhoeff checksum, PAN regex, MRZ, etc.)
+  const contentSensitiveCheck = detectSensitiveDocument({
     filename: originalname,
     buffer,
-    textSample: extractedText,
-    userConsent,
+    text: extractedText,
   });
 
-  if (contentPrivacyCheck.mode === PRIVACY_MODES.STORAGE_ONLY) {
-    console.warn('[Privacy Gate] Content analysis detected sensitive identity pattern! Immediately pivoting to STORAGE_ONLY.');
+  if (contentSensitiveCheck.isSensitive) {
+    console.warn(`[Privacy Gate] Content analysis detected sensitive pattern (${contentSensitiveCheck.reason})! Immediately pivoting to STORAGE_ONLY.`);
     return executeDocumentExtractionPipeline({
       userId,
       buffer,
       mimetype,
       originalname,
-      userConsent: PRIVACY_MODES.STORAGE_ONLY,
+      userConsent: 'STORAGE_ONLY',
       existingDocumentId,
+      expectedPolicyVersion,
     });
   }
 
@@ -251,6 +267,11 @@ export async function executeDocumentExtractionPipeline({
     keyDetailsDict[f.fieldName.replace(/_/g, ' ').toUpperCase()] = f.value;
   }
 
+  // Check policyVersion again right before saving results, so a policy change during processing wins
+  if (existingDocumentId) {
+    await assertPolicyUnchangedBeforeSave(existingDocumentId, expectedPolicyVersion);
+  }
+
   const docPayload = {
     userId,
     title: groqTitle,
@@ -270,9 +291,13 @@ export async function executeDocumentExtractionPipeline({
     isExpiringSoon: Boolean(finalExpiryDate),
     embedding,
     privacyMode: PRIVACY_MODES.PROCESSABLE,
+    aiPolicy: AI_POLICIES.AI_ENABLED,
     processingStatus,
-    policyVersion: PIPELINE_VERSION,
+    status: processingStatus,
+    policyVersion: expectedPolicyVersion || PIPELINE_VERSION,
     fileHash,
+    sha256: fileHash,
+    pageCount,
     pipelineVersion: PIPELINE_VERSION,
     extractedFields: verifiedFields,
     reviewStatus,
