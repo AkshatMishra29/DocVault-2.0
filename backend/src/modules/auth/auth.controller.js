@@ -51,6 +51,15 @@ export async function verifyPin(req, res) {
   }
 }
 
+export async function getMe(req, res) {
+  try {
+    const user = await authService.getCurrentUser(req.user.userId);
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+}
+
 export async function updateSessionSettings(req, res) {
   try {
     const result = await authService.updateSessionSettings(req.user.userId, req.body);
@@ -74,6 +83,24 @@ export async function firebaseAuth(req, res) {
     const { idToken } = req.body;
     const result = await authService.authenticateWithFirebaseIdToken(idToken);
     res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+}
+
+export async function resetPassword(req, res) {
+  try {
+    const result = await authService.resetPasswordWithOtp(req.body);
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+}
+
+export async function loginWithOtp(req, res) {
+  try {
+    const result = await authService.loginWithOtp(req.body);
+    res.json(result);
   } catch (err) {
     res.status(err.status || 500).json({ success: false, error: err.message });
   }

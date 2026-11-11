@@ -1,5 +1,6 @@
 import { evaluatePrivacyPolicy, assertProcessingAllowed, PRIVACY_MODES } from './privacyPolicy.service.js';
 import { validateMagicBytes, inspectImageGuardrails, calculateDocumentHash, estimatePdfPageCount, wrapUntrustedDocumentContent } from './ingestionGuard.service.js';
+import { validateExtractionAgainstSourceEvidence, sanitizeUntrustedDocumentText } from './documentExtractionGuardrail.service.js';
 import { extractTextFromPDF, extractTextFromImage, convertPdfToImages } from '../../services/ocr/ocrService.js';
 import { classifyDocumentByRules, extractTier1Fields } from './ruleExtraction.service.js';
 import { verifyAllExtractedFields } from './verification.service.js';
@@ -10,6 +11,7 @@ import { Document } from '../documents/document.model.js';
 import { Deadline } from '../deadlines/deadline.model.js';
 import { detectSensitiveDocument } from '../../services/pipeline/sensitiveDetector.js';
 import { assertAiAllowed, isAiAllowed, assertPolicyUnchangedBeforeSave, AI_POLICIES } from '../../services/pipeline/privacyGate.js';
+import { extractViaPythonService } from './extractionServiceClient.js';
 
 export const PIPELINE_VERSION = '1.0.0';
 
@@ -63,9 +65,17 @@ export async function executeDocumentExtractionPipeline({
       ? sensitiveCheck.reason
       : 'User explicitly marked document for Storage-Only vault protection.';
 
+    let initialTitle = originalname.replace(/\.[^/.]+$/, '');
+    if (existingDocumentId) {
+      const existingDoc = await Document.findById(existingDocumentId).select('title');
+      if (existingDoc && existingDoc.title) {
+        initialTitle = existingDoc.title;
+      }
+    }
+
     const docData = {
       userId,
-      title: originalname.replace(/\.[^/.]+$/, ''),
+      title: initialTitle,
       originalName: originalname,
       category: sensitiveCheck.isSensitive ? 'Identity' : 'Other',
       format: signature.extension,
@@ -120,25 +130,55 @@ export async function executeDocumentExtractionPipeline({
   let extractedText = '';
   let visualBase64 = null;
   let visualMimeType = null;
+  let pageResults = [];
+  let processedPagesCount = 0;
+  let failedPagesCount = 0;
+  let serviceCategory = null;
+  let serviceDocDate = null;
+  let serviceExpDate = null;
+  let serviceKeyDetails = {};
+  let serviceEntities = [];
 
-  if (signature.detectedType === 'application/pdf') {
-    extractedText = await extractTextFromPDF(buffer);
+  // Try Python CPU Extraction Service first (PyMuPDF + native C++ Tesseract + OpenCV)
+  const pythonResult = await extractViaPythonService({
+    buffer,
+    filename: originalname,
+    mimetype: signature.detectedType,
+    userConsent: userConsent || 'PROCESSABLE',
+  });
 
-    // If PDF text layer is minimal (< 50 chars), fallback to image OCR
-    if (!extractedText || extractedText.length < 50) {
-      console.log('[OCR] Scanned PDF detected. Rendering page buffer for local OCR...');
-      const imagePages = await convertPdfToImages(buffer);
-      if (imagePages && imagePages.length > 0) {
-        const firstPage = imagePages[0];
-        extractedText = await extractTextFromImage(firstPage);
-        visualBase64 = firstPage.toString('base64');
-        visualMimeType = 'image/png';
+  if (pythonResult && pythonResult.success) {
+    console.log(`[Extraction Pipeline] Python CPU Extraction Service succeeded. Total pages: ${pythonResult.totalPages}, Status: ${pythonResult.documentStatus}`);
+    extractedText = pythonResult.fullText || '';
+    pageResults = pythonResult.pages || [];
+    processedPagesCount = pythonResult.processedPages || 0;
+    failedPagesCount = pythonResult.failedPages || 0;
+    serviceCategory = pythonResult.category;
+    serviceDocDate = pythonResult.documentDate;
+    serviceExpDate = pythonResult.expiryDate;
+    serviceKeyDetails = pythonResult.keyDetails || {};
+    serviceEntities = pythonResult.entities || [];
+  } else {
+    // Graceful fallback to in-process Node extraction
+    if (signature.detectedType === 'application/pdf') {
+      extractedText = await extractTextFromPDF(buffer);
+
+      // If PDF text layer is minimal (< 50 chars), fallback to image OCR
+      if (!extractedText || extractedText.length < 50) {
+        console.log('[OCR] Scanned PDF detected. Rendering page buffer for local OCR...');
+        const imagePages = await convertPdfToImages(buffer);
+        if (imagePages && imagePages.length > 0) {
+          const firstPage = imagePages[0];
+          extractedText = await extractTextFromImage(firstPage);
+          visualBase64 = firstPage.toString('base64');
+          visualMimeType = 'image/png';
+        }
       }
+    } else if (signature.detectedType.startsWith('image/')) {
+      extractedText = await extractTextFromImage(buffer);
+      visualBase64 = buffer.toString('base64');
+      visualMimeType = signature.detectedType;
     }
-  } else if (signature.detectedType.startsWith('image/')) {
-    extractedText = await extractTextFromImage(buffer);
-    visualBase64 = buffer.toString('base64');
-    visualMimeType = signature.detectedType;
   }
 
   // Re-verify Privacy Gate with extracted text content (Verhoeff checksum, PAN regex, MRZ, etc.)
@@ -163,11 +203,27 @@ export async function executeDocumentExtractionPipeline({
 
   // 4. Tier 1: Deterministic Rules & Keyword Classification
   const ruleClassification = classifyDocumentByRules(extractedText, originalname);
-  let finalCategory = ruleClassification.category;
-  let tierUsed = 'Tier 1 (Regex & Rules)';
+  let finalCategory = serviceCategory || ruleClassification.category;
+  let tierUsed = pythonResult ? 'CPU Multi-Stage Engine (PyMuPDF + Tesseract)' : 'Tier 1 (Regex & Rules)';
 
   // Run Tier 1 Field Extraction
   let extractedFields = extractTier1Fields(extractedText, 1);
+  if (serviceEntities && serviceEntities.length > 0) {
+    for (const se of serviceEntities) {
+      if (!extractedFields.some(ef => ef.fieldName === se.fieldName)) {
+        extractedFields.push({
+          fieldName: se.fieldName,
+          value: se.value,
+          evidence: se.evidence || '',
+          pageNumber: se.pageNumber || 1,
+          extractionMethod: se.extractionMethod || 'rules',
+          confidence: se.confidence || 0.90,
+          verificationStatus: se.verificationStatus || 'accepted',
+          pipelineVersion: '1.0.0',
+        });
+      }
+    }
+  }
   console.log(`[Tier 1 Rules] Extracted ${extractedFields.length} deterministic fields. Category: ${finalCategory} (conf: ${ruleClassification.confidence})`);
 
   // Check if critical fields were found via deterministic rules
@@ -182,18 +238,31 @@ export async function executeDocumentExtractionPipeline({
   let groqTitle = originalname.replace(/\.[^/.]+$/, '');
   let groqTags = ['Document', finalCategory];
   let groqExpiryDate = null;
+  let groqDocumentDate = null;
 
-  if (!isTier1Sufficient && extractedText.length > 20) {
+  if (!isTier1Sufficient && (extractedText.length > 10 || visualBase64)) {
     const budget = await checkTokenBudget(userId);
     if (budget.allowed) {
       try {
         console.log('[Tier 3 Fallback] Invoking Groq LLM with evidence-window truncation...');
-        tierUsed = 'Tier 3 (Groq Fallback)';
+        tierUsed = visualBase64 ? 'Tier 3 (Groq Multimodal Vision)' : 'Tier 3 (Groq Fallback)';
 
-        // Wrap untrusted document text with security delimiters
-        const safeWrappedText = wrapUntrustedDocumentContent(extractedText.slice(0, 3000));
+        // Wrap untrusted document text with security delimiters and sanitize prompt injection triggers
+        const { sanitizedText } = sanitizeUntrustedDocumentText((extractedText || '').slice(0, 3000));
+        const safeWrappedText = wrapUntrustedDocumentContent(sanitizedText);
 
-        const aiResult = await extractDocumentMetadata(safeWrappedText, originalname, visualBase64);
+        const aiResultRaw = await extractDocumentMetadata(safeWrappedText, originalname, visualBase64);
+
+        // If local OCR text was sparse but Groq Vision extracted the transcription, adopt it
+        if ((!extractedText || extractedText.length < 15) && aiResultRaw?.extractedText) {
+          extractedText = aiResultRaw.extractedText;
+        }
+        const effectiveSourceText = (extractedText && extractedText.length > 10)
+          ? extractedText
+          : (aiResultRaw?.extractedText || extractedText || '');
+
+        // Grounding & Anti-Hallucination Guardrail: Validate all extracted metadata against source text
+        const aiResult = validateExtractionAgainstSourceEvidence(aiResultRaw, effectiveSourceText);
 
         if (aiResult) {
           if (aiResult.title) groqTitle = aiResult.title;
@@ -201,6 +270,21 @@ export async function executeDocumentExtractionPipeline({
           if (aiResult.summary) groqSummary = aiResult.summary;
           if (aiResult.tags) groqTags = aiResult.tags;
           if (aiResult.expiryDate) groqExpiryDate = aiResult.expiryDate;
+          if (aiResult.documentDate) groqDocumentDate = aiResult.documentDate;
+
+          // Merge document date as field if found
+          if (groqDocumentDate && !extractedFields.some(f => f.fieldName === 'document_date' || f.fieldName === 'issue_date')) {
+            extractedFields.push({
+              fieldName: 'document_date',
+              value: groqDocumentDate,
+              evidence: `Document Date: ${groqDocumentDate}`,
+              pageNumber: 1,
+              extractionMethod: 'groq_llm',
+              confidence: 0.90,
+              verificationStatus: 'accepted',
+              pipelineVersion: PIPELINE_VERSION,
+            });
+          }
 
           // Merge keyDetails as structured fields if not already extracted by Tier 1
           if (aiResult.keyDetails && typeof aiResult.keyDetails === 'object') {
@@ -214,8 +298,8 @@ export async function executeDocumentExtractionPipeline({
                   evidence: `${k}: ${v}`,
                   pageNumber: 1,
                   extractionMethod: 'groq_llm',
-                  confidence: 0.82,
-                  verificationStatus: 'needs_review',
+                  confidence: 0.88,
+                  verificationStatus: 'accepted',
                   pipelineVersion: PIPELINE_VERSION,
                 });
               }
@@ -248,14 +332,17 @@ export async function executeDocumentExtractionPipeline({
   const processingStatus = hasUncertainFields ? 'needs_review' : 'completed';
   const reviewStatus = hasUncertainFields ? 'pending_review' : 'not_required';
 
-  // Extract verified expiry date for reminder
+  // Extract verified dates
   const expiryField = verifiedFields.find(f => f.fieldName === 'expiry_date' && f.verificationStatus === 'accepted');
   const finalExpiryDate = expiryField ? String(expiryField.value) : groqExpiryDate;
+
+  const docDateField = verifiedFields.find(f => ['document_date', 'issue_date', 'completion_date', 'award_date', 'certificate_date'].includes(f.fieldName) && (f.verificationStatus === 'accepted' || f.verificationStatus === 'needs_review'));
+  const finalDocumentDate = docDateField ? String(docDateField.value) : groqDocumentDate;
 
   // 7. Hugging Face Semantic Vector Embedding
   let embedding = [];
   try {
-    const textToEmbed = `${groqTitle} ${finalCategory} ${groqSummary} ${groqTags.join(' ')}`;
+    const textToEmbed = `${groqTitle} ${finalCategory} ${finalDocumentDate ? 'Date: ' + finalDocumentDate : ''} ${finalExpiryDate ? 'Expiry: ' + finalExpiryDate : ''} ${groqSummary} ${groqTags.join(' ')} ${extractedText ? extractedText.slice(0, 1000) : ''}`;
     embedding = await generateEmbedding(textToEmbed);
   } catch (embErr) {
     console.warn('[Embedding] Embedding generation skipped:', embErr.message);
@@ -266,15 +353,34 @@ export async function executeDocumentExtractionPipeline({
   for (const f of verifiedFields) {
     keyDetailsDict[f.fieldName.replace(/_/g, ' ').toUpperCase()] = f.value;
   }
+  if (finalDocumentDate && !keyDetailsDict['DOCUMENT DATE'] && !keyDetailsDict['ISSUE DATE']) {
+    keyDetailsDict['DOCUMENT DATE'] = finalDocumentDate;
+  }
 
   // Check policyVersion again right before saving results, so a policy change during processing wins
   if (existingDocumentId) {
     await assertPolicyUnchangedBeforeSave(existingDocumentId, expectedPolicyVersion);
   }
 
+  // Preserve custom title if user renamed the document on upload
+  let finalTitle = groqTitle;
+  if (existingDocumentId) {
+    const existingDoc = await Document.findById(existingDocumentId).select('title originalName');
+    if (existingDoc && existingDoc.title) {
+      const defaultOriginal = (existingDoc.originalName || originalname).replace(/\.[^/.]+$/, '');
+      if (existingDoc.title !== defaultOriginal) {
+        finalTitle = existingDoc.title;
+      }
+    }
+  }
+
+  const averageConfidence = verifiedFields.length > 0
+    ? parseFloat((verifiedFields.reduce((acc, f) => acc + (f.confidence || 0), 0) / verifiedFields.length).toFixed(2))
+    : 0.90;
+
   const docPayload = {
     userId,
-    title: groqTitle,
+    title: finalTitle,
     originalName: originalname,
     category: finalCategory,
     format: signature.extension,
@@ -287,8 +393,11 @@ export async function executeDocumentExtractionPipeline({
     summary: groqSummary || `Verified ${finalCategory} document stored in DocVault.`,
     keyDetails: keyDetailsDict,
     tags: groqTags,
+    documentDate: finalDocumentDate,
     expiryDate: finalExpiryDate,
     isExpiringSoon: Boolean(finalExpiryDate),
+    tierUsed: tierUsed || (extractedFields.some(f => f.extractionMethod === 'groq_llm') ? 'Tier 3 (Groq LLM / Vision)' : 'Tier 1 (Regex & Rules)'),
+    confidenceScore: averageConfidence,
     embedding,
     privacyMode: PRIVACY_MODES.PROCESSABLE,
     aiPolicy: AI_POLICIES.AI_ENABLED,
@@ -300,6 +409,10 @@ export async function executeDocumentExtractionPipeline({
     pageCount,
     pipelineVersion: PIPELINE_VERSION,
     extractedFields: verifiedFields,
+    pages: pageResults,
+    processedPages: processedPagesCount || pageCount,
+    failedPages: failedPagesCount,
+    extractionMethod: pythonResult ? 'cpu_multistage_pipeline' : 'node_fallback_pipeline',
     reviewStatus,
   };
 

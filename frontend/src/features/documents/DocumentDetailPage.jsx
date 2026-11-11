@@ -4,8 +4,9 @@ import { apiRequest, API_BASE_URL } from "../../services/api";
 import { 
   ArrowLeft, Download, Trash2, Calendar, FileText, CheckCircle2,
   ShieldCheck, AlertTriangle, ExternalLink, Link2, Sparkles,
-  Lock, Edit3, Check, X, Shield, Cpu, Tag, Activity, FileCheck2, Clock
+  Lock, Edit3, Check, X, Shield, Cpu, Tag, Activity, FileCheck2, Clock, Share2
 } from "lucide-react";
+import ShareModal from "../sharing/ShareModal";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
 import Card from "../../components/common/Card/Card";
@@ -17,6 +18,7 @@ import DocumentTypeIcon from "../../components/common/DocumentTypeIcon/DocumentT
 import ExpiryBadge from "../../components/common/ExpiryBadge/ExpiryBadge";
 import VerificationStatus from "../../components/common/VerificationStatus/VerificationStatus";
 import ExtractionConfidence from "../../components/common/ExtractionConfidence/ExtractionConfidence";
+import ExtractionInspector from "../../components/common/ExtractionInspector/ExtractionInspector";
 
 import "./DocumentDetailPage.css";
 
@@ -44,6 +46,7 @@ export default function DocumentDetailPage() {
   const [docVersions, setDocVersions] = useState(null);
   const [docVerification, setDocVerification] = useState([]);
   const [verifying, setVerifying] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     async function loadDocAndAssets() {
@@ -193,6 +196,14 @@ export default function DocumentDetailPage() {
 
           {doc && (
             <div className="dv-detail-actions">
+              <Button
+                variant="outline"
+                size="sm"
+                icon={Share2}
+                onClick={() => setShowShareModal(true)}
+              >
+                Share / Access
+              </Button>
               <Link to={`/ask-ai?docId=${doc._id}`}>
                 <Button variant="outline" size="sm" icon={Sparkles}>
                   Ask Copilot
@@ -272,6 +283,29 @@ export default function DocumentDetailPage() {
                   </div>
                 )}
 
+                {/* Primary Document / Issue Date */}
+                {doc.documentDate && (
+                  <div className="dv-detail-issued-box" style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "12px 16px",
+                    background: "rgba(16, 185, 129, 0.08)",
+                    border: "1px solid rgba(16, 185, 129, 0.25)",
+                    borderRadius: "10px",
+                    marginTop: "14px"
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <Calendar size={18} color="#10B981" />
+                      <div>
+                        <strong style={{ color: "#F1F5F9", fontSize: "14px" }}>Issue / Document Date: {doc.documentDate}</strong>
+                        <p style={{ margin: 0, fontSize: "12px", color: "#94A3B8" }}>Verified and indexed for AI Copilot queries.</p>
+                      </div>
+                    </div>
+                    <Badge variant="success" size="sm">✓ Grounded Date</Badge>
+                  </div>
+                )}
+
                 {/* Expiry Banner if present */}
                 {doc.expiryDate && (
                   <div className="dv-detail-expiry-box">
@@ -306,6 +340,9 @@ export default function DocumentDetailPage() {
                   </div>
                 </div>
               </Card>
+
+              {/* Live Testing Extraction Diagnostics Inspector */}
+              <ExtractionInspector doc={doc} defaultExpanded={false} />
 
               {/* Evidence-Based Structured Fields Ladder */}
               <Card padding="lg" className="dv-detail-entities-card">
@@ -613,6 +650,17 @@ export default function DocumentDetailPage() {
           </Button>
         </div>
       </Modal>
+
+      {/* WhatsApp-Style Share / Audience Selector Modal */}
+      {doc && (
+        <ShareModal
+          documentId={doc._id}
+          documentTitle={doc.title}
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          onSaved={() => {}}
+        />
+      )}
     </div>
   );
 }

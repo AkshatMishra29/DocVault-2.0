@@ -12,7 +12,7 @@ export async function generateEmbedding(text) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        inputs: text.slice(0, 1000), // Max chunk
+        inputs: text.slice(0, 2000), // Max chunk
       }),
       signal: AbortSignal.timeout(3500),
     });

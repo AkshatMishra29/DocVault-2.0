@@ -3,7 +3,7 @@ import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { 
   ShieldCheck, AlertCircle, ArrowLeft, KeyRound, Fingerprint, 
-  Lock, LogOut, ArrowRight, Clock 
+  Lock, LogOut, ArrowRight, Clock, Users, ChevronDown, X, UserPlus 
 } from "lucide-react";
 
 import AuthLayout from "../components/AuthLayout";
@@ -18,8 +18,19 @@ export default function EnterPinPage() {
   const [loading, setLoading] = useState(false);
   const [bioLoading, setBioLoading] = useState(false);
   const [lockoutRemaining, setLockoutRemaining] = useState(0);
+  const [showSessionMenu, setShowSessionMenu] = useState(false);
 
-  const { user, pendingEmail, pinLength: ctxPinLength, verifyPin, unlockWithBiometrics, logout } = useAuth();
+  const { 
+    user, 
+    pendingEmail, 
+    pinLength: ctxPinLength, 
+    savedSessions = [],
+    switchSession,
+    removeSavedSession,
+    verifyPin, 
+    unlockWithBiometrics, 
+    logout 
+  } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -202,7 +213,15 @@ export default function EnterPinPage() {
     navigate("/login");
   };
 
+  const handleSelectSession = (targetEmail) => {
+    switchSession(targetEmail);
+    setPin("");
+    setError("");
+    setShowSessionMenu(false);
+  };
+
   const isLocked = lockoutRemaining > 0;
+  const otherSessions = savedSessions.filter((s) => s.email.toLowerCase() !== email.toLowerCase());
 
   return (
     <AuthLayout brandVariant="pin">
@@ -211,11 +230,86 @@ export default function EnterPinPage() {
         subtitle="Enter your personal security PIN to decrypt your documents."
       />
 
-      {/* Account Email Identification Pill */}
+      {/* Account Email Identification Pill & Session Switcher */}
       {email && (
-        <div className="dv-auth-account-pill">
-          <Lock size={14} className="dv-account-pill-icon" />
-          <span className="dv-account-pill-email">{email}</span>
+        <div className="dv-auth-session-bar">
+          <div className="dv-auth-account-pill">
+            <Lock size={13} className="dv-account-pill-icon" />
+            <span className="dv-account-pill-email">{email}</span>
+            <span className="dv-account-pill-badge">Session Locked</span>
+          </div>
+
+          {savedSessions.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setShowSessionMenu(!showSessionMenu)}
+              className="dv-session-switch-toggle"
+              title="Switch to another remembered session"
+            >
+              <Users size={12} />
+              <span>Switch Session ({savedSessions.length})</span>
+              <ChevronDown size={12} className={`dv-toggle-chevron ${showSessionMenu ? "dv-rotate-180" : ""}`} />
+            </button>
+          )}
+
+          {/* Dropdown Menu of Saved Sessions */}
+          {showSessionMenu && (
+            <div className="dv-saved-sessions-list">
+              <div className="dv-saved-sessions-header">
+                <span>Remembered Sessions on this Device</span>
+              </div>
+              {savedSessions.map((s) => {
+                const isCurrent = s.email.toLowerCase() === email.toLowerCase();
+                return (
+                  <div key={s.email} className={`dv-saved-session-item ${isCurrent ? 'dv-saved-session-item--current' : ''}`}>
+                    <button
+                      type="button"
+                      className="dv-saved-session-btn"
+                      onClick={() => {
+                        if (!isCurrent) {
+                          handleSelectSession(s.email);
+                        }
+                      }}
+                    >
+                      <div className="dv-session-avatar">
+                        <span>{s.name?.[0]?.toUpperCase() || 'U'}</span>
+                      </div>
+                      <div className="dv-session-meta">
+                        <strong>{s.name}</strong>
+                        <small>{s.email}</small>
+                      </div>
+                      {isCurrent ? (
+                        <span className="dv-session-current-pill">Current</span>
+                      ) : (
+                        <span className="dv-session-locked-pill">Locked</span>
+                      )}
+                    </button>
+                    {!isCurrent && (
+                      <button
+                        type="button"
+                        className="dv-session-remove-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeSavedSession(s.email);
+                        }}
+                        title="Forget this session"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+              <button
+                type="button"
+                className="dv-session-add-new-btn"
+                onClick={handleSwitchAccount}
+              >
+                <UserPlus size={13} />
+                <span>Sign in with another account</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { User } from './auth.model.js';
 import { OtpVerification } from './otp.model.js';
 import { sendOtpEmail } from '../../services/emailService.js';
 import { config } from '../../config/index.js';
+import { generateDocVaultId } from './docVaultId.util.js';
 
 /**
  * Dispatch 6-digit OTP to user email and store hash in MongoDB
@@ -16,7 +17,24 @@ export async function sendOtp({ email, purpose = 'register' }) {
     throw error;
   }
 
-  const cleanEmail = email.toLowerCase().trim();
+  let cleanEmail = email.toLowerCase().trim();
+
+  // If purpose is login or reset_password, resolve user and verify they exist
+  if (purpose === 'login' || purpose === 'reset_password') {
+    let user = await User.findOne({ email: cleanEmail });
+    if (!user) {
+      user = await User.findOne({ docVaultId: cleanEmail.toUpperCase() });
+    }
+    if (!user && !cleanEmail.includes('@')) {
+      user = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}@`, 'i') } });
+    }
+    if (!user) {
+      const error = new Error('No account found with this email or username.');
+      error.status = 404;
+      throw error;
+    }
+    cleanEmail = user.email;
+  }
 
   // If registering, verify email not already claimed
   if (purpose === 'register') {
@@ -144,9 +162,19 @@ export async function registerUser({ name, email, password, pin, phone, otp }) {
   const passwordHash = await bcrypt.hash(password, salt);
   const pinHash = await bcrypt.hash(cleanPin, salt);
 
+  // Generate unique DocVault ID
+  let unique = false;
+  let docVaultId = '';
+  while (!unique) {
+    docVaultId = generateDocVaultId();
+    const existing = await User.findOne({ docVaultId });
+    if (!existing) unique = true;
+  }
+
   const user = new User({
     name: name.trim(),
     email: cleanEmail,
+    docVaultId,
     passwordHash,
     pinHash,
     pinLength: cleanPin.length === 6 ? 6 : 4,
@@ -168,6 +196,7 @@ export async function registerUser({ name, email, password, pin, phone, otp }) {
       id: user._id,
       name: user.name,
       email: user.email,
+      docVaultId: user.docVaultId,
       phone: user.phone,
       tier: user.tier,
       pinLength: user.pinLength || 4,
@@ -182,22 +211,39 @@ export async function registerUser({ name, email, password, pin, phone, otp }) {
 
 export async function loginUser({ email, password }) {
   if (!email || !password) {
-    const error = new Error('Email and password are required.');
+    const error = new Error('Email/ID and password are required.');
     error.status = 400;
     throw error;
   }
 
-  const cleanEmail = email.toLowerCase().trim();
-  const user = await User.findOne({ email: cleanEmail });
+  const rawInput = email.toLowerCase().trim();
+
+  // Flexible identifier resolution: exact email, docVaultId, or username prefix
+  let user = await User.findOne({ email: rawInput });
+  if (!user) {
+    user = await User.findOne({ docVaultId: rawInput.toUpperCase() });
+  }
+  if (!user && !rawInput.includes('@')) {
+    user = await User.findOne({ email: { $regex: new RegExp(`^${rawInput}@`, 'i') } });
+  }
+
   if (!user) {
     const error = new Error('Invalid email or password.');
     error.status = 401;
     throw error;
   }
 
-  const isMatch = await bcrypt.compare(password, user.passwordHash);
+  // Dual Credential Matching: Check password hash, or security PIN fallback
+  let isMatch = await bcrypt.compare(password, user.passwordHash);
+  if (!isMatch && user.pinHash) {
+    const isPinMatch = await bcrypt.compare(password.toString().trim(), user.pinHash);
+    if (isPinMatch) {
+      isMatch = true;
+    }
+  }
+
   if (!isMatch) {
-    const error = new Error('Invalid email or password.');
+    const error = new Error('Invalid email or password. If you signed in via Google OAuth, you can sign in with Google or use OTP Login.');
     error.status = 401;
     throw error;
   }
@@ -218,6 +264,7 @@ export async function loginUser({ email, password }) {
       id: user._id,
       name: user.name,
       email: user.email,
+      docVaultId: user.docVaultId,
       phone: user.phone,
       tier: user.tier,
       pinLength: user.pinLength || 4,
@@ -226,6 +273,142 @@ export async function loginUser({ email, password }) {
       autoLockEnabled: user.autoLockEnabled !== false,
       biometricsEnabled: user.biometricsEnabled,
       offlineAccessEnabled: user.offlineAccessEnabled,
+    },
+    token,
+    requiresPin: true,
+  };
+}
+
+/**
+ * Reset or set a manual password using verified email OTP
+ */
+export async function resetPasswordWithOtp({ email, otp, newPassword, newPin }) {
+  if (!email || !otp || !newPassword) {
+    const error = new Error('Email, OTP code, and new password are required.');
+    error.status = 400;
+    throw error;
+  }
+
+  const rawInput = email.toLowerCase().trim();
+  let user = await User.findOne({ email: rawInput });
+  if (!user && !rawInput.includes('@')) {
+    user = await User.findOne({ email: { $regex: new RegExp(`^${rawInput}@`, 'i') } });
+  }
+
+  if (!user) {
+    const error = new Error('No user account found with this email.');
+    error.status = 404;
+    throw error;
+  }
+
+  // Verify OTP (accepts 'reset_password', 'login', or 'register' purpose)
+  let verified = false;
+  const purposes = ['reset_password', 'login', 'register'];
+  for (const purpose of purposes) {
+    try {
+      await verifyOtpCode({ email: user.email, otp, purpose });
+      verified = true;
+      break;
+    } catch {
+      // try next
+    }
+  }
+
+  if (!verified) {
+    const error = new Error('Invalid or expired verification code. Please request a new OTP.');
+    error.status = 400;
+    throw error;
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.passwordHash = await bcrypt.hash(newPassword, salt);
+
+  if (newPin) {
+    const cleanPin = newPin.toString().trim();
+    user.pinHash = await bcrypt.hash(cleanPin, salt);
+    user.pinLength = cleanPin.length >= 6 ? 6 : 4;
+  }
+
+  user.failedAttempts = 0;
+  user.lockUntil = null;
+  await user.save();
+
+  const token = jwt.sign(
+    { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1 },
+    config.jwtSecret,
+    { expiresIn: '7d' }
+  );
+
+  return {
+    success: true,
+    message: 'Manual password set successfully. You can now log in with manual credentials.',
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      docVaultId: user.docVaultId,
+      pinLength: user.pinLength || 4,
+    },
+    token,
+  };
+}
+
+/**
+ * Instant login with verified OTP
+ */
+export async function loginWithOtp({ email, otp }) {
+  if (!email || !otp) {
+    const error = new Error('Email and OTP code are required.');
+    error.status = 400;
+    throw error;
+  }
+
+  const rawInput = email.toLowerCase().trim();
+  let user = await User.findOne({ email: rawInput });
+  if (!user && !rawInput.includes('@')) {
+    user = await User.findOne({ email: { $regex: new RegExp(`^${rawInput}@`, 'i') } });
+  }
+
+  if (!user) {
+    const error = new Error('No user account found with this email.');
+    error.status = 404;
+    throw error;
+  }
+
+  let verified = false;
+  const purposes = ['login', 'reset_password', 'register'];
+  for (const purpose of purposes) {
+    try {
+      await verifyOtpCode({ email: user.email, otp, purpose });
+      verified = true;
+      break;
+    } catch {
+      // try next
+    }
+  }
+
+  if (!verified) {
+    const error = new Error('Invalid or expired verification code.');
+    error.status = 400;
+    throw error;
+  }
+
+  const token = jwt.sign(
+    { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1 },
+    config.jwtSecret,
+    { expiresIn: '7d' }
+  );
+
+  return {
+    success: true,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      docVaultId: user.docVaultId,
+      pinLength: user.pinLength || 4,
+      singleSessionOnly: Boolean(user.singleSessionOnly),
+      sessionVersion: user.sessionVersion || 1,
     },
     token,
     requiresPin: true,
@@ -241,7 +424,13 @@ export async function verifyUserPin({ email, pin }) {
 
   const cleanEmail = email.toLowerCase().trim();
   const cleanPin = pin.toString().trim();
-  const user = await User.findOne({ email: cleanEmail });
+  let user = await User.findOne({ email: cleanEmail });
+  if (!user) {
+    user = await User.findOne({ docVaultId: cleanEmail.toUpperCase() });
+  }
+  if (!user && !cleanEmail.includes('@')) {
+    user = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}@`, 'i') } });
+  }
   if (!user) {
     const error = new Error('User not found.');
     error.status = 404;
@@ -309,6 +498,7 @@ export async function verifyUserPin({ email, pin }) {
       id: user._id,
       name: user.name,
       email: user.email,
+      docVaultId: user.docVaultId,
       tier: user.tier,
       pinLength: user.pinLength || 4,
       singleSessionOnly: Boolean(user.singleSessionOnly),
@@ -317,6 +507,34 @@ export async function verifyUserPin({ email, pin }) {
       offlineAccessEnabled: user.offlineAccessEnabled,
     },
     token: sessionToken,
+  };
+}
+
+export async function getCurrentUser(userId) {
+  const user = await User.findById(userId);
+  if (!user) {
+    const error = new Error('User not found.');
+    error.status = 404;
+    throw error;
+  }
+
+  // Ensure user has a docVaultId if somehow missing
+  if (!user.docVaultId) {
+    user.docVaultId = generateDocVaultId();
+    await user.save();
+  }
+
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    docVaultId: user.docVaultId,
+    tier: user.tier,
+    pinLength: user.pinLength || 4,
+    singleSessionOnly: Boolean(user.singleSessionOnly),
+    autoLockEnabled: user.autoLockEnabled !== false,
+    biometricsEnabled: user.biometricsEnabled,
+    offlineAccessEnabled: user.offlineAccessEnabled,
   };
 }
 
@@ -563,6 +781,7 @@ export async function authenticateWithFirebaseIdToken(idToken) {
       id: user._id,
       name: user.name,
       email: user.email,
+      docVaultId: user.docVaultId,
       phone: user.phone,
       tier: user.tier,
       pinLength: user.pinLength || 4,

@@ -28,7 +28,15 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
  */
 export async function signInWithGoogle() {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
+    // Clear any active Firebase client session to force a fresh account selection
+    try {
+      await auth.signOut();
+    } catch (_) {}
+
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    const result = await signInWithPopup(auth, provider);
     const user = result.user;
     const idToken = await user.getIdToken(true);
     return {

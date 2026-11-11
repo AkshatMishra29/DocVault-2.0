@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Mail, Lock, ArrowRight, ShieldCheck, HelpCircle } from "lucide-react";
+import { Mail, Lock, ArrowRight, ShieldCheck, HelpCircle, KeyRound, Sparkles, CheckCircle2 } from "lucide-react";
 import AboutDocVaultModal from "../../../components/common/AboutModal/AboutDocVaultModal";
+import Modal from "../../../components/common/Modal/Modal";
 import { signInWithGoogle } from "../../../services/firebase";
+import { apiRequest } from "../../../services/api";
 
 import AuthLayout from "../components/AuthLayout";
 import AuthHeader from "../components/AuthHeader";
@@ -32,6 +34,17 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
 
+  // Set / Reset Password & OTP Login Modal State
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetOtp, setResetOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [resetStep, setResetStep] = useState(1); // 1 = request code, 2 = set password / sign in
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState("");
+
   const { login, loginWithFirebaseToken } = useAuth();
   const navigate = useNavigate();
 
@@ -40,7 +53,7 @@ export default function LoginPage() {
     setError("");
 
     if (!email || !password) {
-      setError("Please provide both email and password.");
+      setError("Please provide both email/ID and password.");
       return;
     }
 
@@ -52,7 +65,7 @@ export default function LoginPage() {
     if (result.success) {
       navigate("/enter-pin", { 
         state: { 
-          email: cleanEmail, 
+          email: result.user?.email || cleanEmail, 
           pinLength: result.user?.pinLength || 4 
         } 
       });
@@ -92,11 +105,120 @@ export default function LoginPage() {
     }
   };
 
-  const handleForgotPassword = () => {
-    if (email) {
-      setInfoMessage(`Password reset link dispatched to ${email}. Please check your inbox.`);
-    } else {
-      setError("Please enter your email address to receive reset instructions.");
+  const handleOpenResetModal = () => {
+    setResetEmail(email.trim() || "");
+    setResetOtp("");
+    setNewPassword("");
+    setNewPin("");
+    setResetError("");
+    setResetSuccess("");
+    setResetStep(1);
+    setIsResetModalOpen(true);
+  };
+
+  // Step 1: Request 6-digit OTP
+  const handleSendResetOtp = async (e) => {
+    e.preventDefault();
+    setResetError("");
+    setResetSuccess("");
+
+    if (!resetEmail.trim()) {
+      setResetError("Please enter your email or username.");
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const res = await apiRequest("/api/auth/send-otp", {
+        method: "POST",
+        body: JSON.stringify({ email: resetEmail.trim(), purpose: "reset_password" }),
+      });
+      if (res.success) {
+        setResetSuccess(res.message || "Verification code dispatched to your email.");
+        setResetStep(2);
+      } else {
+        setResetError(res.error || "Failed to dispatch verification code.");
+      }
+    } catch (err) {
+      setResetError(err.message || "Network error. Please try again.");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  // Step 2: Submit OTP & Set New Password
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    setResetError("");
+    setResetSuccess("");
+
+    if (!resetOtp.trim() || !newPassword) {
+      setResetError("Please provide both the 6-digit code and your new password.");
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const res = await apiRequest("/api/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({
+          email: resetEmail.trim(),
+          otp: resetOtp.trim(),
+          newPassword,
+          newPin: newPin.trim() || undefined,
+        }),
+      });
+
+      if (res.success) {
+        setResetSuccess("Manual password set successfully! You can now log in.");
+        setTimeout(() => {
+          setIsResetModalOpen(false);
+          setEmail(resetEmail);
+          setPassword(newPassword);
+          setInfoMessage("Manual password set! Sign in below with your new password.");
+        }, 1500);
+      } else {
+        setResetError(res.error || "Password update failed. Please check your code.");
+      }
+    } catch (err) {
+      setResetError(err.message || "Failed to update password.");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  // Instant OTP Login without password
+  const handleQuickOtpLogin = async () => {
+    if (!resetOtp.trim()) {
+      setResetError("Please enter the 6-digit verification code to sign in.");
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const res = await apiRequest("/api/auth/login-otp", {
+        method: "POST",
+        body: JSON.stringify({ email: resetEmail.trim(), otp: resetOtp.trim() }),
+      });
+      if (res.success && res.token) {
+        localStorage.setItem("token", res.token);
+        localStorage.setItem("docvault_token", res.token);
+        if (res.user) {
+          localStorage.setItem("docvault_user", JSON.stringify(res.user));
+        }
+        setIsResetModalOpen(false);
+        navigate("/enter-pin", {
+          state: {
+            email: res.user?.email || resetEmail.trim(),
+            pinLength: res.user?.pinLength || 4,
+          },
+        });
+      } else {
+        setResetError(res.error || "OTP login failed. Invalid or expired code.");
+      }
+    } catch (err) {
+      setResetError(err.message || "OTP sign in error.");
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -130,24 +252,24 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="dv-auth-form">
         <PasswordInput
-          label="Email Address"
-          type="email"
+          label="Email Address or DocVault ID"
+          type="text"
           name="email"
           icon={Mail}
-          placeholder="name@example.com"
+          placeholder="name@example.com, username, or DocVault ID"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          autoComplete="email"
+          autoComplete="username"
           disabled={loading || googleLoading}
         />
 
         <PasswordInput
-          label="Password"
+          label="Password (or Vault PIN)"
           type="password"
           name="password"
           icon={Lock}
-          placeholder="Enter your password"
+          placeholder="Enter your password or 4-digit PIN"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -170,10 +292,10 @@ export default function LoginPage() {
           <button
             type="button"
             className="dv-auth-forgot-link"
-            onClick={handleForgotPassword}
+            onClick={handleOpenResetModal}
             disabled={loading || googleLoading}
           >
-            Forgot password?
+            Forgot / Set Password?
           </button>
         </div>
 
@@ -213,6 +335,124 @@ export default function LoginPage() {
         <ShieldCheck size={14} className="dv-auth-security-note-icon" />
         <span>Your documents. Your privacy. Your control.</span>
       </div>
+
+      {/* Set / Reset Manual Password & Quick OTP Login Modal */}
+      <Modal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        title="Set or Reset Manual Password"
+        maxWidth="460px"
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <p style={{ fontSize: "13.5px", color: "var(--color-text-secondary, #556B82)", margin: 0, lineHeight: 1.5 }}>
+            If you originally created your vault with Google OAuth, use this to set your manual password and 4-digit PIN for direct login anytime.
+          </p>
+
+          {resetError && <AuthAlert type="error" message={resetError} />}
+          {resetSuccess && <AuthAlert type="success" message={resetSuccess} />}
+
+          {resetStep === 1 ? (
+            <form onSubmit={handleSendResetOtp} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <PasswordInput
+                label="Registered Email or Username"
+                type="text"
+                name="resetEmail"
+                icon={Mail}
+                placeholder="name@example.com or username"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                required
+                disabled={resetLoading}
+              />
+
+              <button
+                type="submit"
+                className="dv-auth-submit-btn"
+                disabled={resetLoading || !resetEmail.trim()}
+              >
+                {resetLoading ? "Dispatching OTP..." : "Send Verification Code"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleResetSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div style={{ fontSize: "12.5px", color: "#10B981", display: "flex", alignItems: "center", gap: "6px" }}>
+                <CheckCircle2 size={14} />
+                <span>Verification code dispatched to {resetEmail}</span>
+              </div>
+
+              <PasswordInput
+                label="6-Digit Verification Code"
+                type="text"
+                name="resetOtp"
+                icon={KeyRound}
+                placeholder="Enter 6-digit OTP"
+                value={resetOtp}
+                onChange={(e) => setResetOtp(e.target.value)}
+                required
+                disabled={resetLoading}
+              />
+
+              <PasswordInput
+                label="New Master Password"
+                type="password"
+                name="newPassword"
+                icon={Lock}
+                placeholder="At least 6 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                disabled={resetLoading}
+              />
+
+              <PasswordInput
+                label="Vault Security PIN (Optional)"
+                type="password"
+                name="newPin"
+                icon={ShieldCheck}
+                placeholder="4 or 6 digits (e.g. 1234)"
+                value={newPin}
+                onChange={(e) => setNewPin(e.target.value)}
+                disabled={resetLoading}
+              />
+
+              <button
+                type="submit"
+                className="dv-auth-submit-btn"
+                disabled={resetLoading || !resetOtp.trim() || !newPassword}
+              >
+                {resetLoading ? "Updating credentials..." : "Set Password & Save"}
+              </button>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "8px" }}>
+                <button
+                  type="button"
+                  onClick={handleQuickOtpLogin}
+                  disabled={resetLoading || !resetOtp.trim()}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#0070F2",
+                    fontSize: "12.5px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    padding: 0
+                  }}
+                >
+                  ⚡ Or Instant OTP Login
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResetStep(1)}
+                  style={{ background: "none", border: "none", color: "#64748B", fontSize: "12px", cursor: "pointer" }}
+                >
+                  Resend code
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </Modal>
 
       <AboutDocVaultModal
         isOpen={isAboutModalOpen}

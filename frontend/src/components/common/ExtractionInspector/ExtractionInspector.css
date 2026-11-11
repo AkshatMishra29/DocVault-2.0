@@ -1,0 +1,296 @@
+/* ExtractionInspector.css — Apple Zen 3D Testing Diagnostic Card */
+
+.dv-inspector {
+  margin: 20px 0;
+  border-radius: 16px;
+  background: rgba(18, 22, 31, 0.75);
+  border: 1px solid rgba(0, 112, 242, 0.35);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 112, 242, 0.15) inset;
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.dv-inspector:hover {
+  border-color: rgba(0, 112, 242, 0.55);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45), 0 0 16px rgba(0, 112, 242, 0.2) inset;
+}
+
+.dv-inspector__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: linear-gradient(90deg, rgba(0, 112, 242, 0.15), rgba(16, 185, 129, 0.08));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dv-inspector__title-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dv-inspector__tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.dv-inspector__subtitle {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.dv-inspector__toggle-btn {
+  font-size: 12px !important;
+  color: #e2e8f0 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  padding: 4px 10px !important;
+  transition: all 0.2s ease !important;
+}
+
+.dv-inspector__toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+.dv-inspector__body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Metrics row */
+.dv-inspector__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dv-inspector__metric-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.dv-inspector__metric-label {
+  color: #94a3b8;
+}
+
+.dv-inspector__metric-val {
+  color: #f1f5f9;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.dv-inspector__icon--blue { color: #38bdf8; }
+.dv-inspector__icon--green { color: #10b981; }
+.dv-inspector__icon--amber { color: #f59e0b; }
+
+/* Section Header */
+.dv-inspector__section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #e2e8f0;
+}
+
+.dv-inspector__section-header h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Dates Card */
+.dv-inspector__dates-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.dv-inspector__dates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.dv-inspector__date-block {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dv-inspector__date-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dv-inspector__date-val {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.dv-inspector__date-val--success {
+  color: #10b981;
+}
+
+.dv-inspector__date-val--amber {
+  color: #f59e0b;
+}
+
+.dv-inspector__date-val--empty {
+  color: #ef4444;
+  font-size: 13px;
+}
+
+.dv-inspector__date-val--neutral {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.dv-inspector__date-hint {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Fields Table */
+.dv-inspector__fields-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.dv-inspector__table-wrap {
+  overflow-x: auto;
+}
+
+.dv-inspector__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dv-inspector__table th {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.dv-inspector__table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #f1f5f9;
+}
+
+.dv-inspector__td-key {
+  font-weight: 600;
+  color: #38bdf8 !important;
+  width: 30%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.dv-inspector__td-val {
+  color: #e2e8f0;
+}
+
+.dv-inspector__chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+/* Raw OCR Card */
+.dv-inspector__raw-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dv-inspector__raw-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.2s ease;
+}
+
+.dv-inspector__raw-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dv-inspector__raw-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.dv-inspector__raw-content {
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.35);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.dv-inspector__raw-pre {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #94a3b8;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dv-inspector__empty-raw {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  font-style: italic;
+}
+

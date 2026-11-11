@@ -50,6 +50,88 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
+  // Track all remembered / saved sessions on this browser
+  const [savedSessions, setSavedSessions] = useState(() => {
+    try {
+      const raw = localStorage.getItem('dv_saved_sessions');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Helper to persist/update a session in savedSessions
+  const recordSession = (userData) => {
+    if (!userData?.email) return;
+    try {
+      const email = userData.email.toLowerCase().trim();
+      setSavedSessions((prev) => {
+        const filtered = prev.filter((s) => s.email.toLowerCase() !== email);
+        const updated = [
+          {
+            id: userData.id || userData._id || userData.docVaultId,
+            name: userData.name || email.split('@')[0],
+            email,
+            pinLength: userData.pinLength || 4,
+            tier: userData.tier || 'Vault Pro',
+            lastActive: Date.now(),
+          },
+          ...filtered,
+        ].slice(0, 5); // Keep at most 5 recent sessions
+        localStorage.setItem('dv_saved_sessions', JSON.stringify(updated));
+        return updated;
+      });
+    } catch (e) {
+      console.warn('[DocVault Auth] Failed to record session:', e);
+    }
+  };
+
+  // Helper to switch to an existing saved session
+  const switchSession = (targetEmail) => {
+    if (!targetEmail) return;
+    const cleanEmail = targetEmail.toLowerCase().trim();
+    const session = savedSessions.find((s) => s.email.toLowerCase() === cleanEmail);
+    const pinLen = session?.pinLength || 4;
+
+    // Lock current vault state
+    setIsVaultUnlocked(false);
+    sessionStorage.removeItem('docvault_unlocked');
+    localStorage.removeItem('dv_last_activity_time');
+
+    // Update active target credentials
+    setPendingEmail(cleanEmail);
+    setPinLength(pinLen);
+    sessionStorage.setItem('docvault_pending_email', cleanEmail);
+    sessionStorage.setItem('docvault_pin_length', pinLen.toString());
+    localStorage.setItem('pending_pin_email', cleanEmail);
+
+    if (session) {
+      const switchedUser = {
+        name: session.name,
+        email: cleanEmail,
+        pinLength: pinLen,
+        tier: session.tier,
+      };
+      setUser(switchedUser);
+      localStorage.setItem('docvault_user', JSON.stringify(switchedUser));
+    }
+  };
+
+  // Remove a saved session from the device
+  const removeSavedSession = (targetEmail) => {
+    if (!targetEmail) return;
+    const cleanEmail = targetEmail.toLowerCase().trim();
+    setSavedSessions((prev) => {
+      const filtered = prev.filter((s) => s.email.toLowerCase() !== cleanEmail);
+      localStorage.setItem('dv_saved_sessions', JSON.stringify(filtered));
+      return filtered;
+    });
+
+    if (user?.email?.toLowerCase() === cleanEmail || pendingEmail?.toLowerCase() === cleanEmail) {
+      logout();
+    }
+  };
+
   // Auto-Lock Vault: Detects 10-minute rest / inactivity AND mobile device sleep / backgrounding
   useEffect(() => {
     // Only monitor if vault is unlocked and user has autoLockEnabled (default true)
@@ -103,6 +185,7 @@ export const AuthProvider = ({ children }) => {
   const handleLoginSuccess = (userData, requiresPin = true) => {
     setUser(userData);
     setPendingEmail(userData.email);
+    recordSession(userData);
     const len = userData.pinLength || 4;
     setPinLength(len);
     sessionStorage.setItem('docvault_pin_length', len.toString());
@@ -118,6 +201,7 @@ export const AuthProvider = ({ children }) => {
     setToken(authToken);
     setUser(userData);
     setPendingEmail(userData.email);
+    recordSession(userData);
     if (userData.pinLength) {
       setPinLength(userData.pinLength);
       sessionStorage.setItem('docvault_pin_length', userData.pinLength.toString());
@@ -375,6 +459,29 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('dv_last_activity_time');
   };
 
+  // Lock Session (records session to savedSessions, locks vault)
+  const lockSession = () => {
+    if (user?.email) {
+      recordSession(user);
+    }
+    lockVault();
+  };
+
+  // Global Keyboard Shortcut: Cmd+L or Ctrl+L locks the active session
+  useEffect(() => {
+    const handleGlobalLockShortcut = (e) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'l' || e.key === 'L')) {
+        if (isVaultUnlocked) {
+          e.preventDefault();
+          lockSession();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalLockShortcut);
+    return () => window.removeEventListener('keydown', handleGlobalLockShortcut);
+  }, [isVaultUnlocked, user]);
+
   // Full Logout (cleans up all session tokens and credentials completely)
   const logout = () => {
     setUser(null);
@@ -399,8 +506,12 @@ export const AuthProvider = ({ children }) => {
         isVaultUnlocked,
         pendingEmail,
         pinLength,
+        savedSessions,
         setPinLength,
         setPendingEmail,
+        recordSession,
+        switchSession,
+        removeSavedSession,
         handleLoginSuccess,
         handlePinSuccess,
         register,
@@ -411,6 +522,7 @@ export const AuthProvider = ({ children }) => {
         registerBiometrics,
         unlockWithBiometrics,
         lockVault,
+        lockSession,
         logout,
       }}
     >

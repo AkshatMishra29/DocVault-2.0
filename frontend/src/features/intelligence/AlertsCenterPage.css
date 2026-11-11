@@ -1,11 +1,15 @@
+/* ==========================================================================
+   ALERTS CENTRE (APPLE ZEN LIGHT SPECIFICATION)
+   ========================================================================== */
+
 .alerts-center-page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  padding: var(--space-6);
-  max-width: 1200px;
+  gap: 24px;
+  max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .alerts-filter-bar {
@@ -17,33 +21,39 @@
 .alerts-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .alert-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-5);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface, #131b26);
-  border: 1px solid var(--color-border, #1f2937);
-  gap: var(--space-4);
-  transition: all 0.2s ease;
+  padding: 22px 26px;
+  border-radius: 20px;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  gap: 20px;
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.alert-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -2px rgba(15, 23, 42, 0.06);
 }
 
 .alert-card.border-critical {
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid #EF4444;
 }
 
 .alert-card.border-warning {
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid #F59E0B;
 }
 
 .alert-card-left {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-4);
+  gap: 16px;
   flex: 1;
 }
 
@@ -51,25 +61,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
   flex-shrink: 0;
 }
 
 .icon-critical {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
 }
 
 .icon-warning {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.14);
+  color: #D97706;
 }
 
 .icon-info {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background: rgba(0, 113, 227, 0.12);
+  color: #0071E3;
 }
 
 .alert-body {
@@ -82,33 +92,37 @@
 .alert-header-row {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .alert-title {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--color-text-main, #f3f4f6);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.01em;
 }
 
 .alert-type-tag {
-  font-size: 0.72rem;
-  color: var(--color-text-muted, #9ca3af);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748B;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 .alert-message {
-  font-size: 0.88rem;
-  color: var(--color-text-muted, #9ca3af);
-  line-height: 1.45;
+  font-size: 13.5px;
+  color: #475569;
+  line-height: 1.5;
 }
 
 .alert-references {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 8px;
   flex-wrap: wrap;
   margin-top: 4px;
 }
@@ -117,54 +131,58 @@
 .alert-entity-pill {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.78rem;
-  padding: 2px 8px;
+  gap: 5px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
   border-radius: 9999px;
-  background: var(--color-background, #0b0f17);
-  border: 1px solid var(--color-border, #1f2937);
-  color: var(--color-text-main, #f3f4f6);
+  background: #F1F5F9;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  color: #475569;
   text-decoration: none;
+  transition: all 0.2s ease;
 }
 
 .alert-doc-pill:hover,
 .alert-entity-pill:hover {
-  border-color: var(--color-primary, #10b981);
+  background: rgba(0, 113, 227, 0.08);
+  border-color: rgba(0, 113, 227, 0.3);
+  color: #0071E3;
 }
 
 .alert-card-actions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: var(--space-2);
+  gap: 8px;
   flex-shrink: 0;
 }
 
 .alert-button-group {
   display: flex;
-  gap: var(--space-2);
+  gap: 8px;
 }
 
 .alerts-skeleton-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 14px;
 }
 
-@media (max-width: 640px) {
-  .alerts-center-page {
-    padding: var(--space-4);
-  }
+@media (max-width: 768px) {
   .alert-card {
     flex-direction: column;
     align-items: flex-start;
   }
   .alert-card-actions {
     width: 100%;
-    align-items: stretch;
+    align-items: flex-start;
   }
   .alert-button-group {
-    justify-content: flex-end;
+    width: 100%;
+  }
+  .alert-button-group button {
+    flex: 1;
   }
 }
-

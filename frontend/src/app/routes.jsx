@@ -13,8 +13,13 @@ import AuthVerifiedPage from "../features/auth/pages/AuthVerifiedPage";
 import HomePage from "../features/dashboard/HomePage";
 import DocumentsPage from "../features/documents/DocumentsPage";
 import DocumentDetailPage from "../features/documents/DocumentDetailPage";
+import ConnectionsPage from "../features/sharing/ConnectionsPage";
+import ShareCenterPage from "../features/sharing/ShareCenterPage";
+import SharedDocumentViewerPage from "../features/sharing/SharedDocumentViewerPage";
 import AskAiPage from "../features/ai-assistant/AskAiPage";
 import AssetsPage from "../features/assets/AssetsPage";
+import AssetDetailPage from "../features/assets/AssetDetailPage";
+import BankStatementsPage from "../features/assets/BankStatementsPage";
 import DeadlinesPage from "../features/deadlines/DeadlinesPage";
 import UploadPage from "../features/upload/UploadPage";
 import MorePage from "../features/dashboard/MorePage";
@@ -60,8 +65,13 @@ export function AppRoutes() {
       >
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/documents/:id" element={<DocumentDetailPage />} />
+        <Route path="/connections" element={<ConnectionsPage />} />
+        <Route path="/shares" element={<ShareCenterPage />} />
+        <Route path="/shares/:id/view" element={<SharedDocumentViewerPage />} />
         <Route path="/ask-ai" element={<AskAiPage />} />
         <Route path="/assets" element={<AssetsPage />} />
+        <Route path="/assets/:id" element={<AssetDetailPage />} />
+        <Route path="/banking" element={<BankStatementsPage />} />
         <Route path="/deadlines" element={<DeadlinesPage />} />
         <Route path="/upload" element={<UploadPage />} />
         <Route path="/intelligence" element={<IntelligenceDashboardPage />} />

@@ -1,91 +1,297 @@
+/* ==========================================================================
+   DOCVAULT AI COPILOT CHAT SCREEN (APPLE ZEN 3D SPECIFICATION)
+   Bounded RAG Intelligence • Spatial Chat Window • Responsive Glassmorphism
+   ========================================================================== */
+
 .dv-ai-page {
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .dv-ai-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding-top: var(--space-4);
+  gap: 24px;
+  padding-top: 16px;
+  padding-bottom: 48px;
+  box-sizing: border-box;
 }
+
+/* ==========================================================================
+   1. COPILOT COMMAND HERO (APPLE ZEN 3D SPATIAL SURFACE)
+   ========================================================================== */
+
+.dv-ai-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  background: 
+    radial-gradient(ellipse at 88% 18%, rgba(0, 113, 227, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse at 12% 82%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+    #FFFFFF;
+  border: 1px solid rgba(0, 113, 227, 0.15);
+  border-radius: 22px;
+  padding: 30px 36px;
+  box-shadow: 
+    0 12px 32px -4px rgba(15, 23, 42, 0.04),
+    0 2px 8px -2px rgba(15, 23, 42, 0.02);
+  position: relative;
+  overflow: hidden;
+}
+
+.dv-ai-hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #0071E3 35%, #8B5CF6 70%, transparent 100%);
+  opacity: 0.6;
+}
+
+.dv-ai-hero__info {
+  flex: 1;
+  max-width: 720px;
+}
+
+.dv-ai-hero__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 113, 227, 0.22);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #0071E3;
+  box-shadow: 0 2px 10px rgba(0, 113, 227, 0.08);
+  margin-bottom: 14px;
+}
+
+.dv-ai-hero__kicker-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #0071E3;
+  box-shadow: 0 0 8px rgba(0, 113, 227, 0.7);
+  animation: dvPulseBlue 2.5s infinite;
+}
+
+@keyframes dvPulseBlue {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.2); }
+}
+
+.dv-ai-hero__title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  font-size: clamp(22px, 2.6vw, 28px);
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.025em;
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+.dv-ai-hero__title-accent {
+  background: linear-gradient(135deg, #0071E3 0%, #8B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.dv-ai-hero__desc {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.dv-ai-hero__badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 24px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.06) 0%, rgba(139, 92, 246, 0.04) 100%);
+  border: 1px solid rgba(0, 113, 227, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.05);
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.dv-ai-hero__badge-num {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0071E3;
+  letter-spacing: -0.02em;
+}
+
+.dv-ai-hero__badge-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   2. TARGET DOCUMENT SCOPED STRIP
+   ========================================================================== */
 
 .dv-ai-scoped-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
-  background-color: var(--color-primary-subtle);
-  border: 1px solid rgba(0, 112, 242, 0.25);
-  border-radius: var(--radius-md);
-  font-size: var(--text-xs);
-  color: var(--color-primary);
+  padding: 12px 20px;
+  background: linear-gradient(90deg, rgba(0, 113, 227, 0.06) 0%, #FFFFFF 100%);
+  border: 1px solid rgba(0, 113, 227, 0.2);
+  border-radius: 14px;
+  font-size: 13px;
+  color: #0071E3;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.04);
 }
+
+.dv-ai-scoped-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dv-ai-scoped-banner strong {
+  color: #0F172A;
+}
+
+/* ==========================================================================
+   3. SPATIAL CHAT WINDOW
+   ========================================================================== */
 
 .dv-ai-chat-window {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 200px);
-  min-height: 520px;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  height: calc(100vh - 260px);
+  min-height: 580px;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 12px 36px -4px rgba(15, 23, 42, 0.05);
 }
 
+/* Header */
 .dv-ai-chat-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3-5) var(--space-5);
-  border-bottom: 1px solid var(--color-border);
-  background-color: var(--color-surface);
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .dv-ai-chat-brand {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 14px;
 }
 
 .dv-ai-chat-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #0070F2, #0051B4);
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0071E3 0%, #6366F1 100%);
   color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 112, 242, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.35);
+  flex-shrink: 0;
+}
+
+.dv-ai-chat-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .dv-ai-chat-title {
-  font-size: var(--text-sm);
-  font-weight: var(--font-bold);
-  color: var(--color-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+.dv-ai-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dv-ai-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10B981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
 }
 
 .dv-ai-chat-sub {
-  font-size: 11px;
-  color: var(--color-text-secondary);
+  font-size: 12px;
+  color: #64748B;
+  display: block;
+  margin-top: 2px;
 }
 
+/* History */
 .dv-ai-chat-history {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-5);
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 20px;
+  background: 
+    radial-gradient(circle at 90% 10%, rgba(0, 113, 227, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 10% 90%, rgba(139, 92, 246, 0.02) 0%, transparent 50%),
+    #FBFBFD;
 }
 
 .dv-chat-msg {
   display: flex;
-  gap: var(--space-3);
+  gap: 12px;
   max-width: 82%;
+  animation: dvMsgFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dvMsgFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .dv-chat-msg--assistant {
@@ -98,9 +304,9 @@
 }
 
 .dv-chat-msg__avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -108,38 +314,43 @@
 }
 
 .dv-chat-msg--assistant .dv-chat-msg__avatar {
-  background-color: var(--color-primary-subtle);
-  color: var(--color-primary);
-  border: 1px solid rgba(0, 112, 242, 0.25);
+  background: rgba(0, 113, 227, 0.1);
+  color: #0071E3;
+  border: 1px solid rgba(0, 113, 227, 0.2);
 }
 
 .dv-chat-msg--user .dv-chat-msg__avatar {
-  background-color: var(--color-secondary);
+  background: #0F172A;
   color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .dv-chat-msg__bubble {
-  padding: var(--space-3-5) var(--space-4);
-  border-radius: var(--radius-lg);
-  font-size: var(--text-sm);
-  line-height: 1.5;
+  padding: 16px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  line-height: 1.55;
+  box-sizing: border-box;
 }
 
 .dv-chat-msg--assistant .dv-chat-msg__bubble {
-  background-color: var(--color-surface-secondary);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-  border-top-left-radius: 4px;
+  background: #FFFFFF;
+  color: #0F172A;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
 }
 
 .dv-chat-msg--user .dv-chat-msg__bubble {
-  background-color: var(--color-primary);
+  background: linear-gradient(135deg, #0071E3 0%, #0056B3 100%);
   color: #FFFFFF;
-  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 113, 227, 0.28);
 }
 
+/* Markdown Rendering */
 .dv-markdown-wrapper p {
-  margin-bottom: var(--space-2);
+  margin: 0 0 10px 0;
 }
 
 .dv-markdown-wrapper p:last-child {
@@ -148,8 +359,8 @@
 
 .dv-markdown-wrapper ul,
 .dv-markdown-wrapper ol {
-  padding-left: var(--space-4);
-  margin-bottom: var(--space-2);
+  padding-left: 20px;
+  margin: 0 0 10px 0;
 }
 
 .dv-markdown-wrapper li {
@@ -157,125 +368,198 @@
 }
 
 .dv-markdown-wrapper strong {
-  font-weight: var(--font-bold);
+  font-weight: 700;
+  color: inherit;
 }
 
+.dv-markdown-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 13px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.dv-markdown-wrapper th,
+.dv-markdown-wrapper td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+  text-align: left;
+}
+
+.dv-markdown-wrapper th {
+  background: #F8FAFC;
+  font-weight: 700;
+  color: #475569;
+}
+
+/* Citation Links */
 .dv-chat-citations {
-  margin-top: var(--space-3);
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--color-border-subtle);
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .dv-citations-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: 10.5px;
-  font-weight: var(--font-bold);
+  font-weight: 700;
   text-transform: uppercase;
-  color: var(--color-text-muted);
-  margin-bottom: 4px;
+  color: #64748B;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
   display: block;
 }
 
 .dv-citations-list {
   display: flex;
-  gap: var(--space-2);
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .dv-citation-pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 3px 8px;
-  font-size: 11px;
-  color: var(--color-primary);
-  font-weight: var(--font-semibold);
-  transition: all var(--transition-fast);
+  gap: 5px;
+  background: #F8FAFC;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11.5px;
+  color: #0071E3;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
 }
 
 .dv-citation-pill:hover {
-  background-color: var(--color-primary-subtle);
-  border-color: var(--color-primary);
+  background: rgba(0, 113, 227, 0.08);
+  border-color: rgba(0, 113, 227, 0.3);
+  transform: translateY(-1px);
 }
 
+/* Loading Dots */
 .dv-chat-loading-bubble {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
+  gap: 12px;
+  font-size: 13px;
+  color: #64748B;
 }
 
-/* Suggested Prompts Bar */
+.dv-chat-loading-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dv-chat-loading-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #0071E3;
+  animation: dvDotWave 1.4s infinite ease-in-out both;
+}
+
+.dv-chat-loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.dv-chat-loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes dvDotWave {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1.1); opacity: 1; }
+}
+
+/* ==========================================================================
+   4. SUGGESTIONS PROMPTS CAROUSEL
+   ========================================================================== */
+
 .dv-ai-prompts-bar {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2-5) var(--space-5);
-  border-top: 1px solid var(--color-border-subtle);
-  background-color: var(--color-surface-hover);
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(226, 232, 240, 0.85);
+  background: #FFFFFF;
   overflow-x: auto;
 }
 
 .dv-ai-prompts-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: 11px;
-  font-weight: var(--font-bold);
-  color: var(--color-text-muted);
+  font-weight: 700;
+  color: #64748B;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
   flex-shrink: 0;
 }
 
 .dv-ai-prompts-chips {
   display: flex;
-  gap: var(--space-2);
+  gap: 8px;
+  flex-wrap: nowrap;
 }
 
 .dv-prompt-chip {
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  font-size: 11.5px;
-  color: var(--color-text-secondary);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: #F8FAFC;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
   cursor: pointer;
   white-space: nowrap;
-  transition: all var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.dv-prompt-chip:hover {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-subtle);
+.dv-prompt-chip:hover:not(:disabled) {
+  color: #0071E3;
+  border-color: #0071E3;
+  background: rgba(0, 113, 227, 0.06);
+  transform: translateY(-1px);
 }
 
-/* Chat Composer */
+.dv-prompt-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   5. FLOATING CHAT COMPOSER
+   ========================================================================== */
+
 .dv-ai-composer {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
-  border-top: 1px solid var(--color-border);
-  background-color: var(--color-surface);
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+  background: #FFFFFF;
 }
 
 .dv-ai-composer__input {
   flex: 1;
-  height: 40px;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-surface-secondary);
-  border-radius: 8px;
-  padding: 0 14px;
-  font-size: var(--text-sm);
+  height: 44px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: #F8FAFC;
+  border-radius: 14px;
+  padding: 0 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 13.5px;
+  color: #0F172A;
   outline: none;
   box-sizing: border-box;
-  transition: border-color var(--transition-fast);
+  transition: all 0.2s ease;
 }
 
 .dv-ai-composer__input:focus {
-  border-color: var(--color-primary);
-  background-color: var(--color-surface);
+  border-color: #0071E3;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
 }
 
 .dv-ai-footer-disclaimer {
@@ -283,15 +567,71 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 6px var(--space-4);
-  background-color: var(--color-surface-secondary);
-  font-size: 11px;
-  color: var(--color-text-muted);
+  padding: 8px 16px;
+  background: #FAFAFC;
+  border-top: 1px solid rgba(226, 232, 240, 0.7);
+  font-size: 11.5px;
+  color: #64748B;
   text-align: center;
 }
 
-@media (max-width: 600px) {
+/* ==========================================================================
+   6. RESPONSIVE MEDIA QUERIES
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  .dv-ai-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px 28px;
+  }
+
+  .dv-ai-hero__badge {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .dv-ai-chat-window {
+    height: calc(100vh - 210px);
+    min-height: 520px;
+  }
+}
+
+@media (max-width: 640px) {
+  .dv-ai-content {
+    gap: 18px;
+    padding-top: 10px;
+  }
+
+  .dv-ai-hero {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .dv-ai-chat-window {
+    border-radius: 18px;
+    height: calc(100vh - 180px);
+  }
+
+  .dv-ai-chat-header {
+    padding: 14px 16px;
+  }
+
+  .dv-ai-chat-history {
+    padding: 16px;
+    gap: 14px;
+  }
+
   .dv-chat-msg {
-    max-width: 95%;
+    max-width: 94%;
+  }
+
+  .dv-chat-msg__bubble {
+    padding: 12px 14px;
+    font-size: 13.5px;
+  }
+
+  .dv-ai-composer {
+    padding: 12px 14px;
   }
 }

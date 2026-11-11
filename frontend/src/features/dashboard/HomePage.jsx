@@ -82,8 +82,8 @@ export default function HomePage() {
   return (
     <div className="dv-dashboard">
       <AppHeader
-        title="Your personal document command centre"
-        subtitle={`Welcome back, ${userName}. Everything important, organized and protected.`}
+        title="Vault Overview"
+        subtitle={`Welcome back, ${userName}. Your zero-trust personal document command centre.`}
       />
 
       <div className="dv-dashboard__content">
@@ -101,14 +101,18 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Section A: Welcome Hero Bar with Direct Action CTAs */}
+        {/* Section A: Apple Zen 3D Command Hero */}
         <div className="dv-dash-hero">
           <div className="dv-dash-hero__info">
+            <div className="dv-dash-hero__kicker">
+              <span className="dv-dash-hero__kicker-dot" />
+              <span>Zero-Trust Enclave Active</span>
+            </div>
             <h2 className="dv-dash-hero__title">
-              Secure Documents. Actionable Intelligence.
+              Intelligent Document <span className="dv-dash-hero__title-accent">Command Centre</span>
             </h2>
             <p className="dv-dash-hero__desc">
-              Your policies, warranties, and identity records are organized, verified, and protected. Never miss critical renewals.
+              Your policies, proofs, and warranties are encrypted, indexed, and actively monitored for critical renewal cutoffs.
             </p>
           </div>
 
@@ -118,8 +122,13 @@ export default function HomePage() {
                 Upload Document
               </Button>
             </Link>
+            <Link to="/ask-ai">
+              <Button variant="outline" size="md" icon={Sparkles}>
+                Ask Copilot
+              </Button>
+            </Link>
             <Link to="/documents">
-              <Button variant="outline" size="md" icon={FileText}>
+              <Button variant="ghost" size="md" icon={FileText}>
                 Browse Vault
               </Button>
             </Link>
@@ -136,9 +145,9 @@ export default function HomePage() {
             <Sparkles size={16} />
             <span>Ask Copilot</span>
           </Link>
-          <Link to="/admin" className="dv-mobile-quick-btn dv-mobile-quick-btn--outline">
-            <ShieldCheck size={16} />
-            <span>Enclave Admin</span>
+          <Link to="/documents" className="dv-mobile-quick-btn dv-mobile-quick-btn--outline">
+            <FileText size={16} />
+            <span>All Documents</span>
           </Link>
         </div>
 
@@ -164,51 +173,55 @@ export default function HomePage() {
 
         {/* Section B: Overview Metrics Grid */}
         <div className="dv-stats-grid">
-          <Card padding="md" className="dv-stat-card">
-            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--brand">
-              <FileText size={22} color="#0070F2" />
+          <Card padding="md" className="dv-stat-card dv-stat-card--blue">
+            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--blue">
+              <FileText size={22} />
             </div>
             <div className="dv-stat-card__meta">
               <span className="dv-stat-card__label">Total Documents</span>
               <span className="dv-stat-card__value">
                 {loading ? <Skeleton width="60px" height="28px" /> : documents.length}
               </span>
+              <span className="dv-stat-card__sub">Encrypted & Indexed</span>
             </div>
           </Card>
 
-          <Card padding="md" className="dv-stat-card">
+          <Card padding="md" className="dv-stat-card dv-stat-card--amber">
             <div className="dv-stat-card__icon-box dv-stat-card__icon-box--amber">
-              <Calendar size={22} color="#0070F2" />
+              <Calendar size={22} />
             </div>
             <div className="dv-stat-card__meta">
               <span className="dv-stat-card__label">Upcoming Deadlines</span>
               <span className="dv-stat-card__value">
                 {loading ? <Skeleton width="60px" height="28px" /> : deadlines.length}
               </span>
+              <span className="dv-stat-card__sub">{urgentDeadlines.length > 0 ? `${urgentDeadlines.length} urgent action(s)` : "Monitored on schedule"}</span>
             </div>
           </Card>
 
-          <Card padding="md" className="dv-stat-card">
-            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--blue">
-              <Layers size={22} color="#2563EB" />
+          <Card padding="md" className="dv-stat-card dv-stat-card--emerald">
+            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--emerald">
+              <Layers size={22} />
             </div>
             <div className="dv-stat-card__meta">
-              <span className="dv-stat-card__label">Tracked Assets</span>
+              <span className="dv-stat-card__label">Connected Assets</span>
               <span className="dv-stat-card__value">
                 {loading ? <Skeleton width="60px" height="28px" /> : assets.length}
               </span>
+              <span className="dv-stat-card__sub">Vehicles & Properties</span>
             </div>
           </Card>
 
-          <Card padding="md" className="dv-stat-card">
+          <Card padding="md" className="dv-stat-card dv-stat-card--purple">
             <div className="dv-stat-card__icon-box dv-stat-card__icon-box--purple">
-              <CheckCircle2 size={22} color="#9333EA" />
+              <CheckCircle2 size={22} />
             </div>
             <div className="dv-stat-card__meta">
               <span className="dv-stat-card__label">Needs Review</span>
               <span className="dv-stat-card__value">
                 {loading ? <Skeleton width="60px" height="28px" /> : reviewQueue.length}
               </span>
+              <span className="dv-stat-card__sub">{reviewQueue.length > 0 ? "Requires confirmation" : "100% verified"}</span>
             </div>
           </Card>
         </div>
@@ -219,16 +232,16 @@ export default function HomePage() {
             <div className="dv-ai-copilot-card__icon">
               <Sparkles size={22} color="#FFFFFF" />
             </div>
-            <div>
-              <h3 className="dv-ai-copilot-card__title">Your documents. One intelligent assistant.</h3>
+            <div className="dv-ai-copilot-card__titles">
+              <h3 className="dv-ai-copilot-card__title">Your Documents. One Intelligent Assistant.</h3>
               <p className="dv-ai-copilot-card__desc">
-                Ask questions and get answers grounded strictly in your personal vault.
+                Ask questions and get answers grounded strictly in your personal vault. Zero training, zero leakage.
               </p>
             </div>
             <div className="dv-ai-copilot-card__cta">
               <Link to="/ask-ai">
                 <Button variant="secondary" size="md" icon={ArrowRight} iconPosition="right">
-                  Ask DocVault
+                  Open Copilot
                 </Button>
               </Link>
             </div>

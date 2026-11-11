@@ -4,8 +4,9 @@ import { apiRequest } from "../../services/api";
 import { 
   FileText, Search, Plus, Filter, ArrowUpDown, Calendar,
   LayoutGrid, List, ChevronRight, Download, Star, ShieldCheck,
-  AlertCircle, X
+  AlertCircle, X, Users, Share2
 } from "lucide-react";
+import { sharingService } from "../../services/sharing.service";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
 import Card from "../../components/common/Card/Card";
@@ -24,6 +25,8 @@ const CATEGORIES = ["All", "Tax Invoice", "Purchase Receipt", "Insurance", "Iden
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState([]);
+  const [sharedDocs, setSharedDocs] = useState([]);
+  const [activeTab, setActiveTab] = useState("my_vault"); // 'my_vault' | 'shared_with_me'
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'table'
@@ -35,12 +38,44 @@ export default function DocumentsPage() {
   const searchQuery = searchParams.get("q") || "";
 
   useEffect(() => {
-    fetchDocuments();
-  }, [selectedCategory, searchQuery]);
+    if (activeTab === "my_vault") {
+      fetchDocuments(true);
+    } else {
+      fetchSharedDocuments(true);
+    }
 
-  async function fetchDocuments() {
+    // Live Sync: Background sync every 4 seconds without flicker
+    const interval = setInterval(() => {
+      if (activeTab === "my_vault") {
+        fetchDocuments(false);
+      } else {
+        fetchSharedDocuments(false);
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [selectedCategory, searchQuery, activeTab]);
+
+  async function fetchSharedDocuments(showLoading = true) {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
+      setError("");
+      const res = await sharingService.getReceivedDocuments();
+      if (res.success && res.data) {
+        setSharedDocs(res.data);
+      } else {
+        setSharedDocs([]);
+      }
+    } catch (err) {
+      if (showLoading) setError("Failed to fetch shared documents.");
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }
+
+  async function fetchDocuments(showLoading = true) {
+    try {
+      if (showLoading) setLoading(true);
       setError("");
 
       const params = new URLSearchParams();
@@ -56,9 +91,9 @@ export default function DocumentsPage() {
         setDocuments([]);
       }
     } catch (err) {
-      setError("Failed to fetch documents. Please refresh the page.");
+      if (showLoading) setError("Failed to fetch documents. Please refresh the page.");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }
 
@@ -106,6 +141,25 @@ export default function DocumentsPage() {
       />
 
       <div className="dv-docs-content">
+        {/* Vault vs Shared with Me Switcher */}
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem' }}>
+          <button
+            type="button"
+            className={`dv-cat-pill ${activeTab === 'my_vault' ? 'active' : ''}`}
+            onClick={() => setActiveTab('my_vault')}
+          >
+            My Vault ({documents.length})
+          </button>
+          <button
+            type="button"
+            className={`dv-cat-pill ${activeTab === 'shared_with_me' ? 'active' : ''}`}
+            onClick={() => setActiveTab('shared_with_me')}
+          >
+            <Users size={14} style={{ display: 'inline', marginRight: '6px' }} />
+            Shared With Me ({sharedDocs.length})
+          </button>
+        </div>
+
         {/* Controls Toolbar */}
         <div className="dv-docs-toolbar">
           <div className="dv-docs-search-wrap">
@@ -204,7 +258,55 @@ export default function DocumentsPage() {
         )}
 
         {/* Content Body */}
-        {loading ? (
+        {activeTab === "shared_with_me" ? (
+          sharedDocs.length === 0 ? (
+            <EmptyState
+              title="No shared documents yet"
+              description="Documents shared with you by your mutual connections will appear here with owner badges and access permissions."
+              actionLabel="View Connections"
+              onAction={() => navigate("/connections")}
+            />
+          ) : (
+            <div className="dv-docs-grid">
+              {sharedDocs.map((item) => (
+                <Card
+                  key={item.grantId}
+                  hover
+                  padding="md"
+                  className="dv-doc-card"
+                  onClick={() => navigate(`/documents/${item.documentId}`)}
+                >
+                  <div className="dv-doc-card__top">
+                    <DocumentTypeIcon category={item.category} format={item.format} />
+                    <div className="dv-doc-card__badges">
+                      <span className="badge-count" style={{ background: '#0070f2' }}>
+                        By {item.owner.name}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="dv-doc-card__body">
+                    <h3 className="dv-doc-card__title" title={item.title}>
+                      {item.title}
+                    </h3>
+                    <p className="dv-doc-card__summary">
+                      Owner: <strong>{item.owner.name}</strong> ({item.owner.docVaultId})
+                    </p>
+                  </div>
+
+                  <div className="dv-doc-card__footer">
+                    <span className="dv-doc-card__meta-tag">
+                      {item.permissions?.download ? 'View + Download' : 'View Only'}
+                    </span>
+                    <span className="dv-doc-card__filesize">
+                      {item.expiresAt ? `Expires ${new Date(item.expiresAt).toLocaleDateString()}` : 'Continuous'}
+                    </span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )
+        ) : loading ? (
           viewMode === "grid" ? (
             <div className="dv-docs-grid">
               {[1, 2, 3, 4, 5, 6].map((i) => (

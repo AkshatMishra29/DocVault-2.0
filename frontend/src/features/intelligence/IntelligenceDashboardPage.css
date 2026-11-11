@@ -1,299 +1,543 @@
+/* ==========================================================================
+   DOCVAULT DOCUMENT INTELLIGENCE DASHBOARD (APPLE ZEN 3D SPECIFICATION)
+   Ontology Graph • Proactive Health Reasoning • Responsive Glassmorphism
+   ========================================================================== */
+
 .intelligence-dashboard-page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  padding: var(--space-6);
-  max-width: 1200px;
-  margin: 0 auto;
   width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .intelligence-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: 28px;
+  padding-top: 16px;
+  padding-bottom: 48px;
+  box-sizing: border-box;
 }
+
+/* ==========================================================================
+   1. INTELLIGENCE HERO COMMAND BANNER (APPLE ZEN 3D SPATIAL SURFACE)
+   ========================================================================== */
+
+.dv-intel-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  background: 
+    radial-gradient(ellipse at 88% 18%, rgba(16, 185, 129, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse at 12% 82%, rgba(0, 113, 227, 0.06) 0%, transparent 50%),
+    #FFFFFF;
+  border: 1px solid rgba(16, 185, 129, 0.18);
+  border-radius: 22px;
+  padding: 30px 36px;
+  box-shadow: 
+    0 12px 32px -4px rgba(15, 23, 42, 0.04),
+    0 2px 8px -2px rgba(15, 23, 42, 0.02);
+  position: relative;
+  overflow: hidden;
+}
+
+.dv-intel-hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #10B981 35%, #0071E3 70%, transparent 100%);
+  opacity: 0.6;
+}
+
+.dv-intel-hero__info {
+  flex: 1;
+  max-width: 720px;
+}
+
+.dv-intel-hero__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #059669;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.08);
+  margin-bottom: 14px;
+}
+
+.dv-intel-hero__kicker-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+  animation: dvPulseGreen 2.5s infinite;
+}
+
+@keyframes dvPulseGreen {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.2); }
+}
+
+.dv-intel-hero__title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  font-size: clamp(22px, 2.6vw, 28px);
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.025em;
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+.dv-intel-hero__title-accent {
+  background: linear-gradient(135deg, #10B981 0%, #0071E3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.dv-intel-hero__desc {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.dv-intel-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.dv-intel-hero__actions a {
+  text-decoration: none;
+  display: inline-flex;
+}
+
+/* ==========================================================================
+   2. HEALTH METRICS STATS GRID (APPLE TITANIUM 3D CARDS)
+   ========================================================================== */
 
 .intelligence-stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
 }
 
 .stat-card {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface, #131b26);
-  border: 1px solid var(--color-border, #1f2937);
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  gap: 16px;
+  background: #FFFFFF;
+  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  padding: 22px 24px;
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
 }
 
+.stat-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: transparent;
+  transition: background-color 0.25s ease;
+}
+
+.stat-valid::after { background: #10B981; }
+.stat-expiring::after { background: #F59E0B; }
+.stat-expired::after { background: #EF4444; }
+.stat-conflicts::after { background: #8B5CF6; }
+
 .stat-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-primary, #10b981);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px -4px rgba(15, 23, 42, 0.08);
+  border-color: rgba(0, 113, 227, 0.25);
 }
 
 .stat-icon-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.stat-card:hover .stat-icon-wrap {
+  transform: scale(1.06);
 }
 
 .stat-valid .stat-icon-wrap {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
 }
 
 .stat-expiring .stat-icon-wrap {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.14);
+  color: #D97706;
 }
 
 .stat-expired .stat-icon-wrap {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
 }
 
 .stat-conflicts .stat-icon-wrap {
-  background: rgba(139, 92, 246, 0.15);
-  color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.12);
+  color: #7C3AED;
 }
 
 .stat-body {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .stat-value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--color-text-main, #f3f4f6);
-  line-height: 1.2;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
 .stat-label {
-  font-size: 0.85rem;
-  color: var(--color-text-muted, #9ca3af);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
 }
+
+.stat-sub {
+  font-size: 11.5px;
+  color: #94A3B8;
+  font-weight: 500;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   3. QUICK ACTION TILES (KNOWLEDGE GRAPH, ALERTS, CONFLICTS)
+   ========================================================================== */
 
 .intelligence-nav-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
 }
 
 .nav-card-tile {
   display: flex;
   flex-direction: column;
-  padding: var(--space-6);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface, #131b26);
-  border: 1px solid var(--color-border, #1f2937);
+  padding: 24px 26px;
+  border-radius: 20px;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.9);
   text-decoration: none;
   color: inherit;
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .nav-card-tile:hover {
-  border-color: var(--color-primary, #10b981);
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 14px 30px -4px rgba(15, 23, 42, 0.08);
+  border-color: rgba(0, 113, 227, 0.25);
 }
 
 .nav-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-4);
+  margin-bottom: 16px;
 }
 
 .nav-tile-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  flex-shrink: 0;
 }
 
 .icon-graph {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
 }
 
 .icon-alerts {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.14);
+  color: #D97706;
 }
 
 .icon-conflicts {
-  background: rgba(139, 92, 246, 0.15);
-  color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.12);
+  color: #7C3AED;
 }
 
 .nav-tile-pill {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
   border-radius: 9999px;
-  background: var(--color-border, #1f2937);
-  color: var(--color-text-muted, #9ca3af);
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid rgba(226, 232, 240, 0.9);
 }
 
 .pill-alert {
-  background: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.14);
+  color: #D97706;
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.pill-conflicts {
+  background: rgba(139, 92, 246, 0.14);
+  color: #7C3AED;
+  border-color: rgba(139, 92, 246, 0.25);
 }
 
 .nav-card-tile h3 {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--color-text-main, #f3f4f6);
-  margin-bottom: var(--space-2);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.015em;
+  margin: 0 0 6px 0;
 }
 
 .nav-card-tile p {
-  font-size: 0.88rem;
-  color: var(--color-text-muted, #9ca3af);
+  font-size: 13px;
+  color: #64748B;
   line-height: 1.5;
   flex: 1;
-  margin-bottom: var(--space-4);
+  margin: 0 0 16px 0;
 }
 
 .nav-tile-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.85rem;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 12.5px;
   font-weight: 600;
-  color: var(--color-primary, #10b981);
+  color: #0071E3;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
+.nav-card-tile:hover .nav-tile-footer {
+  color: #0056B3;
+  transform: translateX(3px);
+}
+
+/* ==========================================================================
+   4. SECTION CARDS (EXPIRING DOCUMENTS & KNOWLEDGE GRAPH)
+   ========================================================================== */
+
 .dashboard-section-card {
-  padding: var(--space-6);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface, #131b26);
-  border: 1px solid var(--color-border, #1f2937);
+  padding: 26px 30px;
+  border-radius: 22px;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.03);
 }
 
 .card-border-danger {
-  border-color: rgba(239, 68, 68, 0.4);
+  border-color: rgba(239, 68, 68, 0.3);
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.3) 0%, #FFFFFF 100%);
 }
 
 .section-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--color-border, #1f2937);
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .section-header-title {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 10px;
 }
 
 .section-header-title h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--color-text-main, #f3f4f6);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.015em;
+  margin: 0;
 }
 
 .section-header-link {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.85rem;
-  color: var(--color-primary, #10b981);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0071E3;
   text-decoration: none;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.section-header-link:hover {
+  color: #0056B3;
+  transform: translateX(3px);
 }
 
 .expiring-doc-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 10px;
 }
 
 .expiring-doc-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--color-background, #0b0f17);
-  border: 1px solid var(--color-border, #1f2937);
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: #F8FAFC;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  transition: all 0.2s ease;
+}
+
+.expiring-doc-item:hover {
+  background: #FFFFFF;
+  border-color: rgba(0, 113, 227, 0.25);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
 }
 
 .expiring-doc-left {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
+  min-width: 0;
 }
 
 .expiring-doc-title {
-  font-size: 0.95rem;
+  font-size: 13.5px;
   font-weight: 600;
-  color: var(--color-text-main, #f3f4f6);
+  color: #0F172A;
   text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .expiring-doc-title:hover {
-  text-decoration: underline;
-  color: var(--color-primary, #10b981);
+  color: #0071E3;
 }
 
 .expiring-doc-cat {
   display: block;
-  font-size: 0.78rem;
-  color: var(--color-text-muted, #9ca3af);
+  font-size: 11.5px;
+  color: #64748B;
+  margin-top: 1px;
 }
 
 .expiring-doc-right {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 12px;
+  flex-shrink: 0;
 }
 
+/* Entity Type Chips */
 .entity-type-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  gap: 12px;
 }
 
 .entity-chip {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-full, 9999px);
-  background: var(--color-background, #0b0f17);
-  border: 1px solid var(--color-border, #1f2937);
-  font-size: 0.85rem;
-  color: var(--color-text-main, #f3f4f6);
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  background: rgba(0, 113, 227, 0.05);
+  border: 1px solid rgba(0, 113, 227, 0.15);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 12.5px;
+  color: #0F172A;
+  transition: all 0.2s ease;
+}
+
+.entity-chip:hover {
+  background: rgba(0, 113, 227, 0.1);
+  border-color: rgba(0, 113, 227, 0.3);
+  transform: translateY(-1px);
 }
 
 .chip-label {
-  color: var(--color-text-muted, #9ca3af);
+  color: #64748B;
+  font-weight: 500;
 }
 
 .chip-count {
   font-weight: 700;
-  color: var(--color-primary, #10b981);
+  color: #0071E3;
 }
 
+/* Skeleton & Error */
 .intelligence-skeleton-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-4);
+  gap: 16px;
 }
+
+.intelligence-error-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 28px;
+  background: #FFFFFF;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 20px;
+}
+
+.dv-color-primary { color: #0071E3; }
+.dv-color-warning { color: #F59E0B; }
+.dv-color-danger { color: #EF4444; }
 
 @keyframes spin {
   from { transform: rotate(0deg); }
@@ -304,22 +548,75 @@
   animation: spin 1s linear infinite;
 }
 
-.dv-color-primary { color: #10b981; }
-.dv-color-warning { color: #f59e0b; }
-.dv-color-danger { color: #ef4444; }
+/* ==========================================================================
+   5. RESPONSIVE MEDIA QUERIES
+   ========================================================================== */
+
+@media (max-width: 1100px) {
+  .intelligence-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .intelligence-nav-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .dv-intel-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px 28px;
+  }
+
+  .dv-intel-hero__actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .dv-intel-hero__actions button,
+  .dv-intel-hero__actions a {
+    width: 100%;
+  }
+
+  .intelligence-nav-cards {
+    grid-template-columns: 1fr;
+  }
+}
 
 @media (max-width: 640px) {
-  .intelligence-dashboard-page {
-    padding: var(--space-4);
+  .intelligence-content {
+    gap: 20px;
+    padding-top: 10px;
   }
+
+  .dv-intel-hero {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .intelligence-stat-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 16px 18px;
+    border-radius: 16px;
+  }
+
+  .dashboard-section-card {
+    padding: 20px;
+  }
+
   .expiring-doc-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-3);
+    gap: 12px;
   }
+
   .expiring-doc-right {
     width: 100%;
     justify-content: space-between;
   }
 }
-

@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk';
 import { config } from '../../config/index.js';
+import { normalizeDateToIso } from '../../modules/extraction/ruleExtraction.service.js';
 
 const groq = new Groq({
   apiKey: config.groq.apiKey,
@@ -13,18 +14,27 @@ export async function extractDocumentMetadata(rawText, filename, imageBase64 = n
   if ((!rawText || rawText.trim().length < 20) && imageBase64) {
     try {
       console.log(`[Groq Vision OCR] Attempting visual multimodal extraction for: ${filename} using qwen/qwen3.8-27b...`);
-      const visionPrompt = `You are the DocVault AI Document Vision Engine.
-Analyze the provided document image and extract its complete content and metadata. Return ONLY a valid JSON object (no markdown, no backticks):
+      const visionPrompt = `You are the DocVault Universal Production Document Vision Engine.
+Analyze the provided document image (such as an academic certificate, invoice, policy, receipt, or identity card) and extract its complete content and metadata.
+Pay special attention to dates (issue date, completion date, award date), recipient/organization names, certificate/credential IDs, and all readable text.
+
+Return ONLY a valid JSON object (no markdown, no backticks):
 {
-  "title": "A short, descriptive title for this document (e.g., 'Honda City Comprehensive Insurance Policy')",
-  "category": "Document category (e.g. 'Tax Invoice', 'Purchase Receipt', 'Insurance Policy', 'Warranty Document', 'Medical Report', 'Admit Card', 'Academic Certificate', 'Bank Statement', 'Identity Document', 'Other')",
-  "summary": "A concise 2-3 sentence executive summary explaining what this document is and any critical policy numbers or conditions.",
-  "expiryDate": "YYYY-MM-DD format if an expiration, renewal, or warranty end date is present, otherwise null",
+  "title": "A short, descriptive title for this document (e.g. 'Stanford Machine Learning Certificate')",
+  "category": "One of: 'Academic Certificate', 'Tax Invoice', 'Purchase Receipt', 'Insurance Policy', 'Warranty Document', 'Medical Report', 'Admit Card', 'Bank Statement', 'Identity Document', 'Employment Document', 'Other'",
+  "documentDate": "Primary document date (e.g. Issue Date, Certificate Award Date, Invoice Date, Completion Date) in YYYY-MM-DD or readable format if found, otherwise null",
+  "expiryDate": "YYYY-MM-DD format if an expiration, renewal, or validity end date is present, otherwise null",
+  "summary": "A concise 2-3 sentence executive summary explaining what this document is, recipient/issuer, and critical facts.",
   "keyDetails": {
-    "Key Name (e.g. Policy Number, Account Number, Serial Number, Date)": "Value"
+    "Recipient Name": "Name of person awarded/billed/insured if present",
+    "Issuing Organization": "Institution, University, Company, or Authority",
+    "Certificate or Credential ID": "Certificate No, Roll No, or ID if present",
+    "Issue Date": "Date issued, awarded, or signed",
+    "Course or Program": "Course/degree title if applicable",
+    "Additional Details": "Any other critical numbers or values"
   },
   "tags": ["array", "of", "3-5", "relevant", "search", "keywords"],
-  "extractedText": "Full readable transcription of all text detected in this document"
+  "extractedText": "Complete readable verbatim transcription of all text and labels detected in this document image"
 }
 Filename: ${filename}`;
 
@@ -50,23 +60,47 @@ Filename: ${filename}`;
 
       const parsed = JSON.parse(visionResponse.choices[0].message.content);
       console.log(`[Groq Vision Success] Successfully extracted metadata visually from ${filename}`);
+
+      // Auto-normalize dates
+      if (parsed.documentDate) {
+        const norm = normalizeDateToIso(parsed.documentDate);
+        if (norm) parsed.documentDate = norm;
+      }
+      if (parsed.expiryDate) {
+        const norm = normalizeDateToIso(parsed.expiryDate);
+        if (norm) parsed.expiryDate = norm;
+      }
+      if (parsed.keyDetails && typeof parsed.keyDetails === 'object') {
+        for (const [k, v] of Object.entries(parsed.keyDetails)) {
+          if (typeof v === 'string' && /(?:date|issued|expiry|completion|valid)/i.test(k)) {
+            const norm = normalizeDateToIso(v);
+            if (norm) parsed.keyDetails[k] = norm;
+          }
+        }
+      }
+
       return parsed;
     } catch (visionErr) {
       console.warn('[Groq Vision Warning] Vision fallback failed, proceeding with text-based model:', visionErr.message);
     }
   }
 
-  const prompt = `You are the DocVault AI Extraction Engine.
+  const prompt = `You are the DocVault AI Universal Information Extraction Engine.
 Analyze the following document text and return ONLY a valid JSON object (no markdown, no backticks, no commentary).
+Extract all critical metadata, paying special attention to certificate dates, recipient names, issuing organizations, and identifiers.
 
-Extract the following fields:
 {
-  "title": "A short, descriptive title for this document (e.g., 'Honda City Comprehensive Insurance Policy')",
-  "category": "Document category (e.g. 'Tax Invoice', 'Purchase Receipt', 'Insurance Policy', 'Warranty Document', 'Medical Report', 'Admit Card', 'Academic Certificate', 'Bank Statement', 'Identity Document', 'Other')",
-  "summary": "A concise 2-3 sentence executive summary explaining what this document is and any critical policy numbers or conditions.",
+  "title": "A short, descriptive title for this document (e.g. 'Stanford Machine Learning Certificate')",
+  "category": "One of: 'Academic Certificate', 'Tax Invoice', 'Purchase Receipt', 'Insurance Policy', 'Warranty Document', 'Medical Report', 'Admit Card', 'Academic Certificate', 'Bank Statement', 'Identity Document', 'Employment Document', 'Other'",
+  "documentDate": "Primary date of this document (e.g. Issue Date, Certificate Date, Invoice Date, Award Date, Completion Date) in YYYY-MM-DD or readable format if found, otherwise null",
   "expiryDate": "YYYY-MM-DD format if an expiration, renewal, or warranty end date is present, otherwise null",
+  "summary": "A concise 2-3 sentence executive summary explaining what this document is, recipient/issuer, and key facts.",
   "keyDetails": {
-    "Key Name (e.g. Policy Number, Sum Insured, Serial Number, Premium)": "Value"
+    "Recipient Name": "Name of person awarded/billed/insured if present",
+    "Issuing Organization": "Institution, Company, or Authority",
+    "Certificate or Credential ID": "Certificate No, Roll No, or ID if present",
+    "Issue Date": "Date issued, awarded, or signed",
+    "Course or Program": "Course/degree title if applicable"
   },
   "tags": ["array", "of", "3-5", "relevant", "search", "keywords"]
 }
@@ -85,12 +119,32 @@ ${rawText ? rawText.slice(0, 4000) : 'No OCR text available. Infer from filename
     });
 
     const parsed = JSON.parse(response.choices[0].message.content);
+
+    // Auto-normalize dates
+    if (parsed.documentDate) {
+      const norm = normalizeDateToIso(parsed.documentDate);
+      if (norm) parsed.documentDate = norm;
+    }
+    if (parsed.expiryDate) {
+      const norm = normalizeDateToIso(parsed.expiryDate);
+      if (norm) parsed.expiryDate = norm;
+    }
+    if (parsed.keyDetails && typeof parsed.keyDetails === 'object') {
+      for (const [k, v] of Object.entries(parsed.keyDetails)) {
+        if (typeof v === 'string' && /(?:date|issued|expiry|completion|valid)/i.test(k)) {
+          const norm = normalizeDateToIso(v);
+          if (norm) parsed.keyDetails[k] = norm;
+        }
+      }
+    }
+
     return parsed;
   } catch (err) {
     console.error('[Groq] Metadata extraction failed:', err.message);
     return {
       title: filename.replace(/\.[^/.]+$/, ''),
       category: 'Other',
+      documentDate: null,
       summary: 'Uploaded document stored securely in your encrypted DocVault.',
       expiryDate: null,
       keyDetails: { 'File Name': filename },
@@ -105,10 +159,12 @@ ${rawText ? rawText.slice(0, 4000) : 'No OCR text available. Infer from filename
 export async function answerDocumentQuery(question, contextDocs = [], contextAssets = []) {
   const docContextString = contextDocs.length > 0 ? contextDocs.map((doc, idx) => `
 [Document ${idx + 1}]: "${doc.title}" (Category: ${doc.category})
+Primary Document Date / Issue Date: ${doc.documentDate || doc.keyDetails?.['Issue Date'] || doc.keyDetails?.['Date'] || doc.keyDetails?.['Date of Issue'] || doc.keyDetails?.['ISSUE DATE'] || 'N/A'}
+Expiry / Due Date: ${doc.expiryDate || doc.keyDetails?.['Expiry Date'] || doc.keyDetails?.['EXPIRY DATE'] || 'N/A'}
 Summary: ${doc.summary || 'N/A'}
-Key Details: ${JSON.stringify(doc.keyDetails || {})}
-Expiry Date: ${doc.expiryDate || 'N/A'}
-Full Extracted Content / Notes: ${doc.extractedText ? doc.extractedText.slice(0, 3000) : 'N/A'}
+Key Structured Details: ${JSON.stringify(doc.keyDetails || {})}
+Extracted Document Content / Text:
+${doc.extractedText ? doc.extractedText.slice(0, 3500) : 'N/A'}
 `).join('\n---\n') : 'No documents found.';
 
   const assetContextString = contextAssets.length > 0 ? contextAssets.map((asset, idx) => `
@@ -126,9 +182,12 @@ SECURITY & ACCURACY RULES:
 1. You operate strictly within the user's isolated encrypted DocVault ecosystem.
 2. Answer the user's question directly, professionally, and accurately using ONLY the provided verified document records and tracked asset inventory below.
 3. NEVER assume, hallucinate, or fabricate information from external sources.
-4. If neither the provided documents nor the tracked assets contain the answer, reply cleanly:
+4. When asked about DATES (e.g. "when was my certificate issued?", "what is the date on my document?", "when does it expire?"), check "Primary Document Date / Issue Date", "Expiry / Due Date", and "Key Structured Details" first.
+5. If the user asks about names, certificates, courses, organizations, or numbers, locate the exact values from "Key Structured Details" and "Extracted Document Content".
+6. State dates and critical entities directly and prominently in bold.
+7. If neither the provided documents nor the tracked assets contain the answer, reply cleanly:
 "I cannot find that information in your currently uploaded documents or tracked assets."
-5. FORMATTING: Structure your responses cleanly with clear headings, bullet points, and highlight key identifiers (dates, policy numbers, amounts, contact info). Be professional, crisp, and direct.
+8. Structure your responses cleanly with clear headings, bullet points, and highlight key identifiers.
 
 CONTEXT - TRACKED ASSETS:
 ${assetContextString}
@@ -141,8 +200,8 @@ ${question}
 `;
 
   try {
-    // Prefer powerful text model openai/gpt-oss-120b for Q&A, fallback to config model
-    const chatModel = 'openai/gpt-oss-120b';
+    // Use config model (llama-3.3-70b-versatile) for fast, highly accurate grounded Q&A
+    const chatModel = config.groq.model || 'llama-3.3-70b-versatile';
     const response = await groq.chat.completions.create({
       model: chatModel,
       messages: [{ role: 'user', content: prompt }],

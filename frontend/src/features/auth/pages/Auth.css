@@ -316,39 +316,272 @@
   cursor: not-allowed;
 }
 
-/* PIN Screen Specifics */
+/* PIN Screen Specifics & Multi-Session Switcher */
+.dv-auth-session-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 20px;
+  position: relative;
+}
+
 .dv-auth-account-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 6px 16px;
+  padding: 6px 14px;
   border-radius: 9999px;
-  background-color: var(--color-auth-panel-light, #F2ECE6);
-  border: 1px solid var(--color-auth-border, #D5DADD);
-  margin-bottom: 18px;
-  align-self: center;
+  background-color: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
 [data-theme="dark"] .dv-auth-account-pill {
-  background-color: #241A17;
-  border-color: #3D2F28;
+  background-color: #1E293B;
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .dv-account-pill-icon {
-  color: var(--color-auth-cta, #0070F2);
+  color: #0071E3;
   flex-shrink: 0;
 }
 
 .dv-account-pill-email {
-  font-family: var(--font-ui, 'Manrope', sans-serif);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: 12.5px;
-  font-weight: 700;
-  color: var(--color-auth-text-dark, #1D2D3E);
+  font-weight: 600;
+  color: #0F172A;
 }
 
 [data-theme="dark"] .dv-account-pill-email {
-  color: #F5F6F7;
+  color: #F8FAFC;
+}
+
+.dv-account-pill-badge {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: rgba(0, 113, 227, 0.08);
+  color: #0071E3;
+}
+
+.dv-session-switch-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dv-session-switch-toggle:hover {
+  background-color: #F8FAFC;
+  border-color: #0071E3;
+  color: #0071E3;
+}
+
+.dv-toggle-chevron {
+  transition: transform 0.2s ease;
+}
+
+.dv-rotate-180 {
+  transform: rotate(180deg);
+}
+
+/* Saved Sessions Dropdown Card */
+.dv-saved-sessions-list {
+  width: 100%;
+  max-width: 360px;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px -6px rgba(15, 23, 42, 0.12),
+              0 2px 6px rgba(15, 23, 42, 0.04);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  animation: dv-auth-card-entrance 0.2s ease forwards;
+  z-index: 10;
+}
+
+[data-theme="dark"] .dv-saved-sessions-list {
+  background: #1E293B;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.5);
+}
+
+.dv-saved-sessions-header {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748B;
+  padding: 4px 8px 6px 8px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+[data-theme="dark"] .dv-saved-sessions-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+}
+
+.dv-saved-session-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 10px;
+  padding: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.dv-saved-session-item:hover {
+  background-color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-saved-session-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dv-saved-session-item--current {
+  background-color: rgba(0, 113, 227, 0.05);
+}
+
+.dv-saved-session-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 8px;
+  min-width: 0;
+}
+
+.dv-session-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0071E3, #4F46E5);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.dv-session-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.dv-session-meta strong {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme="dark"] .dv-session-meta strong {
+  color: #F8FAFC;
+}
+
+.dv-session-meta small {
+  font-size: 11px;
+  color: #64748B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dv-session-current-pill {
+  font-size: 10px;
+  font-weight: 700;
+  color: #0071E3;
+  background: rgba(0, 113, 227, 0.1);
+  padding: 2px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.dv-session-locked-pill {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748B;
+  background: #F1F5F9;
+  padding: 2px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.dv-session-remove-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-right: 4px;
+}
+
+.dv-session-remove-btn:hover {
+  background-color: #FEE2E2;
+  color: #EF4444;
+}
+
+.dv-session-add-new-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px dashed rgba(203, 213, 225, 0.9);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0071E3;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.dv-session-add-new-btn:hover {
+  background-color: rgba(0, 113, 227, 0.05);
+  border-color: #0071E3;
 }
 
 .dv-pin-entry-container {

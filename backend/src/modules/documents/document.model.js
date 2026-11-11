@@ -34,6 +34,29 @@ const ExtractedFieldSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const DocumentPageSchema = new mongoose.Schema(
+  {
+    pageNumber: { type: Number, required: true },
+    method: {
+      type: String,
+      enum: ['digital_text', 'tesseract_ocr', 'skipped_by_privacy', 'empty', 'failed'],
+      default: 'digital_text',
+    },
+    status: {
+      type: String,
+      enum: ['TEXT_EXTRACTED', 'OCR_EXTRACTED', 'LOW_CONFIDENCE', 'EMPTY_PAGE', 'FAILED', 'SKIPPED_BY_PRIVACY_POLICY'],
+      default: 'TEXT_EXTRACTED',
+    },
+    text: { type: String, default: '' },
+    confidence: { type: Number, default: 0 },
+    charCount: { type: Number, default: 0 },
+    wordCount: { type: Number, default: 0 },
+    error: { type: String, default: null },
+    durationMs: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
 const DocumentSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   title: { type: String, required: true },
@@ -58,8 +81,11 @@ const DocumentSchema = new mongoose.Schema({
   keyDetails: { type: mongoose.Schema.Types.Mixed, default: {} },
   tags: [{ type: String }],
   isFavorite: { type: Boolean, default: false },
-  expiryDate: { type: String }, // YYYY-MM-DD
+  documentDate: { type: String, index: true }, // YYYY-MM-DD (e.g. Issue date, certificate date, invoice date)
+  expiryDate: { type: String, index: true }, // YYYY-MM-DD
   isExpiringSoon: { type: Boolean, default: false },
+  tierUsed: { type: String, default: 'Tier 1 (Regex & Rules)' },
+  confidenceScore: { type: Number, default: 0 },
   embedding: [{ type: Number }], // Hugging Face 384-dim vector
 
   // PHASE A: Universal Pipeline Core Fields
@@ -111,6 +137,13 @@ const DocumentSchema = new mongoose.Schema({
   },
 
   extractedFields: [ExtractedFieldSchema],
+
+  // Stage Eight: Page-Level Traceability
+  pages: [DocumentPageSchema],
+  processedPages: { type: Number, default: 0 },
+  failedPages: { type: Number, default: 0 },
+  extractionMethod: { type: String, default: null },
+  processingError: { type: String, default: null },
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

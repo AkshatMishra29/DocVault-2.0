@@ -1,3 +1,5 @@
+import { normalizeDateToIso } from './ruleExtraction.service.js';
+
 /**
  * DocVault Independent Verification Gates & Confidence Scoring Engine
  *
@@ -107,22 +109,27 @@ export function verifyFormat(fieldName, value) {
     return isValid ? { passed: true } : { passed: false, reason: 'Invalid PAN format. Must be 5 letters, 4 digits, 1 letter.' };
   }
 
-  // Date Validation (ISO YYYY-MM-DD)
-  if (fieldName.includes('date')) {
-    const dateMatch = strVal.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  // Date Validation (ISO YYYY-MM-DD with auto-normalization)
+  if (fieldName.includes('date') || fieldName.includes('expiry') || fieldName.includes('issued')) {
+    let cleanDate = strVal;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
+      const normalized = normalizeDateToIso(cleanDate);
+      if (normalized) cleanDate = normalized;
+    }
+    const dateMatch = cleanDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!dateMatch) return { passed: false, reason: 'Date must be normalized to YYYY-MM-DD format.' };
     const y = parseInt(dateMatch[1], 10);
     const m = parseInt(dateMatch[2], 10);
     const d = parseInt(dateMatch[3], 10);
-    if (y < 1990 || y > 2040 || m < 1 || m > 12 || d < 1 || d > 31) {
-      return { passed: false, reason: `Date "${strVal}" is out of plausible calendar bounds.` };
+    if (y < 1950 || y > 2050 || m < 1 || m > 12 || d < 1 || d > 31) {
+      return { passed: false, reason: `Date "${cleanDate}" is out of plausible calendar bounds (1950-2050).` };
     }
     // Verify true calendar validity (e.g. leap year Feb 29 vs Feb 28, 30 vs 31 days)
     const dateObj = new Date(Date.UTC(y, m - 1, d));
     if (dateObj.getUTCFullYear() !== y || (dateObj.getUTCMonth() + 1) !== m || dateObj.getUTCDate() !== d) {
-      return { passed: false, reason: `Date "${strVal}" is not a valid calendar day.` };
+      return { passed: false, reason: `Date "${cleanDate}" is not a valid calendar day.` };
     }
-    return { passed: true };
+    return { passed: true, normalizedDate: cleanDate };
   }
 
   // Amount Validation
@@ -214,6 +221,8 @@ export function verifyAllExtractedFields(extractedFields, sourceText) {
     if (!formatCheck.passed) {
       confidence -= 0.40;
       rejectionReasons.push(formatCheck.reason);
+    } else if (formatCheck.normalizedDate) {
+      field.value = formatCheck.normalizedDate;
     }
 
     // 3. Run Logic Gate

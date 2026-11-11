@@ -84,22 +84,44 @@ export default function IntelligenceDashboardPage() {
   return (
     <div className="intelligence-dashboard-page">
       <AppHeader
-        title="Intelligence & Health Engine"
-        subtitle="Deterministic document health, knowledge graph, and proactive vault reasoning"
-        action={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleReEvaluate}
-            disabled={evaluating || loading}
-          >
-            <RefreshCw size={15} className={evaluating ? 'dv-spin' : ''} />
-            <span>{evaluating ? 'Analyzing Vault...' : 'Sync & Re-evaluate'}</span>
-          </Button>
-        }
+        title="Document Intelligence"
+        subtitle="Deterministic document health, knowledge graph ontology, and proactive vault reasoning."
       />
 
       <div className="intelligence-content">
+        {/* Apple Zen 3D Intelligence Command Hero */}
+        <div className="dv-intel-hero">
+          <div className="dv-intel-hero__info">
+            <div className="dv-intel-hero__kicker">
+              <span className="dv-intel-hero__kicker-dot" />
+              <span>Vault Reasoning Active</span>
+            </div>
+            <h2 className="dv-intel-hero__title">
+              Autonomous Document <span className="dv-intel-hero__title-accent">Intelligence</span>
+            </h2>
+            <p className="dv-intel-hero__desc">
+              Continuously evaluates policy health, maps your personal knowledge graph, and identifies conflicting clauses across documents.
+            </p>
+          </div>
+
+          <div className="dv-intel-hero__actions">
+            <Button
+              variant="primary"
+              size="md"
+              onClick={handleReEvaluate}
+              disabled={evaluating || loading}
+            >
+              <RefreshCw size={16} className={evaluating ? 'dv-spin' : ''} />
+              <span>{evaluating ? 'Analyzing Vault...' : 'Sync & Re-evaluate'}</span>
+            </Button>
+            <Link to="/intelligence/entities">
+              <Button variant="outline" size="md" icon={Layers}>
+                Explore Graph
+              </Button>
+            </Link>
+          </div>
+        </div>
+
         {loading ? (
           <div className="intelligence-skeleton-grid">
             <Skeleton height={140} />
@@ -129,6 +151,7 @@ export default function IntelligenceDashboardPage() {
                 <div className="stat-body">
                   <span className="stat-value">{counts.VALID || 0}</span>
                   <span className="stat-label">Valid Documents</span>
+                  <span className="stat-sub">100% compliant</span>
                 </div>
               </Card>
 
@@ -139,6 +162,7 @@ export default function IntelligenceDashboardPage() {
                 <div className="stat-body">
                   <span className="stat-value">{counts.EXPIRING_SOON || 0}</span>
                   <span className="stat-label">Expiring Soon (30d)</span>
+                  <span className="stat-sub">Action required</span>
                 </div>
               </Card>
 
@@ -149,6 +173,7 @@ export default function IntelligenceDashboardPage() {
                 <div className="stat-body">
                   <span className="stat-value">{counts.EXPIRED || 0}</span>
                   <span className="stat-label">Expired Documents</span>
+                  <span className="stat-sub">Renewal needed</span>
                 </div>
               </Card>
 
@@ -159,6 +184,7 @@ export default function IntelligenceDashboardPage() {
                 <div className="stat-body">
                   <span className="stat-value">{conflicts.totalOpen || 0}</span>
                   <span className="stat-label">Open Conflicts</span>
+                  <span className="stat-sub">Data discrepancies</span>
                 </div>
               </Card>
             </div>
@@ -168,7 +194,7 @@ export default function IntelligenceDashboardPage() {
               <Link to="/intelligence/entities" className="nav-card-tile">
                 <div className="nav-card-header">
                   <div className="nav-tile-icon icon-graph">
-                    <Layers size={20} />
+                    <Layers size={22} />
                   </div>
                   <span className="nav-tile-pill">{graph.totalEntities || 0} Entities</span>
                 </div>
@@ -183,7 +209,7 @@ export default function IntelligenceDashboardPage() {
               <Link to="/intelligence/alerts" className="nav-card-tile">
                 <div className="nav-card-header">
                   <div className="nav-tile-icon icon-alerts">
-                    <Activity size={20} />
+                    <Activity size={22} />
                   </div>
                   <span className="nav-tile-pill pill-alert">{alerts.totalActive || 0} Active</span>
                 </div>
@@ -198,9 +224,9 @@ export default function IntelligenceDashboardPage() {
               <Link to="/intelligence/conflicts" className="nav-card-tile">
                 <div className="nav-card-header">
                   <div className="nav-tile-icon icon-conflicts">
-                    <FileCheck2 size={20} />
+                    <FileCheck2 size={22} />
                   </div>
-                  <span className="nav-tile-pill">{conflicts.totalOpen || 0} Discrepancies</span>
+                  <span className="nav-tile-pill pill-conflicts">{conflicts.totalOpen || 0} Discrepancies</span>
                 </div>
                 <h3>Conflict Resolver</h3>
                 <p>Compare conflicting facts across uploaded documents and resolve without deleting history.</p>

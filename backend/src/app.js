@@ -14,6 +14,13 @@ import aiRoutes from './modules/ai/ai.routes.js';
 import vaultRoutes from './modules/vault/vault.routes.js';
 import extractionRoutes from './modules/extraction/extraction.routes.js';
 import intelligenceRoutes from './modules/intelligence/intelligence.routes.js';
+import connectionRoutes from './modules/sharing/connection.routes.js';
+import sharingRoutes from './modules/sharing/sharing.routes.js';
+import expenseRoutes from './modules/assets/expense.routes.js';
+import timelineRoutes from './modules/assets/timeline.routes.js';
+import notificationRoutes from './modules/deadlines/notification.routes.js';
+import bankStatementRoutes from './modules/assets/bankStatement.routes.js';
+import sharesRoutes from './modules/sharing/shares.routes.js';
 
 import mongoose from 'mongoose';
 import { config } from './config/index.js';
@@ -70,6 +77,13 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/vault', vaultRoutes);
 app.use('/api/extraction', extractionRoutes);
 app.use('/api/intelligence', intelligenceRoutes);
+app.use('/api/connections', connectionRoutes);
+app.use('/api/sharing', sharingRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/timeline', timelineRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/bank-statements', bankStatementRoutes);
+app.use('/api/shares', sharesRoutes);
 
 /* ==========================================================================
    Static Frontend Production Serve (Unified Deployment)

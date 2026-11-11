@@ -127,17 +127,40 @@ export default function AskAiPage() {
   return (
     <div className="dv-ai-page">
       <AppHeader
-        title="Ask AI Copilot"
-        subtitle="Ask questions and get answers grounded strictly in your personal vault documents."
+        title="AI Copilot"
+        subtitle="Conversational assistant strictly bounded to your personal encrypted documents."
       />
 
       <div className="dv-ai-content">
+        {/* Apple Zen 3D Copilot Command Hero */}
+        <div className="dv-ai-hero">
+          <div className="dv-ai-hero__info">
+            <div className="dv-ai-hero__kicker">
+              <span className="dv-ai-hero__kicker-dot" />
+              <span>Bounded RAG Intelligence Active</span>
+            </div>
+            <h2 className="dv-ai-hero__title">
+              Private Conversational <span className="dv-ai-hero__title-accent">Copilot</span>
+            </h2>
+            <p className="dv-ai-hero__desc">
+              Ask natural-language questions about your policies, warranties, deductibles, or vehicle IDs. Answers are strictly bounded to facts in your vault with zero public AI leakage.
+            </p>
+          </div>
+
+          <div className="dv-ai-hero__badge">
+            <div className="dv-ai-hero__badge-num">Zero-Leakage</div>
+            <div className="dv-ai-hero__badge-label">Groq LPU • Dense Vector Bounding</div>
+          </div>
+        </div>
+
         {targetDoc && (
           <div className="dv-ai-scoped-banner">
-            <Sparkles size={16} color="#015A47" />
-            <span>Targeting document: <strong>{targetDoc.title}</strong></span>
+            <div className="dv-ai-scoped-left">
+              <Sparkles size={16} />
+              <span>Targeting document scope: <strong>{targetDoc.title}</strong></span>
+            </div>
             <Button variant="ghost" size="sm" onClick={() => setTargetDoc(null)}>
-              Clear
+              Clear Scope
             </Button>
           </div>
         )}
@@ -150,12 +173,18 @@ export default function AskAiPage() {
                 <Sparkles size={18} />
               </div>
               <div>
-                <h4 className="dv-ai-chat-title">DocVault AI Assistant</h4>
-                <span className="dv-ai-chat-sub">Answers strictly grounded in your private vault</span>
+                <div className="dv-ai-chat-title-row">
+                  <h4 className="dv-ai-chat-title">DocVault AI Assistant</h4>
+                  <span className="dv-ai-status-pill">
+                    <span className="dv-ai-status-dot" />
+                    Vault Bounded
+                  </span>
+                </div>
+                <span className="dv-ai-chat-sub">Zero hallucination • Sourced from your private knowledge graph</span>
               </div>
             </div>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               icon={RotateCcw}
               onClick={handleClear}
@@ -207,8 +236,12 @@ export default function AskAiPage() {
                   <Sparkles size={16} />
                 </div>
                 <div className="dv-chat-msg__bubble dv-chat-loading-bubble">
-                  <div className="dv-btn__spinner" />
-                  <span>Reviewing vault documents and generating answer...</span>
+                  <div className="dv-chat-loading-dots">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <span>Reviewing vector space and generating grounded answer...</span>
                 </div>
               </div>
             )}

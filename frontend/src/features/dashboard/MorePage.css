@@ -131,6 +131,123 @@
   border-top: 1px solid var(--color-border-subtle);
 }
 
+/* Remembered Sessions Card */
+.dv-sessions-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.dv-saved-sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2-5);
+  margin-top: var(--space-2);
+}
+
+.dv-saved-session-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 14px;
+  background-color: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+}
+
+.dv-saved-session-row--active {
+  border-color: rgba(1, 90, 71, 0.4);
+  background: linear-gradient(135deg, rgba(1, 90, 71, 0.04) 0%, rgba(1, 90, 71, 0.01) 100%);
+}
+
+.dv-saved-session-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary) 0%, #004D40 100%);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.dv-saved-session-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dv-saved-session-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.dv-session-tag-current {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background-color: rgba(1, 90, 71, 0.12);
+  color: var(--color-primary);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.dv-session-tag-locked {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background-color: var(--color-surface-tertiary);
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.dv-saved-session-sub {
+  font-size: 11.5px;
+  color: var(--color-text-secondary);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dv-saved-session-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.dv-saved-session-forget-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s ease;
+}
+
+.dv-saved-session-forget-btn:hover {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #EF4444;
+}
+
 /* Backup Export Box */
 .dv-export-box {
   display: flex;

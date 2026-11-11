@@ -88,9 +88,12 @@ export async function inspectImageGuardrails(buffer, filename) {
       throw new Error('Security Guardrail: Image is too small to be a legible document (minimum 100x100px).');
     }
 
-    // 2. Empty / Blank image detection via pixel luminance variance
+    // 2. Empty / Blank image detection via pixel luminance variance & dark pixel existence
     const stats = await sharp(buffer).stats();
-    const isBlank = stats.channels.every(ch => ch.stdev < 2.5);
+    const ch0 = stats.channels[0];
+    const isBlank = stats.channels.every(ch => ch.stdev < 1.0) ||
+      (ch0.mean > 240 && ch0.min > 215) ||
+      (ch0.mean < 15 && ch0.max < 40);
     if (isBlank) {
       throw new Error('Security Guardrail: Uploaded image appears to be blank or a single solid color.');
     }

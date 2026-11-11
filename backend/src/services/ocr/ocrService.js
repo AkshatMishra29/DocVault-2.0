@@ -38,19 +38,36 @@ export async function extractTextFromImage(buffer) {
   }
 }
 
-export async function convertPdfToImages(buffer) {
+export async function convertPdfToImages(buffer, maxPages = 2, scale = 1.5) {
   try {
-    const pdfImgConvert = await import('pdf-img-convert');
-    const convertFn = pdfImgConvert.convert || pdfImgConvert.default?.convert;
-    if (!convertFn) {
-      throw new Error('convert function not found on pdf-img-convert module');
-    }
-    return await convertFn(buffer, {
-      width: 1600,
-      page_numbers: [1, 2],
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const { createCanvas } = await import('canvas');
+
+    const loadingTask = pdfjsLib.getDocument({
+      data: new Uint8Array(buffer),
+      disableFontFace: true,
+      useSystemFonts: true,
     });
+    const doc = await loadingTask.promise;
+    const numPages = Math.min(doc.numPages, maxPages);
+    const buffers = [];
+
+    for (let i = 1; i <= numPages; i++) {
+      const page = await doc.getPage(i);
+      const viewport = page.getViewport({ scale });
+      const canvas = createCanvas(viewport.width, viewport.height);
+      const ctx = canvas.getContext('2d');
+
+      // White solid background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, viewport.width, viewport.height);
+
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      buffers.push(canvas.toBuffer('image/png'));
+    }
+    return buffers;
   } catch (err) {
-    console.warn('[OCR Service] pdf-img-convert unavailable:', err.message);
+    console.warn('[OCR Service] PDF to image conversion error:', err.message);
     return null;
   }
 }

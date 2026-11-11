@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import MobileAppAuthView from './MobileAppAuthView';
 import PublicNavbar from '../../components/layout/PublicNavbar/PublicNavbar';
 import PublicFooter from '../../components/layout/PublicFooter/PublicFooter';
-import heroArtwork from '../../assets/hero-landing.jpg';
+import AppleSpatialVault3D from './components/AppleSpatialVault3D';
 import { useAuth } from '../auth/context/AuthContext';
 
 import { 
@@ -72,30 +71,10 @@ export default function LandingPage() {
   const { user, isVaultUnlocked } = useAuth();
   const [openFaq, setOpenFaq] = useState(1);
   const [faqFilter, setFaqFilter] = useState('all');
-  const [isMobileOrTablet, setIsMobileOrTablet] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth <= 1024;
-    }
-    return false;
-  });
-  const [forceDesktopWeb, setForceDesktopWeb] = useState(false);
-
-  React.useEffect(() => {
-    const handleResize = () => {
-      setIsMobileOrTablet(window.innerWidth <= 1024);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // When already authenticated, go straight to dashboard
   if (user && isVaultUnlocked) {
     return <Navigate to="/dashboard" replace />;
-  }
-
-  // Mobile to Tab View: show native app login/registration screen
-  if (isMobileOrTablet && !forceDesktopWeb) {
-    return <MobileAppAuthView onSwitchToDesktopWeb={() => setForceDesktopWeb(true)} />;
   }
 
   const toggleFaq = (id) => {
@@ -165,15 +144,9 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right Column: Bespoke 3D Hero Artwork */}
+          {/* Right Column: Interactive 3D Spatial Vault Showcase */}
           <div className="dv-lp-hero__right">
-            <div className="dv-lp-hero__art-frame">
-              <img 
-                src={heroArtwork} 
-                alt="DocVault 3D Ceramic Safe with Spoke Locker Wheel and Floating Documents" 
-                className="dv-lp-hero__art-img"
-              />
-            </div>
+            <AppleSpatialVault3D />
           </div>
         </div>
 
@@ -298,38 +271,50 @@ export default function LandingPage() {
       <section className="dv-lp-showcase">
         <div className="dv-lp-container">
           <div className="dv-lp-showcase__grid">
-            {/* Left Column: High-Fidelity UI Mockup */}
+            {/* Left Column: Apple macOS Sequoia High-Fidelity Glass Window */}
             <div className="dv-lp-showcase__left">
               <div className="dv-lp-mockup-frame">
-                {/* Mockup Header */}
+                {/* macOS Frosted Glass Titlebar */}
                 <div className="dv-lp-mockup-top">
                   <div className="dv-lp-mockup-dots">
                     <span className="dot dot--red" />
                     <span className="dot dot--yellow" />
                     <span className="dot dot--green" />
                   </div>
+                  <div className="dv-lp-mockup-titlebar-pill">
+                    <Lock size={11} className="dv-lp-mockup-lock-icon" />
+                    <span>DocVault Workspace • AES-256 Hardware Isolation</span>
+                  </div>
                   <div className="dv-lp-mockup-search">
-                    <Search size={13} />
-                    <span>Search documents, policies, or ask AI...</span>
+                    <Search size={12} />
+                    <span>Search documents, policies...</span>
+                    <kbd className="dv-lp-mockup-kbd">⌘K</kbd>
                   </div>
                   <div className="dv-lp-mockup-avatar">
-                    <span>JD</span>
+                    <span>AK</span>
+                    <span className="dv-lp-avatar-live-beacon" />
                   </div>
                 </div>
 
                 {/* Mockup Body */}
                 <div className="dv-lp-mockup-body">
+                  {/* Apple Ambient Greeting Header */}
                   <div className="dv-lp-mockup-banner">
-                    <div>
-                      <h3>Welcome back, John</h3>
-                      <p>All 42 documents encrypted and verified in custody.</p>
+                    <div className="dv-lp-mockup-banner-info">
+                      <div className="dv-lp-mockup-live-status">
+                        <span className="dv-lp-pulse-dot" />
+                        <span>Hardware Enclave Active</span>
+                      </div>
+                      <h3>Welcome back, Akshat</h3>
+                      <p>All 42 documents encrypted with sovereign zero-knowledge custody.</p>
                     </div>
+
                     <div className="dv-lp-mockup-stats">
-                      <div className="stat-pill">
+                      <div className="stat-pill stat-pill--primary">
                         <strong>42</strong>
                         <span>Files</span>
                       </div>
-                      <div className="stat-pill">
+                      <div className="stat-pill stat-pill--info">
                         <strong>8</strong>
                         <span>Assets</span>
                       </div>
@@ -340,59 +325,99 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Dual Grid: Recent Files & Expiry Calendar */}
+                  {/* Dual Grid: Recent Verified Files & Grounded AI Intelligence */}
                   <div className="dv-lp-mockup-panels">
+                    {/* Panel 1: Verified Document Custody */}
                     <div className="dv-lp-mockup-panel">
                       <div className="panel-title-row">
-                        <h5>Recent Verified Files</h5>
-                        <small>View all</small>
+                        <div className="panel-title-left">
+                          <FolderLock size={14} className="panel-header-icon" />
+                          <h5>Verified Document Custody</h5>
+                        </div>
+                        <span className="panel-badge-pill">42 Protected</span>
                       </div>
+
                       <div className="panel-item">
                         <div className="item-icon item-icon--pdf">
                           <FileText size={15} />
                         </div>
                         <div className="item-meta">
                           <strong>Motor_Insurance_Policy.pdf</strong>
-                          <small>Vehicle Cover • 2.4 MB</small>
+                          <small>Comprehensive Cover • 2.4 MB</small>
                         </div>
-                        <span className="badge badge--success">Verified</span>
+                        <span className="badge badge--success">
+                          <ShieldCheck size={11} />
+                          <span>Verified</span>
+                        </span>
                       </div>
+
+                      <div className="panel-item">
+                        <div className="item-icon item-icon--locked">
+                          <Lock size={15} />
+                        </div>
+                        <div className="item-meta">
+                          <strong>Property_Deed_Registry.pdf</strong>
+                          <small>Real Estate • Encrypted Only</small>
+                        </div>
+                        <span className="badge badge--storage">
+                          <span>Secure Only</span>
+                        </span>
+                      </div>
+
                       <div className="panel-item">
                         <div className="item-icon item-icon--tax">
                           <FileSpreadsheet size={15} />
                         </div>
                         <div className="item-meta">
-                          <strong>Tax_Invoice_2026.pdf</strong>
+                          <strong>Quarterly_Tax_Invoice_FY26.pdf</strong>
                           <small>Financial • GSTIN Extracted</small>
                         </div>
-                        <span className="badge badge--success">Active</span>
+                        <span className="badge badge--active">
+                          <CheckCircle2 size={11} />
+                          <span>Grounded</span>
+                        </span>
                       </div>
                     </div>
 
+                    {/* Panel 2: Live Actionable Intelligence & Grounded AI */}
                     <div className="dv-lp-mockup-panel">
                       <div className="panel-title-row">
-                        <h5>Upcoming Deadlines</h5>
-                        <small>Calendar</small>
+                        <div className="panel-title-left">
+                          <Sparkles size={14} className="panel-header-icon panel-header-icon--ai" />
+                          <h5>Actionable Intelligence</h5>
+                        </div>
+                        <span className="panel-badge-pill panel-badge-pill--alert">Urgent Alert</span>
                       </div>
-                      <div className="panel-item">
-                        <div className="item-icon item-icon--alert">
-                          <Clock size={15} />
+
+                      {/* Urgent Expiry Card */}
+                      <div className="panel-alert-card">
+                        <div className="panel-alert-card__top">
+                          <div className="item-icon item-icon--alert">
+                            <Clock size={14} />
+                          </div>
+                          <div>
+                            <strong>Motor Insurance Renewal</strong>
+                            <small>Due in 14 days • HDFC ERGO</small>
+                          </div>
                         </div>
-                        <div className="item-meta">
-                          <strong>Vehicle Insurance Renewal</strong>
-                          <small>Due in 14 days • HDFC ERGO</small>
+                        <div className="panel-alert-card__progress">
+                          <div className="panel-progress-bar" style={{ width: '82%' }} />
                         </div>
-                        <span className="badge badge--alert">Urgent</span>
                       </div>
-                      <div className="panel-item">
-                        <div className="item-icon item-icon--ai">
-                          <Sparkles size={15} />
+
+                      {/* Grounded AI Query Preview */}
+                      <div className="panel-ai-preview">
+                        <div className="panel-ai-query-pill">
+                          <Sparkles size={12} />
+                          <span>Q: What is my zero-depreciation excess?</span>
                         </div>
-                        <div className="item-meta">
-                          <strong>Ask AI Copilot</strong>
-                          <small>Grounded query ready</small>
+                        <div className="panel-ai-answer">
+                          <p>“Clause 4.1: ₹1,000 deductible with 100% depreciation waiver on plastic & glass.”</p>
+                          <span className="panel-ai-citation">
+                            <CheckCircle2 size={10} />
+                            <span>Cited: Motor_Policy.pdf (p.6) • 0% Hallucination</span>
+                          </span>
                         </div>
-                        <span className="badge badge--ai">AI Ready</span>
                       </div>
                     </div>
                   </div>
@@ -548,6 +573,26 @@ export default function LandingPage() {
                 </div>
               </div>
 
+              {/* Cryptographic Standards Ribbon */}
+              <div className="dv-lp-crypto-ribbon">
+                <div className="dv-lp-crypto-item">
+                  <span className="dv-lp-crypto-dot" />
+                  <span>AES-256-GCM Vault Isolation</span>
+                </div>
+                <div className="dv-lp-crypto-item">
+                  <span className="dv-lp-crypto-dot" />
+                  <span>Argon2id Key Derivation</span>
+                </div>
+                <div className="dv-lp-crypto-item">
+                  <span className="dv-lp-crypto-dot" />
+                  <span>Zero-Knowledge Proofs</span>
+                </div>
+                <div className="dv-lp-crypto-item">
+                  <span className="dv-lp-crypto-dot" />
+                  <span>Verhoeff Checksum Guard</span>
+                </div>
+              </div>
+
               <div className="dv-lp-security-cta">
                 <Link to="/register" className="dv-lp-btn-primary">
                   <span>Create Your Secure Vault</span>
@@ -663,25 +708,51 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 7. CONVERSION BANNER */}
+      {/* 7. CONVERSION BANNER (APPLE AMBIENT GRADIENT MESH) */}
       <section className="dv-lp-cta-banner">
         <div className="dv-lp-container">
           <div className="dv-lp-banner-inner">
+            <div className="dv-lp-banner-ambient-glow" />
+            <div className="dv-lp-banner-badge">
+              <Sparkles size={13} />
+              <span>SOVEREIGN ARCHIVE DEPLOYMENT</span>
+            </div>
             <h2 className="dv-lp-banner-title">
               Take sovereign control of your documents today.
             </h2>
             <p className="dv-lp-banner-sub">
-              Join thousands who trust DocVault to protect, organize, and understand life's critical paperwork.
+              Join thousands who trust DocVault to protect, organize, and query life's critical paperwork with absolute peace of mind.
             </p>
             <div className="dv-lp-banner-actions">
               <Link to="/register" className="dv-lp-btn-primary dv-lp-btn-banner">
-                <span>Get Started Free</span>
+                <span>Create Your Private Vault</span>
                 <ArrowRight size={16} />
               </Link>
+            </div>
+            <div className="dv-lp-banner-trust">
+              <span>Zero third-party tracking</span>
+              <span className="dv-lp-banner-bullet">•</span>
+              <span>Hardware-backed encryption</span>
+              <span className="dv-lp-banner-bullet">•</span>
+              <span>Free personal tier</span>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Mobile Floating Apple-Style Action Dock */}
+      <aside className="dv-mobile-zen-dock" aria-label="Mobile Quick Access">
+        <div className="dv-mobile-zen-dock__inner">
+          <Link to="/login" className="dv-mobile-dock-btn dv-mobile-dock-btn--login">
+            <Lock size={15} />
+            <span>Sign In</span>
+          </Link>
+          <Link to="/register" className="dv-mobile-dock-btn dv-mobile-dock-btn--start">
+            <span>Open Vault</span>
+            <ArrowRight size={15} />
+          </Link>
+        </div>
+      </aside>
 
       <PublicFooter />
     </div>

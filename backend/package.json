@@ -10,7 +10,8 @@
     "test:phase-a": "node tests/phaseA.test.js",
     "test:intelligence": "node tests/intelligenceEngine.test.js",
     "test:api": "node tests/apiAudit.test.js",
-    "db:clear": "node scripts/clearDatabase.js"
+    "db:clear": "node scripts/clearDatabase.js",
+    "db:purge-all": "node scripts/purgeAllAuthAndDb.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1158.0",

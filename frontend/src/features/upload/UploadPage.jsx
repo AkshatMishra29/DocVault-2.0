@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { apiRequest } from "../../services/api";
 import { 
   UploadCloud, FileText, CheckCircle2, AlertCircle, ArrowRight,
-  ShieldCheck, Sparkles, Layers, Lock, Shield, EyeOff, FileCheck
+  ShieldCheck, Sparkles, Lock, Pencil
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -13,11 +13,13 @@ import Badge from "../../components/common/Badge/Badge";
 import DocumentTypeIcon from "../../components/common/DocumentTypeIcon/DocumentTypeIcon";
 import ExpiryBadge from "../../components/common/ExpiryBadge/ExpiryBadge";
 import VerificationStatus from "../../components/common/VerificationStatus/VerificationStatus";
+import ExtractionInspector from "../../components/common/ExtractionInspector/ExtractionInspector";
 
 import "./UploadPage.css";
 
 export default function UploadPage() {
   const [file, setFile] = useState(null);
+  const [customTitle, setCustomTitle] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const [privacyMode, setPrivacyMode] = useState("PROCESSABLE"); // 'PROCESSABLE' | 'STORAGE_ONLY'
   const [uploading, setUploading] = useState(false);
@@ -64,6 +66,9 @@ export default function UploadPage() {
       return;
     }
     setFile(selectedFile);
+    // Auto-populate the rename field with the base filename (strip extension)
+    const baseName = selectedFile.name.replace(/\.[^/.]+$/, "").replace(/[_-]+/g, " ").trim();
+    setCustomTitle(baseName);
   };
 
   const handleUpload = async () => {
@@ -71,7 +76,7 @@ export default function UploadPage() {
 
     setUploading(true);
     setError("");
-    setProgressStage("Preparing your document for secure upload...");
+    setProgressStage("Checking file security & signatures...");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -79,21 +84,24 @@ export default function UploadPage() {
     formData.append("privacyMode", privacyMode);
     formData.append("aiPolicy", privacyMode === "STORAGE_ONLY" ? "storage_only" : "ai_enabled");
     formData.append("noticeVersion", "1.0.0");
+    // Append custom title so backend saves it under the user's chosen name
+    const finalTitle = customTitle.trim() || file.name.replace(/\.[^/.]+$/, "");
+    formData.append("title", finalTitle);
 
     try {
       const stageTimer1 = setTimeout(() => {
         setProgressStage(
           privacyMode === "STORAGE_ONLY"
             ? "Securing document in your private vault..."
-            : "Reading and analysing document contents..."
+            : "Validating document quality & structure..."
         );
-      }, 1200);
+      }, 700);
 
       const stageTimer2 = setTimeout(() => {
         if (privacyMode !== "STORAGE_ONLY") {
-          setProgressStage("Verifying and structuring key information...");
+          setProgressStage("Verifying content and extracting key details...");
         }
-      }, 2400);
+      }, 1800);
 
       const res = await apiRequest("/api/documents/upload", {
         method: "POST",
@@ -140,11 +148,32 @@ export default function UploadPage() {
   return (
     <div className="dv-upload-page">
       <AppHeader
-        title="Upload Documents"
+        title="Document Ingestion"
         subtitle="Add policies, warranties, invoices, and certificates to your secure personal vault."
       />
 
       <div className="dv-upload-content">
+        {/* Apple Zen 3D Ingestion Command Hero */}
+        <div className="dv-upload-hero">
+          <div className="dv-upload-hero__info">
+            <div className="dv-upload-hero__kicker">
+              <span className="dv-upload-hero__kicker-dot" />
+              <span>Zero-Knowledge Ingestion Active</span>
+            </div>
+            <h2 className="dv-upload-hero__title">
+              Secure Document <span className="dv-upload-hero__title-accent">Ingestion Engine</span>
+            </h2>
+            <p className="dv-upload-hero__desc">
+              Upload contracts, identity proofs, invoices, or policies. Files are enhanced with Sharp, parsed with hybrid OCR, and indexed into your private encrypted vault.
+            </p>
+          </div>
+
+          <div className="dv-upload-hero__badge">
+            <div className="dv-upload-hero__badge-num">25 MB</div>
+            <div className="dv-upload-hero__badge-label">Max Limit • PDF, JPG, PNG, WEBP</div>
+          </div>
+        </div>
+
         {!uploadedDoc ? (
           <div className="dv-upload-grid">
             {/* Left: Interactive Dropzone & Controls */}
@@ -168,30 +197,61 @@ export default function UploadPage() {
                 {!file ? (
                   <label htmlFor="dv-file-input" className="dv-dropzone-label">
                     <div className="dv-dropzone-icon-box">
-                      <UploadCloud size={36} color="#0070F2" />
+                      <UploadCloud size={34} />
                     </div>
-                    <h3 className="dv-dropzone-title">Click to select or drag and drop files</h3>
+                    <h3 className="dv-dropzone-title">Click to browse or drag and drop files</h3>
                     <p className="dv-dropzone-sub">
-                      PDF, Scanned Documents, PNG, JPG, WEBP (Up to 25 MB)
+                      Drag any document scan or photo directly onto this surface
                     </p>
+                    <div className="dv-dropzone-formats">
+                      <span className="dv-format-pill">PDF (Digital & Scanned)</span>
+                      <span className="dv-format-pill">PNG</span>
+                      <span className="dv-format-pill">JPG / JPEG</span>
+                      <span className="dv-format-pill">WEBP</span>
+                    </div>
                   </label>
                 ) : (
                   <div className="dv-file-selected-box">
-                    <FileText size={36} color="#0070F2" />
+                    <div className="dv-file-selected-icon">
+                      <FileText size={32} />
+                    </div>
                     <div className="dv-file-selected-meta">
                       <span className="dv-file-selected-name">{file.name}</span>
                       <span className="dv-file-selected-size">
-                        {(file.size / (1024 * 1024)).toFixed(2)} MB
+                        {(file.size / (1024 * 1024)).toFixed(2)} MB • Ready for processing
                       </span>
                     </div>
                     {!uploading && (
-                      <Button variant="ghost" size="sm" onClick={() => setFile(null)}>
-                        Change File
+                      <Button variant="outline" size="sm" onClick={() => { setFile(null); setCustomTitle(""); }}>
+                        Change
                       </Button>
                     )}
                   </div>
                 )}
               </div>
+
+              {/* Document Rename Field — shown only after a file is chosen */}
+              {file && (
+                <div className="dv-rename-box">
+                  <label className="dv-rename-label" htmlFor="dv-custom-title">
+                    <Pencil size={14} />
+                    <span>Document Title <span className="dv-rename-hint">(rename before saving)</span></span>
+                  </label>
+                  <input
+                    id="dv-custom-title"
+                    type="text"
+                    className="dv-rename-input"
+                    value={customTitle}
+                    onChange={(e) => setCustomTitle(e.target.value)}
+                    placeholder="Enter a readable title for this document…"
+                    maxLength={120}
+                    disabled={uploading}
+                  />
+                  <p className="dv-rename-tip">
+                    This name will be shown in your vault and search results.
+                  </p>
+                </div>
+              )}
 
               {/* Privacy Mode Option Selector */}
               <div className="dv-privacy-selector-box">
@@ -246,8 +306,11 @@ export default function UploadPage() {
 
               {uploading && (
                 <div className="dv-upload-progress-box">
-                  <div className="dv-btn__spinner" />
-                  <span className="dv-upload-progress-text">{progressStage}</span>
+                  <div className="dv-upload-progress-pulse" />
+                  <div className="dv-upload-progress-info">
+                    <span className="dv-upload-progress-title">Pipeline Ingestion Active</span>
+                    <span className="dv-upload-progress-text">{progressStage}</span>
+                  </div>
                 </div>
               )}
 
@@ -265,47 +328,47 @@ export default function UploadPage() {
               </Button>
             </Card>
 
-            {/* Right: Customer Benefit Showcase */}
+            {/* Right: Pipeline Transparency Card */}
             <Card padding="lg" className="dv-upload-info-card">
               <div className="dv-upload-info-badge">
                 <ShieldCheck size={16} />
-                <span>DocVault Protection</span>
+                <span>Zero-Trust Architecture</span>
               </div>
-              <h3 className="dv-pipeline-title">How DocVault Protects & Organizes</h3>
+              <h3 className="dv-pipeline-title">How DocVault Ingests & Protects</h3>
               <p className="dv-pipeline-sub">
-                Every document added to your vault is processed securely with zero data sharing and privacy safeguards.
+                Every document added to your vault is processed securely with zero external model training and air-tight tenant boundaries.
               </p>
 
               <div className="dv-pipeline-steps">
                 <div className="dv-pstep">
                   <span className="dv-pstep-num">1</span>
                   <div>
-                    <h4>Privacy First Inspection</h4>
-                    <p>Validates file integrity and ensures sensitive personal identity documents remain strictly isolated.</p>
+                    <h4>Sharp Image Conditioning</h4>
+                    <p>Applies grayscale normalization and contrast edge sharpening to ensure crystal-clear character boundaries.</p>
                   </div>
                 </div>
 
                 <div className="dv-pstep">
                   <span className="dv-pstep-num">2</span>
                   <div>
-                    <h4>Smart Document Reading</h4>
-                    <p>Extracts text cleanly and identifies important contract terms, policy numbers, and validity periods.</p>
+                    <h4>Hybrid OCR & Vision Cascade</h4>
+                    <p>Extracts text with Tesseract.js WASM; automatically cascades to Groq Vision VLM for tilted/blurred phone photos.</p>
                   </div>
                 </div>
 
                 <div className="dv-pstep">
                   <span className="dv-pstep-num">3</span>
                   <div>
-                    <h4>Automated Deadline Tracking</h4>
-                    <p>Detects renewal dates and sets proactive calendar reminders so you never miss an expiry.</p>
+                    <h4>Entity Structuring & Deadlines</h4>
+                    <p>Identifies policy numbers, coverage limits, and renewal cutoffs, scheduling RFC-5545 calendar reminders.</p>
                   </div>
                 </div>
 
                 <div className="dv-pstep">
                   <span className="dv-pstep-num">4</span>
                   <div>
-                    <h4>Grounded AI Copilot</h4>
-                    <p>Enables instant Q&A grounded exclusively in your own vault documents with zero hallucination.</p>
+                    <h4>Air-Tight Bounded RAG</h4>
+                    <p>Generates dense vector embeddings for conversational retrieval strictly isolated to your personal vault.</p>
                   </div>
                 </div>
               </div>
@@ -377,6 +440,9 @@ export default function UploadPage() {
                 </div>
               )}
             </div>
+
+            {/* Live Testing Extraction Diagnostics Inspector */}
+            <ExtractionInspector doc={uploadedDoc} defaultExpanded={true} />
 
             <div className="dv-success-actions">
               <Button

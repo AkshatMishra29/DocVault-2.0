@@ -7,7 +7,7 @@
   width: 100vw;
   height: 100vh;
   min-height: 100vh;
-  background-color: var(--color-auth-bg, #F8F5F1);
+  background-color: var(--color-auth-bg, #FBFBFD);
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -18,12 +18,12 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-auth-bg, #F8F5F1);
+  background-color: var(--color-auth-bg, #FBFBFD);
   overflow-y: auto;
   position: relative;
   box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: var(--color-auth-border, #D8CCC3) transparent;
+  scrollbar-color: var(--color-auth-border, #CBD5E1) transparent;
 }
 
 .dv-auth-form-panel::-webkit-scrollbar {
@@ -31,7 +31,7 @@
 }
 
 .dv-auth-form-panel::-webkit-scrollbar-thumb {
-  background-color: var(--color-auth-border, #D8CCC3);
+  background-color: var(--color-auth-border, #CBD5E1);
   border-radius: 4px;
 }
 
@@ -77,12 +77,12 @@
   display: flex;
   flex-direction: column;
   background: var(--color-auth-card-bg, #FFFFFF);
-  border: 1px solid var(--color-auth-border, #D8CCC3);
-  border-radius: 20px;
-  padding: 34px 38px 28px;
+  border: 1px solid var(--color-auth-border, rgba(226, 232, 240, 0.95));
+  border-radius: 24px;
+  padding: 36px 38px 30px;
   box-shadow: 
-    0 16px 36px -4px rgba(28, 19, 16, 0.06),
-    0 4px 12px -2px rgba(28, 19, 16, 0.03);
+    0 20px 48px -10px rgba(15, 23, 42, 0.08),
+    0 4px 14px -2px rgba(15, 23, 42, 0.03);
   box-sizing: border-box;
   animation: dv-auth-card-entrance 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

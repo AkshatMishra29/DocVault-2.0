@@ -5,6 +5,7 @@ import { Asset } from '../assets/asset.model.js';
 import { answerDocumentQuery } from '../../services/ai/groqService.js';
 import { generateEmbedding } from '../../services/ai/huggingFaceService.js';
 import { assertAiAllowed, isAiAllowed, PrivacyPolicyViolationError } from '../../services/pipeline/privacyGate.js';
+import { DocumentAccessControlService } from '../sharing/accessControl.service.js';
 
 const router = Router();
 
@@ -23,8 +24,37 @@ function cosineSimilarity(vecA, vecB) {
 }
 
 /**
+ * Computes exact lexical / keyword matching score across document attributes
+ */
+function computeLexicalScore(doc, queryTokens) {
+  let score = 0;
+  const title = (doc.title || '').toLowerCase();
+  const category = (doc.category || '').toLowerCase();
+  const summary = (doc.summary || '').toLowerCase();
+  const tags = (doc.tags || []).join(' ').toLowerCase();
+  const extractedText = (doc.extractedText || '').toLowerCase();
+  const docDate = (doc.documentDate || '').toLowerCase();
+  const expDate = (doc.expiryDate || '').toLowerCase();
+  const keyDetailsStr = JSON.stringify(doc.keyDetails || {}).toLowerCase();
+
+  for (const token of queryTokens) {
+    if (token.length < 2) continue;
+    if (title.includes(token)) score += 6.0;
+    if (category.includes(token)) score += 5.0;
+    if (docDate.includes(token)) score += 6.0;
+    if (expDate.includes(token)) score += 6.0;
+    if (keyDetailsStr.includes(token)) score += 5.0;
+    if (tags.includes(token)) score += 3.5;
+    if (summary.includes(token)) score += 2.5;
+    if (extractedText.includes(token)) score += 1.5;
+  }
+  return score;
+}
+
+/**
  * Core AI Query Handler
  * Enforces assertAiAllowed before any document context is passed to Groq or Hugging Face
+ * Implements Smart Hybrid Retrieval (Dense Vector + Sparse Lexical + Reciprocal Rank Fusion)
  */
 async function handleAiQuery(req, res) {
   try {
@@ -36,8 +66,13 @@ async function handleAiQuery(req, res) {
     let documents = [];
 
     if (docId) {
-      // Single Document Query: Enforce strict ownership & assertAiAllowed
-      const doc = await Document.findOne({ _id: docId, userId: req.user.userId }).select('-fileData');
+      // Single Document Query: Enforce Central Access Control & assertAiAllowed
+      const access = await DocumentAccessControlService.canViewDocument(req.user.userId, docId);
+      if (!access.allowed) {
+        return res.status(403).json({ success: false, error: 'Access denied to this document.' });
+      }
+
+      const doc = await Document.findById(docId).select('-fileData');
       if (!doc) {
         return res.status(404).json({ success: false, error: 'Document not found' });
       }
@@ -46,9 +81,12 @@ async function handleAiQuery(req, res) {
       assertAiAllowed(doc, 'Single document AI query');
       documents.push(doc);
     } else {
-      // Vault-Wide Query: Filter strictly by aiPolicy === 'ai_enabled' (or legacy PROCESSABLE) and sensitiveFlag !== true
+      // Vault-Wide Query: strictly get documents user owns or has active VIEW grant for
+      const accessibleDocIds = await DocumentAccessControlService.getAccessibleDocumentIds(req.user.userId, 'view');
+
+      // Filter strictly by aiPolicy === 'ai_enabled' (or legacy PROCESSABLE) and sensitiveFlag !== true
       const candidates = await Document.find({
-        userId: req.user.userId,
+        _id: { $in: accessibleDocIds },
         $or: [
           { aiPolicy: 'ai_enabled' },
           { privacyMode: 'PROCESSABLE' },
@@ -57,24 +95,78 @@ async function handleAiQuery(req, res) {
       }).select('-fileData');
 
       // Double-check with in-memory privacy gate
-      documents = candidates.filter(d => isAiAllowed(d));
+      const validCandidates = candidates.filter(d => isAiAllowed(d));
 
-      // Rank via semantic embeddings if query vector is generated
-      if (documents.length > 0) {
+      if (validCandidates.length > 0) {
+        // 1. Tokenize query for Lexical Match
+        const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'a', 'an', 'in', 'of', 'and', 'or', 'for', 'to', 'my', 'what', 'tell', 'show', 'give']);
+        const queryTokens = question.toLowerCase()
+          .replace(/[^a-z0-9\s]/g, ' ')
+          .split(/\s+/)
+          .filter(t => t.length > 1 && !stopWords.has(t));
+
+        // 2. Query Intent Analysis
+        const isDateQuery = /(?:when|date|issued|expiry|expire|due|completed|award|valid|renewal|time|day|month|year)/i.test(question);
+        const isCertQuery = /(?:certif|degree|diploma|grade|score|course|university|college|completion|mark|award)/i.test(question);
+        const isFinanceQuery = /(?:amount|total|bill|invoice|gst|price|cost|paid|tax|expense|salary|statement)/i.test(question);
+
+        // 3. Dense Vector Embeddings Generation
+        let queryVector = [];
         try {
-          const queryVector = await generateEmbedding(question);
-          if (queryVector && queryVector.length > 0) {
-            documents = documents
-              .map(d => ({
-                doc: d,
-                score: d.embedding && d.embedding.length > 0 ? cosineSimilarity(queryVector, d.embedding) : 0,
-              }))
-              .sort((a, b) => b.score - a.score)
-              .map(item => item.doc);
-          }
+          queryVector = await generateEmbedding(question);
         } catch (err) {
-          console.warn('[AI Assistant] Semantic vector search skipped, using candidate docs:', err.message);
+          console.warn('[AI Assistant] Semantic vector generation skipped:', err.message);
         }
+
+        // 4. Compute Dense and Lexical Rankings
+        const denseRankings = [...validCandidates]
+          .map(d => ({
+            id: String(d._id),
+            score: (queryVector.length > 0 && d.embedding && d.embedding.length > 0)
+              ? cosineSimilarity(queryVector, d.embedding)
+              : 0
+          }))
+          .sort((a, b) => b.score - a.score);
+
+        const denseRankMap = new Map();
+        denseRankings.forEach((item, idx) => denseRankMap.set(item.id, idx + 1));
+
+        const lexicalRankings = [...validCandidates]
+          .map(d => ({
+            id: String(d._id),
+            score: computeLexicalScore(d, queryTokens)
+          }))
+          .sort((a, b) => b.score - a.score);
+
+        const lexicalRankMap = new Map();
+        lexicalRankings.forEach((item, idx) => lexicalRankMap.set(item.id, idx + 1));
+
+        // 5. Reciprocal Rank Fusion (RRF) with Intent Boosters
+        const scoredDocs = validCandidates.map(doc => {
+          const docIdStr = String(doc._id);
+          const dRank = denseRankMap.get(docIdStr) || 999;
+          const lRank = lexicalRankMap.get(docIdStr) || 999;
+
+          // RRF core: 1 / (60 + rank)
+          let rrf = (1.0 / (60 + dRank)) + (1.5 / (60 + lRank));
+
+          // Domain Intent Boosters
+          if (isDateQuery && (doc.documentDate || doc.expiryDate)) {
+            rrf += 0.04;
+          }
+          if (isCertQuery && (doc.category === 'Academic Certificate' || doc.category === 'Certificates' || /certificate/i.test(doc.title))) {
+            rrf += 0.05;
+          }
+          if (isFinanceQuery && (doc.category === 'Tax Invoice' || doc.category === 'Purchase Receipt' || doc.category === 'Bank Statement')) {
+            rrf += 0.04;
+          }
+
+          return { doc, rrf };
+        });
+
+        // Sort by final fused RRF score and take top candidates (up to 5)
+        scoredDocs.sort((a, b) => b.rrf - a.rrf);
+        documents = scoredDocs.slice(0, 5).map(item => item.doc);
       }
     }
 

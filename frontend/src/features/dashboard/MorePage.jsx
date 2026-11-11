@@ -5,7 +5,7 @@ import { apiRequest } from "../../services/api";
 import { 
   ShieldCheck, Download, KeyRound, Smartphone, HardDrive, 
   Clock, LogOut, CheckCircle2, ChevronRight, Sparkles, Lock, 
-  Shield, Fingerprint, FileText, HelpCircle
+  Shield, Fingerprint, FileText, HelpCircle, Users, ArrowRightLeft
 } from "lucide-react";
 import AboutDocVaultModal from "../../components/common/AboutModal/AboutDocVaultModal";
 
@@ -18,7 +18,17 @@ import Skeleton from "../../components/common/Skeleton/Skeleton";
 import "./MorePage.css";
 
 export default function MorePage() {
-  const { user, lockVault, logout, updateSessionPreference, registerBiometrics } = useAuth();
+  const { 
+    user, 
+    lockVault, 
+    lockSession, 
+    savedSessions, 
+    switchSession, 
+    removeSavedSession, 
+    logout, 
+    updateSessionPreference, 
+    registerBiometrics 
+  } = useAuth();
   const navigate = useNavigate();
 
   const [logs, setLogs] = useState([]);
@@ -103,8 +113,7 @@ export default function MorePage() {
   };
 
   const handleLockVault = () => {
-    lockVault();
-    navigate('/enter-pin', { state: { email: user?.email } });
+    lockSession();
   };
 
   useEffect(() => {
@@ -246,12 +255,85 @@ export default function MorePage() {
 
             {/* Lock Vault & Sign Out Actions */}
             <div className="dv-setting-card__actions">
-              <Button variant="outline" size="sm" icon={Lock} onClick={handleLockVault}>
-                Lock Vault Now
+              <Button variant="outline" size="sm" icon={Lock} onClick={handleLockVault} title="Lock session (⌘L)">
+                Lock Session (⌘L)
               </Button>
               <Button variant="danger" size="sm" icon={LogOut} onClick={logout}>
                 Sign Out
               </Button>
+            </div>
+          </Card>
+
+          {/* Remembered Sessions & Switcher */}
+          <Card padding="lg" className="dv-setting-card dv-sessions-card">
+            <div className="dv-sessions-card__header">
+              <div>
+                <h3 className="dv-setting-card__title">Remembered Sessions</h3>
+                <p className="dv-setting-desc">
+                  Switch instantly to another account on this device or securely lock current session.
+                </p>
+              </div>
+              <Badge variant="primary" size="sm">
+                {savedSessions?.length || 1} Saved
+              </Badge>
+            </div>
+
+            <div className="dv-saved-sessions-list">
+              {(savedSessions && savedSessions.length > 0 ? savedSessions : [{ email: user?.email, name: user?.name, pinLength: user?.pinLength || 4 }]).map((session) => {
+                const isCurrent = session.email?.toLowerCase() === user?.email?.toLowerCase();
+                const initials = (session.name || session.email || "U").slice(0, 2).toUpperCase();
+                return (
+                  <div key={session.email} className={`dv-saved-session-row ${isCurrent ? "dv-saved-session-row--active" : ""}`}>
+                    <div className="dv-saved-session-avatar">{initials}</div>
+                    <div className="dv-saved-session-info">
+                      <div className="dv-saved-session-title">
+                        <strong>{session.name || "Vault Custodian"}</strong>
+                        {isCurrent ? (
+                          <span className="dv-session-tag-current">Active</span>
+                        ) : (
+                          <span className="dv-session-tag-locked">Locked</span>
+                        )}
+                      </div>
+                      <div className="dv-saved-session-sub">
+                        {session.email} • {session.pinLength || 4}-digit PIN
+                      </div>
+                    </div>
+                    <div className="dv-saved-session-actions">
+                      {!isCurrent ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            icon={ArrowRightLeft}
+                            onClick={() => switchSession(session.email)}
+                          >
+                            Switch
+                          </Button>
+                          <button
+                            type="button"
+                            className="dv-saved-session-forget-btn"
+                            title="Forget session from device"
+                            onClick={() => removeSavedSession(session.email)}
+                            aria-label={`Forget session for ${session.email}`}
+                          >
+                            ✕
+                          </button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={Lock}
+                          onClick={handleLockVault}
+                          title="Lock active session (⌘L)"
+                        >
+                          Lock
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </Card>
 

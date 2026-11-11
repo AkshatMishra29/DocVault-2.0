@@ -1,55 +1,209 @@
+/* ==========================================================================
+   DOCVAULT DOCUMENT UPLOAD & INGESTION (APPLE ZEN 3D SPECIFICATION)
+   Spatial Dropzone • Hybrid OCR Cascade • Zero-Trust Processing
+   ========================================================================== */
+
 .dv-upload-page {
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .dv-upload-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  padding-top: var(--space-4);
+  gap: 28px;
+  padding-top: 16px;
+  padding-bottom: 48px;
+  box-sizing: border-box;
 }
+
+/* ==========================================================================
+   1. INGESTION COMMAND HERO (APPLE ZEN 3D SPATIAL SURFACE)
+   ========================================================================== */
+
+.dv-upload-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  background: 
+    radial-gradient(ellipse at 88% 18%, rgba(0, 113, 227, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse at 12% 82%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+    #FFFFFF;
+  border: 1px solid rgba(0, 113, 227, 0.15);
+  border-radius: 22px;
+  padding: 30px 36px;
+  box-shadow: 
+    0 12px 32px -4px rgba(15, 23, 42, 0.04),
+    0 2px 8px -2px rgba(15, 23, 42, 0.02);
+  position: relative;
+  overflow: hidden;
+}
+
+.dv-upload-hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #0071E3 35%, #38BDF8 70%, transparent 100%);
+  opacity: 0.6;
+}
+
+.dv-upload-hero__info {
+  flex: 1;
+  max-width: 720px;
+}
+
+.dv-upload-hero__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 113, 227, 0.22);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #0071E3;
+  box-shadow: 0 2px 10px rgba(0, 113, 227, 0.08);
+  margin-bottom: 14px;
+}
+
+.dv-upload-hero__kicker-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #0071E3;
+  box-shadow: 0 0 8px rgba(0, 113, 227, 0.7);
+  animation: dvPulseBlue 2.5s infinite;
+}
+
+@keyframes dvPulseBlue {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.2); }
+}
+
+.dv-upload-hero__title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  font-size: clamp(22px, 2.6vw, 28px);
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.025em;
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+.dv-upload-hero__title-accent {
+  background: linear-gradient(135deg, #0071E3 0%, #38BDF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.dv-upload-hero__desc {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.dv-upload-hero__badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 24px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.06) 0%, rgba(56, 189, 248, 0.04) 100%);
+  border: 1px solid rgba(0, 113, 227, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.05);
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.dv-upload-hero__badge-num {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0071E3;
+  letter-spacing: -0.02em;
+}
+
+.dv-upload-hero__badge-label {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   2. MAIN UPLOAD GRID LAYOUT
+   ========================================================================== */
 
 .dv-upload-grid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: var(--space-6);
+  grid-template-columns: 1.45fr 1fr;
+  gap: 24px;
 }
 
-/* Dropzone Card */
+/* ==========================================================================
+   3. DROPZONE CARD & INTERACTIVE CANVAS
+   ========================================================================== */
+
 .dv-dropzone-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: 22px;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 22px;
+  padding: 28px 32px;
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.03);
 }
 
 .dv-dropzone {
-  border: 2px dashed var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8) var(--space-6);
+  border: 2px dashed rgba(0, 113, 227, 0.28);
+  border-radius: 20px;
+  padding: 42px 28px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  background-color: var(--color-surface-secondary);
-  transition: all var(--transition-normal);
+  background: 
+    radial-gradient(circle at center, rgba(0, 113, 227, 0.04) 0%, transparent 70%),
+    #FAFAFC;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   position: relative;
+  overflow: hidden;
 }
 
 .dv-dropzone:hover,
 .dv-dropzone--active {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-subtle);
+  border-color: #0071E3;
+  background: rgba(0, 113, 227, 0.06);
   transform: translateY(-2px);
+  box-shadow: 0 10px 28px -4px rgba(0, 113, 227, 0.12);
 }
 
 .dv-dropzone--has-file {
   border-style: solid;
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-subtle);
+  border-color: rgba(0, 113, 227, 0.4);
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.06) 0%, rgba(16, 185, 129, 0.03) 100%);
+  padding: 24px 28px;
 }
 
 .dv-file-input-hidden {
@@ -65,241 +219,400 @@
 }
 
 .dv-dropzone-icon-box {
-  width: 60px;
-  height: 60px;
-  border-radius: var(--radius-xl);
-  background-color: var(--color-surface);
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.14) 0%, rgba(56, 189, 248, 0.1) 100%);
+  color: #0071E3;
+  border: 1px solid rgba(0, 113, 227, 0.22);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-sm);
-  margin-bottom: var(--space-3);
-  transition: transform var(--transition-fast);
+  box-shadow: 0 4px 16px rgba(0, 113, 227, 0.15);
+  margin-bottom: 16px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dv-dropzone:hover .dv-dropzone-icon-box {
-  transform: scale(1.08);
+  transform: scale(1.08) translateY(-2px);
 }
 
 .dv-dropzone-title {
-  font-size: var(--text-base);
-  font-weight: var(--font-bold);
-  color: var(--color-text-primary);
-  margin-bottom: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 16.5px;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.015em;
+  margin: 0 0 6px 0;
 }
 
 .dv-dropzone-sub {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
+  font-size: 13px;
+  color: #64748B;
+  margin: 0 0 16px 0;
 }
 
+.dv-dropzone-formats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dv-format-pill {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  color: #475569;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+}
+
+/* File Selected State Card */
 .dv-file-selected-box {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  width: 100%;
-  padding: var(--space-2);
-}
-
-.dv-file-selected-meta {
-  flex: 1;
-  text-align: left;
-}
-
-.dv-file-selected-name {
-  display: block;
-  font-size: var(--text-sm);
-  font-weight: var(--font-bold);
-  color: var(--color-text-primary);
-  word-break: break-all;
-}
-
-.dv-file-selected-size {
-  display: block;
-  font-size: 11px;
-  color: var(--color-text-muted);
-  font-family: var(--font-mono);
-  margin-top: 2px;
-}
-
-/* Privacy Selector */
-.dv-privacy-selector-box {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2-5);
-}
-
-.dv-privacy-selector-title {
-  font-size: var(--text-xs);
-  font-weight: var(--font-bold);
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-  letter-spacing: 0.04em;
-}
-
-.dv-privacy-options {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2-5);
-}
-
-.dv-privacy-option {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-3-5);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-surface);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.dv-privacy-option:hover {
-  border-color: var(--color-border-hover);
-}
-
-.dv-privacy-option--active {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-subtle);
-}
-
-.dv-privacy-option input {
-  margin-top: 3px;
-  accent-color: var(--color-primary);
-}
-
-.dv-popt-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: 2px;
-}
-
-.dv-popt-header strong {
-  font-size: var(--text-sm);
-  color: var(--color-text-primary);
-}
-
-.dv-popt-text p {
-  font-size: 11.5px;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-}
-
-.dv-upload-error {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  background-color: var(--color-danger-bg);
-  border: 1px solid var(--color-danger-border);
-  border-radius: var(--radius-md);
-  color: var(--color-danger);
-  font-size: var(--text-xs);
-}
-
-.dv-upload-progress-box {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3-5) var(--space-4);
-  background-color: var(--color-surface-secondary);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-}
-
-.dv-upload-progress-text {
-  font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
-  color: var(--color-primary);
-}
-
-.dv-upload-submit-btn {
+  gap: 16px;
   width: 100%;
 }
 
-/* Right: Pipeline Transparency Card */
-.dv-upload-info-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.dv-upload-info-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--color-primary);
-  letter-spacing: 0.04em;
-}
-
-.dv-pipeline-title {
-  font-size: var(--text-lg);
-  font-weight: var(--font-bold);
-  color: var(--color-text-primary);
-  letter-spacing: -0.02em;
-}
-
-.dv-pipeline-sub {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  line-height: 1.45;
-}
-
-.dv-pipeline-steps {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  margin-top: var(--space-2);
-}
-
-.dv-pstep {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-}
-
-.dv-pstep-num {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  background-color: var(--color-primary-subtle);
-  border: 1px solid rgba(1, 90, 71, 0.2);
-  color: var(--color-primary);
-  font-weight: var(--font-bold);
-  font-size: 12px;
+.dv-file-selected-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: rgba(0, 113, 227, 0.12);
+  color: #0071E3;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
+.dv-file-selected-meta {
+  flex: 1;
+  text-align: left;
+  min-width: 0;
+}
+
+.dv-file-selected-name {
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dv-file-selected-size {
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   4. RENAME BOX (INTUITIVE TITLE CONFIGURATION)
+   ========================================================================== */
+
+.dv-rename-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px;
+  background: #F8FAFC;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 16px;
+  animation: dvFadeInUp 0.25s ease;
+}
+
+.dv-rename-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.dv-rename-hint {
+  font-weight: 500;
+  color: #64748B;
+  font-size: 12px;
+}
+
+.dv-rename-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 12px;
+  background: #FFFFFF;
+  color: #0F172A;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 13.5px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.dv-rename-input:focus {
+  outline: none;
+  border-color: #0071E3;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+}
+
+.dv-rename-tip {
+  font-size: 11.5px;
+  color: #64748B;
+  margin: 0;
+}
+
+/* ==========================================================================
+   5. PRIVACY & PROCESSING SELECTOR
+   ========================================================================== */
+
+.dv-privacy-selector-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dv-privacy-selector-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748B;
+  letter-spacing: 0.05em;
+}
+
+.dv-privacy-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dv-privacy-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: #F8FAFC;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dv-privacy-option:hover {
+  background: #FFFFFF;
+  border-color: rgba(0, 113, 227, 0.3);
+  transform: translateY(-1px);
+}
+
+.dv-privacy-option--active {
+  background: #FFFFFF;
+  border-color: #0071E3;
+  box-shadow: 0 4px 16px rgba(0, 113, 227, 0.08);
+}
+
+.dv-privacy-option input[type="radio"] {
+  margin-top: 3px;
+  accent-color: #0071E3;
+  width: 16px;
+  height: 16px;
+}
+
+.dv-popt-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.dv-popt-header strong {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.dv-popt-text p {
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* Errors & Live Pipeline Progress Capsule */
+.dv-upload-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  border-radius: 14px;
+  color: #DC2626;
+  font-size: 13px;
+}
+
+.dv-upload-progress-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.08) 0%, rgba(56, 189, 248, 0.04) 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 113, 227, 0.22);
+}
+
+.dv-upload-progress-pulse {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #0071E3;
+  box-shadow: 0 0 10px rgba(0, 113, 227, 0.7);
+  animation: dvPulseBlue 1.8s infinite;
+  flex-shrink: 0;
+}
+
+.dv-upload-progress-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.dv-upload-progress-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0071E3;
+}
+
+.dv-upload-progress-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F172A;
+  margin-top: 2px;
+}
+
+.dv-upload-submit-btn {
+  width: 100%;
+}
+
+/* ==========================================================================
+   6. PIPELINE TRANSPARENCY CARD (RIGHT COLUMN)
+   ========================================================================== */
+
+.dv-upload-info-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 22px;
+  padding: 28px 32px;
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.03);
+}
+
+.dv-upload-info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #0071E3;
+  letter-spacing: 0.05em;
+}
+
+.dv-pipeline-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+.dv-pipeline-sub {
+  font-size: 13px;
+  color: #64748B;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.dv-pipeline-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.dv-pstep {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.dv-pstep-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.14) 0%, rgba(56, 189, 248, 0.08) 100%);
+  border: 1px solid rgba(0, 113, 227, 0.22);
+  color: #0071E3;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.1);
+}
+
 .dv-pstep h4 {
-  font-size: var(--text-sm);
-  font-weight: var(--font-bold);
-  color: var(--color-text-primary);
-  margin-bottom: 2px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 2px 0;
 }
 
 .dv-pstep p {
-  font-size: 11.5px;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.45;
+  margin: 0;
 }
 
-/* Success Receipt Card */
+/* ==========================================================================
+   7. SUCCESS RECEIPT CARD (POST-UPLOAD CONFIRMATION)
+   ========================================================================== */
+
 .dv-upload-success-card {
   max-width: 680px;
   margin: 0 auto;
   width: 100%;
-  text-align: center;
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 22px;
+  padding: 36px 40px;
+  box-shadow: 0 12px 36px -4px rgba(15, 23, 42, 0.06);
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: 24px;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .dv-success-header {
@@ -309,30 +622,42 @@
 }
 
 .dv-success-badge-icon {
-  margin-bottom: var(--space-3);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.2);
 }
 
 .dv-success-title {
-  font-size: var(--text-xl);
-  font-weight: var(--font-extrabold);
-  color: var(--color-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px 0;
 }
 
 .dv-success-sub {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  max-width: 480px;
-  margin-top: 4px;
+  font-size: 13.5px;
+  color: #64748B;
+  max-width: 460px;
+  margin: 0;
+  line-height: 1.5;
 }
 
 .dv-success-meta-box {
-  background-color: var(--color-surface-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
+  background: #F8FAFC;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 18px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 12px;
   text-align: left;
 }
 
@@ -340,9 +665,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: var(--text-xs);
-  border-bottom: 1px solid var(--color-border-subtle);
-  padding-bottom: var(--space-2);
+  font-size: 13px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+  padding-bottom: 10px;
 }
 
 .dv-success-meta-row:last-child {
@@ -351,22 +676,81 @@
 }
 
 .dv-smeta-label {
-  color: var(--color-text-secondary);
-  font-weight: var(--font-medium);
+  color: #64748B;
+  font-weight: 500;
 }
 
 .dv-smeta-val {
-  color: var(--color-text-primary);
+  color: #0F172A;
+  font-weight: 600;
 }
 
 .dv-success-actions {
   display: flex;
   justify-content: center;
-  gap: var(--space-4);
+  gap: 14px;
 }
 
-@media (max-width: 900px) {
+/* ==========================================================================
+   8. RESPONSIVE MEDIA QUERIES
+   ========================================================================== */
+
+@media (max-width: 992px) {
   .dv-upload-grid {
     grid-template-columns: 1fr;
   }
+
+  .dv-upload-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px 28px;
+  }
+
+  .dv-upload-hero__badge {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 640px) {
+  .dv-upload-content {
+    gap: 20px;
+    padding-top: 10px;
+  }
+
+  .dv-upload-hero {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .dv-dropzone-card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .dv-dropzone {
+    padding: 28px 16px;
+  }
+
+  .dv-upload-info-card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .dv-upload-success-card {
+    padding: 24px 20px;
+  }
+
+  .dv-success-actions {
+    flex-direction: column;
+  }
+
+  .dv-success-actions button {
+    width: 100%;
+  }
+}
+
+@keyframes dvFadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

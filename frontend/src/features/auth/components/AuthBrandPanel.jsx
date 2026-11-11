@@ -86,6 +86,12 @@ export default function AuthBrandPanel({
       {/* 3D Illustration Frame */}
       <div className="dv-editorial-visual-frame">
         <div className="dv-editorial-image-wrapper">
+          {/* Floating Apple-Style Badges */}
+          <div className="dv-editorial-float-badge dv-editorial-float-badge--top">
+            <span className="dv-editorial-live-dot" />
+            <span>Hardware Enclave Active</span>
+          </div>
+
           <img
             src={imageSrc}
             alt={imageAlt}
@@ -96,8 +102,13 @@ export default function AuthBrandPanel({
               e.currentTarget.style.display = 'none';
             }}
           />
-          {/* Subtle warm glow overlay */}
+          {/* Subtle luminous glass overlay */}
           <div className="dv-editorial-image-vignette" />
+
+          <div className="dv-editorial-float-badge dv-editorial-float-badge--bottom">
+            <ShieldCheck size={13} className="dv-editorial-badge-icon" />
+            <span>AES-256-GCM Custody</span>
+          </div>
         </div>
       </div>
 

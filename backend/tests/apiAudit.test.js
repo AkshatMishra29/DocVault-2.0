@@ -194,20 +194,25 @@ async function runApiAudit() {
   });
 
   await test('POST /api/documents/upload ingests and executes pipeline', async () => {
-    // Generate valid minimal PDF in-memory
+    // Generate valid minimal PDF with text content in-memory
     const pdfContent = `%PDF-1.4
 1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
 2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj
-3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj
+3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Contents 4 0 R/Resources<<>>>>endobj
+4 0 obj<</Length 55>>stream
+BT /F1 12 Tf 72 712 Td (Auto Insurance Policy POL-88214) Tj ET
+endstream
+endobj
 xref
-0 4
+0 5
 0000000000 65535 f 
 0000000009 00000 n 
 0000000052 00000 n 
 0000000108 00000 n 
-trailer<</Size 4/Root 1 0 R>>
+0000000196 00000 n 
+trailer<</Size 5/Root 1 0 R>>
 startxref
-183
+305
 %%EOF`;
     const boundary = '----WebKitFormBoundaryTest123456';
     const bodyBuffer = Buffer.concat([
@@ -241,7 +246,7 @@ startxref
 
   await test('GET /api/documents/:id/download streams raw binary file', async () => {
     assert.ok(createdDocId);
-    const res = await request(`/api/documents/${createdDocId}/download`);
+    const res = await request(`/api/documents/${createdDocId}/download`, { token: authToken });
     assert.equal(res.status, 200);
     assert.ok(res.body.includes('%PDF-1.4'));
   });

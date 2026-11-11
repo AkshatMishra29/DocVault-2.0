@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
+  docVaultId: { type: String, unique: true, sparse: true, index: true }, // Unique non-sequential DocVault identifier (e.g. DV-XXXX-XXXX)
   passwordHash: { type: String, required: true },
   pinHash: { type: String, required: true }, // 4-to-6 digit quick unlock PIN
   pinLength: { type: Number, default: 4 },    // 4 or 6 digit preference

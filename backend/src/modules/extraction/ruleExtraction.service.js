@@ -50,43 +50,155 @@ const AMOUNT_ANCHORS = [
   /(?:sum\s*insured|idv\s*value)[:.\s]*(?:₹|rs\.?|inr|\$|€|£)?\s*([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{2})?)/i,
 ];
 
+// Date parsing patterns (supports 1950-2050, ordinals, textual months, and separators)
+const MONTH_NAMES = {
+  jan: '01', january: '01',
+  feb: '02', february: '02',
+  mar: '03', march: '03',
+  apr: '04', april: '04',
+  may: '05',
+  jun: '06', june: '06',
+  jul: '07', july: '07',
+  aug: '08', august: '08',
+  sep: '09', sept: '09', september: '09',
+  oct: '10', october: '10',
+  nov: '11', november: '11',
+  dec: '12', december: '12',
+};
+
 // Date parsing patterns
-const DATE_PATTERNS = [
-  // YYYY-MM-DD
-  /\b(20[2-9][0-9]-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01]))\b/g,
-  // DD/MM/YYYY or DD-MM-YYYY
-  /\b((?:0[1-9]|[12][0-9]|3[01])[\/-](?:0[1-9]|1[0-2])[\/-]20[2-9][0-9])\b/g,
-  // DD-MMM-YYYY (e.g. 15-Aug-2025, 04-OCT-2026)
-  /\b((?:0[1-9]|[12][0-9]|3[01])[-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[-\s]20[2-9][0-9])\b/gi,
+export const DATE_PATTERNS = [
+  // YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD
+  /\b((?:19|20)\d{2}[-\/.](?:0?[1-9]|1[0-2])[-\/.](?:0?[1-9]|[12]\d|3[01]))\b/g,
+  // DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
+  /\b((?:0?[1-9]|[12]\d|3[01])[-\/.](?:0?[1-9]|1[0-2])[-\/.](?:19|20)\d{2})\b/g,
+  // DD-MMM-YYYY or DD MMM YYYY or DDth MMM YYYY (e.g. 14th September 2022, 15-Aug-2025)
+  /\b((?:0?[1-9]|[12]\d|3[01])(?:st|nd|rd|th)?[\s,./-]+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s,./-]+(?:19|20)\d{2})\b/gi,
+  // MMM DD, YYYY (e.g. September 14, 2022)
+  /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(?:0?[1-9]|[12]\d|3[01])(?:st|nd|rd|th)?[,\s]+(?:19|20)\d{2})\b/gi,
+  // Formal Phrasing: "this 14th day of September, 2022"
+  /(?:this\s+)?(\d{1,2}(?:st|nd|rd|th)?\s+day\s+of\s+[A-Za-z]+[,\s]+(?:19|20)\d{2})/gi,
+];
+
+// Issue / Completion / Certificate Date Anchors
+const ISSUE_DATE_ANCHORS = [
+  /(?:date\s*of\s*(?:issue|completion|award|passing|examination|birth)|issue\s*date|issued\s*(?:on|at|date)?|awarded\s*(?:on|at|this)?|conferred\s*(?:on|this)?|completion\s*date|dated\b[:.\s-]*|certified\s*(?:on|this)?|given\s*(?:under\s*our\s*hand\s*)?(?:this)?|date\s*of\s*certification)[:.\s-]*([A-Za-z0-9\s,\/.-]{6,35})/i,
+  /(?:on\s*this\s*)([0-9]{1,2}(?:st|nd|rd|th)?\s+day\s+of\s+[A-Za-z]+\s*,?\s*[0-9]{4})/i,
+  /(?:date[:.\s-]*)([A-Za-z0-9\s,\/.-]{6,30})/i,
 ];
 
 // Expiry / Renewal Date Anchor Keywords
 const EXPIRY_ANCHORS = [
-  /(?:valid\s*(?:up\s*to|till|until|through)|expires\s*(?:on|date)?|expiry\s*date|renewal\s*date|due\s*date|warranty\s*(?:until|up\s*to|expiry))[:.\s]*([A-Za-z0-9\/-]{8,15})/i,
+  /(?:valid\s*(?:up\s*to|till|until|through)|expires\s*(?:on|date)?|expiry\s*date|renewal\s*date|due\s*date|warranty\s*(?:until|up\s*to|expiry))[:.\s]*([A-Za-z0-9\s,\/.-]{6,30})/i,
+];
+
+// Certificate and Credential ID Anchors
+const CERTIFICATE_ID_ANCHORS = [
+  /(?:certificate\s*(?:number|num|no|#|id)\b[:.\s-]*)([A-Z0-9\/-]{3,35})/i,
+  /(?:credential\s*(?:id|number|no|#)\b[:.\s-]*)([A-Z0-9\/-]{3,35})/i,
+  /(?:serial\s*(?:number|num|no|#)\b[:.\s-]*)([A-Z0-9\/-]{3,35})/i,
+  /(?:license\s*(?:number|num|no|#)\b[:.\s-]*)([A-Z0-9\/-]{3,35})/i,
+];
+
+// Certificate Recipient Name Anchors
+const RECIPIENT_NAME_ANCHORS = [
+  /(?:this\s*is\s*to\s*certify\s*that\s*)([A-Z][a-zA-Z\s.']{2,40}?)(?:\n|\r|\s+has|\s+of|\s+bearing|\s+son|\s+daughter|\s+successfully|,)/i,
+  /(?:awarded\s*to\s*)([A-Z][a-zA-Z\s.']{2,40}?)(?:\n|\r|\s+for|\s+in|\s+on|,)/i,
+  /(?:presented\s*to\s*)([A-Z][a-zA-Z\s.']{2,40}?)(?:\n|\r|\s+for|\s+in|\s+on|,)/i,
+  /(?:certifies\s*that\s*)([A-Z][a-zA-Z\s.']{2,40}?)(?:\n|\r|\s+has|\s+successfully|,)/i,
+];
+
+// Certificate Issuing Body Anchors
+const ISSUING_ORG_ANCHORS = [
+  /(?:issued\s*by\b[:.\s-]*)([A-Z0-9\s.,&'-]{3,60})/i,
+  /((?:University|Institute|Academy|College|Board|Department|Council|Association)\s+of\s+[A-Za-z\s.,&'-]{3,50})/i,
+];
+
+// Course / Degree / Certification Title Anchors
+const COURSE_NAME_ANCHORS = [
+  /(?:(?:for|has)?\s*successfully\s*completed\s*(?:the\s+(?:graduate\s+program|course|degree|training|program)\s+(?:in|on)\s+)?)(["']?[A-Za-z0-9\s.,&'-]{4,60}["']?)/i,
+  /(?:degree\s*of\s*)([A-Za-z0-9\s.,&'-]{4,50})/i,
+  /(?:in\s+recognition\s+of\s+)(["']?[A-Za-z0-9\s.,&'-]{4,50}["']?)/i,
 ];
 
 /**
  * Standardize various date formats to ISO YYYY-MM-DD
+ * Handles ordinals (14th), textual months (September), phrasing, numeric (dots, slashes), 1950-2050
  */
 export function normalizeDateToIso(dateStr) {
-  if (!dateStr) return null;
-  const clean = dateStr.trim();
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  let clean = dateStr.trim().replace(/^[:.\s-]+|[:.\s-]+$/g, '');
 
-  // YYYY-MM-DD already
-  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+  // 1. Direct ISO YYYY-MM-DD
+  const isoMatch = clean.match(/\b(19\d{2}|20\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\b/);
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
 
-  // DD/MM/YYYY or DD-MM-YYYY
-  const dmyMatch = clean.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
-  if (dmyMatch) {
-    const day = dmyMatch[1].padStart(2, '0');
-    const month = dmyMatch[2].padStart(2, '0');
-    const year = dmyMatch[3];
-    return `${year}-${month}-${day}`;
+  // 2. YYYY/MM/DD or YYYY.MM.DD
+  const ymdMatch = clean.match(/\b(19\d{2}|20\d{2})[\/.](0?[1-9]|1[0-2])[\/.](0?[1-9]|[12]\d|3[01])\b/);
+  if (ymdMatch) {
+    return `${ymdMatch[1]}-${ymdMatch[2].padStart(2, '0')}-${ymdMatch[3].padStart(2, '0')}`;
   }
 
-  // Textual date parse: 15-Aug-2025
+  // 3. Phrasing: "this 14th day of September, 2022" or "14th day of September 2022"
+  const phrasingMatch = clean.match(/(?:this\s+)?(\d{1,2})(?:st|nd|rd|th)?\s+day\s+of\s+([A-Za-z]+)[,\s]+(19\d{2}|20\d{2})/i);
+  if (phrasingMatch) {
+    const day = phrasingMatch[1].padStart(2, '0');
+    const monthKey = phrasingMatch[2].toLowerCase();
+    const month = MONTH_NAMES[monthKey] || MONTH_NAMES[monthKey.slice(0, 3)];
+    const year = phrasingMatch[3];
+    if (month) return `${year}-${month}-${day}`;
+  }
+
+  // 4. DD Month YYYY (e.g. "14th September 2022", "14 September 2022", "14-Sep-2022", "14.Sep.2022", "14/Oct/2023")
+  const dmyTextMatch = clean.match(/\b(\d{1,2})(?:st|nd|rd|th)?[\s,./-]+([A-Za-z]{3,10})[\s,./-]+(19\d{2}|20\d{2})\b/i);
+  if (dmyTextMatch) {
+    const day = dmyTextMatch[1].padStart(2, '0');
+    const monthKey = dmyTextMatch[2].toLowerCase();
+    const month = MONTH_NAMES[monthKey] || MONTH_NAMES[monthKey.slice(0, 3)];
+    const year = dmyTextMatch[3];
+    if (month) return `${year}-${month}-${day}`;
+  }
+
+  // 5. Month DD, YYYY (e.g. "September 14, 2022", "September 14th 2022", "Sep 14, 2022")
+  const mdyTextMatch = clean.match(/\b([A-Za-z]{3,10})\s+(\d{1,2})(?:st|nd|rd|th)?(?:,\s*|\s+)(19\d{2}|20\d{2})\b/i);
+  if (mdyTextMatch) {
+    const monthKey = mdyTextMatch[1].toLowerCase();
+    const month = MONTH_NAMES[monthKey] || MONTH_NAMES[monthKey.slice(0, 3)];
+    const day = mdyTextMatch[2].padStart(2, '0');
+    const year = mdyTextMatch[3];
+    if (month) return `${year}-${month}-${day}`;
+  }
+
+  // 6. Numeric DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+  const numMatch = clean.match(/\b(\d{1,2})[\/.-](\d{1,2})[\/.-](19\d{2}|20\d{2})\b/);
+  if (numMatch) {
+    let p1 = parseInt(numMatch[1], 10);
+    let p2 = parseInt(numMatch[2], 10);
+    const year = numMatch[3];
+    let day = p1;
+    let month = p2;
+    // If p1 <= 12 and p2 > 12 -> MM/DD/YYYY format
+    if (p1 <= 12 && p2 > 12) {
+      month = p1;
+      day = p2;
+    }
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+
+  // 7. Month YYYY (e.g. "October 2023", "Oct 2023")
+  const myTextMatch = clean.match(/\b([A-Za-z]{3,10})[,\s]+(19\d{2}|20\d{2})\b/i);
+  if (myTextMatch) {
+    const monthKey = myTextMatch[1].toLowerCase();
+    const month = MONTH_NAMES[monthKey] || MONTH_NAMES[monthKey.slice(0, 3)];
+    const year = myTextMatch[2];
+    if (month) return `${year}-${month}-01`;
+  }
+
+  // 8. Fallback to native Date parser (bounded 1950 - 2050)
   const parsed = new Date(clean);
-  if (!isNaN(parsed.getTime()) && parsed.getFullYear() >= 1990 && parsed.getFullYear() <= 2040) {
+  if (!isNaN(parsed.getTime()) && parsed.getFullYear() >= 1950 && parsed.getFullYear() <= 2050) {
     const y = parsed.getFullYear();
     const m = String(parsed.getMonth() + 1).padStart(2, '0');
     const d = String(parsed.getDate()).padStart(2, '0');
@@ -130,8 +242,8 @@ export function classifyDocumentByRules(text, filename = '') {
   if (/admit\s*card|roll\s*number|examination|hall\s*ticket|center\s*code|candidate/.test(lower)) {
     scores['Admit Card'] += 40;
   }
-  if (/degree|marksheet|diploma|university|board\s*of\s*education|passed\s*with|semester/.test(lower)) {
-    scores['Academic Certificate'] += 35;
+  if (/degree|marksheet|diploma|university|board\s*of\s*education|passed\s*with|semester|certif(?:icate|ication|y|ied)|completion|awarded\s*to|presented\s*to|conferred|accreditation|achievement|course\s*of|program\s*of/.test(lower)) {
+    scores['Academic Certificate'] += 40;
   }
 
   // Bank Statement rules
@@ -267,6 +379,90 @@ export function extractTier1Fields(text, pageNumber = 1) {
     }
   }
 
+  // 4b. Certificate & Credential ID Extraction
+  for (const anchor of CERTIFICATE_ID_ANCHORS) {
+    const match = text.match(anchor);
+    if (match && match[1]) {
+      const certId = match[1].trim().replace(/[,;:]+$/, '');
+      if (certId.length >= 3 && !certId.toLowerCase().includes('date')) {
+        fields.push({
+          fieldName: 'certificate_number',
+          value: certId,
+          evidence: match[0].trim(),
+          pageNumber,
+          extractionMethod: 'regex',
+          confidence: 0.94,
+          verificationStatus: 'accepted',
+          pipelineVersion: '1.0.0',
+        });
+        break;
+      }
+    }
+  }
+
+  // 4c. Certificate Recipient Name Extraction
+  for (const anchor of RECIPIENT_NAME_ANCHORS) {
+    const match = text.match(anchor);
+    if (match && match[1]) {
+      const recipient = match[1].replace(/[\n\r]+/g, ' ').replace(/\s+(?:has|of|bearing|son|daughter|successfully).*/i, '').trim().replace(/[,;:]+$/, '');
+      if (recipient.length >= 3) {
+        fields.push({
+          fieldName: 'recipient_name',
+          value: recipient,
+          evidence: match[0].trim(),
+          pageNumber,
+          extractionMethod: 'regex',
+          confidence: 0.92,
+          verificationStatus: 'accepted',
+          pipelineVersion: '1.0.0',
+        });
+        break;
+      }
+    }
+  }
+
+  // 4d. Certificate Issuing Organization Extraction
+  for (const anchor of ISSUING_ORG_ANCHORS) {
+    const match = text.match(anchor);
+    if (match && match[1]) {
+      const org = match[1].trim().replace(/[,;:]+$/, '');
+      if (org.length >= 4) {
+        fields.push({
+          fieldName: 'issuing_organization',
+          value: org,
+          evidence: match[0].trim(),
+          pageNumber,
+          extractionMethod: 'regex',
+          confidence: 0.90,
+          verificationStatus: 'accepted',
+          pipelineVersion: '1.0.0',
+        });
+        break;
+      }
+    }
+  }
+
+  // 4e. Certificate Course / Degree Title Extraction
+  for (const anchor of COURSE_NAME_ANCHORS) {
+    const match = text.match(anchor);
+    if (match && match[1]) {
+      const course = match[1].split(/[\n\r]/)[0].trim().replace(/['",;:]+$/g, '').replace(/^['"]/, '');
+      if (course.length >= 3) {
+        fields.push({
+          fieldName: 'course_name',
+          value: course,
+          evidence: match[0].trim(),
+          pageNumber,
+          extractionMethod: 'regex',
+          confidence: 0.90,
+          verificationStatus: 'accepted',
+          pipelineVersion: '1.0.0',
+        });
+        break;
+      }
+    }
+  }
+
   // 5. Total Amount Extraction
   for (const anchor of AMOUNT_ANCHORS) {
     const match = text.match(anchor);
@@ -289,7 +485,31 @@ export function extractTier1Fields(text, pageNumber = 1) {
     }
   }
 
-  // 6. Expiry / Renewal Date Extraction
+  // 6a. Explicit Issue / Completion / Award Date Extraction
+  let explicitIssueFound = false;
+  for (const anchor of ISSUE_DATE_ANCHORS) {
+    const match = text.match(anchor);
+    if (match && match[1]) {
+      const rawDate = match[1].trim();
+      const isoDate = normalizeDateToIso(rawDate);
+      if (isoDate) {
+        fields.push({
+          fieldName: 'issue_date',
+          value: isoDate,
+          evidence: match[0].trim(),
+          pageNumber,
+          extractionMethod: 'regex',
+          confidence: 0.95,
+          verificationStatus: 'accepted',
+          pipelineVersion: '1.0.0',
+        });
+        explicitIssueFound = true;
+        break;
+      }
+    }
+  }
+
+  // 6b. Expiry / Renewal Date Extraction
   for (const anchor of EXPIRY_ANCHORS) {
     const match = text.match(anchor);
     if (match && match[1]) {

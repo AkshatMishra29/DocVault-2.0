@@ -11,6 +11,8 @@ import app from './app.js';
 import { config } from './config/index.js';
 import { initFirebaseAdmin } from './services/storage/firebaseService.js';
 import { startJobWorker } from './modules/pipeline/jobQueue.service.js';
+import { backfillDocVaultIds } from './modules/auth/docVaultId.util.js';
+import { startSharingExpiryWorker } from './modules/sharing/expiryWorker.service.js';
 
 /* ==========================================================================
    Server Initialization
@@ -23,6 +25,12 @@ async function startServer() {
 
     // Initialize Universal Pipeline Background Job Worker
     startJobWorker();
+
+    // Auto-backfill unique DocVault IDs for any users missing them
+    await backfillDocVaultIds();
+
+    // Start background document share expiry worker
+    startSharingExpiryWorker();
 
     app.listen(config.port, () => {
       console.log(`[DocVault Server] API running on http://localhost:${config.port}`);

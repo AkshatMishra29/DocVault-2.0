@@ -140,10 +140,12 @@
 
 .dv-about-hero-card {
   position: relative;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  height: 140px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  height: 150px;
+  box-shadow: 0 12px 30px -6px rgba(0, 113, 227, 0.18),
+              0 2px 8px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .dv-about-hero-img {
@@ -151,38 +153,49 @@
   height: 100%;
   object-fit: cover;
   object-position: center;
+  transform: scale(1.02);
+  transition: transform 0.4s ease;
+}
+
+.dv-about-hero-card:hover .dv-about-hero-img {
+  transform: scale(1.06);
 }
 
 .dv-about-hero-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.2) 0%, rgba(15, 23, 42, 0.85) 100%);
+  background: 
+    radial-gradient(ellipse at 80% 20%, rgba(0, 113, 227, 0.35) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.2) 0%, rgba(15, 23, 42, 0.9) 100%);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 16px;
+  padding: 18px;
 }
 
 .dv-about-hero-tag {
   align-self: flex-start;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", monospace;
+  font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: #0070F2;
+  background: rgba(0, 113, 227, 0.9);
   color: #FFFFFF;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
   margin-bottom: 6px;
+  backdrop-filter: blur(8px);
 }
 
 .dv-about-hero-heading {
   margin: 0;
   color: #FFFFFF;
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 16.5px;
+  font-weight: 700;
   line-height: 1.3;
+  letter-spacing: -0.015em;
 }
 
 .dv-about-intro {

@@ -7,7 +7,12 @@ import { sanitizeKeyDetails } from '../../utils/sanitize.js';
 import { detectSensitiveDocument } from '../../services/pipeline/sensitiveDetector.js';
 import { AI_POLICIES } from '../../services/pipeline/privacyGate.js';
 import { enqueueDocumentJob, cancelJobsForDocument } from '../pipeline/jobQueue.service.js';
-import { validateMagicBytes, estimatePdfPageCount } from '../extraction/ingestionGuard.service.js';
+import { validateFileSignature, validateImageSafety, validatePdfSafety, generateSafeServerFilename, UploadSecurityError } from '../extraction/uploadValidation.service.js';
+import { validateDocumentImage, DocumentImageValidationError } from '../extraction/documentImageValidation.service.js';
+import { extractTextFromPDF, convertPdfToImages } from '../../services/ocr/ocrService.js';
+import { checkUploadRateLimit } from '../extraction/uploadRateLimiter.js';
+import { DocumentAccessControlService } from '../sharing/accessControl.service.js';
+import { ShareAccessLog, SHARE_ACTION } from '../sharing/models/shareAccessLog.model.js';
 import { config } from '../../config/index.js';
 
 const router = Router();
@@ -40,23 +45,41 @@ router.get('/', requireAuth, async (req, res) => {
   }
 });
 
-// GET /api/documents/:id - Get single document details
+// GET /api/documents/:id - Get single document details (Protected with Central Access Control)
 router.get('/:id', requireAuth, async (req, res) => {
   try {
-    const doc = await Document.findOne({ _id: req.params.id, userId: req.user.userId }).select('-fileData');
+    const access = await DocumentAccessControlService.canViewDocument(req.user.userId, req.params.id);
+    if (!access.allowed) {
+      return res.status(access.reason === 'Document not found' ? 404 : 403).json({
+        success: false,
+        error: access.reason || 'Access denied to this document.',
+      });
+    }
+
+    const doc = await Document.findById(req.params.id).select('-fileData');
     if (!doc) {
       return res.status(404).json({ success: false, error: 'Document not found' });
     }
 
     // Record audit trail
-    await AuditLog.create({
-      userId: req.user.userId,
-      action: 'VIEW',
-      documentTitle: doc.title,
-      device: req.headers['user-agent'] || 'Web Client',
-    }).catch(err => console.warn('[Audit Log] Failed to save view audit:', err.message));
+    if (access.isOwner) {
+      await AuditLog.create({
+        userId: req.user.userId,
+        action: 'VIEW',
+        documentTitle: doc.title,
+        device: req.headers['user-agent'] || 'Web Client',
+      }).catch(err => console.warn('[Audit Log] Failed to save view audit:', err.message));
+    } else {
+      await ShareAccessLog.create({
+        ownerId: doc.userId,
+        recipientId: req.user.userId,
+        documentId: doc._id,
+        action: SHARE_ACTION.VIEWED,
+        metadata: { client: req.headers['user-agent'] || 'Web Client' },
+      }).catch(() => {});
+    }
 
-    res.json({ success: true, data: doc });
+    res.json({ success: true, data: doc, isOwner: access.isOwner, permissions: access.grant?.permissions });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -78,13 +101,54 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       return res.status(400).json({ success: false, error: 'No file provided' });
     }
 
+    // 0. Upload Rate Limiting (Protects server from DoS / resource exhaustion)
+    const rateCheck = checkUploadRateLimit(req.user.userId);
+    if (!rateCheck.allowed) {
+      return res.status(429).json({ success: false, error: rateCheck.error, retryAfter: rateCheck.retryAfterSec });
+    }
+
     const { originalname, mimetype, buffer } = req.file;
 
-    // 1. Validate magic bytes & estimate page count
-    const signature = validateMagicBytes(buffer, mimetype, originalname);
+    // 1. Layer 1: Strict File Security & Signature Validation
+    let signature;
     let pageCount = 1;
-    if (signature.detectedType === 'application/pdf') {
-      pageCount = estimatePdfPageCount(buffer); // Throws if > 25 pages
+
+    try {
+      signature = validateFileSignature(buffer, mimetype, originalname);
+
+      if (signature.detectedType === 'application/pdf') {
+        const pdfCheck = validatePdfSafety(buffer);
+        pageCount = pdfCheck.pageCount;
+
+        // Verify PDF contains readable text or valid document page structure (reject blank PDF)
+        const pdfText = await extractTextFromPDF(buffer);
+        const cleanPdfText = pdfText.replace(/-- \d+ of \d+ --/g, '').replace(/\s+/g, ' ').trim();
+        if (cleanPdfText.length < 15) {
+          // If digital text layer is minimal, inspect rendered first page image
+          try {
+            const renderedPages = await convertPdfToImages(buffer, 1, 1.0);
+            if (renderedPages && renderedPages.length > 0) {
+              await validateDocumentImage(renderedPages[0]);
+            }
+          } catch (renderErr) {
+            if (renderErr instanceof DocumentImageValidationError && renderErr.reasonCode === 'BLANK_IMAGE') {
+              throw renderErr;
+            }
+            console.warn('[PDF Guard] Page rendering inspection warning:', renderErr.message);
+          }
+        }
+      } else if (signature.detectedType.startsWith('image/')) {
+        const imgMeta = await validateImageSafety(buffer);
+        // 2. Layer 2: Document Image Guardrail (Rejects blank, casual portraits, selfies, collages)
+        await validateDocumentImage(buffer, imgMeta);
+      }
+    } catch (valErr) {
+      const statusCode = (valErr instanceof UploadSecurityError || valErr instanceof DocumentImageValidationError) ? 400 : 500;
+      return res.status(statusCode).json({
+        success: false,
+        error: valErr.message,
+        code: valErr.code || valErr.reasonCode || 'VALIDATION_FAILED'
+      });
     }
 
     // 2. Compute deterministic SHA-256
@@ -342,17 +406,31 @@ router.patch('/:id/ai-policy', requireAuth, async (req, res) => {
   }
 });
 
-// GET /api/documents/:id/download - Stream document content directly (Protected with ownership check)
+// GET /api/documents/:id/download - Stream document content directly (Protected with Central Access Control)
 router.get('/:id/download', requireAuth, async (req, res) => {
   try {
-    // Ownership check (404 for other users)
-    const doc = await Document.findOne({ _id: req.params.id, userId: req.user.userId });
+    const access = await DocumentAccessControlService.canDownloadDocument(req.user.userId, req.params.id);
+    if (!access.allowed) {
+      return res.status(access.reason === 'Document not found' ? 404 : 403).send(access.reason || 'Download permission denied');
+    }
+
+    const doc = await Document.findById(req.params.id);
     if (!doc) {
       return res.status(404).send('Document not found');
     }
 
     if (!doc.fileData) {
       return res.status(404).send('File content unavailable in database storage');
+    }
+
+    if (!access.isOwner) {
+      await ShareAccessLog.create({
+        ownerId: doc.userId,
+        recipientId: req.user.userId,
+        documentId: doc._id,
+        action: SHARE_ACTION.DOWNLOADED,
+        metadata: { client: req.headers['user-agent'] || 'Web Client' },
+      }).catch(() => {});
     }
 
     const fileBuffer = Buffer.from(doc.fileData, 'base64');

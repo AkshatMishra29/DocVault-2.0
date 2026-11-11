@@ -19,7 +19,7 @@ function getSmtpTransporter() {
         user: user.trim(),
         pass: cleanPass,
       },
-      connectionTimeout: 8000, // 8s timeout to avoid hanging on blocked cloud ports
+      connectionTimeout: 8000,
       greetingTimeout: 8000,
       socketTimeout: 10000,
     });
@@ -30,14 +30,12 @@ function getSmtpTransporter() {
 }
 
 /**
- * Dispatch email via Resend REST API (HTTPS Port 443 - Never blocked by Render/AWS/Cloud)
+ * Dispatch email via Resend REST API (HTTPS Port 443)
  */
 async function sendViaResend({ apiKey, from, to, subject, html, text }) {
   console.log(`[EmailService] Attempting HTTPS dispatch via Resend API to: ${to}`);
-  // If user has not configured a custom verified domain, default to Resend's free onboarding domain
   const sender = process.env.RESEND_FROM || 'DocVault <onboarding@resend.dev>';
 
-  // Auto-heal accidental leading characters (e.g. "ire_..." -> "re_...")
   let cleanKey = (apiKey || '').trim();
   if (cleanKey.startsWith('ire_')) {
     cleanKey = cleanKey.slice(1);
@@ -46,7 +44,7 @@ async function sendViaResend({ apiKey, from, to, subject, html, text }) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${cleanKey}`,
+      Authorization: `Bearer ${cleanKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -74,42 +72,11 @@ async function sendViaResend({ apiKey, from, to, subject, html, text }) {
 }
 
 /**
- * Dispatch email via Brevo REST API (HTTPS Port 443 - Never blocked by Render/AWS/Cloud)
- */
-async function sendViaBrevo({ apiKey, from, to, subject, html, text }) {
-  console.log(`[EmailService] Attempting HTTPS dispatch via Brevo API to: ${to}`);
-  const senderEmail = from || process.env.SMTP_USER || 'security@docvault.local';
-
-  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: {
-      'api-key': apiKey.trim(),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      sender: { name: 'DocVault Security', email: senderEmail },
-      to: [{ email: to }],
-      subject,
-      htmlContent: html,
-      textContent: text,
-    }),
-  });
-
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || `Brevo API Error: ${res.statusText}`);
-  }
-
-  console.log(`[EmailService] Successfully sent via Brevo API. Message ID: ${data.messageId}`);
-  return { messageId: data.messageId, provider: 'brevo' };
-}
-
-/**
- * Master OTP Email Dispatcher with automatic Render / Cloud fallback
+ * Master OTP Email Dispatcher
  */
 export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
   const mailOptions = {
-    from: process.env.SMTP_FROM || `"DocVault Security" <${process.env.SMTP_USER || 'security@docvault.local'}>`,
+    from: process.env.SMTP_FROM || `"DocVault Security" <${process.env.SMTP_USER || 'akshatmishraxic29@gmail.com'}>`,
     to: email,
     subject: `Your DocVault ${purpose} Code: ${otpCode}`,
     text: `Your DocVault verification code is: ${otpCode}. It expires in 10 minutes. If you did not request this, ignore this email.`,
@@ -138,10 +105,23 @@ export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
           If you did not request this code, you can safely ignore this email.
         </div>
       </div>
-    `
+    `,
   };
 
-  // Provider 1: Resend HTTP API (Port 443 - Recommended for Render)
+  // 1. Primary: Direct Gmail SMTP Transporter (Sends to ANY email address)
+  const transporter = getSmtpTransporter();
+  if (transporter) {
+    try {
+      console.log(`[EmailService] Attempting Gmail SMTP dispatch to: ${email}`);
+      const result = await transporter.sendMail(mailOptions);
+      console.log('[EmailService] Gmail SMTP dispatch succeeded! Message ID:', result.messageId);
+      return result;
+    } catch (smtpErr) {
+      console.error('[EmailService ERROR] Gmail SMTP dispatch failed:', smtpErr.message);
+    }
+  }
+
+  // 2. Fallback: Resend HTTP API (Port 443)
   if (process.env.RESEND_API_KEY) {
     try {
       return await sendViaResend({
@@ -156,83 +136,23 @@ export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
       console.error('[EmailService] Resend dispatch failed:', err.message);
       if (err.isResendSandbox) {
         console.warn('========================================================================');
-        console.warn(`[EmailService RESEND SANDBOX NOTIFICATION] Recipient: ${email}`);
+        console.warn(`[EmailService RESEND SANDBOX] Recipient: ${email}`);
         console.warn('Resend testing mode only delivers to account owner: akshatmishra2904@gmail.com');
-        console.warn(`FALLBACK VERIFICATION CODE FOR [ ${email} ]: >>> ${otpCode} <<<`);
+        console.warn(`FALLBACK OTP CODE FOR [ ${email} ]: >>> ${otpCode} <<<`);
         console.warn('========================================================================');
         return {
           messageId: 'resend-sandbox-' + Date.now(),
           mocked: true,
           devOtp: otpCode,
-          warning: 'Resend free testing domain is restricted to account owner email.'
         };
       }
     }
   }
 
-  // Provider 2: Brevo HTTP API (Port 443)
-  if (process.env.BREVO_API_KEY) {
-    try {
-      return await sendViaBrevo({
-        apiKey: process.env.BREVO_API_KEY,
-        from: process.env.SMTP_USER,
-        to: mailOptions.to,
-        subject: mailOptions.subject,
-        html: mailOptions.html,
-        text: mailOptions.text,
-      });
-    } catch (err) {
-      console.error('[EmailService] Brevo dispatch failed:', err.message);
-    }
-  }
-
-  // Provider 3: Gmail SMTP Transporter (Port 587/465)
-  const transporter = getSmtpTransporter();
-  if (transporter) {
-    try {
-      console.log(`[EmailService] Attempting Gmail SMTP dispatch to: ${email}`);
-      const result = await transporter.sendMail(mailOptions);
-      console.log('[EmailService] Gmail SMTP dispatch succeeded! Message ID:', result.messageId);
-      return result;
-    } catch (smtpErr) {
-      console.error('[EmailService ERROR] Gmail SMTP dispatch failed:', smtpErr.message);
-
-      // Detect Render egress firewall blocking SMTP ports
-      const isFirewallBlocked = smtpErr.code === 'ETIMEDOUT' || smtpErr.code === 'ECONNREFUSED' || smtpErr.message.includes('timeout');
-      if (isFirewallBlocked) {
-        console.warn('========================================================================');
-        console.warn('[EmailService CLOUD ALERT] Render/Cloud firewall blocked SMTP port 587!');
-        console.warn('Render Free Tier blocks outbound SMTP ports 25, 465, and 587 to prevent spam.');
-        console.warn('SOLUTION: Set RESEND_API_KEY in Render Environment Variables (works over port 443).');
-        console.warn(`EMERGENCY LOGGED OTP FOR [ ${email} ]: >>> ${otpCode} <<<`);
-        console.warn('========================================================================');
-
-        // Graceful fallback: Do not crash account creation on Render Free Tier
-        return {
-          messageId: 'mock-firewall-' + Date.now(),
-          mocked: true,
-          devOtp: otpCode,
-          warning: 'Render Free Tier blocked outbound SMTP. Fallback active.'
-        };
-      }
-
-      console.warn(`[EmailService] SMTP error (${smtpErr.message}). Falling back to emergency OTP logging for: ${email}`);
-      return {
-        messageId: 'mock-error-' + Date.now(),
-        mocked: true,
-        devOtp: otpCode,
-        warning: smtpErr.message
-      };
-    }
-  }
-
-  // Fallback 4: In-Console Logger (When no credentials exist in Render environment)
+  // 3. Fallback: Console Logging for development
   console.warn('========================================================================');
-  console.warn('[EmailService NO CREDENTIALS CONFIGURED]');
-  console.warn('Neither RESEND_API_KEY nor SMTP_USER / SMTP_PASS found in environment variables.');
-  console.warn('Please add SMTP_USER & SMTP_PASS (or RESEND_API_KEY) to your Render Dashboard.');
   console.warn(`DISPATCHED OTP FOR [ ${email} ]: >>> ${otpCode} <<<`);
   console.warn('========================================================================');
 
-  return { messageId: 'mock-console-' + Date.now(), mocked: true };
+  return { messageId: 'mock-console-' + Date.now(), mocked: true, devOtp: otpCode };
 }
