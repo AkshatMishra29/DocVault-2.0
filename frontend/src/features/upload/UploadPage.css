@@ -33,15 +33,14 @@
   background: 
     radial-gradient(ellipse at 88% 18%, rgba(0, 113, 227, 0.08) 0%, transparent 55%),
     radial-gradient(ellipse at 12% 82%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
-    #FFFFFF;
-  border: 1px solid rgba(0, 113, 227, 0.15);
+    var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 22px;
   padding: 30px 36px;
-  box-shadow: 
-    0 12px 32px -4px rgba(15, 23, 42, 0.04),
-    0 2px 8px -2px rgba(15, 23, 42, 0.02);
+  box-shadow: var(--shadow-sm);
   position: relative;
   overflow: hidden;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
 .dv-upload-hero::before {
@@ -98,7 +97,7 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
   font-size: clamp(22px, 2.6vw, 28px);
   font-weight: 700;
-  color: #0F172A;
+  color: var(--color-text-primary);
   letter-spacing: -0.025em;
   margin: 0 0 8px 0;
   line-height: 1.2;
@@ -113,7 +112,7 @@
 
 .dv-upload-hero__desc {
   font-size: 14px;
-  color: #475569;
+  color: var(--color-text-secondary);
   line-height: 1.55;
   margin: 0;
 }
@@ -144,7 +143,7 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: 11px;
   font-weight: 600;
-  color: #64748B;
+  color: var(--color-text-secondary);
   margin-top: 2px;
 }
 
@@ -166,8 +165,8 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
-  background: #FFFFFF;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 22px;
   padding: 28px 32px;
   box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.03);
@@ -241,14 +240,14 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   font-size: 16.5px;
   font-weight: 700;
-  color: #0F172A;
+  color: var(--color-text-primary);
   letter-spacing: -0.015em;
   margin: 0 0 6px 0;
 }
 
 .dv-dropzone-sub {
   font-size: 13px;
-  color: #64748B;
+  color: var(--color-text-secondary);
   margin: 0 0 16px 0;
 }
 
@@ -266,9 +265,9 @@
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 9999px;
-  background: #FFFFFF;
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  color: #475569;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
 }
 
@@ -303,7 +302,7 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   font-size: 14.5px;
   font-weight: 700;
-  color: #0F172A;
+  color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -313,7 +312,7 @@
   display: block;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: 12px;
-  color: #64748B;
+  color: var(--color-text-secondary);
   margin-top: 2px;
 }
 
@@ -326,8 +325,8 @@
   flex-direction: column;
   gap: 8px;
   padding: 16px 20px;
-  background: #F8FAFC;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
   border-radius: 16px;
   animation: dvFadeInUp 0.25s ease;
 }
@@ -339,22 +338,22 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: 13px;
   font-weight: 700;
-  color: #0F172A;
+  color: var(--color-text-primary);
 }
 
 .dv-rename-hint {
   font-weight: 500;
-  color: #64748B;
+  color: var(--color-text-secondary);
   font-size: 12px;
 }
 
 .dv-rename-input {
   width: 100%;
   padding: 10px 14px;
-  border: 1px solid rgba(226, 232, 240, 0.95);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  background: #FFFFFF;
-  color: #0F172A;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: 13.5px;
   transition: all 0.2s ease;
@@ -369,7 +368,7 @@
 
 .dv-rename-tip {
   font-size: 11.5px;
-  color: #64748B;
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
@@ -388,7 +387,7 @@
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  color: #64748B;
+  color: var(--color-text-secondary);
   letter-spacing: 0.05em;
 }
 
@@ -404,20 +403,20 @@
   gap: 14px;
   padding: 16px 20px;
   border-radius: 16px;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  background: #F8FAFC;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-secondary);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dv-privacy-option:hover {
-  background: #FFFFFF;
+  background: var(--color-surface);
   border-color: rgba(0, 113, 227, 0.3);
   transform: translateY(-1px);
 }
 
 .dv-privacy-option--active {
-  background: #FFFFFF;
+  background: var(--color-surface);
   border-color: #0071E3;
   box-shadow: 0 4px 16px rgba(0, 113, 227, 0.08);
 }
@@ -440,12 +439,12 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   font-size: 14px;
   font-weight: 700;
-  color: #0F172A;
+  color: var(--color-text-primary);
 }
 
 .dv-popt-text p {
   font-size: 12px;
-  color: #64748B;
+  color: var(--color-text-secondary);
   line-height: 1.45;
   margin: 0;
 }
@@ -500,7 +499,7 @@
 .dv-upload-progress-text {
   font-size: 13px;
   font-weight: 600;
-  color: #0F172A;
+  color: var(--color-text-primary);
   margin-top: 2px;
 }
 
@@ -516,8 +515,8 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  background: #FFFFFF;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 22px;
   padding: 28px 32px;
   box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.03);
@@ -538,14 +537,14 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   font-size: 18px;
   font-weight: 700;
-  color: #0F172A;
+  color: var(--color-text-primary);
   letter-spacing: -0.015em;
   margin: 0;
 }
 
 .dv-pipeline-sub {
   font-size: 13px;
-  color: #64748B;
+  color: var(--color-text-secondary);
   line-height: 1.5;
   margin: 0;
 }
@@ -584,13 +583,13 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   font-size: 14px;
   font-weight: 700;
-  color: #0F172A;
+  color: var(--color-text-primary);
   margin: 0 0 2px 0;
 }
 
 .dv-pstep p {
   font-size: 12px;
-  color: #64748B;
+  color: var(--color-text-secondary);
   line-height: 1.45;
   margin: 0;
 }
@@ -603,8 +602,8 @@
   max-width: 680px;
   margin: 0 auto;
   width: 100%;
-  background: #FFFFFF;
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 22px;
   padding: 36px 40px;
   box-shadow: 0 12px 36px -4px rgba(15, 23, 42, 0.06);
@@ -637,22 +636,22 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   font-size: 22px;
   font-weight: 800;
-  color: #0F172A;
+  color: var(--color-text-primary);
   letter-spacing: -0.02em;
   margin: 0 0 6px 0;
 }
 
 .dv-success-sub {
   font-size: 13.5px;
-  color: #64748B;
+  color: var(--color-text-secondary);
   max-width: 460px;
   margin: 0;
   line-height: 1.5;
 }
 
 .dv-success-meta-box {
-  background: #F8FAFC;
-  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
   border-radius: 18px;
   padding: 20px 24px;
   display: flex;
@@ -676,12 +675,12 @@
 }
 
 .dv-smeta-label {
-  color: #64748B;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .dv-smeta-val {
-  color: #0F172A;
+  color: var(--color-text-primary);
   font-weight: 600;
 }
 
@@ -753,4 +752,60 @@
 @keyframes dvFadeInUp {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   DARK MODE ADAPTATIONS (PITCH BLACK & VIBRANT ACCENTS)
+   ========================================================================== */
+
+[data-theme="dark"] .dv-upload-hero {
+  background: 
+    radial-gradient(ellipse at 88% 18%, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 12% 82%, rgba(34, 197, 94, 0.08) 0%, transparent 55%),
+    #121214;
+  border-color: #27272A;
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="dark"] .dv-upload-hero__kicker {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #60A5FA;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .dv-dropzone-card,
+[data-theme="dark"] .dv-upload-info-card,
+[data-theme="dark"] .dv-upload-success-card {
+  background: #121214;
+  border-color: #27272A;
+  box-shadow: 0 4px 18px -2px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .dv-dropzone {
+  background: #18181B;
+  border-color: #3F3F46;
+}
+
+[data-theme="dark"] .dv-dropzone--active {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: #3B82F6;
+}
+
+[data-theme="dark"] .dv-dropzone__icon-box {
+  background: rgba(59, 130, 246, 0.16);
+  color: #60A5FA;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .dv-camera-quick-btn {
+  background: #18181B;
+  border-color: #27272A;
+  color: #FAFAFA;
+}
+
+[data-theme="dark"] .dv-camera-quick-btn:hover {
+  background: #1F1F23;
+  border-color: #3B82F6;
+  color: #60A5FA;
 }

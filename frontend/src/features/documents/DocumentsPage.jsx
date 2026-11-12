@@ -4,7 +4,7 @@ import { apiRequest } from "../../services/api";
 import { 
   FileText, Search, Plus, Filter, ArrowUpDown, Calendar,
   LayoutGrid, List, ChevronRight, Download, Star, ShieldCheck,
-  AlertCircle, X, Users, Share2
+  AlertCircle, X, Users, Share2, CheckSquare, CheckCircle2, ArrowRight
 } from "lucide-react";
 import { sharingService } from "../../services/sharing.service";
 
@@ -13,6 +13,7 @@ import Card from "../../components/common/Card/Card";
 import Button from "../../components/common/Button/Button";
 import Badge from "../../components/common/Badge/Badge";
 import Input from "../../components/common/Input/Input";
+import Modal from "../../components/common/Modal/Modal";
 import EmptyState from "../../components/common/EmptyState/EmptyState";
 import Skeleton from "../../components/common/Skeleton/Skeleton";
 import DocumentTypeIcon from "../../components/common/DocumentTypeIcon/DocumentTypeIcon";
@@ -23,6 +24,70 @@ import "./DocumentsPage.css";
 
 const CATEGORIES = ["All", "Tax Invoice", "Purchase Receipt", "Insurance", "Identity", "Appliances", "Medical", "Other"];
 
+// Pre-built Life Event Checklist Templates (Part C)
+const CHECKLIST_TEMPLATES = [
+  {
+    id: "home_loan",
+    title: "Home Loan Application Pack",
+    icon: "🏠",
+    desc: "Complete document pack required by major lenders (SBI, HDFC, ICICI).",
+    items: [
+      { name: "PAN Card", keywords: ["pan", "identity"], category: "Identity", required: true },
+      { name: "Aadhaar Card", keywords: ["aadhaar", "uidai"], category: "Identity", required: true },
+      { name: "Salary Slips (Last 3 Months)", keywords: ["salary", "payslip", "pay slip"], category: "Financial", required: true },
+      { name: "Bank Statements (Last 6 Months)", keywords: ["bank", "statement"], category: "Financial", required: true },
+      { name: "Form 16 / ITR Filing", keywords: ["form 16", "itr", "tax"], category: "Financial", required: true },
+      { name: "Property Deed / Allotment Letter", keywords: ["property", "deed", "sale", "allotment"], category: "Other", required: false }
+    ]
+  },
+  {
+    id: "passport_renewal",
+    title: "Passport Application / Renewal",
+    icon: "🛂",
+    desc: "Standard checklist for Passport Seva Kendra submission.",
+    items: [
+      { name: "Existing Passport Copy", keywords: ["passport"], category: "Identity", required: true },
+      { name: "Aadhaar Card (Address Proof)", keywords: ["aadhaar", "uidai"], category: "Identity", required: true },
+      { name: "Proof of Date of Birth (Birth Cert / 10th)", keywords: ["birth", "marksheet", "matriculation"], category: "Identity", required: true },
+      { name: "Recent Utility Bill (Electricity/Water)", keywords: ["electricity", "utility", "bill"], category: "Other", required: false }
+    ]
+  },
+  {
+    id: "vehicle_purchase",
+    title: "Vehicle Registration & Motoring Pack",
+    icon: "🚗",
+    desc: "Essential documents for vehicle ownership, insurance claims, and RTO.",
+    items: [
+      { name: "Driving License", keywords: ["driving", "license", "dl"], category: "Identity", required: true },
+      { name: "Aadhaar Card", keywords: ["aadhaar", "uidai"], category: "Identity", required: true },
+      { name: "PAN Card", keywords: ["pan"], category: "Identity", required: true },
+      { name: "Motor Insurance Policy", keywords: ["insurance", "policy", "motor"], category: "Insurance", required: true },
+      { name: "Pollution Certificate (PUC)", keywords: ["puc", "pollution"], category: "Other", required: false }
+    ]
+  },
+  {
+    id: "visa_travel",
+    title: "International Travel / Visa Pack",
+    icon: "✈️",
+    desc: "Standard requirements for tourist and business visa applications.",
+    items: [
+      { name: "Valid Passport (>6 months validity)", keywords: ["passport"], category: "Identity", required: true },
+      { name: "Travel Insurance Policy", keywords: ["travel", "insurance"], category: "Insurance", required: true },
+      { name: "Bank Account Statement", keywords: ["bank", "statement"], category: "Financial", required: true },
+      { name: "Income Tax Returns (ITR / Form 16)", keywords: ["itr", "form 16", "tax"], category: "Financial", required: true }
+    ]
+  }
+];
+
+function matchChecklistItem(item, docs) {
+  return docs.find(doc => {
+    const title = (doc.title || "").toLowerCase();
+    const cat = (doc.category || "").toLowerCase();
+    const orig = (doc.originalName || "").toLowerCase();
+    return item.keywords.some(k => title.includes(k) || cat.includes(k) || orig.includes(k));
+  });
+}
+
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState([]);
   const [sharedDocs, setSharedDocs] = useState([]);
@@ -31,6 +96,8 @@ export default function DocumentsPage() {
   const [error, setError] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'table'
   const [sortBy, setSortBy] = useState("newest");   // 'newest' | 'oldest' | 'title' | 'expiry'
+  const [showChecklistModal, setShowChecklistModal] = useState(false);
+  const [selectedChecklistId, setSelectedChecklistId] = useState("home_loan");
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -136,7 +203,7 @@ export default function DocumentsPage() {
   return (
     <div className="dv-docs-page">
       <AppHeader
-        title="Document Repository"
+        title="My Documents"
         subtitle="Manage, search, and inspect your structured personal policies, certificates, and proofs."
       />
 
@@ -224,6 +291,17 @@ export default function DocumentsPage() {
                 <List size={16} />
               </button>
             </div>
+
+            {/* Life Event Checklist Trigger (Part C) */}
+            <Button
+              variant="outline"
+              size="md"
+              icon={CheckSquare}
+              onClick={() => setShowChecklistModal(true)}
+              title="Verify required documents for major life events"
+            >
+              Life Event Checklists
+            </Button>
 
             {/* Upload Button */}
             <Link to="/upload">
@@ -480,6 +558,142 @@ export default function DocumentsPage() {
           </div>
         )}
       </div>
+
+      {/* Life Event Checklists Modal (Part C) */}
+      <Modal
+        isOpen={showChecklistModal}
+        onClose={() => setShowChecklistModal(false)}
+        title="📋 Document Checklist Templates"
+        maxWidth="680px"
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Template Selector Tabs */}
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {CHECKLIST_TEMPLATES.map(tmpl => (
+              <button
+                key={tmpl.id}
+                type="button"
+                className={`dv-cat-pill ${selectedChecklistId === tmpl.id ? "dv-cat-pill--active" : ""}`}
+                onClick={() => setSelectedChecklistId(tmpl.id)}
+              >
+                <span>{tmpl.icon}</span> {tmpl.title}
+              </button>
+            ))}
+          </div>
+
+          {(() => {
+            const currentTmpl = CHECKLIST_TEMPLATES.find(t => t.id === selectedChecklistId) || CHECKLIST_TEMPLATES[0];
+            const evaluations = currentTmpl.items.map(item => ({
+              ...item,
+              matchedDoc: matchChecklistItem(item, documents)
+            }));
+            const foundCount = evaluations.filter(e => !!e.matchedDoc).length;
+            const totalCount = evaluations.length;
+            const percentage = Math.round((foundCount / totalCount) * 100);
+
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {/* Progress Header */}
+                <div style={{
+                  padding: "14px 16px",
+                  background: percentage === 100 ? "rgba(34, 197, 94, 0.08)" : "rgba(59, 130, 246, 0.08)",
+                  border: `1px solid ${percentage === 100 ? "rgba(34, 197, 94, 0.3)" : "rgba(59, 130, 246, 0.25)"}`,
+                  borderRadius: "12px"
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                    <strong style={{ fontSize: "14px", color: "var(--color-text-primary)" }}>
+                      {currentTmpl.icon} {currentTmpl.title} Readiness
+                    </strong>
+                    <span style={{ fontSize: "13px", fontWeight: "700", color: percentage === 100 ? "#22C55E" : "var(--color-primary)" }}>
+                      {foundCount} of {totalCount} Ready ({percentage}%)
+                    </span>
+                  </div>
+                  <p style={{ margin: "0 0 8px", fontSize: "12px", color: "var(--color-text-secondary)" }}>
+                    {currentTmpl.desc}
+                  </p>
+                  {/* Progress Bar */}
+                  <div style={{ width: "100%", height: "6px", background: "rgba(255, 255, 255, 0.1)", borderRadius: "9999px", overflow: "hidden" }}>
+                    <div style={{
+                      width: `${percentage}%`,
+                      height: "100%",
+                      background: percentage === 100 ? "#22C55E" : "var(--color-primary)",
+                      transition: "width 0.3s ease"
+                    }} />
+                  </div>
+                </div>
+
+                {/* Items List */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {evaluations.map((evalItem, idx) => {
+                    const isFound = !!evalItem.matchedDoc;
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "10px 14px",
+                          borderRadius: "10px",
+                          background: isFound ? "rgba(34, 197, 94, 0.04)" : "var(--color-surface-secondary)",
+                          border: `1px solid ${isFound ? "rgba(34, 197, 94, 0.25)" : "var(--color-border)"}`,
+                          gap: "10px"
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                          {isFound ? (
+                            <CheckCircle2 size={18} color="#22C55E" style={{ flexShrink: 0 }} />
+                          ) : (
+                            <div style={{
+                              width: "18px",
+                              height: "18px",
+                              borderRadius: "50%",
+                              border: "2px solid var(--color-text-muted)",
+                              flexShrink: 0
+                            }} />
+                          )}
+                          <div style={{ minWidth: 0 }}>
+                            <strong style={{ fontSize: "13px", color: "var(--color-text-primary)", display: "block" }}>
+                              {evalItem.name}
+                            </strong>
+                            <span style={{ fontSize: "11px", color: isFound ? "#22C55E" : "var(--color-text-secondary)" }}>
+                              {isFound ? `Found in vault: "${evalItem.matchedDoc.title}"` : evalItem.required ? "Required — Missing from vault" : "Optional — Missing"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div>
+                          {isFound ? (
+                            <Link
+                              to={`/documents/${evalItem.matchedDoc._id}`}
+                              style={{ textDecoration: "none" }}
+                              onClick={() => setShowChecklistModal(false)}
+                            >
+                              <Button variant="ghost" size="sm">
+                                View
+                              </Button>
+                            </Link>
+                          ) : (
+                            <Link
+                              to={`/upload?category=${encodeURIComponent(evalItem.category)}`}
+                              style={{ textDecoration: "none" }}
+                              onClick={() => setShowChecklistModal(false)}
+                            >
+                              <Button variant="primary" size="sm" icon={Plus}>
+                                Upload
+                              </Button>
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      </Modal>
     </div>
   );
 }

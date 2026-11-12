@@ -18,9 +18,80 @@ import DocumentTypeIcon from "../../components/common/DocumentTypeIcon/DocumentT
 import ExpiryBadge from "../../components/common/ExpiryBadge/ExpiryBadge";
 import VerificationStatus from "../../components/common/VerificationStatus/VerificationStatus";
 import ExtractionConfidence from "../../components/common/ExtractionConfidence/ExtractionConfidence";
-import ExtractionInspector from "../../components/common/ExtractionInspector/ExtractionInspector";
 
 import "./DocumentDetailPage.css";
+
+// Map document category/title to official renewal portals (Part C)
+function getRenewalPortal(doc) {
+  const cat = (doc?.category || "").toLowerCase();
+  const title = (doc?.title || "").toLowerCase();
+
+  if (cat.includes("insurance") || title.includes("insurance") || title.includes("policy")) {
+    if (title.includes("motor") || title.includes("car") || title.includes("bike") || title.includes("vehicle")) {
+      return { label: "Renew Motor Insurance", url: "https://www.policybazaar.com/motor-insurance/", official: "Policybazaar / Parivahan" };
+    }
+    if (title.includes("health") || title.includes("mediclaim")) {
+      return { label: "Renew Health Insurance", url: "https://www.policybazaar.com/health-insurance/", official: "Policybazaar" };
+    }
+    return { label: "Renew Policy Online", url: "https://www.policybazaar.com/", official: "Official Aggregator" };
+  }
+
+  if (title.includes("passport") || cat.includes("passport")) {
+    return { label: "Renew on Passport Seva", url: "https://portal2.passportindia.gov.in/", official: "Passport Seva Kendra" };
+  }
+
+  if (title.includes("driving") || title.includes("license") || title.includes("dl") || title.includes("puc") || title.includes("rc")) {
+    return { label: "Renew on Parivahan Portal", url: "https://parivahan.gov.in/", official: "Ministry of Road Transport" };
+  }
+
+  if (title.includes("pan") || cat.includes("pan")) {
+    return { label: "Reprint / Update on NSDL", url: "https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html", official: "NSDL Portal" };
+  }
+
+  if (title.includes("aadhaar") || cat.includes("aadhaar")) {
+    return { label: "Update on myAadhaar", url: "https://myaadhaar.uidai.gov.in/", official: "UIDAI Portal" };
+  }
+
+  return { label: "Search Official Renewal Portal", url: `https://www.google.com/search?q=${encodeURIComponent((doc?.title || "") + " official renewal portal India")}`, official: "Official Portal" };
+}
+
+// Calculate Document Useful Life (Freshness) for financial and proof documents (Part C)
+function getDocumentFreshness(doc) {
+  const cat = (doc?.category || "").toLowerCase();
+  const title = (doc?.title || "").toLowerCase();
+  const isFinancialOrProof = 
+    cat.includes("statement") || cat.includes("salary") || cat.includes("tax") || 
+    cat.includes("receipt") || title.includes("statement") || title.includes("bill") || 
+    title.includes("salary") || title.includes("slip") || title.includes("itr") ||
+    cat.includes("financial") || cat.includes("utility");
+
+  if (!isFinancialOrProof) return null;
+
+  const dateStr = doc?.documentDate || doc?.createdAt;
+  if (!dateStr) return null;
+
+  const docDate = new Date(dateStr);
+  if (isNaN(docDate.getTime())) return null;
+
+  const now = new Date();
+  const diffDays = Math.floor((now - docDate) / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 90) {
+    return {
+      status: "fresh",
+      days: diffDays,
+      badge: "Fresh & Valid (<90d)",
+      message: `Issued ${diffDays} days ago. Fully acceptable for loan applications, visa filings, and KYC checks.`
+    };
+  } else {
+    return {
+      status: "aged",
+      days: diffDays,
+      badge: "Useful Life Advisory (>90d)",
+      message: `Issued ${diffDays} days ago. Banks, employers, and visa consulates typically require statements from within the last 90 days. Consider uploading a fresh copy.`
+    };
+  }
+}
 
 export default function DocumentDetailPage() {
   const { id } = useParams();
@@ -46,6 +117,8 @@ export default function DocumentDetailPage() {
   const [docVersions, setDocVersions] = useState(null);
   const [docVerification, setDocVerification] = useState([]);
   const [verifying, setVerifying] = useState(false);
+  const [verifyMessage, setVerifyMessage] = useState("");
+  const [linkMessage, setLinkMessage] = useState("");
   const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
@@ -88,6 +161,7 @@ export default function DocumentDetailPage() {
   }, [id]);
 
   const handleVerifyAuthenticity = async () => {
+    setVerifyMessage("");
     try {
       setVerifying(true);
       const res = await apiRequest(`/api/intelligence/documents/${id}/verify`, { method: "POST" });
@@ -96,12 +170,12 @@ export default function DocumentDetailPage() {
         if (verifRes?.success && verifRes.data) {
           setDocVerification(verifRes.data);
         }
-        alert("Authenticity and cryptographic verification completed.");
+        setVerifyMessage("Verification complete — document looks authentic.");
       } else {
-        alert(res?.error || "Verification failed");
+        setVerifyMessage(res?.error || "Verification failed. Please try again.");
       }
     } catch (err) {
-      alert("Verification error: " + err.message);
+      setVerifyMessage("Verification error: " + err.message);
     } finally {
       setVerifying(false);
     }
@@ -134,7 +208,7 @@ export default function DocumentDetailPage() {
       });
       if (res.success && res.data) {
         setDoc(res.data);
-        alert("Document successfully linked to selected asset.");
+        setLinkMessage("Document linked to asset successfully.");
       }
     } catch (err) {
       alert("Failed to link asset: " + err.message);
@@ -184,7 +258,7 @@ export default function DocumentDetailPage() {
     <div className="dv-doc-detail-page">
       <AppHeader
         title={doc ? doc.title : "Document Inspection"}
-        subtitle="Verified metadata, structured key-value entities, and direct download stream."
+        subtitle="Document details, extracted information, and actions."
       />
 
       <div className="dv-doc-detail-content">
@@ -278,7 +352,7 @@ export default function DocumentDetailPage() {
 
                 {doc.summary && (
                   <div className="dv-detail-summary-block">
-                    <span className="dv-detail-block-label">Automated Abstract</span>
+                    <span className="dv-detail-block-label">AI Summary</span>
                     <p className="dv-detail-summary-text">{doc.summary}</p>
                   </div>
                 )}
@@ -316,9 +390,61 @@ export default function DocumentDetailPage() {
                         <p>Tracked automatically in your active deadlines calendar.</p>
                       </div>
                     </div>
-                    <ExpiryBadge expiryDate={doc.expiryDate} size="md" />
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <ExpiryBadge expiryDate={doc.expiryDate} size="md" />
+                      {(() => {
+                        const portal = getRenewalPortal(doc);
+                        return (
+                          <a
+                            href={portal.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ textDecoration: "none" }}
+                          >
+                            <Button variant="primary" size="sm" icon={ExternalLink}>
+                              {portal.label}
+                            </Button>
+                          </a>
+                        );
+                      })()}
+                    </div>
                   </div>
                 )}
+
+                {/* Document Useful Life & Freshness Indicator (Part C) */}
+                {(() => {
+                  const freshness = getDocumentFreshness(doc);
+                  if (!freshness) return null;
+                  const isFresh = freshness.status === "fresh";
+                  return (
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "12px 16px",
+                      background: isFresh ? "rgba(34, 197, 94, 0.08)" : "rgba(245, 158, 11, 0.08)",
+                      border: `1px solid ${isFresh ? "rgba(34, 197, 94, 0.25)" : "rgba(245, 158, 11, 0.3)"}`,
+                      borderRadius: "10px",
+                      marginTop: "12px",
+                      gap: "12px"
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <Clock size={18} color={isFresh ? "#22C55E" : "#F59E0B"} />
+                        <div>
+                          <strong style={{ color: "var(--color-text-primary)", fontSize: "13px" }}>
+                            {freshness.badge}
+                          </strong>
+                          <p style={{ margin: "2px 0 0", fontSize: "12px", color: "var(--color-text-secondary)", lineHeight: "1.4" }}>
+                            {freshness.message}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant={isFresh ? "success" : "warning"} size="sm">
+                        {isFresh ? "Verified Fresh" : "Action Suggested"}
+                      </Badge>
+                    </div>
+                  );
+                })()}
 
                 {/* File Metadata Badges */}
                 <div className="dv-detail-meta-row">
@@ -340,9 +466,6 @@ export default function DocumentDetailPage() {
                   </div>
                 </div>
               </Card>
-
-              {/* Live Testing Extraction Diagnostics Inspector */}
-              <ExtractionInspector doc={doc} defaultExpanded={false} />
 
               {/* Evidence-Based Structured Fields Ladder */}
               <Card padding="lg" className="dv-detail-entities-card">
@@ -476,6 +599,9 @@ export default function DocumentDetailPage() {
                   >
                     Link to Asset
                   </Button>
+                  {linkMessage && (
+                    <p style={{ fontSize: "12px", color: "#059669", marginTop: "8px" }}>{linkMessage}</p>
+                  )}
                 </div>
               </Card>
 
@@ -489,11 +615,11 @@ export default function DocumentDetailPage() {
                   </li>
                   <li>
                     <CheckCircle2 size={16} color="#2563EB" />
-                    <span>User-scoped tenant access constraint</span>
+                    <span>Only you can access this document</span>
                   </li>
                   <li>
                     <CheckCircle2 size={16} color="#2563EB" />
-                    <span>Intelligent semantic search index</span>
+                    <span>Searchable in your vault</span>
                   </li>
                   {doc.privacyMode === "STORAGE_ONLY" && (
                     <li>
@@ -542,8 +668,11 @@ export default function DocumentDetailPage() {
                   </Button>
                 </div>
                 <p style={{ fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "8px" }}>
-                  Cryptographic PKCS#7 signature and statutory checksum inspection.
+                  Check if this document appears to be an unaltered original.
                 </p>
+                {verifyMessage && (
+                  <p style={{ fontSize: "12px", color: verifyMessage.includes("error") || verifyMessage.includes("failed") ? "#DC2626" : "#059669", marginBottom: "8px" }}>{verifyMessage}</p>
+                )}
                 {docVerification && docVerification.length > 0 ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     {docVerification.map((v, i) => (

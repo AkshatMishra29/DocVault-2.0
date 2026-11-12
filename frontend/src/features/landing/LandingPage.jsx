@@ -700,7 +700,7 @@ export default function LandingPage() {
                 <p>Our security engineers are available to review implementation specs and privacy guarantees.</p>
               </div>
             </div>
-            <a href="mailto:security@docvault.local" className="dv-lp-faq-footer-btn">
+            <a href="mailto:support@docvault.app" className="dv-lp-faq-footer-btn">
               <Mail size={15} />
               <span>Contact Security Team</span>
             </a>
@@ -715,7 +715,7 @@ export default function LandingPage() {
             <div className="dv-lp-banner-ambient-glow" />
             <div className="dv-lp-banner-badge">
               <Sparkles size={13} />
-              <span>SOVEREIGN ARCHIVE DEPLOYMENT</span>
+              <span>FREE FOR PERSONAL USE</span>
             </div>
             <h2 className="dv-lp-banner-title">
               Take sovereign control of your documents today.

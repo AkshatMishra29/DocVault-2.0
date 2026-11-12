@@ -84,23 +84,20 @@ export default function IntelligenceDashboardPage() {
   return (
     <div className="intelligence-dashboard-page">
       <AppHeader
-        title="Document Intelligence"
-        subtitle="Deterministic document health, knowledge graph ontology, and proactive vault reasoning."
+        title="Policy Health"
+        subtitle="Track document expiry, conflicts, and health in one place."
       />
 
       <div className="intelligence-content">
         {/* Apple Zen 3D Intelligence Command Hero */}
         <div className="dv-intel-hero">
           <div className="dv-intel-hero__info">
-            <div className="dv-intel-hero__kicker">
-              <span className="dv-intel-hero__kicker-dot" />
-              <span>Vault Reasoning Active</span>
-            </div>
+            
             <h2 className="dv-intel-hero__title">
-              Autonomous Document <span className="dv-intel-hero__title-accent">Intelligence</span>
+              Document Health <span className="dv-intel-hero__title-accent">Overview</span>
             </h2>
             <p className="dv-intel-hero__desc">
-              Continuously evaluates policy health, maps your personal knowledge graph, and identifies conflicting clauses across documents.
+              Track expiry dates, conflicts, and document health.
             </p>
           </div>
 
@@ -112,7 +109,7 @@ export default function IntelligenceDashboardPage() {
               disabled={evaluating || loading}
             >
               <RefreshCw size={16} className={evaluating ? 'dv-spin' : ''} />
-              <span>{evaluating ? 'Analyzing Vault...' : 'Sync & Re-evaluate'}</span>
+              <span>{evaluating ? 'Analyzing Vault...' : 'Refresh Analysis'}</span>
             </Button>
             <Link to="/intelligence/entities">
               <Button variant="outline" size="md" icon={Layers}>
@@ -323,7 +320,7 @@ export default function IntelligenceDashboardPage() {
               <div className="section-card-header">
                 <div className="section-header-title">
                   <Layers size={20} className="dv-color-primary" />
-                  <h3>Knowledge Graph Entities</h3>
+                  <h3>What We Found in Your Documents</h3>
                 </div>
                 <Link to="/intelligence/entities" className="section-header-link">
                   Open Entity Explorer <ChevronRight size={16} />
@@ -353,7 +350,7 @@ export default function IntelligenceDashboardPage() {
                 </div>
                 <div className="entity-chip">
                   <ShieldCheck size={16} />
-                  <span className="chip-label">Policies:</span>
+                  <span className="chip-label">Insurance Policies:</span>
                   <span className="chip-count">{graph.typeCounts?.INSURANCE_POLICY || 0}</span>
                 </div>
               </div>

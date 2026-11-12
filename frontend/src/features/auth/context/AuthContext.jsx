@@ -273,6 +273,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Verify PIN function (Step 2) called by EnterPinPage
+  // Reset PIN with OTP when forgotten
+  const resetPinWithOtp = async (email, otp, newPin) => {
+    try {
+      const res = await apiRequest('/api/auth/reset-pin', {
+        method: 'POST',
+        body: JSON.stringify({ email, otp, newPin }),
+      });
+
+      if (res.success && res.token && res.user) {
+        handlePinSuccess(res.token, res.user);
+        return { success: true, message: res.message };
+      }
+      return { success: false, error: res.error || 'Failed to reset PIN.' };
+    } catch (err) {
+      return { success: false, error: err.message || 'Error resetting PIN.' };
+    }
+  };
+
   const verifyPin = async (email, pin) => {
     try {
       const res = await apiRequest('/api/auth/verify-pin', {
@@ -518,6 +536,7 @@ export const AuthProvider = ({ children }) => {
         login,
         loginWithFirebaseToken,
         verifyPin,
+        resetPinWithOtp,
         updateSessionPreference,
         registerBiometrics,
         unlockWithBiometrics,

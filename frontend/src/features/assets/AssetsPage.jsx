@@ -61,6 +61,7 @@ export default function AssetsPage() {
   // Search and Filter State
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [walletMode, setWalletMode] = useState("all"); // 'all' | 'warranty' | 'vehicle'
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -112,6 +113,25 @@ export default function AssetsPage() {
   // Filtered Cards
   const filteredCards = useMemo(() => {
     return flashcards.filter(card => {
+      // Wallet mode filter (Part C)
+      if (walletMode === "warranty") {
+        const cat = (card.category || "").toLowerCase();
+        const hasWarrantyField = (card.customFields || []).some(f => 
+          (f.label || "").toLowerCase().includes("warranty")
+        );
+        const isApplianceOrElectronic = 
+          cat.includes("appliance") || cat.includes("electronic") || cat.includes("tv") || 
+          cat.includes("laptop") || cat.includes("phone") || cat.includes("gadget") || 
+          cat.includes("refrigerator") || cat.includes("ac");
+        if (!hasWarrantyField && !isApplianceOrElectronic) return false;
+      } else if (walletMode === "vehicle") {
+        const cat = (card.category || "").toLowerCase();
+        const isVehicle = 
+          cat.includes("vehicle") || cat.includes("car") || cat.includes("bike") || 
+          cat.includes("automobile") || cat.includes("scooter");
+        if (!isVehicle) return false;
+      }
+
       const matchesCategory = selectedCategory === "ALL" || card.category === selectedCategory;
       const q = searchQuery.toLowerCase().trim();
       if (!q) return matchesCategory;
@@ -126,7 +146,7 @@ export default function AssetsPage() {
 
       return matchesCategory && (inName || inCat || inDesc || inTags || inFields);
     });
-  }, [flashcards, selectedCategory, searchQuery]);
+  }, [flashcards, selectedCategory, searchQuery, walletMode]);
 
   const handleOpenCreateModal = () => {
     setEditingCardId(null);
@@ -289,23 +309,19 @@ export default function AssetsPage() {
   return (
     <div className="dv-flashcards-page">
       <AppHeader
-        title="Asset Flashcards"
-        subtitle="Manage your vehicles, properties, electronics, and valuables with interactive smart flashcards."
+        title="My Assets"
+        subtitle="Track your vehicles, appliances, and properties."
       />
 
       <div className="dv-flashcards-content">
         {/* Apple Zen 3D Flashcards Command Hero */}
         <div className="dv-flash-hero">
           <div className="dv-flash-hero__info">
-            <div className="dv-flash-hero__kicker">
-              <span className="dv-flash-hero__kicker-dot" />
-              <span>Relational Asset Graph Active</span>
-            </div>
             <h2 className="dv-flash-hero__title">
-              Intelligent Asset <span className="dv-flash-hero__title-accent">Flashcards</span>
+              My <span className="dv-flash-hero__title-accent">Assets</span>
             </h2>
             <p className="dv-flash-hero__desc">
-              Create customizable smart flashcards for your physical and digital assets. Link warranty contracts, track vehicle wallets, and automate insurance renewal timelines.
+              Track your physical assets and their documents.
             </p>
           </div>
 
@@ -325,6 +341,75 @@ export default function AssetsPage() {
             </Link>
           </div>
         </div>
+
+        {/* Smart Wallet View Switcher (Part C) */}
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+          <button
+            type="button"
+            className={`dv-filter-pill ${walletMode === "all" ? "dv-filter-pill--active" : ""}`}
+            onClick={() => setWalletMode("all")}
+          >
+            <Layers size={13} style={{ display: "inline", marginRight: "6px" }} />
+            All Assets ({flashcards.length})
+          </button>
+          <button
+            type="button"
+            className={`dv-filter-pill ${walletMode === "warranty" ? "dv-filter-pill--active" : ""}`}
+            onClick={() => setWalletMode("warranty")}
+          >
+            <ShieldCheck size={13} style={{ display: "inline", marginRight: "6px" }} />
+            🛡️ Warranty Wallet (Appliances & Gadgets)
+          </button>
+          <button
+            type="button"
+            className={`dv-filter-pill ${walletMode === "vehicle" ? "dv-filter-pill--active" : ""}`}
+            onClick={() => setWalletMode("vehicle")}
+          >
+            <Car size={13} style={{ display: "inline", marginRight: "6px" }} />
+            🚗 Vehicle Glove Box (RC, Insurance, PUC, DL)
+          </button>
+        </div>
+
+        {/* Informative Banner for Active Wallet Mode */}
+        {walletMode === "warranty" && (
+          <div style={{
+            padding: "12px 18px",
+            background: "rgba(139, 92, 246, 0.08)",
+            border: "1px solid rgba(139, 92, 246, 0.25)",
+            borderRadius: "14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px"
+          }}>
+            <ShieldCheck size={20} color="#A855F7" />
+            <div style={{ fontSize: "12.5px", color: "var(--color-text-secondary)" }}>
+              <strong style={{ color: "var(--color-text-primary)", display: "block" }}>
+                Household Appliance & Electronics Warranty Wallet
+              </strong>
+              Never lose a purchase invoice or miss a warranty period again. All items sorted by warranty protection.
+            </div>
+          </div>
+        )}
+
+        {walletMode === "vehicle" && (
+          <div style={{
+            padding: "12px 18px",
+            background: "rgba(59, 130, 246, 0.08)",
+            border: "1px solid rgba(59, 130, 246, 0.25)",
+            borderRadius: "14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px"
+          }}>
+            <Car size={20} color="#3B82F6" />
+            <div style={{ fontSize: "12.5px", color: "var(--color-text-secondary)" }}>
+              <strong style={{ color: "var(--color-text-primary)", display: "block" }}>
+                Digital Glove Box — 4-Point Motoring Compliance
+              </strong>
+              Keep your RC, Motor Insurance, PUC (Pollution), and Driving License verified and ready for traffic checks.
+            </div>
+          </div>
+        )}
 
         {/* Search, Filter & Glass Toolbar */}
         <div className="dv-flashcards-toolbar">
@@ -483,6 +568,26 @@ export default function AssetsPage() {
                         ))}
                       </div>
                     )}
+                    {/* Digital Glove Box 4-slot indicator for vehicles (Part C) */}
+                    {(card.category || "").toLowerCase().match(/vehicle|car|bike|scooter|auto/) && (
+                      <div style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(4, 1fr)",
+                        gap: "4px",
+                        margin: "10px 0 4px",
+                        padding: "6px",
+                        background: "var(--color-surface-secondary)",
+                        borderRadius: "8px",
+                        fontSize: "10px",
+                        textAlign: "center",
+                        fontWeight: "600"
+                      }}>
+                        <span style={{ color: "#22C55E" }}>✓ RC</span>
+                        <span style={{ color: "#3B82F6" }}>✓ Insure</span>
+                        <span style={{ color: "#F59E0B" }}>• PUC</span>
+                        <span style={{ color: "var(--color-text-secondary)" }}>• DL</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="dv-flashcard__footer">
@@ -504,7 +609,7 @@ export default function AssetsPage() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingCardId ? "Customize Flashcard" : "Create New Flashcard"}
+        title={editingCardId ? "Edit Asset" : "Add New Asset"}
       >
         <form onSubmit={handleSaveFlashcard} className="dv-asset-form">
           <Input

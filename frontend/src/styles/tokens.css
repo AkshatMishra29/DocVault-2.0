@@ -133,38 +133,82 @@
 }
 
 [data-theme="dark"] {
-  /* SAP Evening Horizon Dark Palette */
-  --color-auth-bg: #14171A;
-  --color-auth-panel: #1D232A;
-  --color-auth-panel-deep: #161B21;
-  --color-auth-panel-light: #232B34;
-  --color-auth-text-dark: #F5F6F7;
-  --color-auth-muted: #89A0B4;
-  --color-auth-border: #2D3748;
-  --color-auth-input-bg: #1D232A;
-  --color-auth-surface: #1D232A;
-  --color-auth-card-bg: #1D232A;
-  --color-auth-disabled: #232B34;
-  --color-auth-disabled-text: #556B82;
-  --color-auth-soft-grey: #232B34;
+  /* True Pitch-Black / Obsidian & Zinc Modern Dark Palette */
+  --color-auth-bg: #09090B;
+  --color-auth-panel: #121214;
+  --color-auth-panel-deep: #000000;
+  --color-auth-panel-light: #18181B;
+  --color-auth-text-dark: #FAFAFA;
+  --color-auth-cta: #3B82F6;
+  --color-auth-cta-hover: #2563EB;
+  --color-auth-muted: #A1A1AA;
+  --color-auth-border: #27272A;
+  --color-auth-input-bg: #121214;
+  --color-auth-surface: #121214;
+  --color-auth-card-bg: #121214;
+  --color-auth-disabled: #1C1C1F;
+  --color-auth-disabled-text: #71717A;
+  --color-auth-soft-grey: #18181B;
 
-  --color-bg: #14171A;
-  --color-surface: #1D232A;
-  --color-surface-white: #1D232A;
-  --color-surface-hover: #232B34;
-  --color-surface-secondary: #232B34;
-  --color-surface-tertiary: #2D3748;
-  --color-border: #2D3748;
-  --color-border-subtle: #232B34;
-  --color-border-hover: #4A5568;
-  --color-text-primary: #F5F6F7;
-  --color-text-secondary: #A0AEC0;
-  --color-text-muted: #718096;
-  --glass-bg: rgba(29, 35, 42, 0.92);
+  /* Surfaces & Canvas — Pitch Black (Zinc 950 / Obsidian) */
+  --color-bg: #09090B;               /* Pitch black, never dark navy blue */
+  --color-surface: #121214;          /* Precision obsidian card surface */
+  --color-surface-white: #121214;
+  --color-surface-hover: #1A1A1E;
+  --color-surface-secondary: #18181B;
+  --color-surface-tertiary: #27272A;
+  --color-surface-dark: #000000;
+  --color-surface-dark-card: #121214;
+
+  /* Borders & Dividers */
+  --color-border: #27272A;           /* Zinc 800 subtle borders */
+  --color-border-subtle: #1C1C1F;
+  --color-border-hover: #3F3F46;     /* Zinc 700 */
+  --color-border-focus: #3B82F6;
+
+  /* Typography */
+  --color-text-primary: #FAFAFA;     /* High contrast crisp white */
+  --color-text-secondary: #A1A1AA;   /* Zinc 400 clean secondary */
+  --color-text-muted: #71717A;       /* Zinc 500 placeholders */
+  --color-text-inverse: #09090B;
+
+  /* Accent & Brand — Vibrant Blue that shines on pure black */
+  --color-primary: #3B82F6;          /* High contrast bright neon blue */
+  --color-primary-hover: #60A5FA;
+  --color-primary-light: #93C5FD;
+  --color-primary-subtle: rgba(59, 130, 246, 0.15);
+  --color-accent: #3B82F6;
+  --color-accent-subtle: rgba(59, 130, 246, 0.15);
+
+  /* Glassmorphism */
+  --glass-bg: rgba(9, 9, 11, 0.88);
   --glass-border: rgba(255, 255, 255, 0.08);
-  --color-primary-subtle: rgba(0, 112, 242, 0.18);
-  --color-accent-subtle: rgba(0, 112, 242, 0.18);
-  --color-success-bg: rgba(24, 137, 24, 0.18);
-  --color-warning-bg: rgba(233, 115, 12, 0.15);
-  --color-danger-bg: rgba(187, 0, 0, 0.15);
+
+  /* Gradients */
+  --gradient-card: linear-gradient(180deg, #18181B 0%, #121214 100%);
+  --gradient-hero: radial-gradient(circle at 50% 15%, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.02) 50%, transparent 75%);
+
+  /* Semantic Feedback in Dark Mode */
+  --color-success: #22C55E;
+  --color-success-bg: rgba(34, 197, 94, 0.12);
+  --color-success-subtle: rgba(34, 197, 94, 0.12);
+  --color-success-border: rgba(34, 197, 94, 0.3);
+
+  --color-warning: #F59E0B;
+  --color-warning-bg: rgba(245, 158, 11, 0.12);
+  --color-warning-subtle: rgba(245, 158, 11, 0.12);
+  --color-warning-border: rgba(245, 158, 11, 0.3);
+
+  --color-danger: #EF4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.12);
+  --color-danger-subtle: rgba(239, 68, 68, 0.12);
+  --color-danger-border: rgba(239, 68, 68, 0.3);
+
+  /* Elevation */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.8), 0 1px 2px 0 rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 12px -1px rgba(0, 0, 0, 0.85), 0 2px 4px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 14px 28px -3px rgba(0, 0, 0, 0.95), 0 6px 10px -2px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 24px -2px rgba(59, 130, 246, 0.35);
+  --shadow-glow-mint: 0 0 24px -3px rgba(34, 197, 94, 0.25);
 }

@@ -6,10 +6,10 @@
   width: 100%;
   max-width: 600px;
   height: 64px;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -33,7 +33,7 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  color: #64748B;
+  color: var(--color-text-secondary);
   text-decoration: none;
   font-family: 'Manrope', -apple-system, sans-serif;
   font-size: 11px;
@@ -50,7 +50,7 @@
 }
 
 .nav-item.active {
-  color: #0070F2;
+  color: var(--color-primary);
   font-weight: 700;
 }
 
@@ -68,23 +68,23 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0070F2 0%, #0064D9 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #2563EB 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 18px rgba(0, 112, 242, 0.38);
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.38);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
-  border: 3px solid #FFFFFF;
+  border: 3px solid var(--color-surface);
 }
 
 .nav-item-upload:active .upload-icon-circle {
   transform: scale(0.92);
-  box-shadow: 0 2px 8px rgba(0, 112, 242, 0.25);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
 }
 
 .nav-item-upload .nav-label {
   font-size: 10.5px;
   margin-top: 2px;
   font-weight: 700;
-  color: #0070F2;
+  color: var(--color-primary);
 }

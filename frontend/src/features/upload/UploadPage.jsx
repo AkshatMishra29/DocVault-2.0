@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiRequest } from "../../services/api";
 import { 
-  UploadCloud, FileText, CheckCircle2, AlertCircle, ArrowRight,
+  UploadCloud, FileText, CheckCircle2, AlertCircle, ArrowRight, Camera, Zap,
   ShieldCheck, Sparkles, Lock, Pencil
 } from "lucide-react";
 
@@ -13,7 +13,6 @@ import Badge from "../../components/common/Badge/Badge";
 import DocumentTypeIcon from "../../components/common/DocumentTypeIcon/DocumentTypeIcon";
 import ExpiryBadge from "../../components/common/ExpiryBadge/ExpiryBadge";
 import VerificationStatus from "../../components/common/VerificationStatus/VerificationStatus";
-import ExtractionInspector from "../../components/common/ExtractionInspector/ExtractionInspector";
 
 import "./UploadPage.css";
 
@@ -23,6 +22,8 @@ export default function UploadPage() {
   const [dragActive, setDragActive] = useState(false);
   const [privacyMode, setPrivacyMode] = useState("PROCESSABLE"); // 'PROCESSABLE' | 'STORAGE_ONLY'
   const [uploading, setUploading] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
+  const [isCameraScan, setIsCameraScan] = useState(false);
   const [progressStage, setProgressStage] = useState("");
   const [error, setError] = useState("");
   const [uploadedDoc, setUploadedDoc] = useState(null);
@@ -51,6 +52,72 @@ export default function UploadPage() {
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       validateAndSetFile(e.target.files[0]);
+    }
+  };
+
+  // Client-side Canvas Image Optimizer (Google Files-style downscale & sharpen preparation)
+  const optimizeImageForOCR = async (imageFile) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(imageFile);
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        const MAX_DIM = 2200; // Optimal resolution for high-accuracy OCR without bloat
+        let { width, height } = img;
+
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          } else {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+
+        // High quality bicubic smoothing
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const optFile = new File([blob], imageFile.name.replace(/\.[^/.]+$/, "") + "-scan.jpg", {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(optFile);
+            } else {
+              resolve(imageFile);
+            }
+          },
+          "image/jpeg",
+          0.85
+        );
+      };
+      img.onerror = () => resolve(imageFile);
+    });
+  };
+
+  const handleCameraCapture = async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const rawFile = e.target.files[0];
+      setOptimizing(true);
+      try {
+        const optimized = await optimizeImageForOCR(rawFile);
+        setIsCameraScan(true);
+        validateAndSetFile(optimized);
+      } catch (err) {
+        validateAndSetFile(rawFile);
+      } finally {
+        setOptimizing(false);
+      }
     }
   };
 
@@ -148,24 +215,17 @@ export default function UploadPage() {
   return (
     <div className="dv-upload-page">
       <AppHeader
-        title="Document Ingestion"
-        subtitle="Add policies, warranties, invoices, and certificates to your secure personal vault."
+        title="Add a Document"
+        subtitle="Upload any PDF or image — we'll read and organize it automatically."
       />
 
       <div className="dv-upload-content">
         {/* Apple Zen 3D Ingestion Command Hero */}
         <div className="dv-upload-hero">
           <div className="dv-upload-hero__info">
-            <div className="dv-upload-hero__kicker">
-              <span className="dv-upload-hero__kicker-dot" />
-              <span>Zero-Knowledge Ingestion Active</span>
-            </div>
             <h2 className="dv-upload-hero__title">
-              Secure Document <span className="dv-upload-hero__title-accent">Ingestion Engine</span>
+              Upload a <span className="dv-upload-hero__title-accent">New Document</span>
             </h2>
-            <p className="dv-upload-hero__desc">
-              Upload contracts, identity proofs, invoices, or policies. Files are enhanced with Sharp, parsed with hybrid OCR, and indexed into your private encrypted vault.
-            </p>
           </div>
 
           <div className="dv-upload-hero__badge">
@@ -191,7 +251,16 @@ export default function UploadPage() {
                   className="dv-file-input-hidden"
                   accept=".pdf,.png,.jpg,.jpeg,.webp"
                   onChange={handleFileChange}
-                  disabled={uploading}
+                  disabled={uploading || optimizing}
+                />
+                <input
+                  type="file"
+                  id="dv-camera-input"
+                  className="dv-file-input-hidden"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleCameraCapture}
+                  disabled={uploading || optimizing}
                 />
 
                 {!file ? (
@@ -203,6 +272,35 @@ export default function UploadPage() {
                     <p className="dv-dropzone-sub">
                       Drag any document scan or photo directly onto this surface
                     </p>
+
+                    <div style={{ marginTop: "14px", display: "flex", gap: "10px", justifyContent: "center" }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          document.getElementById("dv-camera-input")?.click();
+                        }}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "8px 18px",
+                          borderRadius: "9999px",
+                          background: "linear-gradient(135deg, #0070F2 0%, #4F46E5 100%)",
+                          color: "#FFFFFF",
+                          border: "none",
+                          fontSize: "13px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          boxShadow: "0 4px 14px rgba(0, 112, 242, 0.35)",
+                          transition: "all 0.2s ease"
+                        }}
+                      >
+                        <Camera size={16} />
+                        <span>Quick Scan with Camera</span>
+                      </button>
+                    </div>
                     <div className="dv-dropzone-formats">
                       <span className="dv-format-pill">PDF (Digital & Scanned)</span>
                       <span className="dv-format-pill">PNG</span>
@@ -217,8 +315,13 @@ export default function UploadPage() {
                     </div>
                     <div className="dv-file-selected-meta">
                       <span className="dv-file-selected-name">{file.name}</span>
-                      <span className="dv-file-selected-size">
-                        {(file.size / (1024 * 1024)).toFixed(2)} MB • Ready for processing
+                      <span className="dv-file-selected-size" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span>{(file.size / (1024 * 1024)).toFixed(2)} MB • Ready for processing</span>
+                        {isCameraScan && (
+                          <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(16, 185, 129, 0.15)", color: "#10B981", padding: "2px 8px", borderRadius: "9999px" }}>
+                            ⚡ Mobile Scan Optimized
+                          </span>
+                        )}
                       </span>
                     </div>
                     {!uploading && (
@@ -270,7 +373,7 @@ export default function UploadPage() {
                     <div className="dv-popt-text">
                       <div className="dv-popt-header">
                         <Sparkles size={16} color="#0070F2" />
-                        <strong>Standard Intelligent Processing</strong>
+                        <strong>Smart Processing</strong>
                       </div>
                       <p>Automatically organizes dates, renewal deadlines, key policy terms, and enables Copilot questions.</p>
                     </div>
@@ -289,7 +392,7 @@ export default function UploadPage() {
                     <div className="dv-popt-text">
                       <div className="dv-popt-header">
                         <Lock size={16} color="#E9730C" />
-                        <strong>Secure Vault Storage Only</strong>
+                        <strong>Private Storage Only</strong>
                       </div>
                       <p>Encrypted personal storage for sensitive identity documents (Aadhaar, PAN). Excluded from automated indexing.</p>
                     </div>
@@ -308,7 +411,7 @@ export default function UploadPage() {
                 <div className="dv-upload-progress-box">
                   <div className="dv-upload-progress-pulse" />
                   <div className="dv-upload-progress-info">
-                    <span className="dv-upload-progress-title">Pipeline Ingestion Active</span>
+                    <span className="dv-upload-progress-title">Processing your document...</span>
                     <span className="dv-upload-progress-text">{progressStage}</span>
                   </div>
                 </div>
@@ -328,50 +431,32 @@ export default function UploadPage() {
               </Button>
             </Card>
 
-            {/* Right: Pipeline Transparency Card */}
+            {/* Right: Why DocVault */}
             <Card padding="lg" className="dv-upload-info-card">
-              <div className="dv-upload-info-badge">
-                <ShieldCheck size={16} />
-                <span>Zero-Trust Architecture</span>
-              </div>
-              <h3 className="dv-pipeline-title">How DocVault Ingests & Protects</h3>
-              <p className="dv-pipeline-sub">
-                Every document added to your vault is processed securely with zero external model training and air-tight tenant boundaries.
-              </p>
-
-              <div className="dv-pipeline-steps">
-                <div className="dv-pstep">
+              <h3 className="dv-pipeline-title">What happens after you upload?</h3>
+              <ul className="dv-pipeline-steps" style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "16px", marginTop: "12px" }}>
+                <li className="dv-pstep">
                   <span className="dv-pstep-num">1</span>
                   <div>
-                    <h4>Sharp Image Conditioning</h4>
-                    <p>Applies grayscale normalization and contrast edge sharpening to ensure crystal-clear character boundaries.</p>
+                    <h4>Key details extracted automatically</h4>
+                    <p>Dates, renewal deadlines, policy numbers, and other important fields are identified and saved for you.</p>
                   </div>
-                </div>
-
-                <div className="dv-pstep">
+                </li>
+                <li className="dv-pstep">
                   <span className="dv-pstep-num">2</span>
                   <div>
-                    <h4>Hybrid OCR & Vision Cascade</h4>
-                    <p>Extracts text with Tesseract.js WASM; automatically cascades to Groq Vision VLM for tilted/blurred phone photos.</p>
+                    <h4>Reminders set for expiry dates</h4>
+                    <p>Any renewal or expiry date found is added to your Renewals tracker automatically.</p>
                   </div>
-                </div>
-
-                <div className="dv-pstep">
+                </li>
+                <li className="dv-pstep">
                   <span className="dv-pstep-num">3</span>
                   <div>
-                    <h4>Entity Structuring & Deadlines</h4>
-                    <p>Identifies policy numbers, coverage limits, and renewal cutoffs, scheduling RFC-5545 calendar reminders.</p>
+                    <h4>Searchable by AI</h4>
+                    <p>Ask plain-English questions about this document anytime using the AI Assistant.</p>
                   </div>
-                </div>
-
-                <div className="dv-pstep">
-                  <span className="dv-pstep-num">4</span>
-                  <div>
-                    <h4>Air-Tight Bounded RAG</h4>
-                    <p>Generates dense vector embeddings for conversational retrieval strictly isolated to your personal vault.</p>
-                  </div>
-                </div>
-              </div>
+                </li>
+              </ul>
             </Card>
           </div>
         ) : (
@@ -440,9 +525,6 @@ export default function UploadPage() {
                 </div>
               )}
             </div>
-
-            {/* Live Testing Extraction Diagnostics Inspector */}
-            <ExtractionInspector doc={uploadedDoc} defaultExpanded={true} />
 
             <div className="dv-success-actions">
               <Button

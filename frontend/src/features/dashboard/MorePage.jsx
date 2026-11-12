@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../app/theme";
 import { useAuth } from "../auth/context/AuthContext";
 import { apiRequest } from "../../services/api";
 import { 
@@ -18,6 +19,7 @@ import Skeleton from "../../components/common/Skeleton/Skeleton";
 import "./MorePage.css";
 
 export default function MorePage() {
+  const { theme, setTheme } = useTheme();
   const { 
     user, 
     lockVault, 
@@ -38,6 +40,24 @@ export default function MorePage() {
   const [autoLock, setAutoLock] = useState(user?.autoLockEnabled !== false);
   const [biometrics, setBiometrics] = useState(Boolean(user?.biometricsEnabled));
   const [savingSessionPref, setSavingSessionPref] = useState(false);
+
+  // Security credentials state
+  const [activeSecTab, setActiveSecTab] = useState("pin"); // 'pin' | 'password'
+  
+  // Change PIN state
+  const [currentPin, setCurrentPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmNewPin, setConfirmNewPin] = useState("");
+  const [pinChangeLen, setPinChangeLen] = useState(user?.pinLength || 4);
+  const [changingPin, setChangingPin] = useState(false);
+  const [pinMessage, setPinMessage] = useState(null); // { type: 'success' | 'error', text: '' }
+
+  // Change Password state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState(null);
   const [savingAutoLockPref, setSavingAutoLockPref] = useState(false);
   const [registeringBio, setRegisteringBio] = useState(false);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
@@ -59,6 +79,82 @@ export default function MorePage() {
       setHasRegisteredBio(Boolean(localStorage.getItem(`dv_bio_cred_${user?.email}`)));
     }
   }, [user?.singleSessionOnly, user?.autoLockEnabled, user?.biometricsEnabled, user?.email]);
+
+  const handleChangePin = async (e) => {
+    e.preventDefault();
+    setPinMessage(null);
+
+    if (!currentPin.trim()) {
+      setPinMessage({ type: "error", text: "Please enter your current PIN." });
+      return;
+    }
+    if (newPin.length !== pinChangeLen) {
+      setPinMessage({ type: "error", text: `New PIN must be exactly ${pinChangeLen} digits.` });
+      return;
+    }
+    if (newPin !== confirmNewPin) {
+      setPinMessage({ type: "error", text: "New PIN and confirmation do not match." });
+      return;
+    }
+
+    try {
+      setChangingPin(true);
+      const res = await apiRequest("/api/auth/change-pin", {
+        method: "POST",
+        body: JSON.stringify({ currentPin, newPin }),
+      });
+      if (res.success) {
+        setPinMessage({ type: "success", text: "Vault PIN updated successfully." });
+        setCurrentPin("");
+        setNewPin("");
+        setConfirmNewPin("");
+      } else {
+        setPinMessage({ type: "error", text: res.error || "Failed to update PIN." });
+      }
+    } catch (err) {
+      setPinMessage({ type: "error", text: err.message || "Error updating PIN." });
+    } finally {
+      setChangingPin(false);
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordMessage(null);
+
+    if (!currentPassword) {
+      setPasswordMessage({ type: "error", text: "Please enter your current password." });
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordMessage({ type: "error", text: "New password must be at least 8 characters long." });
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordMessage({ type: "error", text: "New password and confirmation do not match." });
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+      const res = await apiRequest("/api/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      if (res.success) {
+        setPasswordMessage({ type: "success", text: "Password changed successfully." });
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmNewPassword("");
+      } else {
+        setPasswordMessage({ type: "error", text: res.error || "Failed to change password." });
+      }
+    } catch (err) {
+      setPasswordMessage({ type: "error", text: err.message || "Error changing password." });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   const handleToggleSingleSession = async () => {
     const nextVal = !singleSession;
@@ -159,7 +255,7 @@ export default function MorePage() {
   return (
     <div className="dv-settings-page">
       <AppHeader
-        title="Settings & Audit Security"
+        title="Settings"
         subtitle="Manage account credentials, two-tier isolation settings, and review immutable access logs."
       />
 
@@ -202,6 +298,64 @@ export default function MorePage() {
               >
                 <span className="dv-switch-thumb" />
               </button>
+            </div>
+
+            {/* Display Theme Mode Toggle */}
+            <div className="dv-setting-toggle-row">
+              <div>
+                <span className="dv-toggle-title">Interface Appearance</span>
+                <span className="dv-toggle-sub">Switch between Light, Dark, or System mode</span>
+              </div>
+              <div style={{ display: "flex", gap: "4px", background: "var(--color-surface-secondary)", padding: "3px", borderRadius: "8px" }}>
+                <button
+                  type="button"
+                  onClick={() => setTheme("light")}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    border: "none",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    background: theme === "light" ? "var(--color-primary)" : "transparent",
+                    color: theme === "light" ? "#FFF" : "var(--color-text-secondary)"
+                  }}
+                >
+                  Light
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTheme("dark")}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    border: "none",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    background: theme === "dark" ? "var(--color-primary)" : "transparent",
+                    color: theme === "dark" ? "#FFF" : "var(--color-text-secondary)"
+                  }}
+                >
+                  Dark
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTheme("system")}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    border: "none",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    background: theme === "system" ? "var(--color-primary)" : "transparent",
+                    color: theme === "system" ? "#FFF" : "var(--color-text-secondary)"
+                  }}
+                >
+                  Auto
+                </button>
+              </div>
             </div>
 
             {/* Auto-Lock Toggle */}
@@ -262,6 +416,207 @@ export default function MorePage() {
                 Sign Out
               </Button>
             </div>
+          </Card>
+
+          {/* Security & Credentials (Change PIN / Change Password) */}
+          <Card padding="lg" className="dv-setting-card">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <KeyRound size={20} color="#3B82F6" />
+                <h3 className="dv-setting-card__title" style={{ margin: 0 }}>Security Credentials</h3>
+              </div>
+              <div style={{ display: "flex", background: "rgba(255, 255, 255, 0.05)", borderRadius: "8px", padding: "3px" }}>
+                <button
+                  type="button"
+                  onClick={() => { setActiveSecTab("pin"); setPinMessage(null); }}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "6px",
+                    border: "none",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    background: activeSecTab === "pin" ? "#2563EB" : "transparent",
+                    color: activeSecTab === "pin" ? "#FFFFFF" : "#94A3B8",
+                  }}
+                >
+                  Change PIN
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveSecTab("password"); setPasswordMessage(null); }}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "6px",
+                    border: "none",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    background: activeSecTab === "password" ? "#2563EB" : "transparent",
+                    color: activeSecTab === "password" ? "#FFFFFF" : "#94A3B8",
+                  }}
+                >
+                  Change Password
+                </button>
+              </div>
+            </div>
+
+            {activeSecTab === "pin" ? (
+              <form onSubmit={handleChangePin} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {pinMessage && (
+                  <div style={{
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    fontSize: "13px",
+                    background: pinMessage.type === "success" ? "rgba(16, 185, 129, 0.15)" : "rgba(220, 38, 38, 0.15)",
+                    border: pinMessage.type === "success" ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(220, 38, 38, 0.3)",
+                    color: pinMessage.type === "success" ? "#34D399" : "#F87171"
+                  }}>
+                    {pinMessage.text}
+                  </div>
+                )}
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <label style={{ fontSize: "12px", fontWeight: "600", color: "#CBD5E1" }}>
+                    New PIN Length
+                  </label>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button
+                      type="button"
+                      onClick={() => { setPinChangeLen(4); setNewPin(""); setConfirmNewPin(""); }}
+                      style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", background: pinChangeLen === 4 ? "#2563EB" : "rgba(255, 255, 255, 0.08)", color: "#FFF", border: "none", cursor: "pointer" }}
+                    >
+                      4 Digits
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setPinChangeLen(6); setNewPin(""); setConfirmNewPin(""); }}
+                      style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", background: pinChangeLen === 6 ? "#2563EB" : "rgba(255, 255, 255, 0.08)", color: "#FFF", border: "none", cursor: "pointer" }}
+                    >
+                      6 Digits
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                    Current PIN
+                  </label>
+                  <input
+                    type="password"
+                    maxLength={6}
+                    value={currentPin}
+                    onChange={(e) => setCurrentPin(e.target.value.replace(/[^0-9]/g, ""))}
+                    placeholder="Enter current PIN"
+                    style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px", letterSpacing: "2px" }}
+                  />
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                      New {pinChangeLen}-Digit PIN
+                    </label>
+                    <input
+                      type="password"
+                      maxLength={pinChangeLen}
+                      value={newPin}
+                      onChange={(e) => setNewPin(e.target.value.replace(/[^0-9]/g, ""))}
+                      placeholder={`New ${pinChangeLen} digits`}
+                      style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px", letterSpacing: "2px" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                      Confirm New PIN
+                    </label>
+                    <input
+                      type="password"
+                      maxLength={pinChangeLen}
+                      value={confirmNewPin}
+                      onChange={(e) => setConfirmNewPin(e.target.value.replace(/[^0-9]/g, ""))}
+                      placeholder="Repeat new PIN"
+                      style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px", letterSpacing: "2px" }}
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  loading={changingPin}
+                  disabled={!currentPin || newPin.length !== pinChangeLen || newPin !== confirmNewPin}
+                  style={{ alignSelf: "flex-start", marginTop: "4px" }}
+                >
+                  Update Vault PIN
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {passwordMessage && (
+                  <div style={{
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    fontSize: "13px",
+                    background: passwordMessage.type === "success" ? "rgba(16, 185, 129, 0.15)" : "rgba(220, 38, 38, 0.15)",
+                    border: passwordMessage.type === "success" ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(220, 38, 38, 0.3)",
+                    color: passwordMessage.type === "success" ? "#34D399" : "#F87171"
+                  }}>
+                    {passwordMessage.text}
+                  </div>
+                )}
+
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px" }}
+                  />
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                      New Password (min 8 chars)
+                    </label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                      style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      placeholder="Repeat new password"
+                      style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px" }}
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  loading={changingPassword}
+                  disabled={!currentPassword || newPassword.length < 8 || newPassword !== confirmNewPassword}
+                  style={{ alignSelf: "flex-start", marginTop: "4px" }}
+                >
+                  Update Account Password
+                </Button>
+              </form>
+            )}
           </Card>
 
           {/* Remembered Sessions & Switcher */}

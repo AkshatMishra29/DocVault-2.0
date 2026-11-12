@@ -1,11 +1,13 @@
 import React from 'react';
 import { AuthProvider } from '../features/auth/context/AuthContext';
+import { ThemeProvider } from './theme';
 
 export function AppProviders({ children }) {
   return (
-    <AuthProvider>
-      {children}
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        {children}
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
-

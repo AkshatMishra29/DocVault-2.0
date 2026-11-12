@@ -11,6 +11,8 @@ import AuthHeader from "../components/AuthHeader";
 import AuthAlert from "../components/AuthAlert";
 import PinInput from "../components/PinInput";
 import PinKeypad from "../components/PinKeypad";
+import Modal from "../../../components/common/Modal/Modal";
+import { apiRequest } from "../../../services/api";
 
 export default function EnterPinPage() {
   const [pin, setPin] = useState("");
@@ -19,6 +21,16 @@ export default function EnterPinPage() {
   const [bioLoading, setBioLoading] = useState(false);
   const [lockoutRemaining, setLockoutRemaining] = useState(0);
   const [showSessionMenu, setShowSessionMenu] = useState(false);
+  
+  // Forgot PIN state
+  const [showForgotPinModal, setShowForgotPinModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState("request"); // 'request' | 'verify'
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [forgotNewPin, setForgotNewPin] = useState("");
+  const [forgotConfirmPin, setForgotConfirmPin] = useState("");
+  const [forgotPinLen, setForgotPinLen] = useState(4);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState("");
 
   const { 
     user, 
@@ -28,6 +40,7 @@ export default function EnterPinPage() {
     switchSession,
     removeSavedSession,
     verifyPin, 
+    resetPinWithOtp,
     unlockWithBiometrics, 
     logout 
   } = useAuth();
@@ -154,6 +167,59 @@ export default function EnterPinPage() {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
+  // Forgot PIN handlers
+  const handleSendResetPinOtp = async () => {
+    setForgotLoading(true);
+    setForgotError("");
+    try {
+      const res = await apiRequest("/api/auth/send-otp", {
+        method: "POST",
+        body: JSON.stringify({ email, purpose: "reset_pin" }),
+      });
+      if (res.success) {
+        setForgotStep("verify");
+      } else {
+        setForgotError(res.error || "Failed to send reset code.");
+      }
+    } catch (err) {
+      setForgotError(err.message || "Error sending reset code.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPinSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!forgotOtp.trim()) {
+      setForgotError("Please enter the 6-digit code.");
+      return;
+    }
+    if (forgotNewPin.length !== forgotPinLen) {
+      setForgotError(`New PIN must be ${forgotPinLen} digits.`);
+      return;
+    }
+    if (forgotNewPin !== forgotConfirmPin) {
+      setForgotError("PIN confirmation does not match.");
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError("");
+    try {
+      const res = await resetPinWithOtp(email, forgotOtp.trim(), forgotNewPin.trim());
+      if (res.success) {
+        setShowForgotPinModal(false);
+        navigate("/dashboard", { replace: true });
+      } else {
+        setForgotError(res.error || "Failed to reset PIN.");
+      }
+    } catch (err) {
+      setForgotError(err.message || "Error resetting PIN.");
+    } finally {
+      setForgotLoading(false);
+    }
   };
 
   const handleUnlock = async (submittedPin = pin) => {
@@ -382,6 +448,36 @@ export default function EnterPinPage() {
             )}
           </button>
 
+          <button
+            type="button"
+            className="dv-forgot-pin-trigger"
+            style={{
+              background: "none",
+              border: "none",
+              color: "#60A5FA",
+              fontSize: "13px",
+              fontWeight: "500",
+              cursor: "pointer",
+              marginTop: "12px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 10px",
+              borderRadius: "6px"
+            }}
+            onClick={() => {
+              setShowForgotPinModal(true);
+              setForgotStep("request");
+              setForgotError("");
+              setForgotOtp("");
+              setForgotNewPin("");
+              setForgotConfirmPin("");
+            }}
+          >
+            <KeyRound size={14} />
+            <span>Forgot Vault PIN?</span>
+          </button>
+
           {hasBiometrics && (
             <button
               type="button"
@@ -410,6 +506,125 @@ export default function EnterPinPage() {
         <ShieldCheck size={14} className="dv-auth-security-note-icon" />
         <span>Your documents. Your privacy. Your control.</span>
       </div>
+      {/* Forgot PIN Recovery Modal */}
+      <Modal
+        isOpen={showForgotPinModal}
+        onClose={() => setShowForgotPinModal(false)}
+        title="Reset Vault PIN"
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "4px 0" }}>
+          {forgotError && (
+            <div style={{ padding: "10px 12px", background: "rgba(220, 38, 38, 0.15)", border: "1px solid rgba(220, 38, 38, 0.3)", borderRadius: "8px", color: "#F87171", fontSize: "13px" }}>
+              {forgotError}
+            </div>
+          )}
+
+          {forgotStep === "request" ? (
+            <div>
+              <p style={{ fontSize: "14px", color: "var(--color-text-secondary, #94A3B8)", marginBottom: "16px", lineHeight: "1.5" }}>
+                Forgot your vault PIN? We can send a secure 6-digit verification code to your registered email address (<strong>{email}</strong>).
+              </p>
+              <button
+                type="button"
+                className="dv-auth-submit-btn"
+                onClick={handleSendResetPinOtp}
+                disabled={forgotLoading}
+              >
+                {forgotLoading ? "Sending Code..." : "Send Verification Code"}
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleResetPinSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <p style={{ fontSize: "13px", color: "var(--color-text-secondary, #94A3B8)", margin: 0 }}>
+                Enter the 6-digit code sent to <strong>{email}</strong> and choose a new PIN.
+              </p>
+
+              <div>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                  6-Digit OTP Code
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={forgotOtp}
+                  onChange={(e) => setForgotOtp(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="123456"
+                  style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "16px", letterSpacing: "4px", textAlign: "center" }}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <label style={{ fontSize: "12px", fontWeight: "600", color: "#CBD5E1" }}>
+                  PIN Length Preference
+                </label>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <button
+                    type="button"
+                    onClick={() => { setForgotPinLen(4); setForgotNewPin(""); setForgotConfirmPin(""); }}
+                    style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", background: forgotPinLen === 4 ? "#2563EB" : "rgba(255, 255, 255, 0.08)", color: "#FFF", border: "none", cursor: "pointer" }}
+                  >
+                    4 Digits
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setForgotPinLen(6); setForgotNewPin(""); setForgotConfirmPin(""); }}
+                    style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", background: forgotPinLen === 6 ? "#2563EB" : "rgba(255, 255, 255, 0.08)", color: "#FFF", border: "none", cursor: "pointer" }}
+                  >
+                    6 Digits
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                  New {forgotPinLen}-Digit PIN
+                </label>
+                <input
+                  type="password"
+                  maxLength={forgotPinLen}
+                  value={forgotNewPin}
+                  onChange={(e) => setForgotNewPin(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder={`Enter ${forgotPinLen} digits`}
+                  style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "16px", letterSpacing: "4px", textAlign: "center" }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                  Confirm New PIN
+                </label>
+                <input
+                  type="password"
+                  maxLength={forgotPinLen}
+                  value={forgotConfirmPin}
+                  onChange={(e) => setForgotConfirmPin(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder={`Re-enter ${forgotPinLen} digits`}
+                  style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "16px", letterSpacing: "4px", textAlign: "center" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                <button
+                  type="button"
+                  onClick={() => setForgotStep("request")}
+                  style={{ flex: 1, padding: "10px", background: "rgba(255, 255, 255, 0.08)", border: "none", borderRadius: "8px", color: "#CBD5E1", cursor: "pointer", fontSize: "13px" }}
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  className="dv-auth-submit-btn"
+                  style={{ flex: 2 }}
+                  disabled={forgotLoading || forgotNewPin.length !== forgotPinLen || forgotNewPin !== forgotConfirmPin}
+                >
+                  {forgotLoading ? "Resetting..." : "Save PIN & Unlock"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </Modal>
     </AuthLayout>
   );
 }

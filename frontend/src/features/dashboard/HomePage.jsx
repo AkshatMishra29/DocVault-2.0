@@ -4,8 +4,8 @@ import { useAuth } from "../auth/context/AuthContext";
 import { apiRequest } from "../../services/api";
 import { 
   FileText, UploadCloud, Calendar, Sparkles, Layers, ArrowRight,
-  ShieldCheck, AlertTriangle, Clock, ChevronRight, Lock, 
-  CheckCircle2, Eye, HelpCircle, Shield, FileCheck
+  AlertTriangle, Clock, ChevronRight,
+  CheckCircle2, Eye, HelpCircle, X
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -38,6 +38,9 @@ export default function HomePage() {
   const [reviewQueue, setReviewQueue] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    return localStorage.getItem("dv_onboarding_dismissed") !== "true";
+  });
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -82,8 +85,8 @@ export default function HomePage() {
   return (
     <div className="dv-dashboard">
       <AppHeader
-        title="Vault Overview"
-        subtitle={`Welcome back, ${userName}. Your zero-trust personal document command centre.`}
+        title="Home"
+        subtitle={`Welcome back, ${userName}. Your documents, deadlines, and AI — all in one place.`}
       />
 
       <div className="dv-dashboard__content">
@@ -104,15 +107,11 @@ export default function HomePage() {
         {/* Section A: Apple Zen 3D Command Hero */}
         <div className="dv-dash-hero">
           <div className="dv-dash-hero__info">
-            <div className="dv-dash-hero__kicker">
-              <span className="dv-dash-hero__kicker-dot" />
-              <span>Zero-Trust Enclave Active</span>
-            </div>
             <h2 className="dv-dash-hero__title">
-              Intelligent Document <span className="dv-dash-hero__title-accent">Command Centre</span>
+              Your <span className="dv-dash-hero__title-accent">Document Dashboard</span>
             </h2>
             <p className="dv-dash-hero__desc">
-              Your policies, proofs, and warranties are encrypted, indexed, and actively monitored for critical renewal cutoffs.
+              Everything important in one place.
             </p>
           </div>
 
@@ -134,6 +133,87 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+
+        {/* Section: 3-Step Guided Onboarding (Part C) */}
+        {showOnboarding && (
+          <div className="dv-onboarding-card">
+            <div className="dv-onboarding-header">
+              <div className="dv-onboarding-title-wrap">
+                <span className="dv-onboarding-badge">
+                  <Sparkles size={13} />
+                  <span>Quick Setup</span>
+                </span>
+                <h3 className="dv-onboarding-title">Get Started with DocVault</h3>
+                <p className="dv-onboarding-subtitle">
+                  Complete these 3 simple steps to secure your vault and automate your documents.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="dv-onboarding-dismiss-btn"
+                onClick={() => {
+                  setShowOnboarding(false);
+                  localStorage.setItem("dv_onboarding_dismissed", "true");
+                }}
+                title="Dismiss setup guide"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="dv-onboarding-steps">
+              {/* Step 1 */}
+              <div className={`dv-onboarding-step ${documents.length > 0 ? "dv-onboarding-step--done" : ""}`}>
+                <div className="dv-onboarding-step-indicator">
+                  {documents.length > 0 ? <CheckCircle2 size={18} className="dv-step-check" /> : <span className="dv-step-num">1</span>}
+                </div>
+                <div className="dv-onboarding-step-body">
+                  <strong>Upload your first document or policy</strong>
+                  <p>Store an insurance policy, warranty, or ID to activate smart extraction.</p>
+                </div>
+                {documents.length > 0 ? (
+                  <span className="dv-onboarding-step-status">Completed</span>
+                ) : (
+                  <Link to="/upload" className="dv-onboarding-step-btn">
+                    Upload Now <ArrowRight size={13} />
+                  </Link>
+                )}
+              </div>
+
+              {/* Step 2 */}
+              <div className={`dv-onboarding-step ${deadlines.length > 0 ? "dv-onboarding-step--done" : ""}`}>
+                <div className="dv-onboarding-step-indicator">
+                  {deadlines.length > 0 ? <CheckCircle2 size={18} className="dv-step-check" /> : <span className="dv-step-num">2</span>}
+                </div>
+                <div className="dv-onboarding-step-body">
+                  <strong>Review renewal deadlines & reminders</strong>
+                  <p>Never miss a policy expiry, PUC renewal, or warranty deadline.</p>
+                </div>
+                {deadlines.length > 0 ? (
+                  <span className="dv-onboarding-step-status">Active</span>
+                ) : (
+                  <Link to="/deadlines" className="dv-onboarding-step-btn">
+                    View Deadlines <ArrowRight size={13} />
+                  </Link>
+                )}
+              </div>
+
+              {/* Step 3 */}
+              <div className="dv-onboarding-step">
+                <div className="dv-onboarding-step-indicator">
+                  <span className="dv-step-num">3</span>
+                </div>
+                <div className="dv-onboarding-step-body">
+                  <strong>Ask AI questions about your policies</strong>
+                  <p>Get instant answers about coverage, limits, or validity with source citations.</p>
+                </div>
+                <Link to="/ask-ai" className="dv-onboarding-step-btn">
+                  Ask AI <Sparkles size={13} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Mobile & Tablet Native App Quick Action Pills */}
         <div className="dv-mobile-quick-actions">
@@ -464,80 +544,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Section C: Intelligent Upload Entry Point & Quick Actions */}
-        <div className="dv-upload-entry-section">
-          <Card padding="lg" className="dv-upload-entry-card">
-            <div className="dv-upload-entry-card__content">
-              <div className="dv-upload-entry-card__icon-box">
-                <UploadCloud size={28} />
-              </div>
-              <div>
-                <h4 className="dv-upload-entry-card__title">Ready to secure a new document?</h4>
-                <p className="dv-upload-entry-card__desc">
-                  Accepted formats: <strong>PDF, JPG, JPEG, PNG, WEBP</strong> (up to 25 MB). Automatic details organization, renewal schedules, and smart search.
-                </p>
-              </div>
-            </div>
-            <Link to="/upload">
-              <Button variant="primary" size="md" icon={UploadCloud}>
-                Upload Document
-              </Button>
-            </Link>
-          </Card>
-        </div>
-
-        {/* Section H: Privacy and Vault Trust Panel */}
-        <div className="dv-trust-panel">
-          <div className="dv-trust-panel__header">
-            <div className="dv-trust-panel__badge">
-              <ShieldCheck size={16} />
-              <span>Security Architecture</span>
-            </div>
-            <h4 className="dv-trust-panel__title">How DocVault Protects Your Personal Records</h4>
-          </div>
-
-          <div className="dv-trust-grid">
-            <div className="dv-trust-item">
-              <div className="dv-trust-item__icon dv-trust-item__icon--emerald">
-                <Lock size={18} />
-              </div>
-              <div className="dv-trust-item__content">
-                <h5>Two-Stage Protection</h5>
-                <p>Authentication requires account password plus a personal 4-to-6 digit vault PIN challenge.</p>
-              </div>
-            </div>
-
-            <div className="dv-trust-item">
-              <div className="dv-trust-item__icon dv-trust-item__icon--blue">
-                <Shield size={18} />
-              </div>
-              <div className="dv-trust-item__content">
-                <h5>Tenant Isolation</h5>
-                <p>Every query is strictly user-scoped in database queries with strict authorization boundaries.</p>
-              </div>
-            </div>
-
-            <div className="dv-trust-item">
-              <div className="dv-trust-item__icon dv-trust-item__icon--purple">
-                <FileCheck size={18} />
-              </div>
-              <div className="dv-trust-item__content">
-                <h5>Storage-Only Isolation</h5>
-                <p>Sensitive IDs (Aadhaar, PAN) can be isolated from AI and indexing pipelines.</p>
-              </div>
-            </div>
-
-            <div className="dv-trust-item">
-              <div className="dv-trust-item__icon dv-trust-item__icon--amber">
-                <Clock size={18} />
-              </div>
-              <div className="dv-trust-item__content">
-                <h5>Audit Trail Logging</h5>
-                <p>All file views, uploads, and deletions are recorded in an immutable audit ledger.</p>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

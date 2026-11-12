@@ -1,13 +1,75 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../features/auth/context/AuthContext';
-import { LogOut, ShieldCheck, Lock, Users, ChevronDown, UserPlus, Check } from 'lucide-react';
+import { LogOut, ShieldCheck, Lock, Users, ChevronDown, UserPlus, Check, Bell, Calendar, AlertTriangle, FileText, ChevronRight, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../../../app/theme';
+import { apiRequest } from '../../../services/api';
 import Button from '../../common/Button/Button';
 import './AppHeader.css';
 
 export default function AppHeader({ title, subtitle }) {
   const { user, lockSession, logout, savedSessions = [], switchSession } = useAuth();
+  const { resolvedTheme, toggleTheme } = useTheme();
   const [showSwitchMenu, setShowSwitchMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const notifRef = useRef(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadNotifications() {
+      try {
+        const [deadRes, revRes] = await Promise.all([
+          apiRequest('/api/deadlines').catch(() => ({ data: [] })),
+          apiRequest('/api/extraction/review-queue').catch(() => ({ data: [] }))
+        ]);
+
+        const notifs = [];
+        if (deadRes?.data && Array.isArray(deadRes.data)) {
+          deadRes.data.forEach((d) => {
+            const days = d.daysLeft !== undefined ? d.daysLeft : null;
+            if (days !== null && days <= 0) {
+              notifs.push({
+                id: `overdue-${d.documentId || d._id}`,
+                type: 'danger',
+                title: `${d.title} is Overdue`,
+                desc: `Expired on ${d.date || d.dueDate}`,
+                link: d.documentId ? `/documents/${d.documentId}` : '/deadlines'
+              });
+            } else if (days !== null && days <= 30) {
+              notifs.push({
+                id: `expiring-${d.documentId || d._id}`,
+                type: 'warning',
+                title: `${d.title} Expiring Soon`,
+                desc: `Renewal due in ${days} days`,
+                link: d.documentId ? `/documents/${d.documentId}` : '/deadlines'
+              });
+            }
+          });
+        }
+
+        if (revRes?.data && Array.isArray(revRes.data)) {
+          revRes.data.slice(0, 3).forEach((r) => {
+            notifs.push({
+              id: `review-${r._id}`,
+              type: 'info',
+              title: `Review Details for ${r.title}`,
+              desc: 'Some extracted fields need your confirmation',
+              link: `/documents/${r._id}`
+            });
+          });
+        }
+
+        if (mounted) {
+          setNotifications(notifs);
+        }
+      } catch (err) {
+        // quiet ignore
+      }
+    }
+    loadNotifications();
+    return () => { mounted = false; };
+  }, []);
   const menuRef = useRef(null);
   const navigate = useNavigate();
 
@@ -27,6 +89,9 @@ export default function AppHeader({ title, subtitle }) {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setShowSwitchMenu(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifications(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -50,7 +115,86 @@ export default function AppHeader({ title, subtitle }) {
         </div>
       </div>
 
-      <div className="dv-app-header__actions" ref={menuRef}>
+            <div className="dv-app-header__actions" ref={menuRef}>
+        {/* Dark / Light Mode Theme Toggle Pill */}
+        <button
+          type="button"
+          className="dv-header-theme-toggle"
+          onClick={toggleTheme}
+          title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
+          aria-label="Toggle theme"
+        >
+          {resolvedTheme === 'dark' ? (
+            <>
+              <Sun size={15} className="dv-theme-icon-sun" />
+              <span className="dv-header-theme-label">Light</span>
+            </>
+          ) : (
+            <>
+              <Moon size={15} className="dv-theme-icon-moon" />
+              <span className="dv-header-theme-label">Dark</span>
+            </>
+          )}
+        </button>
+
+        {/* Notification Bell Dropdown */}
+        <div className="dv-header-notif-wrapper" ref={notifRef}>
+          <button
+            type="button"
+            className={`dv-header-notif-btn ${notifications.length > 0 ? 'dv-header-notif-btn--has-unread' : ''}`}
+            onClick={() => setShowNotifications(!showNotifications)}
+            title="Notifications"
+          >
+            <Bell size={18} />
+            {notifications.length > 0 && (
+              <span className="dv-header-notif-badge">{notifications.length}</span>
+            )}
+          </button>
+
+          {showNotifications && (
+            <div className="dv-header-notif-dropdown">
+              <div className="dv-header-notif-header">
+                <strong>Vault Notifications</strong>
+                <span className="dv-notif-count-pill">{notifications.length} alerts</span>
+              </div>
+
+              <div className="dv-header-notif-list">
+                {notifications.length === 0 ? (
+                  <div className="dv-notif-empty">
+                    <Check size={24} color="#10B981" />
+                    <p>All caught up!</p>
+                    <small>No pending renewals or document reviews.</small>
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <Link
+                      key={n.id}
+                      to={n.link}
+                      className={`dv-notif-item dv-notif-item--${n.type}`}
+                      onClick={() => setShowNotifications(false)}
+                    >
+                      <div className="dv-notif-item-icon">
+                        {n.type === 'danger' ? <AlertTriangle size={15} /> : <Calendar size={15} />}
+                      </div>
+                      <div className="dv-notif-item-content">
+                        <span className="dv-notif-item-title">{n.title}</span>
+                        <small className="dv-notif-item-desc">{n.desc}</small>
+                      </div>
+                      <ChevronRight size={14} className="dv-notif-arrow" />
+                    </Link>
+                  ))
+                )}
+              </div>
+
+              <div className="dv-header-notif-footer">
+                <Link to="/deadlines" onClick={() => setShowNotifications(false)}>
+                  View all in Renewals & Deadlines →
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* User Account & Switch Pill */}
         <div className="dv-app-header__session-wrapper">
           <button

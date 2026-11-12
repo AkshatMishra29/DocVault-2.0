@@ -23,11 +23,11 @@
 
 [data-theme="dark"] .dv-auth-editorial-panel {
   background: 
-    radial-gradient(ellipse at 20% 15%, rgba(0, 113, 227, 0.15) 0%, transparent 55%),
-    radial-gradient(ellipse at 85% 85%, rgba(99, 102, 241, 0.1) 0%, transparent 60%),
-    linear-gradient(155deg, #0B0F19 0%, #111827 50%, #0F172A 100%);
-  border-right-color: rgba(255, 255, 255, 0.08);
-  color: #F8FAFC;
+    radial-gradient(ellipse at 20% 15%, rgba(59, 130, 246, 0.15) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 85%, rgba(139, 92, 246, 0.08) 0%, transparent 60%),
+    linear-gradient(155deg, #09090B 0%, #121214 50%, #000000 100%);
+  border-right-color: #27272A;
+  color: #FAFAFA;
 }
 
 /* Subtle Ethereal Ambient Canvas */
@@ -119,10 +119,10 @@
 }
 
 [data-theme="dark"] .dv-editorial-image-wrapper {
-  background: #1E293B;
+  background: #18181B;
   box-shadow: 
-    0 24px 60px -12px rgba(0, 0, 0, 0.6),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    0 24px 60px -12px rgba(0, 0, 0, 0.8),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .dv-editorial-image-wrapper:hover {

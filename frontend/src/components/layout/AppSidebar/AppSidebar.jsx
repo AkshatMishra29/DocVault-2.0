@@ -3,29 +3,26 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, FileText, UploadCloud, Layers, Calendar, 
   Sparkles, Settings, ShieldCheck, Activity, Users, Share2, 
-  Landmark, Lock, ChevronDown, Check, UserPlus 
+  Landmark, Lock, ChevronDown, Check, UserPlus, Sun, Moon 
 } from 'lucide-react';
 import DocVaultLogo from '../../common/DocVaultLogo/DocVaultLogo';
 import { useAuth } from '../../../features/auth/context/AuthContext';
+import { useTheme } from '../../../app/theme';
 import './AppSidebar.css';
 
 const navItems = [
-  { to: '/dashboard', label: 'Vault Overview', icon: LayoutDashboard },
+  { to: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { to: '/documents', label: 'My Documents', icon: FileText },
-  { to: '/connections', label: 'Connections', icon: Users, badge: 'SOCIAL' },
-  { to: '/shares', label: 'Share Center', icon: Share2 },
-  { to: '/intelligence', label: 'Document Intelligence', icon: Activity, badge: 'NEW' },
-  { to: '/upload', label: 'Upload Document', icon: UploadCloud },
-  { to: '/assets', label: 'Flashcards', icon: Layers },
-  { to: '/banking', label: 'Bank Statements', icon: Landmark },
-  { to: '/deadlines', label: 'Renewals & Deadlines', icon: Calendar },
-  { to: '/ask-ai', label: 'Ask AI Copilot', icon: Sparkles, badge: 'AI' },
-  { to: '/admin', label: 'Admin Console', icon: ShieldCheck },
+  { to: '/deadlines', label: 'Renewals', icon: Calendar },
+  { to: '/assets', label: 'My Assets', icon: Layers },
+  { to: '/shares', label: 'Sharing', icon: Share2 },
+  { to: '/ask-ai', label: 'Ask AI', icon: Sparkles },
   { to: '/more', label: 'Settings', icon: Settings },
 ];
 
 export default function AppSidebar() {
   const { user, lockSession, savedSessions = [], switchSession, logout } = useAuth();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [showSwitchMenu, setShowSwitchMenu] = useState(false);
   const navigate = useNavigate();
 
@@ -70,9 +67,42 @@ export default function AppSidebar() {
             </NavLink>
           );
         })}
+        {user?.role === 'admin' && (
+          <NavLink
+            to="/admin"
+            className={({ isActive }) =>
+              `dv-sidebar__item ${isActive ? 'dv-sidebar__item--active' : ''}`
+            }
+          >
+            <ShieldCheck size={18} className="dv-sidebar__icon" />
+            <span className="dv-sidebar__label">Admin Console</span>
+          </NavLink>
+        )}
       </nav>
 
       <div className="dv-sidebar__footer">
+        {/* Prominent Segmented Theme Switcher */}
+        <div className="dv-sidebar__theme-segment" role="group" aria-label="Theme selector">
+          <button
+            type="button"
+            className={`dv-sidebar__theme-btn ${resolvedTheme === 'light' ? 'dv-sidebar__theme-btn--active' : ''}`}
+            onClick={() => setTheme('light')}
+            title="Switch to Light Mode"
+          >
+            <Sun size={13} className="dv-sidebar__theme-icon" />
+            <span>Light</span>
+          </button>
+          <button
+            type="button"
+            className={`dv-sidebar__theme-btn ${resolvedTheme === 'dark' ? 'dv-sidebar__theme-btn--active' : ''}`}
+            onClick={() => setTheme('dark')}
+            title="Switch to Dark Mode"
+          >
+            <Moon size={13} className="dv-sidebar__theme-icon" />
+            <span>Dark</span>
+          </button>
+        </div>
+
         {/* User Session & Quick Lock Card */}
         <div className="dv-sidebar__session-card">
           <div className="dv-sidebar__user-row">

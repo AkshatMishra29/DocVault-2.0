@@ -195,6 +195,11 @@ async function handleAiQuery(req, res) {
     // Format response cleanly for frontend
     const answer = typeof rawAnswer === 'string' ? rawAnswer : (rawAnswer?.answer || JSON.stringify(rawAnswer));
     const referencedDocIds = documents.map(d => d._id);
+    const referencedDocs = documents.map(d => ({
+      id: d._id,
+      title: d.title,
+      category: d.category
+    }));
 
     res.json({
       success: true,
@@ -202,6 +207,7 @@ async function handleAiQuery(req, res) {
         answer,
         confidence: documents.length > 0 ? 'high' : 'low',
         referencedDocIds,
+        referencedDocs,
         actionItem: null,
       },
     });

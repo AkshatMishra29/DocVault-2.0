@@ -121,3 +121,36 @@ export async function verifyBiometrics(req, res) {
   }
 }
 
+
+export async function resetPin(req, res) {
+  try {
+    const result = await authService.resetPinWithOtp(req.body);
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+}
+
+export async function changePin(req, res) {
+  try {
+    const result = await authService.changePin({
+      userId: req.user.userId,
+      ...req.body,
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+}
+
+export async function changePassword(req, res) {
+  try {
+    const result = await authService.changePassword({
+      userId: req.user.userId,
+      ...req.body,
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+}

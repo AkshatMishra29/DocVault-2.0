@@ -20,7 +20,7 @@ export async function sendOtp({ email, purpose = 'register' }) {
   let cleanEmail = email.toLowerCase().trim();
 
   // If purpose is login or reset_password, resolve user and verify they exist
-  if (purpose === 'login' || purpose === 'reset_password') {
+  if (purpose === 'login' || purpose === 'reset_password' || purpose === 'reset_pin') {
     let user = await User.findOne({ email: cleanEmail });
     if (!user) {
       user = await User.findOne({ docVaultId: cleanEmail.toUpperCase() });
@@ -797,3 +797,162 @@ export async function authenticateWithFirebaseIdToken(idToken) {
 }
 
 
+
+/**
+ * Reset User PIN using verified OTP
+ */
+export async function resetPinWithOtp({ email, otp, newPin }) {
+  if (!email || !otp || !newPin) {
+    const error = new Error('Email, OTP code, and new PIN are required.');
+    error.status = 400;
+    throw error;
+  }
+
+  const cleanPin = newPin.toString().trim();
+  if (!/^([0-9]{4}|[0-9]{6})$/.test(cleanPin)) {
+    const error = new Error('PIN must be 4 or 6 numeric digits.');
+    error.status = 400;
+    throw error;
+  }
+
+  const rawInput = email.toLowerCase().trim();
+  let user = await User.findOne({ email: rawInput });
+  if (!user && !rawInput.includes('@')) {
+    user = await User.findOne({ email: { $regex: new RegExp(`^${rawInput}@`, 'i') } });
+  }
+
+  if (!user) {
+    const error = new Error('No user account found with this email.');
+    error.status = 404;
+    throw error;
+  }
+
+  // Verify OTP
+  let verified = false;
+  const purposes = ['reset_pin', 'reset_password', 'login'];
+  for (const purpose of purposes) {
+    try {
+      await verifyOtpCode({ email: user.email, otp, purpose });
+      verified = true;
+      break;
+    } catch {
+      // try next purpose
+    }
+  }
+
+  if (!verified) {
+    const error = new Error('Invalid or expired verification code. Please request a new OTP.');
+    error.status = 400;
+    throw error;
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.pinHash = await bcrypt.hash(cleanPin, salt);
+  user.pinLength = cleanPin.length === 6 ? 6 : 4;
+  user.failedAttempts = 0;
+  user.lockUntil = null;
+  await user.save();
+
+  const token = jwt.sign(
+    { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1 },
+    config.jwtSecret,
+    { expiresIn: '7d' }
+  );
+
+  return {
+    success: true,
+    message: 'PIN reset successfully. Your vault is unlocked.',
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      docVaultId: user.docVaultId,
+      pinLength: user.pinLength || 4,
+      tier: user.tier,
+    },
+    token,
+  };
+}
+
+/**
+ * Change PIN while logged in
+ */
+export async function changePin({ userId, currentPin, newPin }) {
+  if (!userId || !currentPin || !newPin) {
+    const error = new Error('Current PIN and new PIN are required.');
+    error.status = 400;
+    throw error;
+  }
+
+  const cleanNewPin = newPin.toString().trim();
+  if (!/^([0-9]{4}|[0-9]{6})$/.test(cleanNewPin)) {
+    const error = new Error('New PIN must be 4 or 6 numeric digits.');
+    error.status = 400;
+    throw error;
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    const error = new Error('User not found.');
+    error.status = 404;
+    throw error;
+  }
+
+  const isMatch = await bcrypt.compare(currentPin.toString().trim(), user.pinHash);
+  if (!isMatch) {
+    const error = new Error('Incorrect current PIN.');
+    error.status = 400;
+    throw error;
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.pinHash = await bcrypt.hash(cleanNewPin, salt);
+  user.pinLength = cleanNewPin.length === 6 ? 6 : 4;
+  await user.save();
+
+  return {
+    success: true,
+    message: 'PIN updated successfully.',
+    pinLength: user.pinLength,
+  };
+}
+
+/**
+ * Change Password while logged in
+ */
+export async function changePassword({ userId, currentPassword, newPassword }) {
+  if (!userId || !currentPassword || !newPassword) {
+    const error = new Error('Current password and new password are required.');
+    error.status = 400;
+    throw error;
+  }
+
+  if (newPassword.length < 8) {
+    const error = new Error('New password must be at least 8 characters long.');
+    error.status = 400;
+    throw error;
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    const error = new Error('User not found.');
+    error.status = 404;
+    throw error;
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!isMatch) {
+    const error = new Error('Incorrect current password.');
+    error.status = 400;
+    throw error;
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.passwordHash = await bcrypt.hash(newPassword, salt);
+  await user.save();
+
+  return {
+    success: true,
+    message: 'Password updated successfully.',
+  };
+}

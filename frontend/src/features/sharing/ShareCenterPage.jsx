@@ -186,8 +186,8 @@ export default function ShareCenterPage() {
   return (
     <div className="dv-share-center">
       <AppHeader
-        title="Intelligent Document Sharing"
-        subtitle="Share documents securely with expiring links, OTP verification, watermarks, redactions, and recipient Q&A."
+        title="Share Documents"
+        subtitle="Share documents with trusted contacts and expiring links."
       />
 
       {/* Tabs */}
@@ -237,7 +237,7 @@ export default function ShareCenterPage() {
           <div className="dv-smart-pack-header">
             <div className="dv-smart-pack-title">
               <Sparkles size={20} color="#0070F2" />
-              <span>Smart Share Pack Engine</span>
+              <span>Smart Document Bundle</span>
             </div>
             <Badge variant="primary">AI & Rule-Powered</Badge>
           </div>

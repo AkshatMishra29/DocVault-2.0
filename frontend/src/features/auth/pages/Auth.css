@@ -340,8 +340,8 @@
 }
 
 [data-theme="dark"] .dv-auth-account-pill {
-  background-color: #1E293B;
-  border-color: rgba(255, 255, 255, 0.1);
+  background-color: #18181B;
+  border-color: #27272A;
 }
 
 .dv-account-pill-icon {
@@ -421,9 +421,9 @@
 }
 
 [data-theme="dark"] .dv-saved-sessions-list {
-  background: #1E293B;
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.5);
+  background: #121214;
+  border-color: #27272A;
+  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.8);
 }
 
 .dv-saved-sessions-header {
