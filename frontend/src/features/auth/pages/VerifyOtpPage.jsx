@@ -85,7 +85,7 @@ export default function VerifyOtpPage() {
         body: JSON.stringify({ email: formData.email, purpose: "register" }),
       });
 
-      if (!res.ok) {
+      if (!res.ok && !res.success) {
         throw new Error(res.error || res.message || "Failed to resend code.");
       }
 

@@ -11,8 +11,10 @@ import AuthHeader from "../components/AuthHeader";
 import AuthAlert from "../components/AuthAlert";
 import PinInput from "../components/PinInput";
 import PinKeypad from "../components/PinKeypad";
+import PasswordInput from "../components/PasswordInput";
 import Modal from "../../../components/common/Modal/Modal";
 import { apiRequest } from "../../../services/api";
+import "./Auth.css";
 
 export default function EnterPinPage() {
   const [pin, setPin] = useState("");
@@ -378,94 +380,69 @@ export default function EnterPinPage() {
 
         <form onSubmit={handleSetupCredentials} className="dv-auth-form">
           {/* PIN Length Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px' }}>
-            <span style={{ fontSize: '13px', color: 'var(--color-auth-muted)' }}>PIN Length:</span>
-            <button
-              type="button"
-              onClick={() => { setSetupPinLength(4); setSetupPin(""); setSetupConfirmPin(""); }}
-              style={{
-                padding: '5px 14px',
-                borderRadius: '8px',
-                border: setupPinLength === 4 ? '1.5px solid var(--color-primary, #0070F2)' : '1px solid var(--color-auth-border)',
-                background: setupPinLength === 4 ? 'var(--color-primary, #0070F2)' : 'transparent',
-                color: setupPinLength === 4 ? '#ffffff' : 'inherit',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '12px',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              4 Digits
-            </button>
-            <button
-              type="button"
-              onClick={() => { setSetupPinLength(6); setSetupPin(""); setSetupConfirmPin(""); }}
-              style={{
-                padding: '5px 14px',
-                borderRadius: '8px',
-                border: setupPinLength === 6 ? '1.5px solid var(--color-primary, #0070F2)' : '1px solid var(--color-auth-border)',
-                background: setupPinLength === 6 ? 'var(--color-primary, #0070F2)' : 'transparent',
-                color: setupPinLength === 6 ? '#ffffff' : 'inherit',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '12px',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              6 Digits
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-auth-text-dark, #1D2D3E)' }}>PIN Length:</span>
+            <div className="dv-pin-len-toggle">
+              <button
+                type="button"
+                className={`dv-pin-len-btn ${setupPinLength === 4 ? "dv-pin-len-btn--active" : ""}`}
+                onClick={() => { setSetupPinLength(4); setSetupPin(""); setSetupConfirmPin(""); }}
+              >
+                4 Digits
+              </button>
+              <button
+                type="button"
+                className={`dv-pin-len-btn ${setupPinLength === 6 ? "dv-pin-len-btn--active" : ""}`}
+                onClick={() => { setSetupPinLength(6); setSetupPin(""); setSetupConfirmPin(""); }}
+              >
+                6 Digits
+              </button>
+            </div>
           </div>
 
           {/* PIN Input 1 */}
-          <div className="dv-auth-field-group">
-            <label className="dv-auth-label">Choose Your Security PIN ({setupPinLength} digits)</label>
-            <input
-              type="password"
-              inputMode="numeric"
-              maxLength={setupPinLength}
-              placeholder={`Enter ${setupPinLength}-digit PIN`}
-              value={setupPin}
-              onChange={(e) => setSetupPin(e.target.value.replace(/\D/g, '').slice(0, setupPinLength))}
-              className="dv-auth-input"
-              autoFocus
-              required
-            />
-          </div>
+          <PasswordInput
+            label={`Choose Security PIN (${setupPinLength} digits)`}
+            name="setupPin"
+            icon={KeyRound}
+            placeholder={`Enter ${setupPinLength}-digit numeric PIN`}
+            value={setupPin}
+            onChange={(e) => setSetupPin(e.target.value.replace(/\D/g, '').slice(0, setupPinLength))}
+            inputMode="numeric"
+            maxLength={setupPinLength}
+            autoFocus
+            required
+          />
 
           {/* PIN Input 2 */}
-          <div className="dv-auth-field-group">
-            <label className="dv-auth-label">Confirm Your Security PIN</label>
-            <input
-              type="password"
-              inputMode="numeric"
-              maxLength={setupPinLength}
-              placeholder={`Confirm ${setupPinLength}-digit PIN`}
-              value={setupConfirmPin}
-              onChange={(e) => setSetupConfirmPin(e.target.value.replace(/\D/g, '').slice(0, setupPinLength))}
-              className="dv-auth-input"
-              required
-            />
-          </div>
+          <PasswordInput
+            label="Confirm Security PIN"
+            name="setupConfirmPin"
+            icon={ShieldCheck}
+            placeholder={`Re-enter your ${setupPinLength}-digit PIN`}
+            value={setupConfirmPin}
+            onChange={(e) => setSetupConfirmPin(e.target.value.replace(/\D/g, '').slice(0, setupPinLength))}
+            inputMode="numeric"
+            maxLength={setupPinLength}
+            required
+          />
 
           {/* Optional Master Password */}
-          <div className="dv-auth-field-group">
-            <label className="dv-auth-label">
-              Master Password <span style={{ fontWeight: 400, opacity: 0.7 }}>(Optional - for emergency email sign in)</span>
-            </label>
-            <input
-              type="password"
-              placeholder="At least 8 characters (optional)"
-              value={setupMasterPassword}
-              onChange={(e) => setSetupMasterPassword(e.target.value)}
-              className="dv-auth-input"
-            />
-          </div>
+          <PasswordInput
+            label="Master Password (Optional)"
+            name="setupMasterPassword"
+            icon={Lock}
+            placeholder="At least 8 characters (for emergency sign in)"
+            value={setupMasterPassword}
+            onChange={(e) => setSetupMasterPassword(e.target.value)}
+            helperText="Optional emergency recovery password in case you forget your PIN."
+          />
 
           <button
             type="submit"
             disabled={setupLoading || setupPin.length !== setupPinLength || setupConfirmPin.length !== setupPinLength}
             className="dv-auth-submit-btn"
-            style={{ marginTop: '14px' }}
+            style={{ marginTop: '12px' }}
           >
             {setupLoading ? "Encrypting & Unlocking Vault..." : (
               <>

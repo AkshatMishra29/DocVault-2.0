@@ -1,16 +1,19 @@
+const PRODUCTION_BACKEND_URL = 'https://docvault-backend-tiyz.onrender.com';
+
 function getApiBaseUrl() {
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '');
   }
   if (typeof window !== 'undefined') {
-    // If deployed on Render or production domain
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      return window.location.origin;
+    const host = window.location.hostname;
+    // Local development (Vite on :5173, Express Backend on :5001)
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return `http://${host}:5001`;
     }
-    // Local development (Vite on :5173, Backend on :5001)
-    return `http://${window.location.hostname}:5001`;
+    // Hosted on Render cloud or custom domain -> point to production backend
+    return PRODUCTION_BACKEND_URL;
   }
-  return 'http://localhost:5001';
+  return PRODUCTION_BACKEND_URL;
 }
 
 export const API_BASE_URL = getApiBaseUrl();
@@ -37,8 +40,8 @@ export async function apiRequest(endpoint, options = {}) {
     headers,
   });
 
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
     const data = await response.json();
 
     // Detect session termination by another device or invalid session token
@@ -65,6 +68,17 @@ export async function apiRequest(endpoint, options = {}) {
     }
 
     return { status: response.status, ok: response.ok, ...data };
+  }
+
+  // If endpoint is an API route but server returned HTML (e.g. 404/502/SPA fallback), fail cleanly
+  if (endpoint.startsWith('/api/') && contentType.includes('text/html')) {
+    console.error(`[API Error] Expected JSON from ${endpoint} but received HTML.`);
+    return {
+      status: response.status,
+      ok: false,
+      success: false,
+      error: 'Backend API is currently unreachable. Please verify backend deployment.',
+    };
   }
 
   // Handle blob/text/raw streams (e.g. calendar.ics, file downloads)

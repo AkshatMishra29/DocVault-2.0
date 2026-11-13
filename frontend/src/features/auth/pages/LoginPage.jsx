@@ -12,6 +12,7 @@ import AuthLayout from "../components/AuthLayout";
 import AuthHeader from "../components/AuthHeader";
 import AuthAlert from "../components/AuthAlert";
 import PasswordInput from "../components/PasswordInput";
+import "./Auth.css";
 
 function GoogleIcon() {
   return (
@@ -84,31 +85,34 @@ export default function LoginPage() {
       let accessToken = null;
       let userEmail = null;
 
-      // 1. Try direct Google Cloud OAuth popup window
+      // 1. Try Firebase Google OAuth popup first (uses pre-whitelisted Google Cloud handler)
       try {
-        const googleRes = await triggerGoogleSignIn();
-        if (googleRes?.idToken || googleRes?.accessToken) {
-          idToken = googleRes.idToken;
-          accessToken = googleRes.accessToken;
-          userEmail = googleRes.email;
-        }
-      } catch (gErr) {
-        console.warn("[GCP OAuth] Direct popup fallback:", gErr.message);
-        // If popup was explicitly closed by user or blocked, inform user directly
-        if (gErr.message.includes('popup was closed') || gErr.message.includes('Popup blocked')) {
-          setError(gErr.message);
-          setGoogleLoading(false);
-          return;
-        }
-      }
-
-      // 2. Fallback to Firebase Google popup if GCP popup could not be established
-      if (!idToken && !accessToken) {
         const cred = await signInWithGoogle();
         if (cred && cred.idToken) {
           idToken = cred.idToken;
           userEmail = cred.email;
         }
+      } catch (fbErr) {
+        console.warn("[Firebase OAuth] Primary popup fallback:", fbErr.message);
+      }
+
+      // 2. Fallback to direct Google Cloud popup if Firebase did not resolve
+      if (!idToken) {
+        try {
+          const googleRes = await triggerGoogleSignIn();
+          if (googleRes?.idToken || googleRes?.accessToken) {
+            idToken = googleRes.idToken;
+            accessToken = googleRes.accessToken;
+            userEmail = googleRes.email;
+          }
+        } catch (gErr) {
+          console.warn("[GCP OAuth] Direct popup fallback:", gErr.message);
+        }
+      }
+
+      if (!idToken && !accessToken) {
+        setGoogleLoading(false);
+        return;
       }
 
       if (idToken || accessToken) {

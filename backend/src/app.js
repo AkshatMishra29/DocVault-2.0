@@ -29,6 +29,7 @@ const app = express();
 
 // Security & CORS Whitelist
 const allowedOrigins = [
+  'https://docvault-frontend-60e8.onrender.com',
   'https://docvault-new-1.onrender.com',
   'https://docvault-new.onrender.com',
   'http://localhost:5173',

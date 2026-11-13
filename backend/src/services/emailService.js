@@ -146,18 +146,16 @@ export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
     }
   }
 
-  // Strategy B: Gmail SMTP Transporter (only if not running on Render where SMTP is blocked)
-  if (!isRenderCloud) {
-    const transporter = getSmtpTransporter();
-    if (transporter) {
-      try {
-        console.log(`[EmailService] Attempting Gmail SMTP dispatch to: ${email}`);
-        const result = await transporter.sendMail(mailOptions);
-        console.log('[EmailService] Gmail SMTP dispatch succeeded! Message ID:', result.messageId);
-        return result;
-      } catch (smtpErr) {
-        console.error('[EmailService ERROR] Gmail SMTP dispatch failed:', smtpErr.message);
-      }
+  // Strategy B: Gmail SMTP Transporter (attempted with fast 3s connection timeout)
+  const transporter = getSmtpTransporter();
+  if (transporter) {
+    try {
+      console.log(`[EmailService] Attempting Gmail SMTP dispatch to: ${email}`);
+      const result = await transporter.sendMail(mailOptions);
+      console.log('[EmailService] Gmail SMTP dispatch succeeded! Message ID:', result.messageId);
+      return result;
+    } catch (smtpErr) {
+      console.warn('[EmailService] Gmail SMTP dispatch error/blocked:', smtpErr.message);
     }
   }
 

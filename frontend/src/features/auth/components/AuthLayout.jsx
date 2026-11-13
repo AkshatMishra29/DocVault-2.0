@@ -5,6 +5,7 @@ import { useTheme } from '../../../app/theme';
 import AuthBrandPanel from './AuthBrandPanel';
 import DocVaultLogo from '../../../components/common/DocVaultLogo/DocVaultLogo';
 import './AuthLayout.css';
+import '../pages/Auth.css';
 
 export default function AuthLayout({ 
   children, 
