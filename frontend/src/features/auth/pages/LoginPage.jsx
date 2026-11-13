@@ -171,6 +171,9 @@ export default function LoginPage() {
       });
       if (res.success) {
         setResetSuccess(res.message || "Verification code dispatched to your email.");
+        if (res.devOtp) {
+          setResetOtp(res.devOtp);
+        }
         setResetStep(2);
       } else {
         setResetError(res.error || "Failed to dispatch verification code.");

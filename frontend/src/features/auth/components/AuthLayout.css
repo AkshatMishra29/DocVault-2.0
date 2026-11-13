@@ -45,10 +45,10 @@
 }
 
 .dv-auth-top-bar {
-  display: none;
+  display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding: 14px 32px 4px 32px;
+  justify-content: space-between;
+  padding: 16px 28px 4px 28px;
   width: 100%;
   box-sizing: border-box;
   flex-shrink: 0;
@@ -56,6 +56,52 @@
 
 .dv-auth-mobile-logo {
   display: none;
+}
+
+.dv-auth-theme-action {
+  margin-left: auto;
+}
+
+.dv-auth-theme-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  border: 1px solid var(--color-auth-border, #CBD5E1);
+  background: var(--color-auth-card-bg, #FFFFFF);
+  color: var(--color-auth-text-dark, #1D2D3E);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dv-auth-theme-btn:hover {
+  background: var(--color-auth-panel-light, #F5F6F7);
+  border-color: var(--color-primary, #0070F2);
+  transform: translateY(-1px);
+}
+
+.dv-auth-theme-icon--sun {
+  color: #F59E0B;
+}
+
+.dv-auth-theme-icon--moon {
+  color: #6366F1;
+}
+
+[data-theme="dark"] .dv-auth-theme-btn {
+  background: #18181B;
+  border-color: #27272A;
+  color: #FAFAFA;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .dv-auth-theme-btn:hover {
+  background: #27272A;
+  border-color: #3B82F6;
 }
 
 .dv-auth-form-viewport {

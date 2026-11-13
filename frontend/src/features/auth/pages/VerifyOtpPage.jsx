@@ -89,10 +89,11 @@ export default function VerifyOtpPage() {
         throw new Error(res.error || res.message || "Failed to resend code.");
       }
 
-      setInfoMessage(res.data?.message || "A fresh 6-digit verification code has been dispatched to your email!");
+      setInfoMessage(res.message || res.data?.message || "A fresh 6-digit verification code has been dispatched to your email!");
       setResendCooldown(60);
-      if (res.data?.devOtp) {
-        setOtp(res.data.devOtp);
+      const freshCode = res.devOtp || res.data?.devOtp;
+      if (freshCode) {
+        setOtp(freshCode);
       } else {
         setOtp("");
       }

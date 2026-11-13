@@ -179,6 +179,9 @@ export default function EnterPinPage() {
         body: JSON.stringify({ email, purpose: "reset_pin" }),
       });
       if (res.success) {
+        if (res.devOtp) {
+          setForgotOtp(res.devOtp);
+        }
         setForgotStep("verify");
       } else {
         setForgotError(res.error || "Failed to send reset code.");

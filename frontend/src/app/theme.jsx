@@ -9,11 +9,11 @@ const ThemeContext = createContext({
 
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(() => {
-    return localStorage.getItem('docvault_theme') || 'dark';
+    return localStorage.getItem('docvault_theme') || 'light';
   });
 
   const [resolvedTheme, setResolvedTheme] = useState(() => {
-    const saved = localStorage.getItem('docvault_theme') || 'dark';
+    const saved = localStorage.getItem('docvault_theme') || 'light';
     if (saved === 'system') {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }

@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 let smtpTransporter = null;
 
 /**
- * Configure Nodemailer SMTP Transporter with connection timeouts
+ * Configure Nodemailer SMTP Transporter with fast connection timeouts (3s max)
  */
 function getSmtpTransporter() {
   if (smtpTransporter) return smtpTransporter;
@@ -19,9 +19,9 @@ function getSmtpTransporter() {
         user: user.trim(),
         pass: cleanPass,
       },
-      connectionTimeout: 8000,
-      greetingTimeout: 8000,
-      socketTimeout: 10000,
+      connectionTimeout: 3000,
+      greetingTimeout: 3000,
+      socketTimeout: 4000,
     });
     console.log('[EmailService] Gmail SMTP Transporter initialized for:', user);
   }
@@ -30,45 +30,54 @@ function getSmtpTransporter() {
 }
 
 /**
- * Dispatch email via Resend REST API (HTTPS Port 443)
+ * Dispatch email via Resend REST API (HTTPS Port 443 - zero firewall blocks)
  */
-async function sendViaResend({ apiKey, from, to, subject, html, text }) {
-  console.log(`[EmailService] Attempting HTTPS dispatch via Resend API to: ${to}`);
-  const sender = process.env.RESEND_FROM || 'DocVault <onboarding@resend.dev>';
+async function sendViaResend({ apiKey, to, subject, html, text }) {
+  console.log(`[EmailService] Attempting fast HTTPS dispatch via Resend API to: ${to}`);
+  const rawSender = process.env.RESEND_FROM || 'DocVault <onboarding@resend.dev>';
+  const sender = rawSender.replace(/^"|"$/g, '').trim();
 
   let cleanKey = (apiKey || '').trim();
   if (cleanKey.startsWith('ire_')) {
     cleanKey = cleanKey.slice(1);
   }
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${cleanKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: sender,
-      to: [to],
-      subject,
-      html,
-      text,
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-  const data = await res.json();
-  if (!res.ok) {
-    if (res.status === 403 && data.message?.includes('only send testing emails to your own email address')) {
-      console.warn(`[EmailService] Resend Sandbox restriction: ${data.message}`);
-      const sandboxErr = new Error(data.message);
-      sandboxErr.isResendSandbox = true;
-      throw sandboxErr;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${cleanKey}`,
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        from: sender,
+        to: [to],
+        subject,
+        html,
+        text,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      if (res.status === 403 && data.message?.includes('only send testing emails to your own email address')) {
+        console.warn(`[EmailService] Resend Sandbox restriction: ${data.message}`);
+        const sandboxErr = new Error(data.message);
+        sandboxErr.isResendSandbox = true;
+        throw sandboxErr;
+      }
+      throw new Error(data.message || `Resend API Error: ${res.statusText}`);
     }
-    throw new Error(data.message || `Resend API Error: ${res.statusText}`);
-  }
 
-  console.log(`[EmailService] Successfully sent via Resend API. Message ID: ${data.id}`);
-  return { messageId: data.id, provider: 'resend' };
+    console.log(`[EmailService] Successfully dispatched via Resend API. Message ID: ${data.id}`);
+    return { messageId: data.id, provider: 'resend' };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /**
@@ -108,51 +117,59 @@ export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
     `,
   };
 
-  // 1. Primary: Direct Gmail SMTP Transporter (Sends to ANY email address)
-  const transporter = getSmtpTransporter();
-  if (transporter) {
-    try {
-      console.log(`[EmailService] Attempting Gmail SMTP dispatch to: ${email}`);
-      const result = await transporter.sendMail(mailOptions);
-      console.log('[EmailService] Gmail SMTP dispatch succeeded! Message ID:', result.messageId);
-      return result;
-    } catch (smtpErr) {
-      console.error('[EmailService ERROR] Gmail SMTP dispatch failed:', smtpErr.message);
-    }
-  }
+  const isRenderCloud = Boolean(process.env.RENDER || process.env.NODE_ENV === 'production');
 
-  // 2. Fallback: Resend HTTP API (Port 443)
+  // Strategy A: If Resend API Key is configured, use fast HTTPS port 443 first (takes ~300ms)
   if (process.env.RESEND_API_KEY) {
     try {
       return await sendViaResend({
         apiKey: process.env.RESEND_API_KEY,
-        from: mailOptions.from,
         to: mailOptions.to,
         subject: mailOptions.subject,
         html: mailOptions.html,
         text: mailOptions.text,
       });
-    } catch (err) {
-      console.error('[EmailService] Resend dispatch failed:', err.message);
-      if (err.isResendSandbox) {
-        console.warn('========================================================================');
-        console.warn(`[EmailService RESEND SANDBOX] Recipient: ${email}`);
-        console.warn('Resend testing mode only delivers to account owner: akshatmishra2904@gmail.com');
-        console.warn(`FALLBACK OTP CODE FOR [ ${email} ]: >>> ${otpCode} <<<`);
-        console.warn('========================================================================');
+    } catch (resendErr) {
+      console.warn('[EmailService] Resend dispatch bypassed/failed:', resendErr.message);
+
+      // If Resend failed because of testing domain sandbox (recipient not account owner),
+      // and we are NOT on Render, we can fall through to Gmail SMTP.
+      if (resendErr.isResendSandbox && isRenderCloud) {
+        console.warn(`[EmailService SANDBOX] Render environment + unverified domain recipient: ${email}`);
         return {
           messageId: 'resend-sandbox-' + Date.now(),
           mocked: true,
           devOtp: otpCode,
+          sandboxRestricted: true,
         };
       }
     }
   }
 
-  // 3. Fallback: Console Logging for development
+  // Strategy B: Gmail SMTP Transporter (only if not running on Render where SMTP is blocked)
+  if (!isRenderCloud) {
+    const transporter = getSmtpTransporter();
+    if (transporter) {
+      try {
+        console.log(`[EmailService] Attempting Gmail SMTP dispatch to: ${email}`);
+        const result = await transporter.sendMail(mailOptions);
+        console.log('[EmailService] Gmail SMTP dispatch succeeded! Message ID:', result.messageId);
+        return result;
+      } catch (smtpErr) {
+        console.error('[EmailService ERROR] Gmail SMTP dispatch failed:', smtpErr.message);
+      }
+    }
+  }
+
+  // Strategy C: Dev & Cloud Sandbox Fallback
   console.warn('========================================================================');
   console.warn(`DISPATCHED OTP FOR [ ${email} ]: >>> ${otpCode} <<<`);
   console.warn('========================================================================');
 
-  return { messageId: 'mock-console-' + Date.now(), mocked: true, devOtp: otpCode };
+  return { 
+    messageId: 'mock-sandbox-' + Date.now(), 
+    mocked: true, 
+    devOtp: otpCode,
+    sandboxRestricted: true
+  };
 }
