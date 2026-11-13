@@ -447,6 +447,14 @@ export async function verifyUserPin({ email, pin }) {
     throw error;
   }
 
+  // If user has not configured a PIN yet (e.g. brand new OAuth user)
+  if (user.pinSet === false) {
+    const error = new Error('Vault Security PIN has not been configured yet. Please set up your PIN.');
+    error.status = 400;
+    error.requiresPinSetup = true;
+    throw error;
+  }
+
   const isPinMatch = await bcrypt.compare(cleanPin, user.pinHash);
   if (!isPinMatch) {
     user.failedAttempts = (user.failedAttempts || 0) + 1;

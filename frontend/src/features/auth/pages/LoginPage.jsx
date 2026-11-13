@@ -84,6 +84,7 @@ export default function LoginPage() {
       let idToken = null;
       let accessToken = null;
       let userEmail = null;
+      let isFirebase = false;
 
       // 1. Try Firebase Google OAuth popup first (uses pre-whitelisted Google Cloud handler)
       try {
@@ -91,6 +92,7 @@ export default function LoginPage() {
         if (cred && cred.idToken) {
           idToken = cred.idToken;
           userEmail = cred.email;
+          isFirebase = true;
         }
       } catch (fbErr) {
         console.warn("[Firebase OAuth] Primary popup fallback:", fbErr.message);
@@ -104,6 +106,7 @@ export default function LoginPage() {
             idToken = googleRes.idToken;
             accessToken = googleRes.accessToken;
             userEmail = googleRes.email;
+            isFirebase = false;
           }
         } catch (gErr) {
           console.warn("[GCP OAuth] Direct popup fallback:", gErr.message);
@@ -116,16 +119,19 @@ export default function LoginPage() {
       }
 
       if (idToken || accessToken) {
-        // Authenticate with Google GCP endpoint or fallback
-        let result = await loginWithGoogleToken(idToken, accessToken);
-        if (!result.success && idToken) {
+        // Fast direct route: call the matching backend verification endpoint directly
+        let result = isFirebase
+          ? await loginWithFirebaseToken(idToken)
+          : await loginWithGoogleToken(idToken, accessToken);
+
+        if (!result?.success && idToken && !isFirebase) {
           result = await loginWithFirebaseToken(idToken);
         }
 
-        if (result.success) {
+        if (result?.success) {
           const targetEmail = userEmail || result.user?.email;
           const pinLen = result.user?.pinLength || 4;
-          const isSetup = Boolean(result.requiresPinSetup || result.isNewUser);
+          const isSetup = Boolean(result.requiresPinSetup || result.isNewUser || result.user?.pinSet === false);
 
           localStorage.setItem('pending_pin_email', targetEmail);
           sessionStorage.setItem('docvault_pending_email', targetEmail);
@@ -146,7 +152,7 @@ export default function LoginPage() {
             } 
           });
         } else {
-          setError(result.error || "Google authentication failed.");
+          setError(result?.error || "Google authentication failed.");
         }
       }
     } catch (err) {

@@ -92,6 +92,7 @@ export default function RegisterPage() {
       let idToken = null;
       let accessToken = null;
       let userEmail = null;
+      let isFirebase = false;
 
       // 1. Try Firebase Google OAuth popup first (uses pre-whitelisted Google Cloud handler)
       try {
@@ -99,6 +100,7 @@ export default function RegisterPage() {
         if (cred && cred.idToken) {
           idToken = cred.idToken;
           userEmail = cred.email;
+          isFirebase = true;
         }
       } catch (fbErr) {
         console.warn("[Firebase OAuth] Primary popup fallback:", fbErr.message);
@@ -112,6 +114,7 @@ export default function RegisterPage() {
             idToken = googleRes.idToken;
             accessToken = googleRes.accessToken;
             userEmail = googleRes.email;
+            isFirebase = false;
           }
         } catch (gErr) {
           console.warn("[GCP OAuth] Direct popup fallback:", gErr.message);
@@ -124,15 +127,18 @@ export default function RegisterPage() {
       }
 
       if (idToken || accessToken) {
-        let result = await loginWithGoogleToken(idToken, accessToken);
-        if (!result.success && idToken) {
+        let result = isFirebase
+          ? await loginWithFirebaseToken(idToken)
+          : await loginWithGoogleToken(idToken, accessToken);
+
+        if (!result?.success && idToken && !isFirebase) {
           result = await loginWithFirebaseToken(idToken);
         }
 
-        if (result.success) {
+        if (result?.success) {
           const targetEmail = userEmail || result.user?.email;
           const pinLen = result.user?.pinLength || 4;
-          const isSetup = Boolean(result.requiresPinSetup || result.isNewUser);
+          const isSetup = Boolean(result.requiresPinSetup || result.isNewUser || result.user?.pinSet === false);
 
           localStorage.setItem('pending_pin_email', targetEmail);
           sessionStorage.setItem('docvault_pending_email', targetEmail);
@@ -153,7 +159,7 @@ export default function RegisterPage() {
             } 
           });
         } else {
-          setError(result.error || "Google authentication failed.");
+          setError(result?.error || "Google authentication failed.");
         }
       }
     } catch (err) {

@@ -35,7 +35,7 @@ function getSmtpTransporter() {
 async function sendViaResend({ apiKey, to, subject, html, text }) {
   console.log(`[EmailService] Attempting fast HTTPS dispatch via Resend API to: ${to}`);
   const rawSender = process.env.RESEND_FROM || 'DocVault <onboarding@resend.dev>';
-  const sender = rawSender.replace(/^"|"$/g, '').trim();
+  const sender = rawSender.replace(/"/g, '').trim();
 
   let cleanKey = (apiKey || '').trim();
   if (cleanKey.startsWith('ire_')) {

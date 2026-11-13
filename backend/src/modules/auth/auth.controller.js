@@ -44,6 +44,7 @@ export async function verifyPin(req, res) {
     res.status(err.status || 500).json({
       success: false,
       error: err.message,
+      requiresPinSetup: Boolean(err.requiresPinSetup),
       lockUntil: err.lockUntil || null,
       remainingSeconds: err.remainingSeconds || null,
       attemptsLeft: err.attemptsLeft ?? null

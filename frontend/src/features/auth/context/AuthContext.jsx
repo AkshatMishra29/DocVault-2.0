@@ -318,8 +318,19 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: res.error || res.message || 'Firebase authentication failed.' };
       }
 
+      if (res.token) {
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('docvault_token', res.token);
+      }
+
       handleLoginSuccess(res.user, res.requiresPin);
-      return { success: true, user: res.user, requiresPin: res.requiresPin };
+      return { 
+        success: true, 
+        user: res.user, 
+        requiresPin: res.requiresPin,
+        requiresPinSetup: Boolean(res.requiresPinSetup || !res.user?.pinSet),
+        isNewUser: Boolean(res.isNewUser)
+      };
     } catch (err) {
       return { success: false, error: err.message || 'Network error during Firebase authentication.' };
     }
@@ -355,6 +366,7 @@ export const AuthProvider = ({ children }) => {
         return {
           success: false,
           error: res.error || res.message || 'Incorrect Vault PIN.',
+          requiresPinSetup: Boolean(res.requiresPinSetup),
           lockUntil: res.lockUntil || null,
           remainingSeconds: res.remainingSeconds || null,
           attemptsLeft: res.attemptsLeft ?? null,

@@ -70,12 +70,23 @@ export default function EnterPinPage() {
   const [pinLength, setPinLength] = useState(initialPinLength === 6 ? 6 : 4);
 
   // Setup PIN Mode for Google OAuth / new users without configured PIN
-  const isSetupMode = Boolean(
+  const [isSetupMode, setIsSetupMode] = useState(() => Boolean(
     location.state?.isSetup ||
     location.state?.requiresPinSetup ||
     sessionStorage.getItem("docvault_requires_pin_setup") === "true" ||
     user?.pinSet === false
-  );
+  ));
+
+  useEffect(() => {
+    if (
+      location.state?.isSetup ||
+      location.state?.requiresPinSetup ||
+      sessionStorage.getItem("docvault_requires_pin_setup") === "true" ||
+      user?.pinSet === false
+    ) {
+      setIsSetupMode(true);
+    }
+  }, [location.state, user?.pinSet]);
 
   const [setupPin, setSetupPin] = useState("");
   const [setupConfirmPin, setSetupConfirmPin] = useState("");
@@ -301,6 +312,11 @@ export default function EnterPinPage() {
       navigate("/dashboard");
     } else {
       setPin("");
+      if (result.requiresPinSetup) {
+        sessionStorage.setItem("docvault_requires_pin_setup", "true");
+        setIsSetupMode(true);
+        return;
+      }
       if (result.remainingSeconds || result.lockUntil) {
         const secs = result.remainingSeconds || 300;
         setLockoutRemaining(secs);
