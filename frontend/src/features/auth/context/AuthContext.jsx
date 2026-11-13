@@ -254,11 +254,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Google Cloud OAuth / Google ID Token login
-  const loginWithGoogleToken = async (idToken) => {
+  const loginWithGoogleToken = async (idToken, accessToken) => {
     try {
       const res = await apiRequest('/api/auth/google', {
         method: 'POST',
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ idToken, access_token: accessToken }),
       });
 
       if (!res.ok) {

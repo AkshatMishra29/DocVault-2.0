@@ -714,11 +714,11 @@ export async function verifyBiometricUnlock({ email, credentialId, clientChallen
 }
 
 /**
- * Authenticate or auto-provision user via Google Cloud OAuth ID Token (Google Identity Services)
+ * Authenticate or auto-provision user via Google Cloud OAuth ID Token or Access Token
  */
-export async function authenticateWithGoogleToken(idToken) {
-  if (!idToken) {
-    const error = new Error('Google ID Token is required.');
+export async function authenticateWithGoogleToken(idToken, accessToken) {
+  if (!idToken && !accessToken) {
+    const error = new Error('Google token is required.');
     error.status = 400;
     throw error;
   }
@@ -727,27 +727,44 @@ export async function authenticateWithGoogleToken(idToken) {
   const googleClientId = config.googleAuth?.clientId || process.env.GOOGLE_CLIENT_ID;
   const client = new OAuth2Client(googleClientId);
 
-  let payload;
-  try {
-    const ticket = await client.verifyIdToken({
-      idToken,
-      audience: googleClientId,
-    });
-    payload = ticket.getPayload();
-  } catch (err) {
-    // If audience check failed or token invalid, check with unverified decode for safety or rethrow
-    console.error('[Google OAuth] Token verification failed:', err.message);
-    const error = new Error(`Google token validation failed: ${err.message}`);
-    error.status = 401;
-    throw error;
+  let cleanEmail = '';
+  let name = '';
+
+  // 1. If ID token provided, verify directly with Google certificates
+  if (idToken) {
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: googleClientId,
+      });
+      const payload = ticket.getPayload();
+      cleanEmail = (payload.email || '').toLowerCase().trim();
+      name = payload.name || payload.given_name || cleanEmail.split('@')[0];
+    } catch (err) {
+      console.warn('[Google OAuth] verifyIdToken failed, attempting fallback resolution:', err.message);
+    }
   }
 
-  const cleanEmail = (payload.email || '').toLowerCase().trim();
-  const name = payload.name || payload.given_name || cleanEmail.split('@')[0];
+  // 2. If access token provided or ID token resolution was bypassed, fetch verified userinfo from Google
+  if (!cleanEmail && (accessToken || idToken)) {
+    try {
+      const tokenToUse = accessToken || idToken;
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${tokenToUse}` },
+      });
+      if (res.ok) {
+        const userInfo = await res.json();
+        cleanEmail = (userInfo.email || '').toLowerCase().trim();
+        name = userInfo.name || userInfo.given_name || cleanEmail.split('@')[0];
+      }
+    } catch (fetchErr) {
+      console.error('[Google OAuth] Userinfo fetch failed:', fetchErr.message);
+    }
+  }
 
   if (!cleanEmail) {
-    const error = new Error('No verified email found in Google token.');
-    error.status = 400;
+    const error = new Error('Could not verify Google credentials. Please try signing in again.');
+    error.status = 401;
     throw error;
   }
 

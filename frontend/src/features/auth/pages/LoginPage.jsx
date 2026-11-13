@@ -81,21 +81,29 @@ export default function LoginPage() {
     setGoogleLoading(true);
     try {
       let idToken = null;
+      let accessToken = null;
       let userEmail = null;
 
-      // Try direct Google Cloud Identity Services OAuth first
+      // 1. Try direct Google Cloud OAuth popup window
       try {
         const googleRes = await triggerGoogleSignIn();
-        if (googleRes?.idToken) {
+        if (googleRes?.idToken || googleRes?.accessToken) {
           idToken = googleRes.idToken;
+          accessToken = googleRes.accessToken;
           userEmail = googleRes.email;
         }
       } catch (gErr) {
-        console.warn("[GCP OAuth] Direct trigger fallback to Firebase popup:", gErr.message);
+        console.warn("[GCP OAuth] Direct popup fallback:", gErr.message);
+        // If popup was explicitly closed by user or blocked, inform user directly
+        if (gErr.message.includes('popup was closed') || gErr.message.includes('Popup blocked')) {
+          setError(gErr.message);
+          setGoogleLoading(false);
+          return;
+        }
       }
 
-      // Fallback to Firebase Google popup if GIS was blocked
-      if (!idToken) {
+      // 2. Fallback to Firebase Google popup if GCP popup could not be established
+      if (!idToken && !accessToken) {
         const cred = await signInWithGoogle();
         if (cred && cred.idToken) {
           idToken = cred.idToken;
@@ -103,10 +111,10 @@ export default function LoginPage() {
         }
       }
 
-      if (idToken) {
+      if (idToken || accessToken) {
         // Authenticate with Google GCP endpoint or fallback
-        let result = await loginWithGoogleToken(idToken);
-        if (!result.success) {
+        let result = await loginWithGoogleToken(idToken, accessToken);
+        if (!result.success && idToken) {
           result = await loginWithFirebaseToken(idToken);
         }
 
