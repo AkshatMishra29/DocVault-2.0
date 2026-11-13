@@ -6,6 +6,7 @@ import {
   User, Mail, Lock, Phone, KeyRound, ShieldCheck, ArrowRight, HelpCircle 
 } from "lucide-react";
 import { signInWithGoogle } from "../../../services/firebase";
+import { triggerGoogleSignIn } from "../../../services/googleAuth";
 import AboutDocVaultModal from "../../../components/common/AboutModal/AboutDocVaultModal";
 
 import AuthLayout from "../components/AuthLayout";
@@ -31,7 +32,7 @@ function GoogleIcon() {
 export default function RegisterPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { loginWithFirebaseToken } = useAuth();
+  const { loginWithGoogleToken, loginWithFirebaseToken } = useAuth();
 
   // Pre-fill state if returning from /verify-otp
   const [formData, setFormData] = useState(() => ({
@@ -87,11 +88,37 @@ export default function RegisterPage() {
     setInfoMessage("");
     setGoogleLoading(true);
     try {
-      const cred = await signInWithGoogle();
-      if (cred && cred.idToken) {
-        const result = await loginWithFirebaseToken(cred.idToken);
+      let idToken = null;
+      let userEmail = null;
+
+      // Try direct Google Cloud Identity Services OAuth first
+      try {
+        const googleRes = await triggerGoogleSignIn();
+        if (googleRes?.idToken) {
+          idToken = googleRes.idToken;
+          userEmail = googleRes.email;
+        }
+      } catch (gErr) {
+        console.warn("[GCP OAuth] Direct trigger fallback to Firebase popup:", gErr.message);
+      }
+
+      // Fallback to Firebase Google popup if GIS was blocked
+      if (!idToken) {
+        const cred = await signInWithGoogle();
+        if (cred && cred.idToken) {
+          idToken = cred.idToken;
+          userEmail = cred.email;
+        }
+      }
+
+      if (idToken) {
+        let result = await loginWithGoogleToken(idToken);
+        if (!result.success) {
+          result = await loginWithFirebaseToken(idToken);
+        }
+
         if (result.success) {
-          const targetEmail = cred.email || result.user?.email;
+          const targetEmail = userEmail || result.user?.email;
           const pinLen = result.user?.pinLength || 4;
           localStorage.setItem('pending_pin_email', targetEmail);
           sessionStorage.setItem('docvault_pending_email', targetEmail);

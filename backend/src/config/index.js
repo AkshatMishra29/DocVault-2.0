@@ -28,6 +28,10 @@ export const config = {
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'docvault-app-f867f.firebasestorage.app',
   },
   jwtSecret: process.env.JWT_SECRET || 'docvault_fallback_secret',
+  googleAuth: {
+    clientId: process.env.GOOGLE_CLIENT_ID || '940417312093-vftovh8cf0r3q5jr45jt1659bgnh7n1e.apps.googleusercontent.com',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  },
   pipeline: {
     version: process.env.PIPELINE_VERSION || '1.0.0',
     noticeVersion: process.env.NOTICE_VERSION || '1.0.0',

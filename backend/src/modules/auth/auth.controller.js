@@ -78,6 +78,16 @@ export async function registerBiometrics(req, res) {
   }
 }
 
+export async function googleAuth(req, res) {
+  try {
+    const { idToken, token } = req.body;
+    const result = await authService.authenticateWithGoogleToken(idToken || token);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+}
+
 export async function firebaseAuth(req, res) {
   try {
     const { idToken } = req.body;

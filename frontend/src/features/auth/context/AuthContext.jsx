@@ -253,6 +253,25 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Google Cloud OAuth / Google ID Token login
+  const loginWithGoogleToken = async (idToken) => {
+    try {
+      const res = await apiRequest('/api/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ idToken }),
+      });
+
+      if (!res.ok) {
+        return { success: false, error: res.error || res.message || 'Google authentication failed.' };
+      }
+
+      handleLoginSuccess(res.user, res.requiresPin);
+      return { success: true, user: res.user, requiresPin: res.requiresPin };
+    } catch (err) {
+      return { success: false, error: err.message || 'Network error during Google authentication.' };
+    }
+  };
+
   // Google OAuth / Firebase ID Token login
   const loginWithFirebaseToken = async (idToken) => {
     try {
@@ -534,6 +553,7 @@ export const AuthProvider = ({ children }) => {
         handlePinSuccess,
         register,
         login,
+        loginWithGoogleToken,
         loginWithFirebaseToken,
         verifyPin,
         resetPinWithOtp,

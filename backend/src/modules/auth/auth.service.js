@@ -714,6 +714,98 @@ export async function verifyBiometricUnlock({ email, credentialId, clientChallen
 }
 
 /**
+ * Authenticate or auto-provision user via Google Cloud OAuth ID Token (Google Identity Services)
+ */
+export async function authenticateWithGoogleToken(idToken) {
+  if (!idToken) {
+    const error = new Error('Google ID Token is required.');
+    error.status = 400;
+    throw error;
+  }
+
+  const { OAuth2Client } = await import('google-auth-library');
+  const googleClientId = config.googleAuth?.clientId || process.env.GOOGLE_CLIENT_ID;
+  const client = new OAuth2Client(googleClientId);
+
+  let payload;
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: googleClientId,
+    });
+    payload = ticket.getPayload();
+  } catch (err) {
+    // If audience check failed or token invalid, check with unverified decode for safety or rethrow
+    console.error('[Google OAuth] Token verification failed:', err.message);
+    const error = new Error(`Google token validation failed: ${err.message}`);
+    error.status = 401;
+    throw error;
+  }
+
+  const cleanEmail = (payload.email || '').toLowerCase().trim();
+  const name = payload.name || payload.given_name || cleanEmail.split('@')[0];
+
+  if (!cleanEmail) {
+    const error = new Error('No verified email found in Google token.');
+    error.status = 400;
+    throw error;
+  }
+
+  let user = await User.findOne({ email: cleanEmail });
+
+  // If user does not exist yet, provision an initial vault account
+  if (!user) {
+    const salt = await bcrypt.genSalt(10);
+    const dummyPassword = Math.random().toString(36).slice(-10) + '!A1';
+    const passwordHash = await bcrypt.hash(dummyPassword, salt);
+    // Default PIN: 1234
+    const pinHash = await bcrypt.hash('1234', salt);
+
+    user = new User({
+      name,
+      email: cleanEmail,
+      passwordHash,
+      pinHash,
+      pinLength: 4,
+      tier: 'Vault Pro (Personal)',
+      sessionVersion: 1,
+      singleSessionOnly: false,
+      autoLockEnabled: true,
+      biometricsEnabled: false,
+    });
+    await user.save();
+  }
+
+  if (user.singleSessionOnly) {
+    user.sessionVersion = (user.sessionVersion || 1) + 1;
+    await user.save();
+  }
+
+  const token = jwt.sign(
+    { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1 },
+    config.jwtSecret,
+    { expiresIn: '7d' }
+  );
+
+  return {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      docVaultId: user.docVaultId,
+      phone: user.phone,
+      tier: user.tier,
+      pinLength: user.pinLength || 4,
+      singleSessionOnly: Boolean(user.singleSessionOnly),
+      sessionVersion: user.sessionVersion || 1,
+      autoLockEnabled: user.autoLockEnabled !== false,
+      biometricsEnabled: Boolean(user.biometricsEnabled),
+    },
+    token,
+  };
+}
+
+/**
  * Authenticate or auto-provision user via Firebase ID Token (Google OAuth / Email Link)
  */
 export async function authenticateWithFirebaseIdToken(idToken) {

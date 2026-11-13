@@ -13,6 +13,7 @@ router.post('/reset-password', authController.resetPassword);
 router.post('/reset-pin', authController.resetPin);
 router.post('/change-pin', requireAuth, authController.changePin);
 router.post('/change-password', requireAuth, authController.changePassword);
+router.post('/google', authController.googleAuth);
 router.post('/firebase', authController.firebaseAuth);
 router.post('/verify-pin', authController.verifyPin);
 router.get('/me', requireAuth, authController.getMe);

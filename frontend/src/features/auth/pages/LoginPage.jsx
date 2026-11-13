@@ -5,6 +5,7 @@ import { Mail, Lock, ArrowRight, ShieldCheck, HelpCircle, KeyRound, Sparkles, Ch
 import AboutDocVaultModal from "../../../components/common/AboutModal/AboutDocVaultModal";
 import Modal from "../../../components/common/Modal/Modal";
 import { signInWithGoogle } from "../../../services/firebase";
+import { triggerGoogleSignIn } from "../../../services/googleAuth";
 import { apiRequest } from "../../../services/api";
 
 import AuthLayout from "../components/AuthLayout";
@@ -45,7 +46,7 @@ export default function LoginPage() {
   const [resetError, setResetError] = useState("");
   const [resetSuccess, setResetSuccess] = useState("");
 
-  const { login, loginWithFirebaseToken } = useAuth();
+  const { login, loginWithGoogleToken, loginWithFirebaseToken } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -79,11 +80,38 @@ export default function LoginPage() {
     setInfoMessage("");
     setGoogleLoading(true);
     try {
-      const cred = await signInWithGoogle();
-      if (cred && cred.idToken) {
-        const result = await loginWithFirebaseToken(cred.idToken);
+      let idToken = null;
+      let userEmail = null;
+
+      // Try direct Google Cloud Identity Services OAuth first
+      try {
+        const googleRes = await triggerGoogleSignIn();
+        if (googleRes?.idToken) {
+          idToken = googleRes.idToken;
+          userEmail = googleRes.email;
+        }
+      } catch (gErr) {
+        console.warn("[GCP OAuth] Direct trigger fallback to Firebase popup:", gErr.message);
+      }
+
+      // Fallback to Firebase Google popup if GIS was blocked
+      if (!idToken) {
+        const cred = await signInWithGoogle();
+        if (cred && cred.idToken) {
+          idToken = cred.idToken;
+          userEmail = cred.email;
+        }
+      }
+
+      if (idToken) {
+        // Authenticate with Google GCP endpoint or fallback
+        let result = await loginWithGoogleToken(idToken);
+        if (!result.success) {
+          result = await loginWithFirebaseToken(idToken);
+        }
+
         if (result.success) {
-          const targetEmail = cred.email || result.user?.email;
+          const targetEmail = userEmail || result.user?.email;
           const pinLen = result.user?.pinLength || 4;
           localStorage.setItem('pending_pin_email', targetEmail);
           sessionStorage.setItem('docvault_pending_email', targetEmail);
