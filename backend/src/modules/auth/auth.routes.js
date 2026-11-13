@@ -11,6 +11,7 @@ router.post('/login', authController.login);
 router.post('/login-otp', authController.loginWithOtp);
 router.post('/reset-password', authController.resetPassword);
 router.post('/reset-pin', authController.resetPin);
+router.post('/setup-credentials', authController.setupCredentials);
 router.post('/change-pin', requireAuth, authController.changePin);
 router.post('/change-password', requireAuth, authController.changePassword);
 router.post('/google', authController.googleAuth);

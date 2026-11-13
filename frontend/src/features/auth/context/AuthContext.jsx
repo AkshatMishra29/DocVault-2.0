@@ -265,10 +265,44 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: res.error || res.message || 'Google authentication failed.' };
       }
 
+      if (res.token) {
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('docvault_token', res.token);
+      }
+
       handleLoginSuccess(res.user, res.requiresPin);
-      return { success: true, user: res.user, requiresPin: res.requiresPin };
+      return { 
+        success: true, 
+        user: res.user, 
+        requiresPin: res.requiresPin, 
+        requiresPinSetup: res.requiresPinSetup,
+        isNewUser: res.isNewUser 
+      };
     } catch (err) {
       return { success: false, error: err.message || 'Network error during Google authentication.' };
+    }
+  };
+
+  // Setup Vault PIN and optional Master Password (e.g. for Google OAuth new accounts)
+  const setupCredentials = async ({ email, pin, password }) => {
+    try {
+      const res = await apiRequest('/api/auth/setup-credentials', {
+        method: 'POST',
+        body: JSON.stringify({ email, pin, password }),
+      });
+
+      if (!res.ok && !res.success) {
+        return { success: false, error: res.error || res.message || 'Failed to setup vault credentials.' };
+      }
+
+      if (res.token && res.user) {
+        handlePinSuccess(res.token, res.user);
+        return { success: true, user: res.user };
+      }
+
+      return { success: false, error: 'Invalid response from server.' };
+    } catch (err) {
+      return { success: false, error: err.message || 'Network error during credentials setup.' };
     }
   };
 
@@ -555,6 +589,7 @@ export const AuthProvider = ({ children }) => {
         login,
         loginWithGoogleToken,
         loginWithFirebaseToken,
+        setupCredentials,
         verifyPin,
         resetPinWithOtp,
         updateSessionPreference,

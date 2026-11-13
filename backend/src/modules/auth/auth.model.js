@@ -7,6 +7,8 @@ const UserSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   pinHash: { type: String, required: true }, // 4-to-6 digit quick unlock PIN
   pinLength: { type: Number, default: 4 },    // 4 or 6 digit preference
+  pinSet: { type: Boolean, default: true },   // false when registered via OAuth until user sets their PIN
+  authProvider: { type: String, default: 'local' }, // 'local' | 'google'
   failedAttempts: { type: Number, default: 0 },
   lockUntil: { type: Date, default: null },
   phone: { type: String },

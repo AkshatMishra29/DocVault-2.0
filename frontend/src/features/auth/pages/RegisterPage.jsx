@@ -127,13 +127,24 @@ export default function RegisterPage() {
         if (result.success) {
           const targetEmail = userEmail || result.user?.email;
           const pinLen = result.user?.pinLength || 4;
+          const isSetup = Boolean(result.requiresPinSetup || result.isNewUser);
+
           localStorage.setItem('pending_pin_email', targetEmail);
           sessionStorage.setItem('docvault_pending_email', targetEmail);
           sessionStorage.setItem('docvault_pin_length', pinLen.toString());
+          if (isSetup) {
+            sessionStorage.setItem('docvault_requires_pin_setup', 'true');
+          } else {
+            sessionStorage.removeItem('docvault_requires_pin_setup');
+          }
+
           navigate("/enter-pin", { 
             state: { 
               email: targetEmail, 
-              pinLength: pinLen 
+              name: result.user?.name,
+              pinLength: pinLen,
+              isSetup,
+              requiresPinSetup: isSetup
             } 
           });
         } else {

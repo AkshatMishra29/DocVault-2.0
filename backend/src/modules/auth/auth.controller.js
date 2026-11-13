@@ -78,6 +78,22 @@ export async function registerBiometrics(req, res) {
   }
 }
 
+export async function setupCredentials(req, res) {
+  try {
+    const userId = req.user?.userId;
+    const { email, pin, password } = req.body;
+    const result = await authService.setupCredentials({
+      userId,
+      email,
+      pin,
+      password,
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+}
+
 export async function googleAuth(req, res) {
   try {
     const { idToken, token, access_token } = req.body;

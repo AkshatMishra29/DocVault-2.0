@@ -135,6 +135,40 @@ export default function VerifyOtpPage() {
       {error && <AuthAlert type="error" message={error} />}
       {infoMessage && !error && <AuthAlert type="info" message={infoMessage} />}
 
+      {fallbackOtp && (
+        <div style={{
+          background: 'rgba(59, 130, 246, 0.1)',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+          borderRadius: '10px',
+          padding: '10px 14px',
+          margin: '10px 0 14px',
+          fontSize: '13px',
+          color: 'var(--color-primary, #3B82F6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px'
+        }}>
+          <span><strong>Test Mode:</strong> Your 6-digit code is <code style={{ fontSize: '15px', fontWeight: 'bold', letterSpacing: '1px' }}>{fallbackOtp}</code></span>
+          <button
+            type="button"
+            onClick={() => setOtp(fallbackOtp)}
+            style={{
+              padding: '4px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              background: 'var(--color-primary, #0070F2)',
+              color: '#fff',
+              fontSize: '11px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Auto-fill
+          </button>
+        </div>
+      )}
+
       <form onSubmit={handleVerifyOtpAndRegister} className="dv-auth-form">
         <OtpInput
           value={otp}

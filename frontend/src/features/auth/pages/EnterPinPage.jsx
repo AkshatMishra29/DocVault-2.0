@@ -40,6 +40,7 @@ export default function EnterPinPage() {
     switchSession,
     removeSavedSession,
     verifyPin, 
+    setupCredentials,
     resetPinWithOtp,
     unlockWithBiometrics, 
     logout 
@@ -65,6 +66,59 @@ export default function EnterPinPage() {
     4
   );
   const [pinLength, setPinLength] = useState(initialPinLength === 6 ? 6 : 4);
+
+  // Setup PIN Mode for Google OAuth / new users without configured PIN
+  const isSetupMode = Boolean(
+    location.state?.isSetup ||
+    location.state?.requiresPinSetup ||
+    sessionStorage.getItem("docvault_requires_pin_setup") === "true" ||
+    user?.pinSet === false
+  );
+
+  const [setupPin, setSetupPin] = useState("");
+  const [setupConfirmPin, setSetupConfirmPin] = useState("");
+  const [setupMasterPassword, setSetupMasterPassword] = useState("");
+  const [setupPinLength, setSetupPinLength] = useState(4);
+  const [setupLoading, setSetupLoading] = useState(false);
+  const [setupError, setSetupError] = useState("");
+
+  const handleSetupCredentials = async (e) => {
+    if (e) e.preventDefault();
+    setSetupError("");
+
+    if (setupPin.length !== setupPinLength) {
+      setSetupError(`Please enter a complete ${setupPinLength}-digit PIN.`);
+      return;
+    }
+    if (setupPin !== setupConfirmPin) {
+      setSetupError("PIN and confirmation do not match.");
+      return;
+    }
+    if (setupMasterPassword && setupMasterPassword.length < 8) {
+      setSetupError("Master password must be at least 8 characters long.");
+      return;
+    }
+
+    setSetupLoading(true);
+    try {
+      const res = await setupCredentials({
+        email,
+        pin: setupPin,
+        password: setupMasterPassword.trim() || undefined,
+      });
+
+      if (res.success) {
+        sessionStorage.removeItem("docvault_requires_pin_setup");
+        navigate("/dashboard", { replace: true });
+      } else {
+        setSetupError(res.error || "Failed to set up vault PIN.");
+      }
+    } catch (err) {
+      setSetupError(err.message || "Error setting up vault PIN.");
+    } finally {
+      setSetupLoading(false);
+    }
+  };
 
   // Check if this device has registered biometrics
   const hasBiometrics = Boolean(email && localStorage.getItem(`dv_bio_cred_${email}`));
@@ -291,6 +345,139 @@ export default function EnterPinPage() {
 
   const isLocked = lockoutRemaining > 0;
   const otherSessions = savedSessions.filter((s) => s.email.toLowerCase() !== email.toLowerCase());
+
+  if (isSetupMode) {
+    return (
+      <AuthLayout brandVariant="pin">
+        <button
+          type="button"
+          className="dv-step-back-btn"
+          onClick={handleSwitchAccount}
+          title="Sign in with another account"
+        >
+          <ArrowLeft size={15} />
+          <span>Switch account</span>
+        </button>
+
+        <AuthHeader
+          title="Set Up Your Vault Security"
+          subtitle={`Welcome${location.state?.name ? `, ${location.state.name}` : ''}! Create your personal security PIN to encrypt and unlock your DocVault.`}
+        />
+
+        {email && (
+          <div className="dv-auth-session-bar" style={{ marginBottom: '18px' }}>
+            <div className="dv-auth-account-pill">
+              <Lock size={13} className="dv-account-pill-icon" />
+              <span className="dv-account-pill-email">{email}</span>
+              <span className="dv-account-pill-badge" style={{ background: '#3B82F6', color: '#fff' }}>New Vault Setup</span>
+            </div>
+          </div>
+        )}
+
+        {setupError && <AuthAlert type="error" message={setupError} />}
+
+        <form onSubmit={handleSetupCredentials} className="dv-auth-form">
+          {/* PIN Length Selector */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px' }}>
+            <span style={{ fontSize: '13px', color: 'var(--color-auth-muted)' }}>PIN Length:</span>
+            <button
+              type="button"
+              onClick={() => { setSetupPinLength(4); setSetupPin(""); setSetupConfirmPin(""); }}
+              style={{
+                padding: '5px 14px',
+                borderRadius: '8px',
+                border: setupPinLength === 4 ? '1.5px solid var(--color-primary, #0070F2)' : '1px solid var(--color-auth-border)',
+                background: setupPinLength === 4 ? 'var(--color-primary, #0070F2)' : 'transparent',
+                color: setupPinLength === 4 ? '#ffffff' : 'inherit',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '12px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              4 Digits
+            </button>
+            <button
+              type="button"
+              onClick={() => { setSetupPinLength(6); setSetupPin(""); setSetupConfirmPin(""); }}
+              style={{
+                padding: '5px 14px',
+                borderRadius: '8px',
+                border: setupPinLength === 6 ? '1.5px solid var(--color-primary, #0070F2)' : '1px solid var(--color-auth-border)',
+                background: setupPinLength === 6 ? 'var(--color-primary, #0070F2)' : 'transparent',
+                color: setupPinLength === 6 ? '#ffffff' : 'inherit',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '12px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              6 Digits
+            </button>
+          </div>
+
+          {/* PIN Input 1 */}
+          <div className="dv-auth-field-group">
+            <label className="dv-auth-label">Choose Your Security PIN ({setupPinLength} digits)</label>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={setupPinLength}
+              placeholder={`Enter ${setupPinLength}-digit PIN`}
+              value={setupPin}
+              onChange={(e) => setSetupPin(e.target.value.replace(/\D/g, '').slice(0, setupPinLength))}
+              className="dv-auth-input"
+              autoFocus
+              required
+            />
+          </div>
+
+          {/* PIN Input 2 */}
+          <div className="dv-auth-field-group">
+            <label className="dv-auth-label">Confirm Your Security PIN</label>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={setupPinLength}
+              placeholder={`Confirm ${setupPinLength}-digit PIN`}
+              value={setupConfirmPin}
+              onChange={(e) => setSetupConfirmPin(e.target.value.replace(/\D/g, '').slice(0, setupPinLength))}
+              className="dv-auth-input"
+              required
+            />
+          </div>
+
+          {/* Optional Master Password */}
+          <div className="dv-auth-field-group">
+            <label className="dv-auth-label">
+              Master Password <span style={{ fontWeight: 400, opacity: 0.7 }}>(Optional - for emergency email sign in)</span>
+            </label>
+            <input
+              type="password"
+              placeholder="At least 8 characters (optional)"
+              value={setupMasterPassword}
+              onChange={(e) => setSetupMasterPassword(e.target.value)}
+              className="dv-auth-input"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={setupLoading || setupPin.length !== setupPinLength || setupConfirmPin.length !== setupPinLength}
+            className="dv-auth-submit-btn"
+            style={{ marginTop: '14px' }}
+          >
+            {setupLoading ? "Encrypting & Unlocking Vault..." : (
+              <>
+                <span>Save PIN & Access Dashboard</span>
+                <ArrowRight size={16} />
+              </>
+            )}
+          </button>
+        </form>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout brandVariant="pin">

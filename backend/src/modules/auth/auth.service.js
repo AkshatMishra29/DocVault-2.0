@@ -768,15 +768,18 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
     throw error;
   }
 
+  let isNewUser = false;
   let user = await User.findOne({ email: cleanEmail });
 
-  // If user does not exist yet, provision an initial vault account
+  // If user does not exist yet, provision an initial vault account requiring PIN setup
   if (!user) {
+    isNewUser = true;
     const salt = await bcrypt.genSalt(10);
-    const dummyPassword = Math.random().toString(36).slice(-10) + '!A1';
-    const passwordHash = await bcrypt.hash(dummyPassword, salt);
-    // Default PIN: 1234
-    const pinHash = await bcrypt.hash('1234', salt);
+    // Secure random placeholder until user configures credentials
+    const tempPassword = crypto.randomBytes(16).toString('hex') + '!A1';
+    const passwordHash = await bcrypt.hash(tempPassword, salt);
+    const tempPin = crypto.randomBytes(16).toString('hex');
+    const pinHash = await bcrypt.hash(tempPin, salt);
 
     user = new User({
       name,
@@ -784,6 +787,8 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
       passwordHash,
       pinHash,
       pinLength: 4,
+      pinSet: false, // Flag: user MUST set their own PIN
+      authProvider: 'google',
       tier: 'Vault Pro (Personal)',
       sessionVersion: 1,
       singleSessionOnly: false,
@@ -793,18 +798,23 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
     await user.save();
   }
 
+  const requiresPinSetup = !user.pinSet;
+
   if (user.singleSessionOnly) {
     user.sessionVersion = (user.sessionVersion || 1) + 1;
     await user.save();
   }
 
   const token = jwt.sign(
-    { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1 },
+    { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1, requiresPinSetup },
     config.jwtSecret,
     { expiresIn: '7d' }
   );
 
   return {
+    isNewUser,
+    requiresPinSetup,
+    requiresPin: !requiresPinSetup,
     user: {
       id: user._id,
       name: user.name,
@@ -813,6 +823,87 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
       phone: user.phone,
       tier: user.tier,
       pinLength: user.pinLength || 4,
+      pinSet: Boolean(user.pinSet),
+      authProvider: user.authProvider || 'google',
+      singleSessionOnly: Boolean(user.singleSessionOnly),
+      sessionVersion: user.sessionVersion || 1,
+      autoLockEnabled: user.autoLockEnabled !== false,
+      biometricsEnabled: Boolean(user.biometricsEnabled),
+    },
+    token,
+  };
+}
+
+/**
+ * Setup or customize Vault PIN and optional Master Password (e.g. for Google OAuth new accounts)
+ */
+export async function setupCredentials({ userId, email, pin, password }) {
+  if (!pin) {
+    const error = new Error('A 4 or 6-digit Vault Security PIN is required.');
+    error.status = 400;
+    throw error;
+  }
+
+  const cleanPin = pin.toString().trim();
+  if (!/^([0-9]{4}|[0-9]{6})$/.test(cleanPin)) {
+    const error = new Error('PIN must be 4 or 6 numeric digits.');
+    error.status = 400;
+    throw error;
+  }
+
+  let user = null;
+  if (userId) {
+    user = await User.findById(userId);
+  }
+  if (!user && email) {
+    user = await User.findOne({ email: email.toLowerCase().trim() });
+  }
+
+  if (!user) {
+    const error = new Error('User account not found. Please sign in again.');
+    error.status = 404;
+    throw error;
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.pinHash = await bcrypt.hash(cleanPin, salt);
+  user.pinLength = cleanPin.length;
+  user.pinSet = true;
+  user.failedAttempts = 0;
+  user.lockUntil = null;
+
+  // If user also provided an optional master password
+  if (password && password.trim()) {
+    const cleanPassword = password.trim();
+    if (cleanPassword.length < 8) {
+      const error = new Error('Master password must be at least 8 characters long.');
+      error.status = 400;
+      throw error;
+    }
+    user.passwordHash = await bcrypt.hash(cleanPassword, salt);
+  }
+
+  await user.save();
+
+  const token = jwt.sign(
+    { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1 },
+    config.jwtSecret,
+    { expiresIn: '7d' }
+  );
+
+  return {
+    success: true,
+    message: 'Vault Security PIN set successfully. Your vault is unlocked.',
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      docVaultId: user.docVaultId,
+      phone: user.phone,
+      tier: user.tier,
+      pinLength: user.pinLength,
+      pinSet: true,
+      authProvider: user.authProvider || 'google',
       singleSessionOnly: Boolean(user.singleSessionOnly),
       sessionVersion: user.sessionVersion || 1,
       autoLockEnabled: user.autoLockEnabled !== false,
@@ -848,16 +939,17 @@ export async function authenticateWithFirebaseIdToken(idToken) {
     throw error;
   }
 
+  let isNewUser = false;
   let user = await User.findOne({ email: cleanEmail });
 
   // If user does not exist yet, provision an initial vault account
   if (!user) {
+    isNewUser = true;
     const salt = await bcrypt.genSalt(10);
-    // Random dummy password hash; user signs in via OAuth
-    const dummyPassword = Math.random().toString(36).slice(-10) + '!A1';
-    const passwordHash = await bcrypt.hash(dummyPassword, salt);
-    // Default PIN: 1234
-    const pinHash = await bcrypt.hash('1234', salt);
+    const tempPassword = crypto.randomBytes(16).toString('hex') + '!A1';
+    const passwordHash = await bcrypt.hash(tempPassword, salt);
+    const tempPin = crypto.randomBytes(16).toString('hex');
+    const pinHash = await bcrypt.hash(tempPin, salt);
 
     user = new User({
       name,
@@ -865,6 +957,8 @@ export async function authenticateWithFirebaseIdToken(idToken) {
       passwordHash,
       pinHash,
       pinLength: 4,
+      pinSet: false,
+      authProvider: 'firebase',
       tier: 'Vault Pro (Personal)',
       sessionVersion: 1,
       singleSessionOnly: false,
@@ -874,18 +968,23 @@ export async function authenticateWithFirebaseIdToken(idToken) {
     await user.save();
   }
 
+  const requiresPinSetup = !user.pinSet;
+
   if (user.singleSessionOnly) {
     user.sessionVersion = (user.sessionVersion || 1) + 1;
     await user.save();
   }
 
   const token = jwt.sign(
-    { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1 },
+    { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1, requiresPinSetup },
     config.jwtSecret,
     { expiresIn: '7d' }
   );
 
   return {
+    isNewUser,
+    requiresPinSetup,
+    requiresPin: !requiresPinSetup,
     user: {
       id: user._id,
       name: user.name,
@@ -894,6 +993,8 @@ export async function authenticateWithFirebaseIdToken(idToken) {
       phone: user.phone,
       tier: user.tier,
       pinLength: user.pinLength || 4,
+      pinSet: Boolean(user.pinSet),
+      authProvider: user.authProvider || 'firebase',
       singleSessionOnly: Boolean(user.singleSessionOnly),
       sessionVersion: user.sessionVersion || 1,
       autoLockEnabled: user.autoLockEnabled !== false,
@@ -901,7 +1002,6 @@ export async function authenticateWithFirebaseIdToken(idToken) {
       offlineAccessEnabled: user.offlineAccessEnabled,
     },
     token,
-    requiresPin: true,
   };
 }
 

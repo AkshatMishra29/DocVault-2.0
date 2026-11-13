@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { resetPinWithOtp, changePin, changePassword } from '../src/modules/auth/auth.service.js';
+import { resetPinWithOtp, changePin, changePassword, setupCredentials } from '../src/modules/auth/auth.service.js';
 import authRoutes from '../src/modules/auth/auth.routes.js';
 import aiRoutes from '../src/modules/ai/ai.routes.js';
 import app from '../src/app.js';
@@ -48,6 +48,7 @@ async function runTests() {
 
     const paths = routes.map(r => r.path);
     assert.ok(paths.includes('/reset-pin'), 'Route /reset-pin must be present');
+    assert.ok(paths.includes('/setup-credentials'), 'Route /setup-credentials must be present');
     assert.ok(paths.includes('/change-pin'), 'Route /change-pin must be present');
     assert.ok(paths.includes('/change-password'), 'Route /change-password must be present');
     assert.ok(paths.includes('/send-otp'), 'Route /send-otp must be present');
@@ -137,7 +138,25 @@ async function runTests() {
     );
   });
 
-  // 7. Test Express initialization and middleware stack
+  // 7. Test setupCredentials validations
+  await asyncTest('setupCredentials rejects invalid PIN format', async () => {
+    await assert.rejects(
+      async () => {
+        await setupCredentials({ email: 'test@example.com', pin: '123' });
+      },
+      /4 or 6 numeric digits/i,
+      'Should reject 3-digit PIN'
+    );
+    await assert.rejects(
+      async () => {
+        await setupCredentials({ email: 'test@example.com', pin: '12345' });
+      },
+      /4 or 6 numeric digits/i,
+      'Should reject 5-digit PIN'
+    );
+  });
+
+  // 8. Test Express initialization and middleware stack
   test('Express app instance is properly initialized with routing table', () => {
     assert.ok(app, 'Express app should be instantiated');
     assert.ok(app.router || app._router || typeof app.use === 'function', 'Express app router must be mounted');
