@@ -1,12 +1,11 @@
 import React, { useState, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest } from "../../../services/api";
 import { 
   User, Mail, Lock, Phone, KeyRound, ShieldCheck, ArrowRight, HelpCircle 
 } from "lucide-react";
-import { signInWithGoogle } from "../../../services/firebase";
-import { triggerGoogleSignIn } from "../../../services/googleAuth";
 import AboutDocVaultModal from "../../../components/common/AboutModal/AboutDocVaultModal";
 
 import AuthLayout from "../components/AuthLayout";
@@ -33,7 +32,7 @@ function GoogleIcon() {
 export default function RegisterPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { loginWithGoogleToken, loginWithFirebaseToken } = useAuth();
+  const { loginWithGoogleToken } = useAuth();
 
   // Pre-fill state if returning from /verify-otp
   const [formData, setFormData] = useState(() => ({
@@ -84,59 +83,16 @@ export default function RegisterPage() {
     handleChange(field, clean);
   };
 
-  const handleGoogleSignUp = async () => {
-    setError("");
-    setInfoMessage("");
-    setGoogleLoading(true);
-    try {
-      let idToken = null;
-      let accessToken = null;
-      let userEmail = null;
-      let isFirebase = false;
-
-      // 1. Try Firebase Google OAuth popup first (uses pre-whitelisted Google Cloud handler)
+  // Official Google Cloud Platform OAuth 2.0 (Google Identity Services)
+  const handleGoogleSignUp = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setError("");
+      setInfoMessage("");
+      setGoogleLoading(true);
       try {
-        const cred = await signInWithGoogle();
-        if (cred && cred.idToken) {
-          idToken = cred.idToken;
-          userEmail = cred.email;
-          isFirebase = true;
-        }
-      } catch (fbErr) {
-        console.warn("[Firebase OAuth] Primary popup fallback:", fbErr.message);
-      }
-
-      // 2. Fallback to direct Google Cloud popup if Firebase did not resolve
-      if (!idToken) {
-        try {
-          const googleRes = await triggerGoogleSignIn();
-          if (googleRes?.idToken || googleRes?.accessToken) {
-            idToken = googleRes.idToken;
-            accessToken = googleRes.accessToken;
-            userEmail = googleRes.email;
-            isFirebase = false;
-          }
-        } catch (gErr) {
-          console.warn("[GCP OAuth] Direct popup fallback:", gErr.message);
-        }
-      }
-
-      if (!idToken && !accessToken) {
-        setGoogleLoading(false);
-        return;
-      }
-
-      if (idToken || accessToken) {
-        let result = isFirebase
-          ? await loginWithFirebaseToken(idToken)
-          : await loginWithGoogleToken(idToken, accessToken);
-
-        if (!result?.success && idToken && !isFirebase) {
-          result = await loginWithFirebaseToken(idToken);
-        }
-
+        const result = await loginWithGoogleToken(null, tokenResponse.access_token);
         if (result?.success) {
-          const targetEmail = userEmail || result.user?.email;
+          const targetEmail = result.user?.email;
           const pinLen = result.user?.pinLength || 4;
           const isSetup = Boolean(result.requiresPinSetup || result.isNewUser || result.user?.pinSet === false);
 
@@ -161,13 +117,17 @@ export default function RegisterPage() {
         } else {
           setError(result?.error || "Google authentication failed.");
         }
+      } catch (err) {
+        setError(err.message || "Google authentication failed.");
+      } finally {
+        setGoogleLoading(false);
       }
-    } catch (err) {
-      setError(err.message || "Google authentication failed.");
-    } finally {
+    },
+    onError: (err) => {
+      console.warn("[GCP OAuth] Window closed or error:", err);
       setGoogleLoading(false);
     }
-  };
+  });
 
   // Submit registration form -> Send OTP and navigate to /verify-otp
   const handleRequestOtp = async (e) => {

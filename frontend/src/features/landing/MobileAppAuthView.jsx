@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../auth/context/AuthContext";
 import { 
   ShieldCheck, Lock, Mail, User, KeyRound, 
   ArrowRight, Sparkles, HelpCircle, Smartphone, 
   Eye, EyeOff, Info, CheckCircle2, ChevronRight
 } from "lucide-react";
-import { signInWithGoogle } from "../../services/firebase";
 import { apiRequest } from "../../services/api";
 import DocVaultLogo from "../../components/common/DocVaultLogo/DocVaultLogo";
 import AboutDocVaultModal from "../../components/common/AboutModal/AboutDocVaultModal";
@@ -50,7 +50,7 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState("");
 
-  const { login, loginWithFirebaseToken } = useAuth();
+  const { login, loginWithGoogleToken } = useAuth();
   const navigate = useNavigate();
 
   const pwdAdvice = analyzePasswordStrength(regPassword);
@@ -151,33 +151,47 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
   };
 
   /* ==========================================================================
-     Google One-Tap / Firebase Sign In
+     Google Cloud Platform (GCP) OAuth Sign In
      ========================================================================== */
-  const handleGoogleAuth = async () => {
-    try {
-      const cred = await signInWithGoogle();
-      if (cred && cred.idToken) {
-        const result = await loginWithFirebaseToken(cred.idToken);
-        if (result.success) {
-          const targetEmail = cred.email || result.user?.email;
+  const handleGoogleAuth = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoginError("");
+      try {
+        const result = await loginWithGoogleToken(null, tokenResponse.access_token);
+        if (result?.success) {
+          const targetEmail = result.user?.email;
           const pinLen = result.user?.pinLength || 4;
+          const isSetup = Boolean(result.requiresPinSetup || result.isNewUser || result.user?.pinSet === false);
+
           localStorage.setItem('pending_pin_email', targetEmail);
           sessionStorage.setItem('docvault_pending_email', targetEmail);
           sessionStorage.setItem('docvault_pin_length', pinLen.toString());
+          if (isSetup) {
+            sessionStorage.setItem('docvault_requires_pin_setup', 'true');
+          } else {
+            sessionStorage.removeItem('docvault_requires_pin_setup');
+          }
+
           navigate("/enter-pin", { 
             state: { 
               email: targetEmail, 
-              pinLength: pinLen 
+              name: result.user?.name,
+              pinLength: pinLen,
+              isSetup,
+              requiresPinSetup: isSetup
             } 
           });
         } else {
-          setLoginError(result.error || "Google sign-in could not complete.");
+          setLoginError(result?.error || "Google sign-in could not complete.");
         }
+      } catch (err) {
+        setLoginError(err.message || "Google sign-in failed.");
       }
-    } catch (err) {
-      setLoginError(err.message || "Google Sign-In canceled or blocked.");
+    },
+    onError: (err) => {
+      console.warn("[GCP OAuth Mobile] Error or dismissed:", err);
     }
-  };
+  });
 
   return (
     <div className="dv-native-app-screen">
@@ -241,7 +255,7 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
               <button
                 type="button"
                 className="dv-native-google-btn"
-                onClick={handleGoogleAuth}
+                onClick={() => handleGoogleAuth()}
               >
                 <GoogleIcon />
                 <span>Continue with Google</span>

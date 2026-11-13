@@ -731,16 +731,31 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
     throw error;
   }
 
-  const { OAuth2Client } = await import('google-auth-library');
-  const googleClientId = config.googleAuth?.clientId || process.env.GOOGLE_CLIENT_ID;
-  const client = new OAuth2Client(googleClientId);
-
   let cleanEmail = '';
   let name = '';
 
-  // 1. If ID token provided, verify directly with Google certificates
-  if (idToken) {
+  // 1. If Access Token provided (from Google Identity Services OAuth popup), resolve userinfo directly
+  if (accessToken) {
     try {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const userInfo = await res.json();
+        cleanEmail = (userInfo.email || '').toLowerCase().trim();
+        name = userInfo.name || userInfo.given_name || cleanEmail.split('@')[0];
+      }
+    } catch (fetchErr) {
+      console.warn('[Google OAuth] Access token userinfo fetch failed:', fetchErr.message);
+    }
+  }
+
+  // 2. If ID token provided and email not yet resolved, verify via Google certificates
+  if (!cleanEmail && idToken) {
+    try {
+      const { OAuth2Client } = await import('google-auth-library');
+      const googleClientId = config.googleAuth?.clientId || process.env.GOOGLE_CLIENT_ID;
+      const client = new OAuth2Client(googleClientId);
       const ticket = await client.verifyIdToken({
         idToken,
         audience: googleClientId,
@@ -749,24 +764,7 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
       cleanEmail = (payload.email || '').toLowerCase().trim();
       name = payload.name || payload.given_name || cleanEmail.split('@')[0];
     } catch (err) {
-      console.warn('[Google OAuth] verifyIdToken failed, attempting fallback resolution:', err.message);
-    }
-  }
-
-  // 2. If access token provided or ID token resolution was bypassed, fetch verified userinfo from Google
-  if (!cleanEmail && (accessToken || idToken)) {
-    try {
-      const tokenToUse = accessToken || idToken;
-      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${tokenToUse}` },
-      });
-      if (res.ok) {
-        const userInfo = await res.json();
-        cleanEmail = (userInfo.email || '').toLowerCase().trim();
-        name = userInfo.name || userInfo.given_name || cleanEmail.split('@')[0];
-      }
-    } catch (fetchErr) {
-      console.error('[Google OAuth] Userinfo fetch failed:', fetchErr.message);
+      console.warn('[Google OAuth] verifyIdToken failed:', err.message);
     }
   }
 
