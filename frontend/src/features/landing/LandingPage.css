@@ -2206,3 +2206,81 @@
 [data-theme="dark"] .dv-lp-faq-contact-card p {
   color: #CBD5E1;
 }
+
+/* ==========================================================================
+   DARK MODE MOCKUP PANELS & VIVID ICONS (LANDING PAGE)
+   ========================================================================== */
+
+[data-theme="dark"] .panel-title-row h5 {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .panel-badge-pill {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #CBD5E1;
+}
+
+[data-theme="dark"] .panel-badge-pill--alert {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #F87171;
+}
+
+[data-theme="dark"] .panel-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .panel-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(0, 112, 242, 0.45);
+}
+
+[data-theme="dark"] .item-icon--pdf {
+  background: rgba(0, 113, 227, 0.2);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .item-icon--locked {
+  background: rgba(245, 158, 11, 0.2);
+  color: #FBBF24;
+}
+
+[data-theme="dark"] .item-icon--tax {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34D399;
+}
+
+[data-theme="dark"] .item-icon--alert {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+}
+
+[data-theme="dark"] .panel-alert-card {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+[data-theme="dark"] .panel-alert-card__top strong {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .panel-alert-card__progress {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="dark"] .panel-ai-preview {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+[data-theme="dark"] .panel-ai-preview p {
+  color: #E2E8F0;
+}
+
+[data-theme="dark"] .panel-ai-query-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #CBD5E1;
+}

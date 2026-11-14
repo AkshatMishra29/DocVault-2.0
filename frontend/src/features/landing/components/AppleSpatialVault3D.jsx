@@ -94,41 +94,22 @@ export default function AppleSpatialVault3D() {
     setRotate({ x: 0, y: 0 });
   };
 
-  // Touch move for mobile
-  const handleTouchMove = (e) => {
-    if (!cardRef.current || !e.touches[0]) return;
-    const touch = e.touches[0];
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateX = ((y - centerY) / centerY) * -8;
-    const rotateY = ((x - centerX) / centerX) * 8;
-    setRotate({ x: rotateX, y: rotateY });
-  };
-
-  const handleTouchEnd = () => {
-    setRotate({ x: 0, y: 0 });
-  };
-
   return (
     <div className="dv-3d-scene">
       {/* Ambient background light bloom */}
       <div className={`dv-3d-ambient-bloom dv-3d-ambient-bloom--${currentDoc.tagColor}`} />
 
-      {/* Floating 3D Spatial Frame */}
+      {/* Floating 3D Spatial Frame - Mouse tilt for desktop, pure silky swipe for mobile */}
       <div
         ref={cardRef}
         className="dv-3d-tilt-container"
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
         style={{
-          transform: `perspective(1100px) rotateX(${rotate.x}deg) rotateY(${rotate.y}deg) scale3d(${isHovered ? 1.02 : 1}, ${isHovered ? 1.02 : 1}, 1)`,
+          transform: isHovered
+            ? `perspective(1100px) rotateX(${rotate.x}deg) rotateY(${rotate.y}deg) scale3d(1.02, 1.02, 1)`
+            : 'perspective(1100px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)',
         }}
       >
         {/* Spatial Floating Badge: Top Left */}

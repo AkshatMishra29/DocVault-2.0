@@ -68,6 +68,25 @@
   transform: scale(0.985);
 }
 
+/* GPU Compositor Acceleration for Buttery 120fps Swiping & Scrolling */
+.dv-app-main,
+.dv-app-content-container,
+.bottom-nav,
+.dv-card,
+.dv-3d-vault-card {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Lightweight Silky Smooth Scroll & Swipe Physics */
+.dv-smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-duration: 0.01ms !important;
