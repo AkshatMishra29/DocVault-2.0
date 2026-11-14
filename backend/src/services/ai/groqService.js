@@ -6,6 +6,41 @@ const groq = new Groq({
   apiKey: config.groq.apiKey,
 });
 
+const CANDIDATE_CHAT_MODELS = [
+  config.groq.model,
+  'qwen/qwen3.8-27b',
+  'openai/gpt-oss-120b',
+  'openai/gpt-oss-20b',
+  'llama-3.1-8b-instant',
+  'llama-3.3-70b-versatile',
+].filter(Boolean);
+
+/**
+ * Resilient Groq execution with multi-model fallback chain
+ */
+export async function executeGroqChatCompletion(params) {
+  const models = Array.from(new Set([
+    params.model,
+    ...CANDIDATE_CHAT_MODELS,
+  ].filter(Boolean)));
+
+  let lastError = null;
+  for (const model of models) {
+    try {
+      const response = await groq.chat.completions.create({
+        ...params,
+        model,
+      });
+      return response;
+    } catch (err) {
+      lastError = err;
+      console.warn(`[Groq] Model "${model}" failed: ${err.message}. Trying next fallback...`);
+    }
+  }
+
+  throw lastError;
+}
+
 /**
  * Extract structured metadata, entity fields, and expiry dates from document text
  */
@@ -111,8 +146,8 @@ ${rawText ? rawText.slice(0, 4000) : 'No OCR text available. Infer from filename
 `;
 
   try {
-    const response = await groq.chat.completions.create({
-      model: config.groq.model,
+    const response = await executeGroqChatCompletion({
+      model: config.groq.model || 'qwen/qwen3.8-27b',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.1,
       response_format: { type: 'json_object' },
@@ -180,8 +215,8 @@ Next Scheduled Service: ${asset.nextService || 'N/A'}
   const prompt = `You are the DocVault AI Assistant.
 SECURITY & ACCURACY RULES:
 1. You operate strictly within the user's isolated encrypted DocVault ecosystem.
-2. Answer the user's question directly, professionally, and accurately using ONLY the provided verified document records and tracked asset inventory below.
-3. NEVER assume, hallucinate, or fabricate information from external sources.
+2. Answer the user's question directly, professionally, and accurately using the provided verified document records and tracked asset inventory below.
+3. If the user is asking a conversational greeting or overview (such as "hi", "hello", "what can you do?", "how does DocVault work?"), respond politely, introduce yourself as the DocVault AI Assistant, and briefly explain how you can help analyze and answer questions about their encrypted documents and assets.
 4. When asked about DATES (e.g. "when was my certificate issued?", "what is the date on my document?", "when does it expire?"), check "Primary Document Date / Issue Date", "Expiry / Due Date", and "Key Structured Details" first.
 5. If the user asks about names, certificates, courses, organizations, or numbers, locate the exact values from "Key Structured Details" and "Extracted Document Content".
 6. State dates and critical entities directly and prominently in bold.
@@ -200,10 +235,8 @@ ${question}
 `;
 
   try {
-    // Use config model (llama-3.3-70b-versatile) for fast, highly accurate grounded Q&A
-    const chatModel = config.groq.model || 'llama-3.3-70b-versatile';
-    const response = await groq.chat.completions.create({
-      model: chatModel,
+    const response = await executeGroqChatCompletion({
+      model: config.groq.model || 'qwen/qwen3.8-27b',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
       max_tokens: 1000,
@@ -211,18 +244,11 @@ ${question}
 
     return response.choices[0].message.content;
   } catch (err) {
-    console.warn(`[Groq] Chat query with primary model failed, trying fallback (${config.groq.model}):`, err.message);
-    try {
-      const response = await groq.chat.completions.create({
-        model: config.groq.model,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.2,
-        max_tokens: 600,
-      });
-      return response.choices[0].message.content;
-    } catch (fallbackErr) {
-      console.error('[Groq] Chat query failed:', fallbackErr.message);
-      throw fallbackErr;
+    console.error('[Groq] Chat query failed across all candidate models:', err.message);
+    if (contextDocs.length > 0) {
+      const docSummaries = contextDocs.map(d => `• **${d.title}** (${d.category}): ${d.summary || 'Uploaded document'}${d.documentDate ? ` | Date: ${d.documentDate}` : ''}${d.expiryDate ? ` | Expiry: ${d.expiryDate}` : ''}`).join('\n');
+      return `### Document Information\nI found matching records in your vault:\n\n${docSummaries}\n\n*(Note: Live conversational inference is temporarily running in verified summary mode).*`;
     }
+    return "I am currently unable to reach the AI language service. Please ensure your documents are uploaded with AI analysis enabled and try again.";
   }
 }

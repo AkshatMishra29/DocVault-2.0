@@ -125,7 +125,7 @@ export default function AskAiPage() {
           ...prev,
           {
             role: "assistant",
-            content: "⚠️ I encountered an issue analyzing your vault documents. Please verify your connection and try again.",
+            content: res?.error || "⚠️ I encountered an issue analyzing your vault documents. Please verify your connection and try again.",
           },
         ]);
       }
@@ -134,7 +134,7 @@ export default function AskAiPage() {
         ...prev,
         {
           role: "assistant",
-          content: "⚠️ Server communication error. Please try again later.",
+          content: err?.message || "⚠️ Server communication error. Please try again later.",
         },
       ]);
     } finally {

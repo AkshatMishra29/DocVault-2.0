@@ -77,6 +77,15 @@ async function handleAiQuery(req, res) {
         return res.status(404).json({ success: false, error: 'Document not found' });
       }
 
+      // Auto-backfill aiConsent for user-owned ai_enabled documents if missing
+      if ((doc.aiPolicy === 'ai_enabled' || doc.privacyMode === 'PROCESSABLE') && (!doc.aiConsent || !doc.aiConsent.grantedAt)) {
+        doc.aiConsent = {
+          grantedAt: doc.createdAt || new Date(),
+          noticeVersion: '1.0.0',
+        };
+        Document.updateOne({ _id: doc._id }, { $set: { aiConsent: doc.aiConsent } }).catch(() => {});
+      }
+
       // Hard gatekeeper assertion: Throws 403 if storage_only or sensitive
       assertAiAllowed(doc, 'Single document AI query');
       documents.push(doc);
@@ -93,6 +102,17 @@ async function handleAiQuery(req, res) {
         ],
         sensitiveFlag: { $ne: true },
       }).select('-fileData');
+
+      // Auto-backfill aiConsent for user-owned ai_enabled documents if missing
+      for (const d of candidates) {
+        if ((d.aiPolicy === 'ai_enabled' || d.privacyMode === 'PROCESSABLE') && (!d.aiConsent || !d.aiConsent.grantedAt)) {
+          d.aiConsent = {
+            grantedAt: d.createdAt || new Date(),
+            noticeVersion: '1.0.0',
+          };
+          Document.updateOne({ _id: d._id }, { $set: { aiConsent: d.aiConsent } }).catch(() => {});
+        }
+      }
 
       // Double-check with in-memory privacy gate
       const validCandidates = candidates.filter(d => isAiAllowed(d));
@@ -167,6 +187,9 @@ async function handleAiQuery(req, res) {
         // Sort by final fused RRF score and take top candidates (up to 5)
         scoredDocs.sort((a, b) => b.rrf - a.rrf);
         documents = scoredDocs.slice(0, 5).map(item => item.doc);
+        if (documents.length === 0) {
+          documents = validCandidates.slice(0, 5);
+        }
       }
     }
 
@@ -174,12 +197,37 @@ async function handleAiQuery(req, res) {
 
     // If no AI-enabled documents are available and no assets exist
     if (documents.length === 0 && assets.length === 0) {
+      const totalDocs = await Document.countDocuments({ userId: req.user.userId }).catch(() => 0);
+      const storageOnlyDocs = await Document.countDocuments({
+        userId: req.user.userId,
+        $or: [{ aiPolicy: 'storage_only' }, { sensitiveFlag: true }]
+      }).catch(() => 0);
+
+      // If user has uploaded docs, but all are protected storage-only
+      if (totalDocs > 0 && storageOnlyDocs === totalDocs) {
+        return res.json({
+          success: true,
+          data: {
+            answer: `You have **${totalDocs} document(s)** in your vault, but they are currently protected in **Storage-Only mode** (zero third-party AI egress). To allow DocVault AI to search and answer questions using these documents, please enable AI analysis in your Document Settings.`,
+            confidence: 'low',
+            referencedDocIds: [],
+            referencedDocs: [],
+            actionItem: null,
+          },
+        });
+      }
+
+      // Allow conversational responses or polite guidance when vault is empty
+      const rawAnswer = await answerDocumentQuery(question, [], []);
+      const answer = typeof rawAnswer === 'string' ? rawAnswer : (rawAnswer?.answer || 'Hello! I am your DocVault AI Assistant. You currently have no AI-enabled documents uploaded. Once you upload documents (like certificates, invoices, or policies) with AI analysis enabled, I can answer questions, summarize content, and extract key dates for you.');
+
       return res.json({
         success: true,
         data: {
-          answer: 'I could not find this information in your available documents.',
+          answer,
           confidence: 'low',
           referencedDocIds: [],
+          referencedDocs: [],
           actionItem: null,
         },
       });

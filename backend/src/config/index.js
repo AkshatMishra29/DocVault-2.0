@@ -12,7 +12,7 @@ export const config = {
   mongoUri: process.env.MONGODB_URI,
   groq: {
     apiKey: process.env.GROQ_API_KEY,
-    model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+    model: process.env.GROQ_MODEL || 'qwen/qwen3.8-27b',
   },
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY,
