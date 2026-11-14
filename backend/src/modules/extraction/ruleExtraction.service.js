@@ -46,8 +46,9 @@ const ROLL_NUMBER_ANCHORS = [
 
 // Amount patterns (INR, USD, EUR, GBP)
 const AMOUNT_ANCHORS = [
-  /(?:total(?:\s*amount)?|grand\s*total|net\s*amount|final\s*payable|amount\s*paid)[:.\s]*(?:₹|rs\.?|inr|\$|€|£)?\s*([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{2})?)/i,
-  /(?:sum\s*insured|idv\s*value)[:.\s]*(?:₹|rs\.?|inr|\$|€|£)?\s*([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{2})?)/i,
+  /(?:total(?:\s*amount)?(?:\s*received|\s*paid|\s*payable|\s*due)?|grand\s*total|net\s*(?:amount|payable)|final\s*payable|amount\s*(?:paid|received|due|payable)|bill\s*amount)[:.\s]*(?:₹|rs\.?|inr|\$|€|£)?\s*([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{2})?|[0-9]+)/i,
+  /(?:sum\s*insured|idv\s*value)[:.\s]*(?:₹|rs\.?|inr|\$|€|£)?\s*([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{2})?|[0-9]+)/i,
+  /(?:total|amount|bill|received|paid)\s*[:=]\s*(?:₹|rs\.?|inr|\$|€|£)?\s*([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{2})?|[0-9]+)/i,
 ];
 
 // Date parsing patterns (supports 1950-2050, ordinals, textual months, and separators)
@@ -483,6 +484,39 @@ export function extractTier1Fields(text, pageNumber = 1) {
         break;
       }
     }
+  }
+
+  // 5b. Consumer / Recipient Name Extraction
+  const consumerMatch = text.match(/(?:consumer\s*name|customer\s*name|billed\s*to|recipient(?:\s*name)?|patient(?:\s*name)?|student(?:\s*name)?)[:.\s]+([A-Z][A-Za-z\s\/\.]{2,45})/i);
+  if (consumerMatch && consumerMatch[1]) {
+    const rawName = consumerMatch[1].trim().split('\n')[0].trim();
+    if (rawName.length >= 3) {
+      fields.push({
+        fieldName: 'consumer_name',
+        value: rawName,
+        evidence: consumerMatch[0].trim(),
+        pageNumber,
+        extractionMethod: 'regex',
+        confidence: 0.90,
+        verificationStatus: 'accepted',
+        pipelineVersion: '1.0.0',
+      });
+    }
+  }
+
+  // 5c. Account / Identifier Number Extraction
+  const accountMatch = text.match(/(?:account\s*no\.?|consumer\s*no\.?|ca\s*no\.?|transaction\s*id\.?|receipt\s*no\.?)[:.\s]*([A-Za-z0-9\-_]{5,30})/i);
+  if (accountMatch && accountMatch[1]) {
+    fields.push({
+      fieldName: 'account_number',
+      value: accountMatch[1].trim(),
+      evidence: accountMatch[0].trim(),
+      pageNumber,
+      extractionMethod: 'regex',
+      confidence: 0.92,
+      verificationStatus: 'accepted',
+      pipelineVersion: '1.0.0',
+    });
   }
 
   // 6a. Explicit Issue / Completion / Award Date Extraction

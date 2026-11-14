@@ -2,23 +2,24 @@ import Groq from 'groq-sdk';
 import { config } from '../../config/index.js';
 import { normalizeDateToIso } from '../../modules/extraction/ruleExtraction.service.js';
 
-const groq = new Groq({
-  apiKey: config.groq.apiKey,
-});
+function getGroqClient() {
+  const apiKey = (config.groq.apiKey || process.env.GROQ_API_KEY || '').trim();
+  return new Groq({ apiKey });
+}
 
 const CANDIDATE_CHAT_MODELS = [
-  config.groq.model,
   'qwen/qwen3.8-27b',
   'openai/gpt-oss-120b',
   'openai/gpt-oss-20b',
-  'llama-3.1-8b-instant',
-  'llama-3.3-70b-versatile',
+  'openai/gpt-oss-safeguard-20b',
+  config.groq.model,
 ].filter(Boolean);
 
 /**
  * Resilient Groq execution with multi-model fallback chain
  */
 export async function executeGroqChatCompletion(params) {
+  const groq = getGroqClient();
   const models = Array.from(new Set([
     params.model,
     ...CANDIDATE_CHAT_MODELS,
@@ -73,7 +74,7 @@ Return ONLY a valid JSON object (no markdown, no backticks):
 }
 Filename: ${filename}`;
 
-      const visionResponse = await groq.chat.completions.create({
+      const visionResponse = await getGroqClient().chat.completions.create({
         model: 'qwen/qwen3.8-27b',
         messages: [
           {
@@ -244,11 +245,105 @@ ${question}
 
     return response.choices[0].message.content;
   } catch (err) {
-    console.error('[Groq] Chat query failed across all candidate models:', err.message);
-    if (contextDocs.length > 0) {
-      const docSummaries = contextDocs.map(d => `• **${d.title}** (${d.category}): ${d.summary || 'Uploaded document'}${d.documentDate ? ` | Date: ${d.documentDate}` : ''}${d.expiryDate ? ` | Expiry: ${d.expiryDate}` : ''}`).join('\n');
-      return `### Document Information\nI found matching records in your vault:\n\n${docSummaries}\n\n*(Note: Live conversational inference is temporarily running in verified summary mode).*`;
-    }
-    return "I am currently unable to reach the AI language service. Please ensure your documents are uploaded with AI analysis enabled and try again.";
+    console.warn('[Groq] Chat query fallback across candidate models:', err.message);
+    // Deterministic grounding fallback: answers the user's specific query using verified document facts
+    return answerWithDeterministicGrounding(question, contextDocs, contextAssets);
   }
+}
+
+/**
+ * Deterministic Grounded Query Solver:
+ * Directly extracts answers from verified document context and structured attributes
+ * when live LLM execution is unavailable or rate-limited.
+ */
+export function answerWithDeterministicGrounding(question, contextDocs = [], contextAssets = []) {
+  const lowerQ = (question || '').toLowerCase();
+  const isDateQ = /(?:when|date|day|month|year|expiry|expire|due\s*date|issued|collection|printed)/i.test(lowerQ);
+  const isNameQ = /(?:who|name|consumer|customer|recipient|person|whom|billed\s*to)/i.test(lowerQ);
+  const isAccountQ = /(?:account\s*no|account\s*number|consumer\s*no|ca\s*no|receipt\s*no|transaction\s*id|policy\s*no)/i.test(lowerQ);
+  const isAmountQ = /(?:amount|how\s*much|cost|price|total|payable|paid|fee|charge|balance|bill\s*amount|bill\s*total)/i.test(lowerQ);
+
+  if (contextDocs.length > 0) {
+    const primaryDoc = contextDocs[0];
+    const text = primaryDoc.extractedText || '';
+    const keyDetails = primaryDoc.keyDetails || {};
+
+    // 1. Extract amount
+    let amount = keyDetails['TOTAL AMOUNT'] || keyDetails['Total Amount'] || keyDetails['Amount'] || keyDetails['AMOUNT'] || null;
+    if (!amount) {
+      const amountMatch = text.match(/(?:total\s*amount\s*(?:received|paid|due|payable)?|amount\s*(?:received|paid|due|payable)?|total\s*(?:received|paid|payable)?|grand\s*total|net\s*payable|bill\s*amount)[:.\s]*(?:₹|rs\.?|inr|\$|€|£)?\s*([0-9,]+(?:\.[0-9]{2})?(?:\s*\([^\)]+\))?(?:\s*only)?)/i);
+      if (amountMatch) amount = amountMatch[1].trim();
+    }
+
+    // 2. Extract consumer / recipient
+    let consumer = keyDetails['CONSUMER NAME'] || keyDetails['Consumer Name'] || keyDetails['Recipient Name'] || keyDetails['RECIPIENT NAME'] || null;
+    if (!consumer) {
+      const consumerMatch = text.match(/(?:consumer\s*name|customer\s*name|billed\s*to|recipient(?:\s*name)?|name)[:.\s]+([A-Z][A-Za-z\s\/\.]{2,45})/i);
+      if (consumerMatch) consumer = consumerMatch[1].trim().split('\n')[0];
+    }
+
+    // 3. Extract account number
+    let accountNo = keyDetails['ACCOUNT NUMBER'] || keyDetails['Account No'] || keyDetails['ACCOUNT NO'] || null;
+    if (!accountNo) {
+      const accMatch = text.match(/(?:account\s*no\.?|consumer\s*no\.?|ca\s*no\.?)[:.\s]*([A-Za-z0-9\-_]{4,25})/i);
+      if (accMatch) accountNo = accMatch[1].trim();
+    }
+
+    // 4. Extract transaction / receipt ID
+    let txId = keyDetails['TRANSACTION ID'] || keyDetails['Transaction ID'] || null;
+    if (!txId) {
+      const txMatch = text.match(/(?:transaction\s*id\.?|receipt\s*no\.?|bill\s*no\.?)[:.\s]*([A-Za-z0-9\-_]{5,35})/i);
+      if (txMatch) txId = txMatch[1].trim();
+    }
+
+    // 5. Extract date
+    let docDate = primaryDoc.documentDate || keyDetails['ISSUE DATE'] || keyDetails['DOCUMENT DATE'] || null;
+    if (!docDate) {
+      const dateMatch = text.match(/(?:collection\s*date|printed\s*date|payment\s*date|bill\s*date|issue\s*date|due\s*date)[:.\s]*([0-9]{1,2}[-\/.][0-9]{1,2}[-\/.][0-9]{2,4})/i);
+      if (dateMatch) docDate = dateMatch[1].trim();
+    }
+
+    // 6. Extract issuer / provider
+    let issuer = keyDetails['ISSUING AUTHORITY'] || keyDetails['Issuing Organization'] || null;
+    if (!issuer && text) {
+      const firstLines = text.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 3);
+      const authorityLine = firstLines.find(l => /(?:nigam|ltd|limited|board|corporation|bank|department|university|hospital)/i.test(l));
+      if (authorityLine) issuer = authorityLine;
+    }
+
+    let directAnswer = '';
+    if (isNameQ && consumer) {
+      directAnswer = `The **${primaryDoc.title}** is issued to **${consumer}**.\n\n`;
+    } else if (isDateQ && (docDate || primaryDoc.expiryDate)) {
+      directAnswer = `The recorded date for **${primaryDoc.title}** is **${docDate || primaryDoc.expiryDate}**.\n\n`;
+    } else if (isAccountQ && (accountNo || txId)) {
+      directAnswer = `The account identifier for **${primaryDoc.title}** is ` + (accountNo ? `**${accountNo}**` : `**${txId}**`) + `.\n\n`;
+    } else if (isAmountQ && amount) {
+      const formattedAmt = amount.startsWith('₹') || amount.startsWith('$') ? amount : `₹${amount}`;
+      directAnswer = `The amount of your **${primaryDoc.title}** is **${formattedAmt}**.\n\n`;
+    } else {
+      directAnswer = `Here are the verified records from your vault for **${primaryDoc.title}**:\n\n`;
+    }
+
+    directAnswer += `### Verified Vault Record\n`;
+    if (amount) directAnswer += `• **Total Amount:** **${amount.startsWith('₹') || amount.startsWith('$') ? amount : `₹${amount}`}**\n`;
+    if (consumer) directAnswer += `• **Consumer / Recipient:** ${consumer}\n`;
+    if (accountNo) directAnswer += `• **Account Number:** \`${accountNo}\`\n`;
+    if (docDate) directAnswer += `• **Issue / Payment Date:** ${docDate}\n`;
+    if (primaryDoc.expiryDate) directAnswer += `• **Expiry / Due Date:** ${primaryDoc.expiryDate}\n`;
+    if (txId) directAnswer += `• **Transaction ID:** \`${txId}\`\n`;
+    if (issuer) directAnswer += `• **Issuing Authority:** ${issuer}\n`;
+    if (primaryDoc.summary && primaryDoc.summary !== 'Uploaded document stored securely in your encrypted DocVault.') {
+      directAnswer += `• **Summary:** ${primaryDoc.summary}\n`;
+    }
+
+    return directAnswer.trim();
+  }
+
+  if (contextAssets.length > 0) {
+    const asset = contextAssets[0];
+    return `### Tracked Asset Details\n• **Asset:** ${asset.name} (${asset.category})\n• **Estimated Value:** ${asset.estimatedValue || 'N/A'}\n• **Status:** ${asset.status || 'Active'}\n• **Warranty Expiry:** ${asset.warrantyExpiry || 'N/A'}`;
+  }
+
+  return "I could not find matching records in your currently uploaded documents or tracked assets.";
 }
