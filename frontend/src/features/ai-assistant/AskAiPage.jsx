@@ -298,11 +298,11 @@ export default function AskAiPage() {
                     </div>
                   )}
 
-                  {msg.role === "assistant" && (
+                  {m.role === "assistant" && (
                     <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
                       <button
                         type="button"
-                        onClick={() => handleCopy(msg.content, idx)}
+                        onClick={() => handleCopy(m.content, idx)}
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
