@@ -109,12 +109,16 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-/* Card Surface */
+/* Card Surface (iOS Frosted Glass) */
 .dv-native-card {
-  background: #FFFFFF;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
   border-radius: 24px;
-  border: 1px solid #E9ECEF;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 1),
+              0 16px 40px -8px rgba(15, 23, 42, 0.08),
+              0 4px 12px rgba(15, 23, 42, 0.02);
   padding: 24px 20px;
 }
 
@@ -442,9 +446,11 @@
 }
 
 [data-theme="dark"] .dv-native-card {
-  background: #111B29;
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5);
+  background: rgba(18, 28, 45, 0.65);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 20px 50px -10px rgba(0, 0, 0, 0.65);
 }
 
 [data-theme="dark"] .dv-native-card__title {
@@ -452,7 +458,7 @@
 }
 
 [data-theme="dark"] .dv-native-card__desc {
-  color: #94A3B8;
+  color: #CBD5E1;
 }
 
 [data-theme="dark"] .dv-native-google-btn {
