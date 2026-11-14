@@ -3,7 +3,8 @@ import nodemailer from 'nodemailer';
 let smtpTransporter = null;
 
 /**
- * Configure Nodemailer SMTP Transporter with fast connection timeouts (3s max)
+ * Configure Nodemailer SMTP Transporter with fast connection timeouts (3.5s max)
+ * Uses SSL port 465 for resilient cloud dispatch across cloud firewalls
  */
 function getSmtpTransporter() {
   if (smtpTransporter) return smtpTransporter;
@@ -14,16 +15,18 @@ function getSmtpTransporter() {
   if (user && pass) {
     const cleanPass = pass.replace(/\s+/g, '');
     smtpTransporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: Number(process.env.SMTP_PORT) === 465 || !process.env.SMTP_PORT, // true for 465
       auth: {
         user: user.trim(),
         pass: cleanPass,
       },
-      connectionTimeout: 3000,
-      greetingTimeout: 3000,
+      connectionTimeout: 3500,
+      greetingTimeout: 3500,
       socketTimeout: 4000,
     });
-    console.log('[EmailService] Gmail SMTP Transporter initialized for:', user);
+    console.log('[EmailService] Gmail SMTP Transporter initialized on port', process.env.SMTP_PORT || 465, 'for:', user);
   }
 
   return smtpTransporter;
@@ -43,7 +46,7 @@ async function sendViaResend({ apiKey, to, subject, html, text }) {
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const timeoutId = setTimeout(() => controller.abort(), 3500);
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -131,22 +134,11 @@ export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
       });
     } catch (resendErr) {
       console.warn('[EmailService] Resend dispatch bypassed/failed:', resendErr.message);
-
-      // If Resend failed because of testing domain sandbox (recipient not account owner),
-      // and we are NOT on Render, we can fall through to Gmail SMTP.
-      if (resendErr.isResendSandbox && isRenderCloud) {
-        console.warn(`[EmailService SANDBOX] Render environment + unverified domain recipient: ${email}`);
-        return {
-          messageId: 'resend-sandbox-' + Date.now(),
-          mocked: true,
-          devOtp: otpCode,
-          sandboxRestricted: true,
-        };
-      }
+      // Fall through to Strategy B (Gmail SMTP) without blocking
     }
   }
 
-  // Strategy B: Gmail SMTP Transporter (attempted with fast 3s connection timeout)
+  // Strategy B: Gmail SMTP Transporter (attempted with fast connection timeout)
   const transporter = getSmtpTransporter();
   if (transporter) {
     try {

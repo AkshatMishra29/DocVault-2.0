@@ -16,9 +16,10 @@ export default function VerifyOtpPage() {
 
   const formData = location.state?.formData || location.state?.pendingRegistration;
   const initialInfo = location.state?.infoMessage || "";
-  const fallbackOtp = location.state?.fallbackOtp || "";
+  const initialFallbackOtp = location.state?.fallbackOtp || "";
 
-  const [otp, setOtp] = useState(() => fallbackOtp || "");
+  const [fallbackOtp, setFallbackOtp] = useState(() => initialFallbackOtp);
+  const [otp, setOtp] = useState(() => initialFallbackOtp || "");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
@@ -93,6 +94,7 @@ export default function VerifyOtpPage() {
       setResendCooldown(60);
       const freshCode = res.devOtp || res.data?.devOtp;
       if (freshCode) {
+        setFallbackOtp(freshCode);
         setOtp(freshCode);
       } else {
         setOtp("");

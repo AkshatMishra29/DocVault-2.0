@@ -369,7 +369,12 @@ export default function RegisterPage() {
           disabled={loading || googleLoading}
           className="dv-auth-submit-btn"
         >
-          {loading ? "Dispatching code..." : (
+          {loading ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <span className="dv-btn-spinner" />
+              <span>Dispatching code...</span>
+            </span>
+          ) : (
             <>
               <span>Create account</span>
               <ArrowRight size={16} />

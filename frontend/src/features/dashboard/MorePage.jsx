@@ -27,6 +27,7 @@ export default function MorePage() {
     savedSessions, 
     switchSession, 
     removeSavedSession, 
+    clearAllSavedSessions,
     logout, 
     updateSessionPreference, 
     registerBiometrics 
@@ -118,11 +119,13 @@ export default function MorePage() {
     }
   };
 
+  const hasExistingPassword = user?.hasPassword !== false;
+
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setPasswordMessage(null);
 
-    if (!currentPassword) {
+    if (hasExistingPassword && !currentPassword) {
       setPasswordMessage({ type: "error", text: "Please enter your current password." });
       return;
     }
@@ -139,13 +142,23 @@ export default function MorePage() {
       setChangingPassword(true);
       const res = await apiRequest("/api/auth/change-password", {
         method: "POST",
-        body: JSON.stringify({ currentPassword, newPassword }),
+        body: JSON.stringify({ 
+          currentPassword: hasExistingPassword ? currentPassword : "", 
+          newPassword 
+        }),
       });
       if (res.success) {
-        setPasswordMessage({ type: "success", text: "Password changed successfully." });
+        setPasswordMessage({ 
+          type: "success", 
+          text: hasExistingPassword ? "Password updated successfully." : "Master password created successfully!" 
+        });
         setCurrentPassword("");
         setNewPassword("");
         setConfirmNewPassword("");
+        if (user) {
+          user.hasPassword = true;
+          localStorage.setItem("docvault_user", JSON.stringify({ ...user, hasPassword: true }));
+        }
       } else {
         setPasswordMessage({ type: "error", text: res.error || "Failed to change password." });
       }
@@ -425,7 +438,13 @@ export default function MorePage() {
                 <KeyRound size={20} color="#3B82F6" />
                 <h3 className="dv-setting-card__title" style={{ margin: 0 }}>Security Credentials</h3>
               </div>
-              <div style={{ display: "flex", background: "rgba(255, 255, 255, 0.05)", borderRadius: "8px", padding: "3px" }}>
+              <div style={{ 
+                display: "flex", 
+                background: "var(--color-surface-secondary, rgba(255, 255, 255, 0.05))", 
+                border: "1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.1))",
+                borderRadius: "8px", 
+                padding: "3px" 
+              }}>
                 <button
                   type="button"
                   onClick={() => { setActiveSecTab("pin"); setPinMessage(null); }}
@@ -437,7 +456,7 @@ export default function MorePage() {
                     fontWeight: "600",
                     cursor: "pointer",
                     background: activeSecTab === "pin" ? "#2563EB" : "transparent",
-                    color: activeSecTab === "pin" ? "#FFFFFF" : "#94A3B8",
+                    color: activeSecTab === "pin" ? "#FFFFFF" : "var(--color-text-secondary, #94A3B8)",
                   }}
                 >
                   Change PIN
@@ -453,10 +472,10 @@ export default function MorePage() {
                     fontWeight: "600",
                     cursor: "pointer",
                     background: activeSecTab === "password" ? "#2563EB" : "transparent",
-                    color: activeSecTab === "password" ? "#FFFFFF" : "#94A3B8",
+                    color: activeSecTab === "password" ? "#FFFFFF" : "var(--color-text-secondary, #94A3B8)",
                   }}
                 >
-                  Change Password
+                  {hasExistingPassword ? "Change Password" : "Set Master Password"}
                 </button>
               </div>
             </div>
@@ -477,21 +496,21 @@ export default function MorePage() {
                 )}
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <label style={{ fontSize: "12px", fontWeight: "600", color: "#CBD5E1" }}>
+                  <label style={{ fontSize: "12px", fontWeight: "600", color: "var(--color-text-secondary, #CBD5E1)" }}>
                     New PIN Length
                   </label>
                   <div style={{ display: "flex", gap: "6px" }}>
                     <button
                       type="button"
                       onClick={() => { setPinChangeLen(4); setNewPin(""); setConfirmNewPin(""); }}
-                      style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", background: pinChangeLen === 4 ? "#2563EB" : "rgba(255, 255, 255, 0.08)", color: "#FFF", border: "none", cursor: "pointer" }}
+                      style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", background: pinChangeLen === 4 ? "#2563EB" : "var(--color-surface-secondary, rgba(255, 255, 255, 0.08))", color: pinChangeLen === 4 ? "#FFF" : "var(--color-text-primary, #CBD5E1)", border: "none", cursor: "pointer" }}
                     >
                       4 Digits
                     </button>
                     <button
                       type="button"
                       onClick={() => { setPinChangeLen(6); setNewPin(""); setConfirmNewPin(""); }}
-                      style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", background: pinChangeLen === 6 ? "#2563EB" : "rgba(255, 255, 255, 0.08)", color: "#FFF", border: "none", cursor: "pointer" }}
+                      style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", background: pinChangeLen === 6 ? "#2563EB" : "var(--color-surface-secondary, rgba(255, 255, 255, 0.08))", color: pinChangeLen === 6 ? "#FFF" : "var(--color-text-primary, #CBD5E1)", border: "none", cursor: "pointer" }}
                     >
                       6 Digits
                     </button>
@@ -499,7 +518,7 @@ export default function MorePage() {
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "var(--color-text-secondary, #CBD5E1)", marginBottom: "6px" }}>
                     Current PIN
                   </label>
                   <input
@@ -508,13 +527,13 @@ export default function MorePage() {
                     value={currentPin}
                     onChange={(e) => setCurrentPin(e.target.value.replace(/[^0-9]/g, ""))}
                     placeholder="Enter current PIN"
-                    style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px", letterSpacing: "2px" }}
+                    style={{ width: "100%", padding: "10px 12px", background: "var(--color-surface-secondary, rgba(15, 23, 42, 0.6))", border: "1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.15))", borderRadius: "8px", color: "var(--color-text-primary, #FFF)", fontSize: "14px", letterSpacing: "2px" }}
                   />
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "var(--color-text-secondary, #CBD5E1)", marginBottom: "6px" }}>
                       New {pinChangeLen}-Digit PIN
                     </label>
                     <input
@@ -523,11 +542,11 @@ export default function MorePage() {
                       value={newPin}
                       onChange={(e) => setNewPin(e.target.value.replace(/[^0-9]/g, ""))}
                       placeholder={`New ${pinChangeLen} digits`}
-                      style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px", letterSpacing: "2px" }}
+                      style={{ width: "100%", padding: "10px 12px", background: "var(--color-surface-secondary, rgba(15, 23, 42, 0.6))", border: "1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.15))", borderRadius: "8px", color: "var(--color-text-primary, #FFF)", fontSize: "14px", letterSpacing: "2px" }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "var(--color-text-secondary, #CBD5E1)", marginBottom: "6px" }}>
                       Confirm New PIN
                     </label>
                     <input
@@ -536,7 +555,7 @@ export default function MorePage() {
                       value={confirmNewPin}
                       onChange={(e) => setConfirmNewPin(e.target.value.replace(/[^0-9]/g, ""))}
                       placeholder="Repeat new PIN"
-                      style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px", letterSpacing: "2px" }}
+                      style={{ width: "100%", padding: "10px 12px", background: "var(--color-surface-secondary, rgba(15, 23, 42, 0.6))", border: "1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.15))", borderRadius: "8px", color: "var(--color-text-primary, #FFF)", fontSize: "14px", letterSpacing: "2px" }}
                     />
                   </div>
                 </div>
@@ -553,6 +572,19 @@ export default function MorePage() {
               </form>
             ) : (
               <form onSubmit={handleChangePassword} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {!hasExistingPassword && (
+                  <div style={{
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    fontSize: "13px",
+                    background: "rgba(59, 130, 246, 0.1)",
+                    border: "1px solid rgba(59, 130, 246, 0.25)",
+                    color: "var(--color-primary, #3B82F6)"
+                  }}>
+                    You authenticated via Google Sign-In. You can create a Master Password below to enable direct email & password sign-in.
+                  </div>
+                )}
+
                 {passwordMessage && (
                   <div style={{
                     padding: "10px 14px",
@@ -566,22 +598,24 @@ export default function MorePage() {
                   </div>
                 )}
 
-                <div>
-                  <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter current password"
-                    style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px" }}
-                  />
-                </div>
+                {hasExistingPassword && (
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "var(--color-text-secondary, #CBD5E1)", marginBottom: "6px" }}>
+                      Current Password
+                    </label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Enter current password"
+                      style={{ width: "100%", padding: "10px 12px", background: "var(--color-surface-secondary, rgba(15, 23, 42, 0.6))", border: "1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.15))", borderRadius: "8px", color: "var(--color-text-primary, #FFF)", fontSize: "14px" }}
+                    />
+                  </div>
+                )}
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "var(--color-text-secondary, #CBD5E1)", marginBottom: "6px" }}>
                       New Password (min 8 chars)
                     </label>
                     <input
@@ -589,11 +623,11 @@ export default function MorePage() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Enter new password"
-                      style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px" }}
+                      style={{ width: "100%", padding: "10px 12px", background: "var(--color-surface-secondary, rgba(15, 23, 42, 0.6))", border: "1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.15))", borderRadius: "8px", color: "var(--color-text-primary, #FFF)", fontSize: "14px" }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "var(--color-text-secondary, #CBD5E1)", marginBottom: "6px" }}>
                       Confirm New Password
                     </label>
                     <input
@@ -601,7 +635,7 @@ export default function MorePage() {
                       value={confirmNewPassword}
                       onChange={(e) => setConfirmNewPassword(e.target.value)}
                       placeholder="Repeat new password"
-                      style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px" }}
+                      style={{ width: "100%", padding: "10px 12px", background: "var(--color-surface-secondary, rgba(15, 23, 42, 0.6))", border: "1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.15))", borderRadius: "8px", color: "var(--color-text-primary, #FFF)", fontSize: "14px" }}
                     />
                   </div>
                 </div>
@@ -610,10 +644,10 @@ export default function MorePage() {
                   variant="primary"
                   size="sm"
                   loading={changingPassword}
-                  disabled={!currentPassword || newPassword.length < 8 || newPassword !== confirmNewPassword}
+                  disabled={(hasExistingPassword && !currentPassword) || newPassword.length < 8 || newPassword !== confirmNewPassword}
                   style={{ alignSelf: "flex-start", marginTop: "4px" }}
                 >
-                  Update Account Password
+                  {hasExistingPassword ? "Update Account Password" : "Set Master Password"}
                 </Button>
               </form>
             )}
@@ -628,67 +662,101 @@ export default function MorePage() {
                   Switch instantly to another account on this device or securely lock current session.
                 </p>
               </div>
-              <Badge variant="primary" size="sm">
-                {savedSessions?.length || 1} Saved
-              </Badge>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Badge variant="primary" size="sm">
+                  {(savedSessions || []).filter(s => s && s.email && s.email.includes('@')).length} Saved
+                </Badge>
+                {(savedSessions || []).filter(s => s && s.email && s.email.includes('@')).length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm("Clear all saved accounts from this browser?")) {
+                        clearAllSavedSessions();
+                      }
+                    }}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "var(--color-text-muted, #94A3B8)",
+                      fontSize: "11px",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                      padding: "2px 6px"
+                    }}
+                    title="Clear saved sessions from device"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="dv-saved-sessions-list">
-              {(savedSessions && savedSessions.length > 0 ? savedSessions : [{ email: user?.email, name: user?.name, pinLength: user?.pinLength || 4 }]).map((session) => {
-                const isCurrent = session.email?.toLowerCase() === user?.email?.toLowerCase();
-                const initials = (session.name || session.email || "U").slice(0, 2).toUpperCase();
-                return (
-                  <div key={session.email} className={`dv-saved-session-row ${isCurrent ? "dv-saved-session-row--active" : ""}`}>
-                    <div className="dv-saved-session-avatar">{initials}</div>
-                    <div className="dv-saved-session-info">
-                      <div className="dv-saved-session-title">
-                        <strong>{session.name || "Vault Custodian"}</strong>
-                        {isCurrent ? (
-                          <span className="dv-session-tag-current">Active</span>
+              {(savedSessions || []).filter(s => s && s.email && s.email.includes('@')).length > 0 ? (
+                (savedSessions || []).filter(s => s && s.email && s.email.includes('@')).map((session) => {
+                  const isCurrent = session.email?.toLowerCase() === user?.email?.toLowerCase();
+                  const initials = (session.name || session.email || "U").slice(0, 2).toUpperCase();
+                  return (
+                    <div key={session.email} className={`dv-saved-session-row ${isCurrent ? "dv-saved-session-row--active" : ""}`}>
+                      <div className="dv-saved-session-avatar">{initials}</div>
+                      <div className="dv-saved-session-info">
+                        <div className="dv-saved-session-title">
+                          <strong>{session.name || "Vault Custodian"}</strong>
+                          {isCurrent ? (
+                            <span className="dv-session-tag-current">Active</span>
+                          ) : (
+                            <span className="dv-session-tag-locked">Locked</span>
+                          )}
+                        </div>
+                        <div className="dv-saved-session-sub">
+                          {session.email} • {session.pinLength || 4}-digit PIN
+                        </div>
+                      </div>
+                      <div className="dv-saved-session-actions">
+                        {!isCurrent ? (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              icon={ArrowRightLeft}
+                              onClick={() => switchSession(session.email)}
+                            >
+                              Switch
+                            </Button>
+                            <button
+                              type="button"
+                              className="dv-saved-session-forget-btn"
+                              title="Forget session from device"
+                              onClick={() => removeSavedSession(session.email)}
+                              aria-label={`Forget session for ${session.email}`}
+                            >
+                              ✕
+                            </button>
+                          </>
                         ) : (
-                          <span className="dv-session-tag-locked">Locked</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={Lock}
+                            onClick={handleLockVault}
+                            title="Lock active session (⌘L)"
+                          >
+                            Lock
+                          </Button>
                         )}
                       </div>
-                      <div className="dv-saved-session-sub">
-                        {session.email} • {session.pinLength || 4}-digit PIN
-                      </div>
                     </div>
-                    <div className="dv-saved-session-actions">
-                      {!isCurrent ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            icon={ArrowRightLeft}
-                            onClick={() => switchSession(session.email)}
-                          >
-                            Switch
-                          </Button>
-                          <button
-                            type="button"
-                            className="dv-saved-session-forget-btn"
-                            title="Forget session from device"
-                            onClick={() => removeSavedSession(session.email)}
-                            aria-label={`Forget session for ${session.email}`}
-                          >
-                            ✕
-                          </button>
-                        </>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          icon={Lock}
-                          onClick={handleLockVault}
-                          title="Lock active session (⌘L)"
-                        >
-                          Lock
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div style={{ padding: "16px 8px", textAlign: "center", color: "var(--color-text-secondary, #94A3B8)", fontSize: "13px" }}>
+                  {user?.email ? (
+                    <span>Signed in as <strong>{user.email}</strong>. No other accounts remembered on this device.</span>
+                  ) : (
+                    <span>No saved accounts on this device.</span>
+                  )}
+                </div>
+              )}
             </div>
           </Card>
 

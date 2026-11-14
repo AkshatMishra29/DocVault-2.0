@@ -54,7 +54,10 @@ export const AuthProvider = ({ children }) => {
   const [savedSessions, setSavedSessions] = useState(() => {
     try {
       const raw = localStorage.getItem('dv_saved_sessions');
-      return raw ? JSON.parse(raw) : [];
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter((s) => s && typeof s.email === 'string' && s.email.includes('@'));
     } catch {
       return [];
     }
@@ -130,6 +133,12 @@ export const AuthProvider = ({ children }) => {
     if (user?.email?.toLowerCase() === cleanEmail || pendingEmail?.toLowerCase() === cleanEmail) {
       logout();
     }
+  };
+
+  // Remove all saved sessions from the device
+  const clearAllSavedSessions = () => {
+    localStorage.removeItem('dv_saved_sessions');
+    setSavedSessions([]);
   };
 
   // Auto-Lock Vault: Detects 10-minute rest / inactivity AND mobile device sleep / backgrounding
@@ -595,6 +604,7 @@ export const AuthProvider = ({ children }) => {
         recordSession,
         switchSession,
         removeSavedSession,
+        clearAllSavedSessions,
         handleLoginSuccess,
         handlePinSuccess,
         register,

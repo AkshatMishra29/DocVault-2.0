@@ -268,6 +268,8 @@ export async function loginUser({ email, password }) {
       phone: user.phone,
       tier: user.tier,
       pinLength: user.pinLength || 4,
+      hasPassword: Boolean(user.passwordHash),
+      hasPin: Boolean(user.pinHash),
       singleSessionOnly: Boolean(user.singleSessionOnly),
       sessionVersion: user.sessionVersion || 1,
       autoLockEnabled: user.autoLockEnabled !== false,
@@ -509,6 +511,8 @@ export async function verifyUserPin({ email, pin }) {
       docVaultId: user.docVaultId,
       tier: user.tier,
       pinLength: user.pinLength || 4,
+      hasPassword: Boolean(user.passwordHash),
+      hasPin: Boolean(user.pinHash),
       singleSessionOnly: Boolean(user.singleSessionOnly),
       autoLockEnabled: user.autoLockEnabled !== false,
       biometricsEnabled: user.biometricsEnabled,
@@ -539,6 +543,8 @@ export async function getCurrentUser(userId) {
     docVaultId: user.docVaultId,
     tier: user.tier,
     pinLength: user.pinLength || 4,
+    hasPassword: Boolean(user.passwordHash),
+    hasPin: Boolean(user.pinHash),
     singleSessionOnly: Boolean(user.singleSessionOnly),
     autoLockEnabled: user.autoLockEnabled !== false,
     biometricsEnabled: user.biometricsEnabled,
@@ -830,6 +836,8 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
       tier: user.tier,
       pinLength: user.pinLength || 4,
       pinSet: Boolean(user.pinSet),
+      hasPassword: Boolean(user.passwordHash),
+      hasPin: Boolean(user.pinHash),
       authProvider: user.authProvider || 'google',
       singleSessionOnly: Boolean(user.singleSessionOnly),
       sessionVersion: user.sessionVersion || 1,
@@ -909,6 +917,8 @@ export async function setupCredentials({ userId, email, pin, password }) {
       tier: user.tier,
       pinLength: user.pinLength,
       pinSet: true,
+      hasPassword: Boolean(user.passwordHash),
+      hasPin: true,
       authProvider: user.authProvider || 'google',
       singleSessionOnly: Boolean(user.singleSessionOnly),
       sessionVersion: user.sessionVersion || 1,
@@ -1133,17 +1143,23 @@ export async function changePin({ userId, currentPin, newPin }) {
 }
 
 /**
- * Change Password while logged in
+ * Change or Set Master Password while logged in
  */
-export async function changePassword({ userId, currentPassword, newPassword }) {
-  if (!userId || !currentPassword || !newPassword) {
-    const error = new Error('Current password and new password are required.');
+export async function changePassword({ userId, currentPassword, newPassword, pin }) {
+  if (!userId || !newPassword) {
+    const error = new Error('User ID and new password are required.');
     error.status = 400;
     throw error;
   }
 
   if (newPassword.length < 8) {
     const error = new Error('New password must be at least 8 characters long.');
+    error.status = 400;
+    throw error;
+  }
+
+  if (!currentPassword && !pin) {
+    const error = new Error('Current password or Vault PIN is required.');
     error.status = 400;
     throw error;
   }
@@ -1155,11 +1171,32 @@ export async function changePassword({ userId, currentPassword, newPassword }) {
     throw error;
   }
 
-  const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
-  if (!isMatch) {
-    const error = new Error('Incorrect current password.');
-    error.status = 400;
-    throw error;
+  const hadPassword = Boolean(user.passwordHash);
+
+  // If user already has a password, verify current password
+  if (hadPassword) {
+    if (!currentPassword) {
+      const error = new Error('Current password is required.');
+      error.status = 400;
+      throw error;
+    }
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      const error = new Error('Incorrect current password.');
+      error.status = 400;
+      throw error;
+    }
+  } else {
+    // If user signed up via Google OAuth and has no password yet,
+    // verify Vault PIN if user has one configured
+    if (user.pinHash && pin) {
+      const isPinMatch = await bcrypt.compare(pin.toString().trim(), user.pinHash);
+      if (!isPinMatch) {
+        const error = new Error('Incorrect Vault PIN.');
+        error.status = 400;
+        throw error;
+      }
+    }
   }
 
   const salt = await bcrypt.genSalt(10);
@@ -1168,6 +1205,7 @@ export async function changePassword({ userId, currentPassword, newPassword }) {
 
   return {
     success: true,
-    message: 'Password updated successfully.',
+    message: hadPassword ? 'Master password updated successfully.' : 'Master password created successfully.',
+    hasPassword: true,
   };
 }

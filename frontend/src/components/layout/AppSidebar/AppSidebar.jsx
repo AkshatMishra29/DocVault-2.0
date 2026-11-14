@@ -38,8 +38,8 @@ export default function AppSidebar() {
   };
 
   const userInitial = user?.name ? user.name[0].toUpperCase() : 'U';
-  const otherSessions = savedSessions.filter(
-    (s) => s.email.toLowerCase() !== (user?.email || '').toLowerCase()
+  const otherSessions = (savedSessions || []).filter(
+    (s) => s && s.email && s.email.includes('@') && s.email.toLowerCase() !== (user?.email || '').toLowerCase()
   );
 
   return (
@@ -144,7 +144,7 @@ export default function AppSidebar() {
           {showSwitchMenu && otherSessions.length > 0 && (
             <div className="dv-sidebar__switch-dropdown">
               <div className="dv-sidebar__switch-header">Switch Session</div>
-              {savedSessions.map((s) => {
+              {(savedSessions || []).filter(s => s && s.email && s.email.includes('@')).map((s) => {
                 const isCurrent = s.email.toLowerCase() === (user?.email || '').toLowerCase();
                 return (
                   <button

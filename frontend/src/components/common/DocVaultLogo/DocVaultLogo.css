@@ -34,12 +34,14 @@
   font-family: var(--font-ui, 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
   font-weight: 800;
   letter-spacing: -0.035em;
-  color: var(--color-auth-text-dark, #1C1310);
+  color: var(--color-text-primary, #1C1310);
   line-height: 1;
+  display: inline-flex;
+  align-items: baseline;
 }
 
 [data-theme="dark"] .dv-brand-logo__text {
-  color: #F8F5F1;
+  color: #F8FAFC !important;
 }
 
 .dv-brand-logo__accent {
@@ -47,12 +49,17 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
+  margin-left: 1px;
 }
 
 [data-theme="dark"] .dv-brand-logo__accent {
-  background: linear-gradient(135deg, #4DB1FF 0%, #0070F2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  background: linear-gradient(135deg, #38BDF8 0%, #3B82F6 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+[data-theme="dark"] .dv-brand-logo__img {
+  filter: brightness(1.05) contrast(1.05);
 }
 
 .dv-brand-logo--light .dv-brand-logo__text {
