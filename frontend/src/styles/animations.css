@@ -71,7 +71,6 @@
 /* GPU Compositor Acceleration for Buttery 120fps Swiping & Scrolling */
 .dv-app-main,
 .dv-app-content-container,
-.bottom-nav,
 .dv-card,
 .dv-3d-vault-card {
   -webkit-backface-visibility: hidden;

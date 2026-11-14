@@ -21,7 +21,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); /* Space for mobile nav with notch/home bar */
+  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); /* Complete clearance for mobile nav */
 }
 
 @media (min-width: 1025px) {
@@ -31,16 +31,16 @@
 }
 
 .dv-app-content-container {
-  max-width: 1360px;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
-  padding: var(--space-6, 24px) var(--space-8, 32px);
+  padding: 0 var(--space-8, 32px) 48px;
   box-sizing: border-box;
 }
 
 @media (max-width: 1024px) {
   .dv-app-content-container {
-    padding: 16px 14px;
+    padding: 0 16px 32px;
     max-width: 100%;
     overflow-x: hidden;
   }
@@ -48,7 +48,7 @@
 
 @media (max-width: 480px) {
   .dv-app-content-container {
-    padding: 12px 10px;
+    padding: 0 12px 24px;
   }
 }
 

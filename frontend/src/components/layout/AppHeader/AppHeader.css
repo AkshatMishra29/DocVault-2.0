@@ -4,13 +4,14 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--color-border);
-  padding: 0 var(--space-8, 32px);
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 40;
+  margin-bottom: 20px;
 }
 
 .dv-app-header__title-group {
@@ -257,8 +258,9 @@
 @media (max-width: 1024px) {
   .dv-app-header {
     height: 56px;
-    padding: 0 16px;
+    padding: 0;
     padding-top: max(4px, env(safe-area-inset-top));
+    margin-bottom: 14px;
   }
 
   .dv-app-header__mobile-avatar {
