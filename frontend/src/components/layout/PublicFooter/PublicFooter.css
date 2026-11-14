@@ -213,3 +213,61 @@
     gap: 28px;
   }
 }
+
+/* ==========================================================================
+   PUBLIC FOOTER DARK MODE
+   ========================================================================== */
+
+[data-theme="dark"] .dv-public-footer {
+  background-color: #070C12;
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-public-footer__desc {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-footer-badge {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #E2E8F0;
+}
+
+[data-theme="dark"] .dv-footer-col__title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-footer-link {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-footer-link:hover {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-footer-status {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #CBD5E1;
+}
+
+[data-theme="dark"] .dv-public-footer__bottom {
+  background-color: #05080C;
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .dv-public-footer__copy {
+  color: #64748B;
+}
+
+[data-theme="dark"] .dv-footer-social-btn {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #CBD5E1;
+}
+
+[data-theme="dark"] .dv-footer-social-btn:hover {
+  background-color: rgba(0, 112, 242, 0.2);
+  border-color: #0070F2;
+  color: #60A5FA;
+}

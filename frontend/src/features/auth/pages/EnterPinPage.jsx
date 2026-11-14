@@ -36,6 +36,7 @@ export default function EnterPinPage() {
 
   const { 
     user, 
+    isVaultUnlocked,
     pendingEmail, 
     pinLength: ctxPinLength, 
     savedSessions = [],
@@ -69,6 +70,13 @@ export default function EnterPinPage() {
   );
   const [pinLength, setPinLength] = useState(initialPinLength === 6 ? 6 : 4);
 
+  // If already unlocked and authenticated, immediately redirect forward to dashboard
+  useEffect(() => {
+    if (user && isVaultUnlocked) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, isVaultUnlocked, navigate]);
+
   // Setup PIN Mode for Google OAuth / new users without configured PIN
   const [isSetupMode, setIsSetupMode] = useState(() => Boolean(
     location.state?.isSetup ||
@@ -87,6 +95,18 @@ export default function EnterPinPage() {
       setIsSetupMode(true);
     }
   }, [location.state, user?.pinSet]);
+
+  // Trap browser back-button navigation when locked so users cannot move back into application
+  useEffect(() => {
+    if (!isVaultUnlocked && !isSetupMode) {
+      window.history.pushState(null, "", window.location.href);
+      const handlePopState = () => {
+        window.history.pushState(null, "", window.location.href);
+      };
+      window.addEventListener("popstate", handlePopState);
+      return () => window.removeEventListener("popstate", handlePopState);
+    }
+  }, [isVaultUnlocked, isSetupMode]);
 
   const [setupPin, setSetupPin] = useState("");
   const [setupConfirmPin, setSetupConfirmPin] = useState("");
@@ -183,7 +203,15 @@ export default function EnterPinPage() {
 
   // Physical Keyboard support (standard digits, numpad, backspace, enter)
   useEffect(() => {
+    // CRITICAL: Do not intercept keys when setting up credentials or inside forgot PIN modal
+    if (isSetupMode || showForgotPinModal) return;
+
     const handleKeyDown = (e) => {
+      // Do not intercept when user is typing in any input or form element
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
+        return;
+      }
+
       if (lockoutRemaining > 0 || loading) return;
 
       if (/^[0-9]$/.test(e.key)) {
@@ -202,7 +230,7 @@ export default function EnterPinPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [pin, pinLength, lockoutRemaining, loading]);
+  }, [pin, pinLength, lockoutRemaining, loading, isSetupMode, showForgotPinModal]);
 
   const handleDigit = (digit) => {
     if (lockoutRemaining > 0 || loading) return;
@@ -309,7 +337,7 @@ export default function EnterPinPage() {
     if (result.success) {
       localStorage.removeItem("pending_pin_email");
       if (email) localStorage.removeItem(`dv_lock_until_${email}`);
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     } else {
       setPin("");
       if (result.requiresPinSetup) {
@@ -340,7 +368,7 @@ export default function EnterPinPage() {
     if (result.success) {
       localStorage.removeItem("pending_pin_email");
       if (email) localStorage.removeItem(`dv_lock_until_${email}`);
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     } else {
       if (result.remainingSeconds || result.lockUntil) {
         setLockoutRemaining(result.remainingSeconds || 300);
@@ -419,6 +447,7 @@ export default function EnterPinPage() {
           {/* PIN Input 1 */}
           <PasswordInput
             label={`Choose Security PIN (${setupPinLength} digits)`}
+            type="password"
             name="setupPin"
             icon={KeyRound}
             placeholder={`Enter ${setupPinLength}-digit numeric PIN`}
@@ -433,6 +462,7 @@ export default function EnterPinPage() {
           {/* PIN Input 2 */}
           <PasswordInput
             label="Confirm Security PIN"
+            type="password"
             name="setupConfirmPin"
             icon={ShieldCheck}
             placeholder={`Re-enter your ${setupPinLength}-digit PIN`}
@@ -446,6 +476,7 @@ export default function EnterPinPage() {
           {/* Optional Master Password */}
           <PasswordInput
             label="Master Password (Optional)"
+            type="password"
             name="setupMasterPassword"
             icon={Lock}
             placeholder="At least 8 characters (for emergency sign in)"

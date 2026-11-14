@@ -3,13 +3,15 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import DocVaultLogo from '../../common/DocVaultLogo/DocVaultLogo';
 import { 
   ArrowRight, Lock, LayoutDashboard, ShieldCheck, 
-  Menu, X, Sparkles 
+  Menu, X, Sparkles, Sun, Moon 
 } from 'lucide-react';
 import { useAuth } from '../../../features/auth/context/AuthContext';
+import { useTheme } from '../../../app/theme';
 import './PublicNavbar.css';
 
 export default function PublicNavbar() {
   const { user, isVaultUnlocked, lockVault } = useAuth();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -65,6 +67,17 @@ export default function PublicNavbar() {
 
         {/* Right Actions */}
         <div className="dv-nav-actions">
+          {/* Theme Mode Switcher */}
+          <button
+            type="button"
+            className="dv-nav-theme-toggle"
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            title={resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle display theme"
+          >
+            {resolvedTheme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+          </button>
+
           {user && isVaultUnlocked ? (
             <div className="dv-nav-user-actions">
               <button
@@ -150,6 +163,18 @@ export default function PublicNavbar() {
           </nav>
 
           <div className="dv-nav-mobile-footer">
+            <div className="dv-nav-mobile-theme-row">
+              <span>Appearance</span>
+              <button
+                type="button"
+                className="dv-nav-theme-toggle dv-nav-theme-toggle--mobile"
+                onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+              >
+                {resolvedTheme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+                <span>{resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+              </button>
+            </div>
+
             {user && isVaultUnlocked ? (
               <div className="dv-nav-mobile-cta-group">
                 <button

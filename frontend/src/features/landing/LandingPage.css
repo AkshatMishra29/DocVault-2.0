@@ -1812,3 +1812,276 @@
   background: #0062C4;
   transform: scale(0.97);
 }
+
+/* ==========================================================================
+   LANDING PAGE DARK THEME OVERRIDES
+   ========================================================================== */
+
+[data-theme="dark"] .dv-landing-root {
+  background-color: #0B111A;
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-lp-hero {
+  background: 
+    radial-gradient(ellipse at 80% 20%, rgba(0, 113, 227, 0.16) 0%, transparent 60%),
+    radial-gradient(ellipse at 15% 70%, rgba(16, 185, 129, 0.08) 0%, transparent 55%),
+    #0B111A;
+}
+
+[data-theme="dark"] .dv-lp-kicker {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #93C5FD;
+}
+
+[data-theme="dark"] .dv-lp-hero__title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-lp-hero__desc {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-lp-btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: #F8FAFC;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+[data-theme="dark"] .dv-lp-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .dv-lp-trust-item {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-lp-pillar-card {
+  background: rgba(18, 28, 43, 0.7);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .dv-lp-pillar-card:hover {
+  background: rgba(22, 34, 52, 0.9);
+  border-color: rgba(0, 113, 227, 0.4);
+  box-shadow: 0 12px 30px -4px rgba(0, 113, 227, 0.2);
+}
+
+[data-theme="dark"] .dv-lp-pillar-title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-lp-pillar-desc {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-lp-features {
+  background: #0E1724;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .dv-lp-section-title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-lp-section-sub {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-lp-bento-card {
+  background: rgba(18, 28, 43, 0.7);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-lp-bento-card:hover {
+  border-color: rgba(0, 113, 227, 0.4);
+}
+
+[data-theme="dark"] .dv-lp-bento-title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-lp-bento-desc {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-lp-showcase {
+  background: radial-gradient(ellipse at 50% 0%, rgba(0, 113, 227, 0.1) 0%, transparent 70%), #0B111A;
+  border-top-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-lp-mockup-frame {
+  background: #111B29;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 32px 72px -16px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .dv-lp-mockup-top {
+  background: rgba(18, 28, 43, 0.95);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-lp-mockup-titlebar-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #E2E8F0;
+}
+
+[data-theme="dark"] .dv-lp-mockup-search {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-lp-mockup-body {
+  background: #0B111A;
+}
+
+[data-theme="dark"] .dv-lp-mockup-banner {
+  background: rgba(18, 28, 43, 0.85);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-lp-mockup-banner-info h3 {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-lp-mockup-banner-info p {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-lp-mockup-panel {
+  background: rgba(18, 28, 43, 0.8);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-lp-panel-header h4 {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-lp-mockup-item {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .dv-lp-mockup-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .item-meta strong {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .item-meta span {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-lp-process {
+  background: #0B111A;
+}
+
+[data-theme="dark"] .dv-lp-step-card {
+  background: rgba(18, 28, 43, 0.75);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-lp-step-card:hover {
+  background: rgba(22, 34, 52, 0.95);
+  border-color: rgba(0, 113, 227, 0.4);
+}
+
+[data-theme="dark"] .dv-lp-step-card h3 {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-lp-step-card p {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-lp-security {
+  background: #0E1724;
+}
+
+[data-theme="dark"] .dv-lp-security-card {
+  background: rgba(18, 28, 43, 0.75);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-lp-sec-head h3 {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-lp-sec-head p {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-lp-sec-box {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-lp-sec-box strong {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-lp-sec-box p {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-lp-sec-list-item {
+  color: #CBD5E1;
+}
+
+[data-theme="dark"] .dv-lp-faq {
+  background: #0B111A;
+}
+
+[data-theme="dark"] .dv-lp-accordion-item {
+  background: rgba(18, 28, 43, 0.7);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-lp-accordion-item:hover {
+  background: rgba(22, 34, 52, 0.9);
+  border-color: rgba(0, 113, 227, 0.3);
+}
+
+[data-theme="dark"] .dv-lp-accordion-item--open {
+  background: rgba(22, 34, 52, 0.95);
+  border-color: rgba(0, 113, 227, 0.4);
+}
+
+[data-theme="dark"] .dv-lp-accordion-icon {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .dv-lp-accordion-question {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-lp-accordion-answer p {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-lp-accordion-answer {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .dv-lp-faq-contact-card {
+  background: rgba(18, 28, 43, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-lp-faq-contact-card h4 {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-lp-faq-contact-card p {
+  color: #94A3B8;
+}

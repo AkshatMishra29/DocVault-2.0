@@ -436,3 +436,68 @@
   }
 }
 
+/* Dark Mode Overrides */
+[data-theme="dark"] .dv-native-app-screen {
+  background: #0B111A;
+}
+
+[data-theme="dark"] .dv-native-card {
+  background: #111B29;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .dv-native-card__title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-native-card__desc {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-native-google-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-native-google-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .dv-native-divider::before,
+[data-theme="dark"] .dv-native-divider::after {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .dv-native-divider span {
+  color: #64748B;
+}
+
+[data-theme="dark"] .dv-native-label {
+  color: #CBD5E1;
+}
+
+[data-theme="dark"] .dv-native-input {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-native-segmented {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .dv-native-seg-btn {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-native-seg-btn--active {
+  background: #0070F2;
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .dv-native-footer-text {
+  color: #94A3B8;
+}
+

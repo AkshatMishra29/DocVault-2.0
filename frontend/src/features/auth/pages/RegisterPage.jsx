@@ -32,7 +32,14 @@ function GoogleIcon() {
 export default function RegisterPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { loginWithGoogleToken } = useAuth();
+  const { user, isVaultUnlocked, loginWithGoogleToken } = useAuth();
+
+  // If already unlocked and authenticated, immediately redirect forward to dashboard
+  React.useEffect(() => {
+    if (user && isVaultUnlocked) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, isVaultUnlocked, navigate]);
 
   // Pre-fill state if returning from /verify-otp
   const [formData, setFormData] = useState(() => ({
@@ -106,6 +113,7 @@ export default function RegisterPage() {
           }
 
           navigate("/enter-pin", { 
+            replace: true,
             state: { 
               email: targetEmail, 
               name: result.user?.name,

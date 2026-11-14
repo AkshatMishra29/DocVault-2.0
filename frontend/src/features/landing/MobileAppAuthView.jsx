@@ -173,6 +173,7 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
           }
 
           navigate("/enter-pin", { 
+            replace: true,
             state: { 
               email: targetEmail, 
               name: result.user?.name,

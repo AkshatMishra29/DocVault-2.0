@@ -46,8 +46,15 @@ export default function LoginPage() {
   const [resetError, setResetError] = useState("");
   const [resetSuccess, setResetSuccess] = useState("");
 
-  const { login, loginWithGoogleToken } = useAuth();
+  const { user, isVaultUnlocked, login, loginWithGoogleToken } = useAuth();
   const navigate = useNavigate();
+
+  // If already unlocked and authenticated, immediately redirect forward to dashboard
+  useEffect(() => {
+    if (user && isVaultUnlocked) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, isVaultUnlocked, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,6 +72,7 @@ export default function LoginPage() {
 
     if (result.success) {
       navigate("/enter-pin", { 
+        replace: true,
         state: { 
           email: result.user?.email || cleanEmail, 
           pinLength: result.user?.pinLength || 4 
@@ -98,6 +106,7 @@ export default function LoginPage() {
           }
 
           navigate("/enter-pin", { 
+            replace: true,
             state: { 
               email: targetEmail, 
               name: result.user?.name,
