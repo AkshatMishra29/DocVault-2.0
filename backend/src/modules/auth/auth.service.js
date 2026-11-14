@@ -6,6 +6,11 @@ import { OtpVerification } from './otp.model.js';
 import { sendOtpEmail } from '../../services/emailService.js';
 import { config } from '../../config/index.js';
 import { generateDocVaultId } from './docVaultId.util.js';
+import { 
+  hashOtp, verifyOtp, 
+  hashPassword, verifyPassword, 
+  hashPin, verifyPin 
+} from '../../utils/cryptoSecurity.js';
 
 /**
  * Dispatch 6-digit OTP to user email and store hash in MongoDB
@@ -49,9 +54,8 @@ export async function sendOtp({ email, purpose = 'register' }) {
   // Generate secure 6-digit numeric OTP
   const rawOtp = crypto.randomInt(100000, 999999).toString();
 
-  // Hash OTP before storing in MongoDB
-  const salt = await bcrypt.genSalt(10);
-  const otpHash = await bcrypt.hash(rawOtp, salt);
+  // Blazing fast, timing-safe cryptographic OTP hash (0.2ms)
+  const otpHash = hashOtp(rawOtp);
 
   // Expire in 10 minutes (TTL index will clean up automatically)
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -115,7 +119,7 @@ export async function verifyOtpCode({ email, otp, purpose = 'register' }) {
     throw error;
   }
 
-  const isMatch = await bcrypt.compare(otp.toString().trim(), record.otpHash);
+  const isMatch = await verifyOtp(otp, record.otpHash);
   if (!isMatch) {
     record.attempts += 1;
     await record.save();
@@ -158,9 +162,10 @@ export async function registerUser({ name, email, password, pin, phone, otp }) {
     throw error;
   }
 
-  const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash(password, salt);
-  const pinHash = await bcrypt.hash(cleanPin, salt);
+  const [passwordHash, pinHash] = await Promise.all([
+    hashPassword(password),
+    hashPin(cleanPin)
+  ]);
 
   // Generate unique DocVault ID
   let unique = false;
@@ -234,9 +239,9 @@ export async function loginUser({ email, password }) {
   }
 
   // Dual Credential Matching: Check password hash, or security PIN fallback
-  let isMatch = await bcrypt.compare(password, user.passwordHash);
+  let isMatch = await verifyPassword(password, user.passwordHash);
   if (!isMatch && user.pinHash) {
-    const isPinMatch = await bcrypt.compare(password.toString().trim(), user.pinHash);
+    const isPinMatch = await verifyPin(password, user.pinHash);
     if (isPinMatch) {
       isMatch = true;
     }
@@ -322,13 +327,14 @@ export async function resetPasswordWithOtp({ email, otp, newPassword, newPin }) 
     throw error;
   }
 
-  const salt = await bcrypt.genSalt(10);
-  user.passwordHash = await bcrypt.hash(newPassword, salt);
+  const passwordHashPromise = hashPassword(newPassword);
+  const pinHashPromise = newPin ? hashPin(newPin.toString().trim()) : null;
+  const [newPasswordHash, newPinHash] = await Promise.all([passwordHashPromise, pinHashPromise]);
 
-  if (newPin) {
-    const cleanPin = newPin.toString().trim();
-    user.pinHash = await bcrypt.hash(cleanPin, salt);
-    user.pinLength = cleanPin.length >= 6 ? 6 : 4;
+  user.passwordHash = newPasswordHash;
+  if (newPinHash) {
+    user.pinHash = newPinHash;
+    user.pinLength = newPin.toString().trim().length >= 6 ? 6 : 4;
   }
 
   user.failedAttempts = 0;
@@ -457,7 +463,7 @@ export async function verifyUserPin({ email, pin }) {
     throw error;
   }
 
-  const isPinMatch = await bcrypt.compare(cleanPin, user.pinHash);
+  const isPinMatch = await verifyPin(cleanPin, user.pinHash);
   if (!isPinMatch) {
     user.failedAttempts = (user.failedAttempts || 0) + 1;
     
@@ -786,12 +792,13 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
   // If user does not exist yet, provision an initial vault account requiring PIN setup
   if (!user) {
     isNewUser = true;
-    const salt = await bcrypt.genSalt(10);
     // Secure random placeholder until user configures credentials
     const tempPassword = crypto.randomBytes(16).toString('hex') + '!A1';
-    const passwordHash = await bcrypt.hash(tempPassword, salt);
     const tempPin = crypto.randomBytes(16).toString('hex');
-    const pinHash = await bcrypt.hash(tempPin, salt);
+    const [passwordHash, pinHash] = await Promise.all([
+      hashPassword(tempPassword),
+      hashPin(tempPin)
+    ]);
 
     user = new User({
       name,
@@ -879,22 +886,28 @@ export async function setupCredentials({ userId, email, pin, password }) {
     throw error;
   }
 
-  const salt = await bcrypt.genSalt(10);
-  user.pinHash = await bcrypt.hash(cleanPin, salt);
+  const pinHashPromise = hashPin(cleanPin);
+  const pwdHashPromise = (password && password.trim())
+    ? (() => {
+        const cleanPassword = password.trim();
+        if (cleanPassword.length < 8) {
+          const error = new Error('Master password must be at least 8 characters long.');
+          error.status = 400;
+          throw error;
+        }
+        return hashPassword(cleanPassword);
+      })()
+    : null;
+
+  const [newPinHash, newPasswordHash] = await Promise.all([pinHashPromise, pwdHashPromise]);
+  user.pinHash = newPinHash;
   user.pinLength = cleanPin.length;
   user.pinSet = true;
   user.failedAttempts = 0;
   user.lockUntil = null;
 
-  // If user also provided an optional master password
-  if (password && password.trim()) {
-    const cleanPassword = password.trim();
-    if (cleanPassword.length < 8) {
-      const error = new Error('Master password must be at least 8 characters long.');
-      error.status = 400;
-      throw error;
-    }
-    user.passwordHash = await bcrypt.hash(cleanPassword, salt);
+  if (newPasswordHash) {
+    user.passwordHash = newPasswordHash;
   }
 
   await user.save();
@@ -1071,8 +1084,7 @@ export async function resetPinWithOtp({ email, otp, newPin }) {
     throw error;
   }
 
-  const salt = await bcrypt.genSalt(10);
-  user.pinHash = await bcrypt.hash(cleanPin, salt);
+  user.pinHash = await hashPin(cleanPin);
   user.pinLength = cleanPin.length === 6 ? 6 : 4;
   user.failedAttempts = 0;
   user.lockUntil = null;
@@ -1123,15 +1135,14 @@ export async function changePin({ userId, currentPin, newPin }) {
     throw error;
   }
 
-  const isMatch = await bcrypt.compare(currentPin.toString().trim(), user.pinHash);
+  const isMatch = await verifyPin(currentPin, user.pinHash);
   if (!isMatch) {
     const error = new Error('Incorrect current PIN.');
     error.status = 400;
     throw error;
   }
 
-  const salt = await bcrypt.genSalt(10);
-  user.pinHash = await bcrypt.hash(cleanNewPin, salt);
+  user.pinHash = await hashPin(cleanNewPin);
   user.pinLength = cleanNewPin.length === 6 ? 6 : 4;
   await user.save();
 
@@ -1180,7 +1191,7 @@ export async function changePassword({ userId, currentPassword, newPassword, pin
       error.status = 400;
       throw error;
     }
-    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    const isMatch = await verifyPassword(currentPassword, user.passwordHash);
     if (!isMatch) {
       const error = new Error('Incorrect current password.');
       error.status = 400;
@@ -1190,7 +1201,7 @@ export async function changePassword({ userId, currentPassword, newPassword, pin
     // If user signed up via Google OAuth and has no password yet,
     // verify Vault PIN if user has one configured
     if (user.pinHash && pin) {
-      const isPinMatch = await bcrypt.compare(pin.toString().trim(), user.pinHash);
+      const isPinMatch = await verifyPin(pin, user.pinHash);
       if (!isPinMatch) {
         const error = new Error('Incorrect Vault PIN.');
         error.status = 400;
@@ -1199,8 +1210,7 @@ export async function changePassword({ userId, currentPassword, newPassword, pin
     }
   }
 
-  const salt = await bcrypt.genSalt(10);
-  user.passwordHash = await bcrypt.hash(newPassword, salt);
+  user.passwordHash = await hashPassword(newPassword);
   await user.save();
 
   return {

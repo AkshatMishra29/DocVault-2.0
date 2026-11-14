@@ -22,9 +22,9 @@ function getSmtpTransporter() {
         user: user.trim(),
         pass: cleanPass,
       },
-      connectionTimeout: 3500,
-      greetingTimeout: 3500,
-      socketTimeout: 4000,
+      connectionTimeout: 1800,
+      greetingTimeout: 1800,
+      socketTimeout: 2000,
     });
     console.log('[EmailService] Gmail SMTP Transporter initialized on port', process.env.SMTP_PORT || 465, 'for:', user);
   }
@@ -46,7 +46,7 @@ async function sendViaResend({ apiKey, to, subject, html, text }) {
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 3500);
+  const timeoutId = setTimeout(() => controller.abort(), 2000);
 
   try {
     const res = await fetch('https://api.resend.com/emails', {

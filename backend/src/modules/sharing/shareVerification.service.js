@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
+import { hashPassword, verifyPassword } from '../../utils/cryptoSecurity.js';
 
 /**
  * DocVault Share Verification Service
@@ -70,21 +70,20 @@ export class ShareVerificationService {
   }
 
   /**
-   * Hashes a share password with bcryptjs
+   * Hashes a share password with PBKDF2-SHA256 (native OpenSSL C++)
    */
   static async hashPassword(password) {
     if (!password) return null;
-    const salt = await bcrypt.genSalt(10);
-    return await bcrypt.hash(password, salt);
+    return await hashPassword(password);
   }
 
   /**
-   * Verifies an entered share password
+   * Verifies an entered share password (with legacy bcrypt backward compatibility)
    */
   static async verifyPassword(enteredPassword, passwordHash) {
     if (!passwordHash) return true;
     if (!enteredPassword) return false;
-    return await bcrypt.compare(enteredPassword, passwordHash);
+    return await verifyPassword(enteredPassword, passwordHash);
   }
 }
 
