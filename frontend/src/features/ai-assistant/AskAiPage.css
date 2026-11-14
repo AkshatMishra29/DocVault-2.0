@@ -148,8 +148,44 @@
 }
 
 /* ==========================================================================
-   2. TARGET DOCUMENT SCOPED STRIP
+   2. TARGET DOCUMENT SCOPED STRIP & EMPTY VAULT BANNER
    ========================================================================== */
+
+.dv-ai-empty-vault-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: rgba(0, 112, 242, 0.06);
+  border: 1px solid rgba(0, 112, 242, 0.22);
+  border-radius: 14px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.dv-ai-empty-vault-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dv-ai-empty-vault-icon {
+  color: #0070F2;
+  flex-shrink: 0;
+}
+
+.dv-ai-empty-vault-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.dv-ai-empty-vault-desc {
+  margin: 2px 0 0 0;
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+}
 
 .dv-ai-scoped-banner {
   display: flex;
@@ -471,6 +507,138 @@
   40% { transform: scale(1.1); opacity: 1; }
 }
 
+/* Copy Action */
+.dv-chat-copy-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.dv-chat-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.dv-chat-copy-btn:hover {
+  background: rgba(0, 112, 242, 0.08);
+  border-color: rgba(0, 112, 242, 0.2);
+  color: #0070F2;
+}
+
+.dv-chat-copy-btn--copied {
+  color: #10B981 !important;
+  background: rgba(16, 185, 129, 0.1) !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+/* Form Filler Bar & Grid */
+.dv-ai-form-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 18px;
+  background: rgba(0, 112, 242, 0.05);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dv-ai-form-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dv-ai-form-icon {
+  color: #0070F2;
+}
+
+.dv-ai-form-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.dv-ai-form-desc {
+  font-size: 11.5px;
+  color: var(--color-text-secondary);
+}
+
+.dv-ai-form-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: #0070F2;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dv-ai-form-toggle-btn:hover {
+  background: rgba(0, 112, 242, 0.08);
+  border-color: #0070F2;
+}
+
+.dv-ai-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  padding: 12px 18px;
+  background: var(--color-surface-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dv-ai-form-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dv-ai-form-card:hover {
+  transform: translateY(-1px);
+  border-color: #0070F2;
+  box-shadow: 0 4px 12px rgba(0, 112, 242, 0.08);
+}
+
+.dv-ai-form-card-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dv-ai-form-card-desc {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
 /* ==========================================================================
    4. SUGGESTIONS PROMPTS CAROUSEL
    ========================================================================== */
@@ -636,16 +804,16 @@
 }
 
 /* ==========================================================================
-   DARK MODE ADAPTATIONS (PITCH BLACK & VIBRANT ACCENTS)
+   DARK MODE ADAPTATIONS (SLATE OBSIDIAN & HIGH-CONTRAST ACCENTS)
    ========================================================================== */
 
 [data-theme="dark"] .dv-ai-hero {
   background: 
-    radial-gradient(ellipse at 88% 18%, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse at 12% 82%, rgba(139, 92, 246, 0.08) 0%, transparent 55%),
-    #121214;
-  border-color: #27272A;
-  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.8);
+    radial-gradient(ellipse at 88% 18%, rgba(59, 130, 246, 0.14) 0%, transparent 60%),
+    radial-gradient(ellipse at 12% 82%, rgba(139, 92, 246, 0.1) 0%, transparent 55%),
+    #121824;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.75);
 }
 
 [data-theme="dark"] .dv-ai-hero__kicker {
@@ -655,9 +823,17 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
+[data-theme="dark"] .dv-ai-hero__title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-ai-hero__desc {
+  color: #CBD5E1;
+}
+
 [data-theme="dark"] .dv-ai-hero__badge {
-  background: #18181B;
-  border-color: #27272A;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
 }
 
@@ -665,42 +841,281 @@
   color: #60A5FA;
 }
 
-[data-theme="dark"] .dv-ai-scoped-banner {
-  background: #18181B;
-  border-color: #27272A;
+[data-theme="dark"] .dv-ai-hero__badge-label {
+  color: #94A3B8;
+}
+
+/* Empty Vault Banner */
+[data-theme="dark"] .dv-ai-empty-vault-banner {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .dv-ai-empty-vault-icon {
   color: #60A5FA;
 }
 
-[data-theme="dark"] .dv-ai-chat-window {
-  background: #121214;
-  border-color: #27272A;
-  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.8);
+[data-theme="dark"] .dv-ai-empty-vault-title {
+  color: #F8FAFC;
 }
 
-[data-theme="dark"] .dv-ai-chat-header,
-[data-theme="dark"] .dv-ai-composer {
-  background: #121214;
-  border-color: #27272A;
+[data-theme="dark"] .dv-ai-empty-vault-desc {
+  color: #94A3B8;
+}
+
+/* Scoped Doc Banner */
+[data-theme="dark"] .dv-ai-scoped-banner {
+  background: #141E2E;
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .dv-ai-scoped-banner strong {
+  color: #F8FAFC;
+}
+
+/* Chat Window Container */
+[data-theme="dark"] .dv-ai-chat-window {
+  background: #111A27;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 45px -4px rgba(0, 0, 0, 0.7);
+}
+
+/* Header */
+[data-theme="dark"] .dv-ai-chat-header {
+  background: rgba(17, 26, 39, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-ai-chat-title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-ai-chat-sub {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-ai-status-pill {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #34D399;
+}
+
+/* Chat History Body (Clean Dark Slate Canvas - No light bleeding) */
+[data-theme="dark"] .dv-ai-chat-history {
+  background: 
+    radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.05) 0%, transparent 55%),
+    radial-gradient(circle at 10% 90%, rgba(139, 92, 246, 0.04) 0%, transparent 55%),
+    #0B111A;
+}
+
+/* Assistant Message Bubble & Avatar */
+[data-theme="dark"] .dv-chat-msg--assistant .dv-chat-msg__avatar {
+  background: rgba(59, 130, 246, 0.16);
+  color: #60A5FA;
+  border-color: rgba(59, 130, 246, 0.35);
 }
 
 [data-theme="dark"] .dv-chat-msg--assistant .dv-chat-msg__bubble {
-  background: #18181B;
-  border-color: #27272A;
-  color: #FAFAFA;
+  background: #152030;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #F8FAFC;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+/* User Message Bubble */
+[data-theme="dark"] .dv-chat-msg--user .dv-chat-msg__bubble {
+  background: linear-gradient(135deg, #0070F2 0%, #0051B4 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(0, 112, 242, 0.35);
+}
+
+/* Markdown Rendering in Dark Mode */
+[data-theme="dark"] .dv-markdown-wrapper p,
+[data-theme="dark"] .dv-markdown-wrapper li {
+  color: #F1F5F9;
+}
+
+[data-theme="dark"] .dv-markdown-wrapper strong {
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .dv-markdown-wrapper table {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .dv-markdown-wrapper th {
+  background: rgba(255, 255, 255, 0.06);
+  color: #E2E8F0;
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .dv-markdown-wrapper td {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  color: #CBD5E1;
+}
+
+[data-theme="dark"] .dv-markdown-wrapper code {
+  background: rgba(255, 255, 255, 0.08);
+  color: #93C5FD;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+[data-theme="dark"] .dv-markdown-wrapper pre {
+  background: #090E17;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+[data-theme="dark"] .dv-markdown-wrapper blockquote {
+  border-left-color: #3B82F6;
+  color: #94A3B8;
+  background: rgba(59, 130, 246, 0.08);
+}
+
+/* Citations in Dark Mode */
+[data-theme="dark"] .dv-chat-citations {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-citations-label {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-citation-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .dv-citation-pill:hover {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.45);
+  color: #93C5FD;
+}
+
+/* Copy Button */
+[data-theme="dark"] .dv-chat-copy-btn {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-chat-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #F8FAFC;
+}
+
+/* Loading Dots Bubble */
+[data-theme="dark"] .dv-chat-loading-bubble {
+  background: #152030;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #CBD5E1;
+}
+
+/* Form Filler Bar in Dark Mode */
+[data-theme="dark"] .dv-ai-form-bar {
+  background: rgba(59, 130, 246, 0.08);
+  border-top-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-ai-form-icon {
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .dv-ai-form-title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-ai-form-desc {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-ai-form-toggle-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .dv-ai-form-toggle-btn:hover {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: #60A5FA;
+  color: #93C5FD;
+}
+
+/* Form Picker Grid in Dark Mode */
+[data-theme="dark"] .dv-ai-form-grid {
+  background: #0E1622;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-ai-form-card {
+  background: #141E2C;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .dv-ai-form-card:hover {
+  border-color: #3B82F6;
+  background: #182436;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .dv-ai-form-card-title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-ai-form-card-desc {
+  color: #94A3B8;
+}
+
+/* Suggestions Prompts Bar in Dark Mode */
+[data-theme="dark"] .dv-ai-prompts-bar {
+  background: #111A27;
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-ai-prompts-label {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-prompt-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #CBD5E1;
+}
+
+[data-theme="dark"] .dv-prompt-chip:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: #3B82F6;
+  color: #93C5FD;
+}
+
+/* Composer in Dark Mode */
+[data-theme="dark"] .dv-ai-composer {
+  background: #111A27;
+  border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="dark"] .dv-ai-composer__input {
-  background: #18181B;
-  border-color: #27272A;
-  color: #FAFAFA;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #F8FAFC;
 }
 
 [data-theme="dark"] .dv-ai-composer__input:focus {
+  background: rgba(255, 255, 255, 0.08);
   border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
-[data-theme="dark"] .dv-ai-empty-vault-banner {
-  background: #18181B;
-  border-color: #27272A;
+/* Disclaimer Footer in Dark Mode */
+[data-theme="dark"] .dv-ai-footer-disclaimer {
+  background: #0E1622;
+  border-top-color: rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
 }

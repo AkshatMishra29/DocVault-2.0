@@ -190,21 +190,12 @@ export default function AskAiPage() {
         </div>
 
         {vaultDocCount === 0 && (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "14px 18px",
-            background: "rgba(0, 112, 242, 0.08)",
-            border: "1px solid rgba(0, 112, 242, 0.25)",
-            borderRadius: "12px",
-            marginBottom: "16px"
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <FileText size={20} color="#0070F2" />
+          <div className="dv-ai-empty-vault-banner">
+            <div className="dv-ai-empty-vault-left">
+              <FileText size={20} className="dv-ai-empty-vault-icon" />
               <div>
-                <strong style={{ color: "#F1F5F9", fontSize: "14px" }}>Your vault is empty</strong>
-                <p style={{ margin: "2px 0 0 0", fontSize: "12.5px", color: "#94A3B8" }}>
+                <strong className="dv-ai-empty-vault-title">Your vault is empty</strong>
+                <p className="dv-ai-empty-vault-desc">
                   Upload policies, warranties, or receipts so the AI Assistant can answer questions about them.
                 </p>
               </div>
@@ -299,23 +290,11 @@ export default function AskAiPage() {
                   )}
 
                   {m.role === "assistant" && (
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
+                    <div className="dv-chat-copy-row">
                       <button
                         type="button"
                         onClick={() => handleCopy(m.content, idx)}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          background: "transparent",
-                          border: "none",
-                          fontSize: "11px",
-                          fontWeight: "600",
-                          color: copiedIdx === idx ? "#22C55E" : "var(--color-text-muted)",
-                          cursor: "pointer",
-                          padding: "2px 6px",
-                          borderRadius: "4px"
-                        }}
+                        className={`dv-chat-copy-btn ${copiedIdx === idx ? "dv-chat-copy-btn--copied" : ""}`}
                         title="Copy answer details"
                       >
                         {copiedIdx === idx ? <Check size={12} /> : <ClipboardCopy size={12} />}
@@ -345,43 +324,21 @@ export default function AskAiPage() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Form Filler Assistant Bar (Part C) */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "8px 16px",
-            background: "rgba(59, 130, 246, 0.08)",
-            borderTop: "1px solid var(--color-border)",
-            borderBottom: "1px solid var(--color-border)",
-            flexWrap: "wrap",
-            gap: "8px"
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <FileSpreadsheet size={15} color="var(--color-primary)" />
-              <strong style={{ fontSize: "12px", color: "var(--color-text-primary)" }}>
+          {/* Form Filler Assistant Bar */}
+          <div className="dv-ai-form-bar">
+            <div className="dv-ai-form-bar-left">
+              <FileSpreadsheet size={15} className="dv-ai-form-icon" />
+              <strong className="dv-ai-form-title">
                 Form Filler Assistant:
               </strong>
-              <span style={{ fontSize: "11.5px", color: "var(--color-text-secondary)" }}>
+              <span className="dv-ai-form-desc">
                 Auto-extract your personal fields for standard forms
               </span>
             </div>
             <button
               type="button"
               onClick={() => setShowFormPicker(!showFormPicker)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "4px 10px",
-                borderRadius: "6px",
-                background: "var(--color-surface)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-primary)",
-                fontSize: "11.5px",
-                fontWeight: "600",
-                cursor: "pointer"
-              }}
+              className="dv-ai-form-toggle-btn"
             >
               <span>{showFormPicker ? "Hide Form Templates" : "Select Form Template"}</span>
             </button>
@@ -389,36 +346,19 @@ export default function AskAiPage() {
 
           {/* Form Picker Grid */}
           {showFormPicker && (
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: "8px",
-              padding: "10px 16px",
-              background: "var(--color-surface-secondary)",
-              borderBottom: "1px solid var(--color-border)"
-            }}>
+            <div className="dv-ai-form-grid">
               {FORM_TEMPLATES.map((tmpl, tIdx) => (
                 <button
                   key={tIdx}
                   type="button"
                   onClick={() => handleFillForm(tmpl.name)}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    background: "var(--color-surface)",
-                    border: "1px solid var(--color-border)",
-                    textAlign: "left",
-                    cursor: "pointer"
-                  }}
+                  className="dv-ai-form-card"
                 >
-                  <span style={{ fontSize: "12.5px", fontWeight: "700", color: "var(--color-text-primary)", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span className="dv-ai-form-card-title">
                     <span>{tmpl.icon}</span>
                     <span>{tmpl.name}</span>
                   </span>
-                  <span style={{ fontSize: "11px", color: "var(--color-text-secondary)", marginTop: "3px", lineHeight: "1.3" }}>
+                  <span className="dv-ai-form-card-desc">
                     {tmpl.desc}
                   </span>
                 </button>
