@@ -766,40 +766,54 @@
 
 @media (max-width: 640px) {
   .dv-ai-content {
-    gap: 18px;
-    padding-top: 10px;
+    gap: 14px;
+    padding-top: 6px;
   }
 
   .dv-ai-hero {
-    padding: 20px;
-    border-radius: 18px;
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .dv-ai-hero__title {
+    font-size: 20px;
+  }
+
+  .dv-ai-hero__subtitle {
+    font-size: 13px;
   }
 
   .dv-ai-chat-window {
-    border-radius: 18px;
-    height: calc(100vh - 180px);
+    border-radius: 16px;
+    height: calc(100dvh - 200px);
+    min-height: 360px;
   }
 
   .dv-ai-chat-header {
-    padding: 14px 16px;
+    padding: 12px 14px;
   }
 
   .dv-ai-chat-history {
-    padding: 16px;
-    gap: 14px;
+    padding: 14px 12px;
+    gap: 12px;
   }
 
   .dv-chat-msg {
-    max-width: 94%;
+    max-width: 95%;
   }
 
   .dv-chat-msg__bubble {
-    padding: 12px 14px;
+    padding: 11px 13px;
     font-size: 13.5px;
+    line-height: 1.45;
   }
 
   .dv-ai-composer {
-    padding: 12px 14px;
+    padding: 10px 12px;
+  }
+
+  .dv-ai-input {
+    font-size: 16px !important;
   }
 }
 

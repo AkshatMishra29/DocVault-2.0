@@ -4,6 +4,7 @@ import {
   Home, 
   Files, 
   UploadCloud, 
+  Sparkles,
   Calendar, 
   Menu
 } from 'lucide-react';
@@ -17,7 +18,7 @@ export default function BottomNav() {
         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
         end
       >
-        <Home size={22} className="nav-icon" />
+        <Home size={20} className="nav-icon" />
         <span className="nav-label">Home</span>
       </NavLink>
 
@@ -25,7 +26,7 @@ export default function BottomNav() {
         to="/documents" 
         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
       >
-        <Files size={22} className="nav-icon" />
+        <Files size={20} className="nav-icon" />
         <span className="nav-label">Vault</span>
       </NavLink>
 
@@ -36,16 +37,25 @@ export default function BottomNav() {
         aria-label="Upload or Scan Document"
       >
         <div className="upload-icon-circle">
-          <UploadCloud size={22} color="#FFFFFF" />
+          <UploadCloud size={20} color="#FFFFFF" />
         </div>
         <span className="nav-label">Upload</span>
+      </NavLink>
+
+      {/* Ask AI Copilot Option */}
+      <NavLink 
+        to="/ask-ai" 
+        className={({ isActive }) => `nav-item nav-item-ask ${isActive ? 'active' : ''}`}
+      >
+        <Sparkles size={20} className="nav-icon nav-icon-ask" />
+        <span className="nav-label">Ask AI</span>
       </NavLink>
 
       <NavLink 
         to="/deadlines" 
         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
       >
-        <Calendar size={22} className="nav-icon" />
+        <Calendar size={20} className="nav-icon" />
         <span className="nav-label">Alerts</span>
       </NavLink>
 
@@ -53,7 +63,7 @@ export default function BottomNav() {
         to="/more" 
         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
       >
-        <Menu size={22} className="nav-icon" />
+        <Menu size={20} className="nav-icon" />
         <span className="nav-label">More</span>
       </NavLink>
     </nav>

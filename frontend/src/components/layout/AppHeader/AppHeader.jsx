@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../features/auth/context/AuthContext';
-import { LogOut, ShieldCheck, Lock, Users, ChevronDown, UserPlus, Check, Bell, Calendar, AlertTriangle, FileText, ChevronRight, Sun, Moon } from 'lucide-react';
+import { LogOut, ShieldCheck, Lock, Users, ChevronDown, UserPlus, Check, Bell, Calendar, AlertTriangle, FileText, ChevronRight, Sun, Moon, Sparkles } from 'lucide-react';
 import { useTheme } from '../../../app/theme';
 import { apiRequest } from '../../../services/api';
 import Button from '../../common/Button/Button';
@@ -116,6 +116,17 @@ export default function AppHeader({ title, subtitle }) {
       </div>
 
             <div className="dv-app-header__actions" ref={menuRef}>
+        {/* Quick Ask AI Copilot Button */}
+        <Link
+          to="/ask-ai"
+          className="dv-header-ask-btn"
+          title="Ask AI Assistant"
+          aria-label="Ask AI Assistant"
+        >
+          <Sparkles size={15} className="dv-header-ask-icon" />
+          <span className="dv-header-ask-label">Ask AI</span>
+        </Link>
+
         {/* Dark / Light Mode Theme Toggle Pill */}
         <button
           type="button"
