@@ -233,16 +233,19 @@
   color: #E2E8F0;
 }
 
+[data-theme="dark"] .dv-footer-col-title,
 [data-theme="dark"] .dv-footer-col__title {
   color: #F8FAFC;
 }
 
+[data-theme="dark"] .dv-footer-links a,
 [data-theme="dark"] .dv-footer-link {
   color: #94A3B8;
 }
 
+[data-theme="dark"] .dv-footer-links a:hover,
 [data-theme="dark"] .dv-footer-link:hover {
-  color: #F8FAFC;
+  color: #60A5FA;
 }
 
 [data-theme="dark"] .dv-footer-status {
@@ -256,6 +259,7 @@
   border-top-color: rgba(255, 255, 255, 0.06);
 }
 
+[data-theme="dark"] .dv-public-footer__copyright,
 [data-theme="dark"] .dv-public-footer__copy {
   color: #64748B;
 }

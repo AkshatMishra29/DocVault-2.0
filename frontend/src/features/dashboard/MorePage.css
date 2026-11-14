@@ -363,3 +363,140 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   DARK MODE GLASSMORPHISM & VIVID ACCENTS (MORE / SETTINGS PAGE)
+   ========================================================================== */
+
+[data-theme="dark"] .dv-setting-card,
+[data-theme="dark"] .dv-sessions-card,
+[data-theme="dark"] .dv-audit-card {
+  background: rgba(18, 24, 38, 0.75);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+}
+
+[data-theme="dark"] .dv-setting-card__title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-setting-desc {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-setting-rows {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+[data-theme="dark"] .dv-setting-label {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-setting-val {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-setting-toggle-row {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .dv-toggle-title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-toggle-sub {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-switch {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+[data-theme="dark"] .dv-switch--active {
+  background-color: #2563EB;
+  border-color: #3B82F6;
+}
+
+[data-theme="dark"] .dv-switch-thumb {
+  background-color: #F8FAFC;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .dv-saved-session-row {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+[data-theme="dark"] .dv-saved-session-row:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+[data-theme="dark"] .dv-saved-session-row--active {
+  background: rgba(0, 112, 242, 0.14);
+  border-color: rgba(0, 112, 242, 0.4);
+}
+
+[data-theme="dark"] .dv-saved-session-title strong {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-saved-session-sub {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-session-tag-current {
+  background-color: rgba(0, 112, 242, 0.25);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .dv-session-tag-locked {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-export-box {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+[data-theme="dark"] .dv-export-meta strong {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-export-meta p {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-audit-table {
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 14px;
+}
+
+[data-theme="dark"] .dv-audit-row {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .dv-audit-row:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .dv-audit-doc {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-audit-device {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-audit-time {
+  color: #64748B;
+}
