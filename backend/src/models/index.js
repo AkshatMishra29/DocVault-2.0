@@ -25,3 +25,8 @@ export { RequirementTemplate } from '../modules/intelligence/models/requirement.
 // Document Sharing & Mutual Connections models
 export * from '../modules/sharing/models/index.js';
 
+// AI Conversation History & Message models
+export { Conversation } from '../modules/ai/models/conversation.model.js';
+export { Message } from '../modules/ai/models/message.model.js';
+
+

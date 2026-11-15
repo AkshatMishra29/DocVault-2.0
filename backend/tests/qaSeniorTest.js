@@ -58,12 +58,14 @@ async function runTests() {
   });
 
   // 2. Verify AI routes
-  test('AI Routes exports an Express Router with query endpoint', () => {
+  test('AI Routes exports an Express Router with query & conversation endpoints', () => {
     assert.ok(aiRoutes, 'aiRoutes must be exported');
     const paths = aiRoutes.stack
       .filter(layer => layer.route)
       .map(layer => layer.route.path);
     assert.ok(paths.includes('/query'), 'Route /query must be present');
+    assert.ok(paths.includes('/conversations'), 'Route /conversations must be present');
+    assert.ok(paths.includes('/conversations/:id'), 'Route /conversations/:id must be present');
   });
 
   // 3. Test PIN Validation Logic in auth.service

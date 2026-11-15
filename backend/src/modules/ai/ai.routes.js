@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { requireAuth } from '../../middleware/auth.middleware.js';
 import { Document } from '../documents/document.model.js';
 import { Asset } from '../assets/asset.model.js';
+import { Conversation } from './models/conversation.model.js';
+import { Message } from './models/message.model.js';
 import { answerDocumentQuery } from '../../services/ai/groqService.js';
 import { generateEmbedding } from '../../services/ai/huggingFaceService.js';
 import { assertAiAllowed, isAiAllowed, PrivacyPolicyViolationError } from '../../services/pipeline/privacyGate.js';
@@ -58,10 +60,31 @@ function computeLexicalScore(doc, queryTokens) {
  */
 async function handleAiQuery(req, res) {
   try {
-    const { question, docId } = req.body;
+    const { question, docId, conversationId } = req.body;
     if (!question) {
       return res.status(400).json({ success: false, error: 'Question is required' });
     }
+
+    // Resolve or automatically provision user conversation
+    let conversation = null;
+    if (conversationId) {
+      conversation = await Conversation.findOne({ _id: conversationId, userId: req.user.userId });
+    }
+    if (!conversation) {
+      const cleanTitle = question.replace(/[\n\r]+/g, ' ').trim().slice(0, 50);
+      conversation = await Conversation.create({
+        userId: req.user.userId,
+        title: cleanTitle.length > 0 ? (cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1)) : 'New Conversation',
+      });
+    }
+
+    // Save user message to persistent history
+    await Message.create({
+      conversationId: conversation._id,
+      userId: req.user.userId,
+      role: 'user',
+      content: question,
+    });
 
     let documents = [];
 
@@ -203,29 +226,34 @@ async function handleAiQuery(req, res) {
         $or: [{ aiPolicy: 'storage_only' }, { sensitiveFlag: true }]
       }).catch(() => 0);
 
-      // If user has uploaded docs, but all are protected storage-only
+      let answer = '';
       if (totalDocs > 0 && storageOnlyDocs === totalDocs) {
-        return res.json({
-          success: true,
-          data: {
-            answer: `You have **${totalDocs} document(s)** in your vault, but they are currently protected in **Storage-Only mode** (zero third-party AI egress). To allow DocVault AI to search and answer questions using these documents, please enable AI analysis in your Document Settings.`,
-            confidence: 'low',
-            referencedDocIds: [],
-            referencedDocs: [],
-            actionItem: null,
-          },
-        });
+        answer = `You have **${totalDocs} document(s)** in your vault, but they are currently protected in **Storage-Only mode** (zero third-party AI egress). To allow DocVault AI to search and answer questions using these documents, please enable AI analysis in your Document Settings.`;
+      } else {
+        const rawAnswer = await answerDocumentQuery(question, [], []);
+        answer = typeof rawAnswer === 'string' ? rawAnswer : (rawAnswer?.answer || 'Hello! I am your DocVault AI Assistant. You currently have no AI-enabled documents uploaded. Once you upload documents (like certificates, invoices, or policies) with AI analysis enabled, I can answer questions, summarize content, and extract key dates for you.');
       }
 
-      // Allow conversational responses or polite guidance when vault is empty
-      const rawAnswer = await answerDocumentQuery(question, [], []);
-      const answer = typeof rawAnswer === 'string' ? rawAnswer : (rawAnswer?.answer || 'Hello! I am your DocVault AI Assistant. You currently have no AI-enabled documents uploaded. Once you upload documents (like certificates, invoices, or policies) with AI analysis enabled, I can answer questions, summarize content, and extract key dates for you.');
+      await Message.create({
+        conversationId: conversation._id,
+        userId: req.user.userId,
+        role: 'assistant',
+        content: answer,
+        sources: [],
+        referencedDocIds: [],
+        confidence: 'low',
+      });
+
+      conversation.lastMessageAt = new Date();
+      await conversation.save();
 
       return res.json({
         success: true,
         data: {
+          conversationId: conversation._id,
           answer,
           confidence: 'low',
+          sources: [],
           referencedDocIds: [],
           referencedDocs: [],
           actionItem: null,
@@ -242,18 +270,54 @@ async function handleAiQuery(req, res) {
 
     // Format response cleanly for frontend
     const answer = typeof rawAnswer === 'string' ? rawAnswer : (rawAnswer?.answer || JSON.stringify(rawAnswer));
-    const referencedDocIds = documents.map(d => d._id);
-    const referencedDocs = documents.map(d => ({
+
+    // Construct structured sources for deep linking
+    const isUnanswerable = /I cannot find that information in your currently uploaded documents/i.test(answer);
+    
+    const sources = isUnanswerable ? [] : documents.map(d => ({
+      documentId: d._id,
+      title: d.title,
+      category: d.category || 'Document',
+      documentType: d.format || (d.mimetype?.includes('pdf') ? 'pdf' : (d.mimetype?.includes('image') ? 'image' : 'document')),
+      pageNumber: d.pageCount || 1,
+      previewRoute: `/documents/${d._id}`,
+      downloadUrl: `/api/documents/${d._id}/download`,
+    }));
+
+    const referencedDocIds = isUnanswerable ? [] : documents.map(d => d._id);
+    const referencedDocs = isUnanswerable ? [] : documents.map(d => ({
       id: d._id,
       title: d.title,
       category: d.category
     }));
 
+    // Persist Assistant Message
+    await Message.create({
+      conversationId: conversation._id,
+      userId: req.user.userId,
+      role: 'assistant',
+      content: answer,
+      sources,
+      referencedDocIds,
+      confidence: sources.length > 0 ? 'high' : 'low',
+    });
+
+    conversation.lastMessageAt = new Date();
+    if (conversation.title === 'New Conversation') {
+      const cleanTitle = question.replace(/[\n\r]+/g, ' ').trim().slice(0, 50);
+      if (cleanTitle) {
+        conversation.title = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+      }
+    }
+    await conversation.save();
+
     res.json({
       success: true,
       data: {
+        conversationId: conversation._id,
         answer,
-        confidence: documents.length > 0 ? 'high' : 'low',
+        confidence: sources.length > 0 ? 'high' : 'low',
+        sources,
         referencedDocIds,
         referencedDocs,
         actionItem: null,
@@ -267,6 +331,117 @@ async function handleAiQuery(req, res) {
     res.status(500).json({ success: false, error: err.message });
   }
 }
+
+// ============================================================================
+// CONVERSATION HISTORY & PERSISTENCE APIS
+// ============================================================================
+
+// GET /api/ai/conversations - List authenticated user's conversations
+router.get('/conversations', requireAuth, async (req, res) => {
+  try {
+    const conversations = await Conversation.find({ userId: req.user.userId })
+      .sort({ lastMessageAt: -1 })
+      .limit(60);
+
+    res.json({
+      success: true,
+      count: conversations.length,
+      data: conversations,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/ai/conversations - Initialize a clean new conversation
+router.post('/conversations', requireAuth, async (req, res) => {
+  try {
+    const title = (req.body.title || 'New Conversation').trim().slice(0, 80);
+    const conversation = await Conversation.create({
+      userId: req.user.userId,
+      title: title || 'New Conversation',
+      lastMessageAt: new Date(),
+    });
+
+    res.status(201).json({ success: true, data: conversation });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/ai/conversations/:id - Retrieve conversation and its chronological message history
+router.get('/conversations/:id', requireAuth, async (req, res) => {
+  try {
+    const conversation = await Conversation.findOne({
+      _id: req.params.id,
+      userId: req.user.userId,
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+
+    const messages = await Message.find({
+      conversationId: conversation._id,
+      userId: req.user.userId,
+    }).sort({ createdAt: 1 });
+
+    res.json({
+      success: true,
+      data: {
+        conversation,
+        messages,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PATCH /api/ai/conversations/:id - Rename conversation title
+router.patch('/conversations/:id', requireAuth, async (req, res) => {
+  try {
+    const { title } = req.body;
+    if (!title || !title.trim()) {
+      return res.status(400).json({ success: false, error: 'Title is required' });
+    }
+
+    const cleanTitle = title.trim().slice(0, 100);
+    const conversation = await Conversation.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.userId },
+      { $set: { title: cleanTitle, updatedAt: new Date() } },
+      { returnDocument: 'after' }
+    );
+
+    if (!conversation) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+
+    res.json({ success: true, data: conversation });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/ai/conversations/:id - Delete conversation and its messages
+router.delete('/conversations/:id', requireAuth, async (req, res) => {
+  try {
+    const conversation = await Conversation.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.userId,
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+
+    await Message.deleteMany({ conversationId: conversation._id });
+
+    res.json({ success: true, message: 'Conversation deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // POST /api/ai/query - Contextual AI Q&A across user vault
 router.post('/query', requireAuth, handleAiQuery);
