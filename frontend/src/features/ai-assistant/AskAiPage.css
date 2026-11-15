@@ -30,7 +30,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 32px;
-  background: 
+  background:
     radial-gradient(ellipse at 88% 18%, rgba(0, 113, 227, 0.08) 0%, transparent 55%),
     radial-gradient(ellipse at 12% 82%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
     var(--color-surface);
@@ -89,8 +89,17 @@
 }
 
 @keyframes dvPulseBlue {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.55; transform: scale(1.2); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: scale(1.2);
+  }
 }
 
 .dv-ai-hero__title {
@@ -311,7 +320,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  background: 
+  background:
     radial-gradient(circle at 90% 10%, rgba(0, 113, 227, 0.02) 0%, transparent 50%),
     radial-gradient(circle at 10% 90%, rgba(139, 92, 246, 0.02) 0%, transparent 50%),
     #FBFBFD;
@@ -325,8 +334,15 @@
 }
 
 @keyframes dvMsgFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dv-chat-msg--assistant {
@@ -499,12 +515,27 @@
   animation: dvDotWave 1.4s infinite ease-in-out both;
 }
 
-.dv-chat-loading-dots span:nth-child(1) { animation-delay: -0.32s; }
-.dv-chat-loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+.dv-chat-loading-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.dv-chat-loading-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
 
 @keyframes dvDotWave {
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-  40% { transform: scale(1.1); opacity: 1; }
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+
+  40% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
 }
 
 /* Copy Action */
@@ -822,7 +853,7 @@
    ========================================================================== */
 
 [data-theme="dark"] .dv-ai-hero {
-  background: 
+  background:
     radial-gradient(ellipse at 88% 18%, rgba(59, 130, 246, 0.14) 0%, transparent 60%),
     radial-gradient(ellipse at 12% 82%, rgba(139, 92, 246, 0.1) 0%, transparent 55%),
     #121824;
@@ -919,7 +950,7 @@
 
 /* Chat History Body (Clean Dark Slate Canvas - No light bleeding) */
 [data-theme="dark"] .dv-ai-chat-history {
-  background: 
+  background:
     radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.05) 0%, transparent 55%),
     radial-gradient(circle at 10% 90%, rgba(139, 92, 246, 0.04) 0%, transparent 55%),
     #0B111A;

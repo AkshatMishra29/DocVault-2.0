@@ -263,11 +263,20 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Google Cloud OAuth / Google ID Token login
-  const loginWithGoogleToken = async (idToken, accessToken) => {
+  const loginWithGoogleToken = async (idToken, accessToken, clientProfile = null) => {
     try {
+      const payload = { idToken, access_token: accessToken };
+      if (clientProfile?.email) {
+        payload.email = clientProfile.email;
+        payload.name = clientProfile.name;
+        // Fast local pre-seed for immediate UI responsiveness
+        sessionStorage.setItem('docvault_pending_email', clientProfile.email);
+        localStorage.setItem('pending_pin_email', clientProfile.email);
+      }
+
       const res = await apiRequest('/api/auth/google', {
         method: 'POST',
-        body: JSON.stringify({ idToken, access_token: accessToken }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {

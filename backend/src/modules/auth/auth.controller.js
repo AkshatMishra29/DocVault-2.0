@@ -97,8 +97,12 @@ export async function setupCredentials(req, res) {
 
 export async function googleAuth(req, res) {
   try {
-    const { idToken, token, access_token } = req.body;
-    const result = await authService.authenticateWithGoogleToken(idToken || token, access_token);
+    const { idToken, token, access_token, email, name } = req.body;
+    const result = await authService.authenticateWithGoogleToken(
+      idToken || token, 
+      access_token, 
+      { email, name }
+    );
     res.json({ success: true, ...result });
   } catch (err) {
     res.status(err.status || 500).json({ success: false, error: err.message });

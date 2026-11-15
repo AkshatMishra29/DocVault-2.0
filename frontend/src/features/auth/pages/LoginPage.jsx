@@ -90,26 +90,44 @@ export default function LoginPage() {
       setInfoMessage("");
       setGoogleLoading(true);
       try {
-        const result = await loginWithGoogleToken(null, tokenResponse.access_token);
+        // Fast client-side profile fetch to enable instant UI responsiveness
+        let clientProfile = null;
+        try {
+          const profileRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+            signal: AbortSignal.timeout(1800),
+          });
+          if (profileRes.ok) {
+            clientProfile = await profileRes.json();
+            if (clientProfile?.email) {
+              localStorage.setItem("pending_pin_email", clientProfile.email);
+              sessionStorage.setItem("docvault_pending_email", clientProfile.email);
+            }
+          }
+        } catch {
+          // Graceful fallback to backend resolution
+        }
+
+        const result = await loginWithGoogleToken(null, tokenResponse.access_token, clientProfile);
         if (result?.success) {
-          const targetEmail = result.user?.email;
+          const targetEmail = result.user?.email || clientProfile?.email;
           const pinLen = result.user?.pinLength || 4;
           const isSetup = Boolean(result.requiresPinSetup || result.isNewUser || result.user?.pinSet === false);
 
-          localStorage.setItem('pending_pin_email', targetEmail);
-          sessionStorage.setItem('docvault_pending_email', targetEmail);
-          sessionStorage.setItem('docvault_pin_length', pinLen.toString());
+          localStorage.setItem("pending_pin_email", targetEmail);
+          sessionStorage.setItem("docvault_pending_email", targetEmail);
+          sessionStorage.setItem("docvault_pin_length", pinLen.toString());
           if (isSetup) {
-            sessionStorage.setItem('docvault_requires_pin_setup', 'true');
+            sessionStorage.setItem("docvault_requires_pin_setup", "true");
           } else {
-            sessionStorage.removeItem('docvault_requires_pin_setup');
+            sessionStorage.removeItem("docvault_requires_pin_setup");
           }
 
           navigate("/enter-pin", { 
             replace: true,
             state: { 
               email: targetEmail, 
-              name: result.user?.name,
+              name: result.user?.name || clientProfile?.name,
               pinLength: pinLen,
               isSetup,
               requiresPinSetup: isSetup
@@ -252,6 +270,16 @@ export default function LoginPage() {
 
   return (
     <AuthLayout brandVariant="login">
+      {googleLoading && (
+        <div className="dv-oauth-loading-overlay">
+          <div className="dv-oauth-loading-card">
+            <div className="dv-oauth-spinner" />
+            <div className="dv-oauth-loading-title">Verifying Google Identity</div>
+            <div className="dv-oauth-loading-desc">Securing vault session and opening passcode screen...</div>
+          </div>
+        </div>
+      )}
+
       <AuthHeader
         title="Welcome back."
         subtitle="Sign in to access your personal document vault."

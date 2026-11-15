@@ -384,15 +384,30 @@ export async function loginWithOtp({ email, otp }) {
   }
 
   let verified = false;
-  const purposes = ['login', 'reset_password', 'register'];
-  for (const purpose of purposes) {
-    try {
-      await verifyOtpCode({ email: user.email, otp, purpose });
-      verified = true;
-      break;
-    } catch {
-      // try next
+  const record = await OtpVerification.findOne({
+    email: user.email,
+    purpose: { $in: ['login', 'reset_password', 'register'] }
+  });
+
+  if (record) {
+    if (record.attempts >= 5) {
+      await OtpVerification.deleteOne({ _id: record._id });
+      const error = new Error('Too many incorrect attempts. Please request a new code.');
+      error.status = 429;
+      throw error;
     }
+
+    const isMatch = await verifyOtp(otp, record.otpHash);
+    if (!isMatch) {
+      record.attempts += 1;
+      await record.save();
+      const error = new Error('Invalid verification code. Please check and try again.');
+      error.status = 400;
+      throw error;
+    }
+
+    await OtpVerification.deleteOne({ _id: record._id });
+    verified = true;
   }
 
   if (!verified) {
@@ -736,7 +751,7 @@ export async function verifyBiometricUnlock({ email, credentialId, clientChallen
 /**
  * Authenticate or auto-provision user via Google Cloud OAuth ID Token or Access Token
  */
-export async function authenticateWithGoogleToken(idToken, accessToken) {
+export async function authenticateWithGoogleToken(idToken, accessToken, clientProfile = null) {
   if (!idToken && !accessToken) {
     const error = new Error('Google token is required.');
     error.status = 400;
@@ -750,7 +765,8 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
   if (accessToken) {
     try {
       const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: { Authorization: `Bearer ${accessToken}`, 'Connection': 'keep-alive' },
+        signal: AbortSignal.timeout(3500),
       });
       if (res.ok) {
         const userInfo = await res.json();
@@ -759,6 +775,24 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
       }
     } catch (fetchErr) {
       console.warn('[Google OAuth] Access token userinfo fetch failed:', fetchErr.message);
+    }
+
+    // Fast fallback: if userinfo stalled or failed, verify access token via Google tokeninfo endpoint
+    if (!cleanEmail) {
+      try {
+        const tokenInfoRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`, {
+          signal: AbortSignal.timeout(3000),
+        });
+        if (tokenInfoRes.ok) {
+          const tokenInfo = await tokenInfoRes.json();
+          if (tokenInfo.email) {
+            cleanEmail = tokenInfo.email.toLowerCase().trim();
+            name = clientProfile?.name || cleanEmail.split('@')[0];
+          }
+        }
+      } catch (err) {
+        console.warn('[Google OAuth] tokeninfo verification failed:', err.message);
+      }
     }
   }
 
@@ -792,17 +826,15 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
   // If user does not exist yet, provision an initial vault account requiring PIN setup
   if (!user) {
     isNewUser = true;
-    // Secure random placeholder until user configures credentials
-    const tempPassword = crypto.randomBytes(16).toString('hex') + '!A1';
-    const tempPin = crypto.randomBytes(16).toString('hex');
-    const [passwordHash, pinHash] = await Promise.all([
-      hashPassword(tempPassword),
-      hashPin(tempPin)
-    ]);
+    // Fast placeholder credentials - avoids CPU-intensive PBKDF2 iterations for unconfigured accounts
+    const placeholderSecret = crypto.randomBytes(24).toString('hex');
+    const passwordHash = `oauth:placeholder:${placeholderSecret}`;
+    const pinHash = `oauth:placeholder:${placeholderSecret}`;
 
     user = new User({
-      name,
+      name: name || clientProfile?.name || cleanEmail.split('@')[0],
       email: cleanEmail,
+      docVaultId: generateDocVaultId(),
       passwordHash,
       pinHash,
       pinLength: 4,
@@ -814,6 +846,9 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
       autoLockEnabled: true,
       biometricsEnabled: false,
     });
+    await user.save();
+  } else if (!user.docVaultId) {
+    user.docVaultId = generateDocVaultId();
     await user.save();
   }
 
@@ -843,8 +878,8 @@ export async function authenticateWithGoogleToken(idToken, accessToken) {
       tier: user.tier,
       pinLength: user.pinLength || 4,
       pinSet: Boolean(user.pinSet),
-      hasPassword: Boolean(user.passwordHash),
-      hasPin: Boolean(user.pinHash),
+      hasPassword: Boolean(user.passwordHash && !user.passwordHash.startsWith('oauth:placeholder')),
+      hasPin: Boolean(user.pinHash && !user.pinHash.startsWith('oauth:placeholder')),
       authProvider: user.authProvider || 'google',
       singleSessionOnly: Boolean(user.singleSessionOnly),
       sessionVersion: user.sessionVersion || 1,
@@ -974,15 +1009,14 @@ export async function authenticateWithFirebaseIdToken(idToken) {
   // If user does not exist yet, provision an initial vault account
   if (!user) {
     isNewUser = true;
-    const salt = await bcrypt.genSalt(10);
-    const tempPassword = crypto.randomBytes(16).toString('hex') + '!A1';
-    const passwordHash = await bcrypt.hash(tempPassword, salt);
-    const tempPin = crypto.randomBytes(16).toString('hex');
-    const pinHash = await bcrypt.hash(tempPin, salt);
+    const placeholderSecret = crypto.randomBytes(24).toString('hex');
+    const passwordHash = `oauth:placeholder:${placeholderSecret}`;
+    const pinHash = `oauth:placeholder:${placeholderSecret}`;
 
     user = new User({
       name,
       email: cleanEmail,
+      docVaultId: generateDocVaultId(),
       passwordHash,
       pinHash,
       pinLength: 4,
@@ -994,6 +1028,9 @@ export async function authenticateWithFirebaseIdToken(idToken) {
       autoLockEnabled: true,
       biometricsEnabled: false,
     });
+    await user.save();
+  } else if (!user.docVaultId) {
+    user.docVaultId = generateDocVaultId();
     await user.save();
   }
 

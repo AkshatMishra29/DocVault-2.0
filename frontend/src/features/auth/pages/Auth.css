@@ -741,6 +741,87 @@
   box-sizing: border-box;
 }
 
+/* Fast OAuth Transition Overlay */
+.dv-oauth-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: dvFadeIn 0.18s ease-out;
+}
+
+.dv-oauth-loading-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 81, 180, 0.18);
+  border-radius: 18px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 320px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  animation: dvFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] .dv-oauth-loading-card {
+  background: rgba(22, 33, 49, 0.96);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.55);
+}
+
+.dv-oauth-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3.5px solid rgba(0, 81, 180, 0.18);
+  border-top-color: #0051B4;
+  border-radius: 50%;
+  animation: dvSpin 0.75s linear infinite;
+  margin-bottom: 16px;
+}
+
+[data-theme="dark"] .dv-oauth-spinner {
+  border: 3.5px solid rgba(56, 189, 248, 0.2);
+  border-top-color: #38BDF8;
+}
+
+.dv-oauth-loading-title {
+  font-family: var(--font-ui, 'Manrope', sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: #1D2D3E;
+  margin-bottom: 6px;
+}
+
+[data-theme="dark"] .dv-oauth-loading-title {
+  color: #F8FAFC;
+}
+
+.dv-oauth-loading-desc {
+  font-size: 13px;
+  color: #64748B;
+  line-height: 1.4;
+}
+
+[data-theme="dark"] .dv-oauth-loading-desc {
+  color: #94A3B8;
+}
+
+@keyframes dvSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes dvFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 [data-theme="dark"] .dv-auth-google-btn {
   background-color: var(--color-auth-input-bg, #1D2D3E);
   border-color: var(--color-auth-border, #3D2F28);
