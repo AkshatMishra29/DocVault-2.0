@@ -32,11 +32,28 @@ export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [documents, setDocuments] = useState([]);
-  const [deadlines, setDeadlines] = useState([]);
-  const [assets, setAssets] = useState([]);
+  const [documents, setDocuments] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem("dv_cached_docs");
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
+  const [deadlines, setDeadlines] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem("dv_cached_deadlines");
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
+  const [assets, setAssets] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem("dv_cached_assets");
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
   const [reviewQueue, setReviewQueue] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    return !sessionStorage.getItem("dv_cached_docs");
+  });
   const [error, setError] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(() => {
     return localStorage.getItem("dv_onboarding_dismissed") !== "true";
@@ -45,7 +62,9 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        setLoading(true);
+        if (!sessionStorage.getItem("dv_cached_docs")) {
+          setLoading(true);
+        }
         setError(null);
 
         const [docsRes, deadRes, assetsRes, reviewRes] = await Promise.all([
@@ -55,9 +74,18 @@ export default function HomePage() {
           apiRequest("/api/extraction/review-queue").catch(() => ({ data: [] })),
         ]);
 
-        if (docsRes?.data) setDocuments(docsRes.data);
-        if (deadRes?.data) setDeadlines(deadRes.data);
-        if (assetsRes?.data) setAssets(assetsRes.data);
+        if (docsRes?.data) {
+          setDocuments(docsRes.data);
+          try { sessionStorage.setItem("dv_cached_docs", JSON.stringify(docsRes.data)); } catch {}
+        }
+        if (deadRes?.data) {
+          setDeadlines(deadRes.data);
+          try { sessionStorage.setItem("dv_cached_deadlines", JSON.stringify(deadRes.data)); } catch {}
+        }
+        if (assetsRes?.data) {
+          setAssets(assetsRes.data);
+          try { sessionStorage.setItem("dv_cached_assets", JSON.stringify(assetsRes.data)); } catch {}
+        }
         if (reviewRes?.data) setReviewQueue(reviewRes.data);
       } catch (err) {
         console.warn("[Dashboard] Error loading data:", err.message);

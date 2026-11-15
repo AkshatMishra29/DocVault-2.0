@@ -71,6 +71,11 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result.success) {
+      if (result.requiresPin === false) {
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+
       navigate("/enter-pin", { 
         replace: true,
         state: { 

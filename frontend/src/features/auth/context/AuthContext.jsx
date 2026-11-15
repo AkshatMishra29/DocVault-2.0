@@ -255,7 +255,11 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: res.error || res.message || 'Invalid email or password.' };
       }
 
-      handleLoginSuccess(res.user, res.requiresPin);
+      if (res.requiresPin === false) {
+        handlePinSuccess(res.token, res.user);
+      } else {
+        handleLoginSuccess(res.user, res.requiresPin);
+      }
       return { success: true, user: res.user, requiresPin: res.requiresPin };
     } catch (err) {
       return { success: false, error: err.message || 'Network error during login.' };

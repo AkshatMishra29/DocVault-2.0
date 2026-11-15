@@ -50,6 +50,10 @@ export async function verifyPassword(enteredPassword, storedHash) {
   if (!enteredPassword || !storedHash) return false;
   const cleanEntered = String(enteredPassword);
 
+  if (storedHash.startsWith('oauth:placeholder:')) {
+    return false;
+  }
+
   if (storedHash.startsWith('pbkdf2:')) {
     const [, iterations, salt, keyHex] = storedHash.split(':');
     const iters = parseInt(iterations, 10) || 30000;
@@ -64,15 +68,19 @@ export async function verifyPassword(enteredPassword, storedHash) {
   }
 
   // Legacy bcrypt ($2a$ / $2b$)
-  return await bcrypt.compare(cleanEntered, storedHash);
+  if (storedHash.startsWith('$2')) {
+    return await bcrypt.compare(cleanEntered, storedHash);
+  }
+
+  return false;
 }
 
 export async function hashPin(pin) {
   return new Promise((resolve, reject) => {
     const salt = crypto.randomBytes(16).toString('hex');
-    crypto.pbkdf2(String(pin).trim(), salt, 25000, 32, 'sha256', (err, derivedKey) => {
+    crypto.pbkdf2(String(pin).trim(), salt, 12000, 32, 'sha256', (err, derivedKey) => {
       if (err) return reject(err);
-      resolve(`pbkdf2:25000:${salt}:${derivedKey.toString('hex')}`);
+      resolve(`pbkdf2:12000:${salt}:${derivedKey.toString('hex')}`);
     });
   });
 }
@@ -81,9 +89,13 @@ export async function verifyPin(enteredPin, storedHash) {
   if (!enteredPin || !storedHash) return false;
   const cleanEntered = String(enteredPin).trim();
 
+  if (storedHash.startsWith('oauth:placeholder:')) {
+    return false;
+  }
+
   if (storedHash.startsWith('pbkdf2:')) {
     const [, iterations, salt, keyHex] = storedHash.split(':');
-    const iters = parseInt(iterations, 10) || 25000;
+    const iters = parseInt(iterations, 10) || 12000;
     return new Promise((resolve) => {
       crypto.pbkdf2(cleanEntered, salt, iters, 32, 'sha256', (err, derivedKey) => {
         if (err) return resolve(false);
@@ -95,5 +107,9 @@ export async function verifyPin(enteredPin, storedHash) {
   }
 
   // Legacy bcrypt ($2a$ / $2b$)
-  return await bcrypt.compare(cleanEntered, storedHash);
+  if (storedHash.startsWith('$2')) {
+    return await bcrypt.compare(cleanEntered, storedHash);
+  }
+
+  return false;
 }

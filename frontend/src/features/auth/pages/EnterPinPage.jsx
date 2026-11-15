@@ -332,13 +332,13 @@ export default function EnterPinPage() {
     setError("");
 
     const result = await verifyPin(email, submittedPin);
-    setLoading(false);
 
     if (result.success) {
       localStorage.removeItem("pending_pin_email");
       if (email) localStorage.removeItem(`dv_lock_until_${email}`);
       navigate("/dashboard", { replace: true });
     } else {
+      setLoading(false);
       setPin("");
       if (result.requiresPinSetup) {
         sessionStorage.setItem("docvault_requires_pin_setup", "true");

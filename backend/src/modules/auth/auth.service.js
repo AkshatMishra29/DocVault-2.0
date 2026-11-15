@@ -223,11 +223,14 @@ export async function loginUser({ email, password }) {
 
   const rawInput = email.toLowerCase().trim();
 
-  // Flexible identifier resolution: exact email, docVaultId, or username prefix
-  let user = await User.findOne({ email: rawInput });
-  if (!user) {
-    user = await User.findOne({ docVaultId: rawInput.toUpperCase() });
-  }
+  // Fast single indexed query for email or DocVault ID
+  let user = await User.findOne({
+    $or: [
+      { email: rawInput },
+      { docVaultId: rawInput.toUpperCase() }
+    ]
+  });
+
   if (!user && !rawInput.includes('@')) {
     user = await User.findOne({ email: { $regex: new RegExp(`^${rawInput}@`, 'i') } });
   }
@@ -239,11 +242,30 @@ export async function loginUser({ email, password }) {
   }
 
   // Dual Credential Matching: Check password hash, or security PIN fallback
-  let isMatch = await verifyPassword(password, user.passwordHash);
-  if (!isMatch && user.pinHash) {
+  let isMatch = false;
+  let matchedViaPin = false;
+
+  // 1. If input is 4 or 6 numeric digits, prioritize fast PIN matching
+  const isNumericPin = /^[0-9]{4,6}$/.test(password);
+  if (isNumericPin && user.pinHash) {
     const isPinMatch = await verifyPin(password, user.pinHash);
     if (isPinMatch) {
       isMatch = true;
+      matchedViaPin = true;
+    }
+  }
+
+  // 2. Otherwise verify password hash
+  if (!isMatch && user.passwordHash) {
+    isMatch = await verifyPassword(password, user.passwordHash);
+  }
+
+  // 3. Fallback PIN check if password check didn't match and not already checked
+  if (!isMatch && !isNumericPin && user.pinHash) {
+    const isPinMatch = await verifyPin(password, user.pinHash);
+    if (isPinMatch) {
+      isMatch = true;
+      matchedViaPin = true;
     }
   }
 
@@ -258,8 +280,11 @@ export async function loginUser({ email, password }) {
     await user.save();
   }
 
+  // If user entered valid PIN directly in login field, they are already pinVerified!
+  const pinVerified = Boolean(matchedViaPin);
+
   const token = jwt.sign(
-    { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1 },
+    { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1, pinVerified },
     config.jwtSecret,
     { expiresIn: '7d' }
   );
@@ -282,7 +307,7 @@ export async function loginUser({ email, password }) {
       offlineAccessEnabled: user.offlineAccessEnabled,
     },
     token,
-    requiresPin: true,
+    requiresPin: !pinVerified,
   };
 }
 
@@ -447,13 +472,19 @@ export async function verifyUserPin({ email, pin }) {
 
   const cleanEmail = email.toLowerCase().trim();
   const cleanPin = pin.toString().trim();
-  let user = await User.findOne({ email: cleanEmail });
-  if (!user) {
-    user = await User.findOne({ docVaultId: cleanEmail.toUpperCase() });
-  }
+
+  // Fast single indexed lookup for email or DocVault ID
+  let user = await User.findOne({
+    $or: [
+      { email: cleanEmail },
+      { docVaultId: cleanEmail.toUpperCase() }
+    ]
+  });
+
   if (!user && !cleanEmail.includes('@')) {
     user = await User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}@`, 'i') } });
   }
+
   if (!user) {
     const error = new Error('User not found.');
     error.status = 404;
@@ -478,8 +509,13 @@ export async function verifyUserPin({ email, pin }) {
     throw error;
   }
 
-  const isPinMatch = await verifyPin(cleanPin, user.pinHash);
-  if (!isPinMatch) {
+  // Dual Check: Verify PIN first, or Master Password fallback if user entered password to unlock
+  let isMatch = await verifyPin(cleanPin, user.pinHash);
+  if (!isMatch && user.passwordHash) {
+    isMatch = await verifyPassword(cleanPin, user.passwordHash);
+  }
+
+  if (!isMatch) {
     user.failedAttempts = (user.failedAttempts || 0) + 1;
     
     // After 5 failed attempts, lock for 5 minutes
@@ -501,17 +537,23 @@ export async function verifyUserPin({ email, pin }) {
     throw error;
   }
 
-  // On successful unlock, reset attempts and lockout timer
+  // On successful unlock: only write to DB if state actually changed
+  let needsSave = false;
   if (user.failedAttempts > 0 || user.lockUntil) {
     user.failedAttempts = 0;
     user.lockUntil = null;
+    needsSave = true;
   }
 
-  // If single session is enabled, bump sessionVersion so all previous sessions are invalidated
+  // If single session is enabled, bump sessionVersion
   if (user.singleSessionOnly) {
     user.sessionVersion = (user.sessionVersion || 1) + 1;
+    needsSave = true;
   }
-  await user.save();
+
+  if (needsSave) {
+    await user.save();
+  }
 
   const sessionToken = jwt.sign(
     {
