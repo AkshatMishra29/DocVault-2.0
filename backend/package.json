@@ -11,6 +11,8 @@
     "test:intelligence": "node tests/intelligenceEngine.test.js",
     "test:api": "node tests/apiAudit.test.js",
     "test:qa": "node tests/qaSeniorTest.js",
+    "test:sharing": "node --test tests/sharingEngine.test.js",
+    "test:sharing-id": "node --test tests/sharingIdVerification.test.js",
     "db:clear": "node scripts/clearDatabase.js",
     "db:purge-all": "node scripts/purgeAllAuthAndDb.js"
   },
