@@ -9,6 +9,7 @@ import { AI_POLICIES } from '../../services/pipeline/privacyGate.js';
 import { enqueueDocumentJob, cancelJobsForDocument } from '../pipeline/jobQueue.service.js';
 import { validateFileSignature, validateImageSafety, validatePdfSafety, generateSafeServerFilename, UploadSecurityError } from '../extraction/uploadValidation.service.js';
 import { validateDocumentImage, DocumentImageValidationError } from '../extraction/documentImageValidation.service.js';
+import { validateDocumentPipeline, DocumentValidationPipelineError } from '../extraction/documentValidationPipeline.service.js';
 import { extractTextFromPDF, convertPdfToImages } from '../../services/ocr/ocrService.js';
 import { checkUploadRateLimit } from '../extraction/uploadRateLimiter.js';
 import { DocumentAccessControlService } from '../sharing/accessControl.service.js';
@@ -112,6 +113,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     // 1. Layer 1: Strict File Security & Signature Validation
     let signature;
     let pageCount = 1;
+    let validationResult = null;
 
     try {
       signature = validateFileSignature(buffer, mimetype, originalname);
@@ -128,7 +130,17 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
           try {
             const renderedPages = await convertPdfToImages(buffer, 1, 1.0);
             if (renderedPages && renderedPages.length > 0) {
-              await validateDocumentImage(renderedPages[0]);
+              validationResult = await validateDocumentPipeline(renderedPages[0], { mimetype: 'image/png', originalname });
+              if (validationResult.status === 'rejected' || validationResult.status === 'review') {
+                return res.status(400).json({
+                  success: false,
+                  status: validationResult.status,
+                  error: validationResult.message,
+                  code: validationResult.reason_code,
+                  suggestion: validationResult.suggestion,
+                  document_classification: validationResult.document_classification,
+                });
+              }
             }
           } catch (renderErr) {
             if (renderErr instanceof DocumentImageValidationError && renderErr.reasonCode === 'BLANK_IMAGE') {
@@ -138,16 +150,28 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
           }
         }
       } else if (signature.detectedType.startsWith('image/')) {
-        const imgMeta = await validateImageSafety(buffer);
-        // 2. Layer 2: Document Image Guardrail (Rejects blank, casual portraits, selfies, collages)
-        await validateDocumentImage(buffer, imgMeta);
+        await validateImageSafety(buffer);
+        // Multi-Stage Intelligent Document Detection & Readability Engine
+        validationResult = await validateDocumentPipeline(buffer, { mimetype, originalname });
+
+        if (validationResult.status === 'rejected' || validationResult.status === 'review') {
+          return res.status(400).json({
+            success: false,
+            status: validationResult.status,
+            error: validationResult.message,
+            code: validationResult.reason_code,
+            suggestion: validationResult.suggestion,
+            document_classification: validationResult.document_classification,
+          });
+        }
       }
     } catch (valErr) {
-      const statusCode = (valErr instanceof UploadSecurityError || valErr instanceof DocumentImageValidationError) ? 400 : 500;
+      const statusCode = (valErr instanceof UploadSecurityError || valErr instanceof DocumentImageValidationError || valErr instanceof DocumentValidationPipelineError) ? 400 : 500;
       return res.status(statusCode).json({
         success: false,
         error: valErr.message,
-        code: valErr.code || valErr.reasonCode || 'VALIDATION_FAILED'
+        code: valErr.code || valErr.reasonCode || 'VALIDATION_FAILED',
+        suggestion: valErr.suggestion || null,
       });
     }
 
@@ -187,7 +211,18 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
 
     const isStorageOnly = requestedPolicy === AI_POLICIES.STORAGE_ONLY;
     const initialStatus = isStorageOnly ? 'storage_only' : 'queued';
-    const category = sensitiveCheck.isSensitive ? 'Identity' : (req.body.category || 'Other');
+    let inferredCategory = req.body.category;
+    if (!inferredCategory || inferredCategory === 'Other') {
+      if (validationResult?.document_type === 'invoice') inferredCategory = 'Finance';
+      else if (validationResult?.document_type === 'receipt') inferredCategory = 'Receipts';
+      else if (validationResult?.document_type === 'bill') inferredCategory = 'Bills';
+      else if (validationResult?.document_type === 'id_card') inferredCategory = 'Identity';
+      else if (validationResult?.document_type === 'certificate') inferredCategory = 'Education';
+      else if (validationResult?.document_type === 'insurance_policy') inferredCategory = 'Insurance';
+      else if (validationResult?.document_type === 'vehicle_document') inferredCategory = 'Automobile';
+      else if (validationResult?.document_type === 'legal_document') inferredCategory = 'Property';
+    }
+    const category = sensitiveCheck.isSensitive ? 'Identity' : (inferredCategory || 'Other');
 
     // 5. Persist Document Record
     const docData = {
@@ -201,7 +236,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       sizeBytes: buffer.length,
       fileSizeFormatted: `${(buffer.length / 1024).toFixed(1)} KB`,
       storagePath: 'mongodb-embedded',
-      extractedText: isStorageOnly ? '[REDACTED - STORAGE ONLY DOCUMENT]' : '',
+      extractedText: isStorageOnly ? '[REDACTED - STORAGE ONLY DOCUMENT]' : (validationResult?.extractedText || ''),
       summary: isStorageOnly
         ? (sensitiveCheck.isSensitive
             ? `Protected in Storage-Only vault (${sensitiveCheck.reason}). Zero AI processing.`

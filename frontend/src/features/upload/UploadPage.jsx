@@ -26,6 +26,7 @@ export default function UploadPage() {
   const [isCameraScan, setIsCameraScan] = useState(false);
   const [progressStage, setProgressStage] = useState("");
   const [error, setError] = useState("");
+  const [suggestion, setSuggestion] = useState("");
   const [uploadedDoc, setUploadedDoc] = useState(null);
 
   const navigate = useNavigate();
@@ -123,6 +124,7 @@ export default function UploadPage() {
 
   const validateAndSetFile = (selectedFile) => {
     setError("");
+    setSuggestion("");
     const validTypes = ["application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp"];
     if (!validTypes.includes(selectedFile.type)) {
       setError("Supported file formats are PDF, PNG, JPG, and WEBP.");
@@ -203,9 +205,11 @@ export default function UploadPage() {
         setUploadedDoc(finalDoc);
       } else {
         setError(res.error || "Document upload failed.");
+        setSuggestion(res.suggestion || "");
       }
     } catch (err) {
       setError(err.message || "Failed to process document upload.");
+      setSuggestion("");
     } finally {
       setUploading(false);
       setProgressStage("");
@@ -402,8 +406,17 @@ export default function UploadPage() {
 
               {error && (
                 <div className="dv-upload-error" role="alert">
-                  <AlertCircle size={16} />
-                  <span>{error}</span>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 2, color: "var(--color-danger)" }} />
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontWeight: 600 }}>{error}</span>
+                      {suggestion && (
+                        <span style={{ fontSize: "var(--text-xs)", opacity: 0.9, color: "var(--color-text-secondary)" }}>
+                          💡 <em>{suggestion}</em>
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
