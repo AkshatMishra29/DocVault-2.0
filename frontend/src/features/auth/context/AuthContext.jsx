@@ -73,6 +73,7 @@ export const AuthProvider = ({ children }) => {
         const updated = [
           {
             id: userData.id || userData._id || userData.docVaultId,
+            docVaultId: userData.docVaultId || '',
             name: userData.name || email.split('@')[0],
             email,
             pinLength: userData.pinLength || 4,
@@ -112,13 +113,40 @@ export const AuthProvider = ({ children }) => {
       const switchedUser = {
         name: session.name,
         email: cleanEmail,
+        docVaultId: session.docVaultId || '',
         pinLength: pinLen,
         tier: session.tier,
       };
       setUser(switchedUser);
       localStorage.setItem('docvault_user', JSON.stringify(switchedUser));
+      localStorage.setItem('user', JSON.stringify(switchedUser));
     }
   };
+
+  // Synchronize user profile with backend on mount/token change to ensure docVaultId is always fresh
+  useEffect(() => {
+    if (!token) return;
+    let isCancelled = false;
+
+    apiRequest('/api/auth/me')
+      .then((res) => {
+        if (!isCancelled && res?.success && res.user) {
+          setUser((prev) => {
+            const updated = { ...(prev || {}), ...res.user };
+            localStorage.setItem('docvault_user', JSON.stringify(updated));
+            localStorage.setItem('user', JSON.stringify(updated));
+            return updated;
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('[DocVault Auth] Silent profile sync:', err?.message || err);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [token]);
 
   // Remove a saved session from the device
   const removeSavedSession = (targetEmail) => {

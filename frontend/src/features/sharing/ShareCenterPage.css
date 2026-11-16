@@ -2,8 +2,177 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: var(--space-5);
+  gap: var(--space-4);
   padding-top: var(--space-4);
+}
+
+/* User's DocVault Sharing ID Hero Card */
+.dv-my-id-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(0, 112, 242, 0.07) 0%, rgba(99, 102, 241, 0.04) 100%);
+  border: 1px solid rgba(0, 112, 242, 0.22);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.1rem 1.4rem;
+  gap: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 112, 242, 0.04);
+  flex-wrap: wrap;
+}
+
+.dv-my-id-card__left {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
+  min-width: 280px;
+}
+
+.dv-my-id-badge-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(0, 112, 242, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 112, 242, 0.2);
+}
+
+.dv-shield-icon {
+  color: var(--color-primary, #0070f2);
+}
+
+.dv-my-id-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.dv-my-id-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary, #0070f2);
+}
+
+.dv-my-id-code-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dv-my-id-code {
+  font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--color-text-primary, #1e293b);
+  background: var(--color-surface, #ffffff);
+  border: 1px solid rgba(0, 112, 242, 0.25);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-md, 8px);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.dv-copy-id-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-primary, #0070f2);
+  background: var(--color-surface, #ffffff);
+  border: 1.5px solid var(--color-primary, #0070f2);
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dv-copy-id-btn:hover:not(:disabled) {
+  background: var(--color-primary, #0070f2);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.dv-copy-id-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dv-my-id-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #64748b);
+  line-height: 1.4;
+}
+
+.dv-my-id-card__actions {
+  display: flex;
+  align-items: center;
+}
+
+.dv-manage-conns-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #d9e1e8);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--text-xs, 13px);
+  font-weight: 600;
+  color: var(--color-text-primary, #1e293b);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.dv-manage-conns-link:hover {
+  border-color: var(--color-primary, #0070f2);
+  color: var(--color-primary, #0070f2);
+  box-shadow: 0 2px 6px rgba(0, 112, 242, 0.08);
+}
+
+/* ID Pill badge */
+.dv-id-pill {
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-primary, #0070f2);
+  background: rgba(0, 112, 242, 0.09);
+  padding: 1px 7px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-left: 5px;
+}
+
+.dv-party-name {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--text-xs, 12px);
+  color: var(--color-text-primary);
+}
+
+.dv-party-link {
+  font-size: var(--text-xs, 12px);
+  color: var(--color-text-secondary);
+}
+
+.dv-modal-sharing-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, rgba(0, 112, 242, 0.06), rgba(0, 112, 242, 0.02));
+  border: 1px solid rgba(0, 112, 242, 0.18);
+  border-radius: var(--radius-md, 8px);
+  margin-bottom: 4px;
 }
 
 .dv-share-tabs {

@@ -9,6 +9,7 @@ import {
   NOTIFICATION_TYPE,
 } from './models/index.js';
 import { User } from '../auth/auth.model.js';
+import { generateDocVaultId } from '../auth/docVaultId.util.js';
 
 /**
  * Standardize pair order so userA < userB
@@ -313,7 +314,14 @@ export class ConnectionService {
     const users = await User.find({ _id: { $in: otherUserIds } }).select(
       'name docVaultId email createdAt'
     );
-    const userMap = new Map(users.map((u) => [u._id.toString(), u]));
+    const userMap = new Map();
+    for (const u of users) {
+      if (!u.docVaultId) {
+        u.docVaultId = generateDocVaultId();
+        await User.findByIdAndUpdate(u._id, { docVaultId: u.docVaultId });
+      }
+      userMap.set(u._id.toString(), u);
+    }
 
     return conns
       .map((c) => {

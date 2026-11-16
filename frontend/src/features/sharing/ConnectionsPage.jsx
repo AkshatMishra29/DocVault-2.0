@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Clock, Check, X, Trash2, Copy, ShieldAlert, Search } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Users, UserPlus, Clock, Check, X, Trash2, Copy, ShieldAlert, Search, RefreshCw, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../auth/context/AuthContext';
 import { sharingService } from '../../services/sharing.service';
 import { apiRequest } from '../../config';
 import './ConnectionsPage.css';
 
 export default function ConnectionsPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('mutual'); // 'mutual', 'incoming', 'outgoing', 'search'
   const [connections, setConnections] = useState([]);
   const [incoming, setIncoming] = useState([]);
@@ -12,25 +14,48 @@ export default function ConnectionsPage() {
   const [searchId, setSearchId] = useState('');
   const [searchResult, setSearchResult] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [copied, setCopied] = useState(false);
-  const [myDocVaultId, setMyDocVaultId] = useState('');
+  const [myDocVaultId, setMyDocVaultId] = useState(() => {
+    return user?.docVaultId || (() => {
+      try {
+        const stored = JSON.parse(localStorage.getItem('docvault_user') || localStorage.getItem('user') || '{}');
+        return stored.docVaultId || '';
+      } catch {
+        return '';
+      }
+    })();
+  });
 
-  useEffect(() => {
-    loadData(true);
-    fetchMyProfile();
+  const loadData = useCallback(async (showLoadingSpinner = true) => {
+    if (showLoadingSpinner) setLoading(true);
+    try {
+      const [connRes, reqRes] = await Promise.all([
+        sharingService.getConnections(),
+        sharingService.getRequests(),
+      ]);
 
-    // Live Sync: Automatic lightweight polling every 3 seconds
-    const interval = setInterval(() => {
-      loadData(false);
-    }, 3000);
-
-    return () => clearInterval(interval);
+      if (connRes.success) setConnections(connRes.data || []);
+      if (reqRes.success) {
+        setIncoming(reqRes.data?.incoming || []);
+        setOutgoing(reqRes.data?.outgoing || []);
+      }
+    } catch (err) {
+      if (showLoadingSpinner) setError('Failed to load connections.');
+    } finally {
+      if (showLoadingSpinner) setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
-  const fetchMyProfile = async () => {
+  const fetchMyProfile = useCallback(async () => {
     try {
+      if (user?.docVaultId) {
+        setMyDocVaultId(user.docVaultId);
+        return;
+      }
       const stored = JSON.parse(
         localStorage.getItem('user') ||
         localStorage.getItem('docvault_user') ||
@@ -50,26 +75,37 @@ export default function ConnectionsPage() {
     } catch (e) {
       console.warn('Profile fetch warning:', e);
     }
-  };
+  }, [user?.docVaultId]);
 
-  const loadData = async (showLoadingSpinner = true) => {
-    if (showLoadingSpinner) setLoading(true);
-    try {
-      const [connRes, reqRes] = await Promise.all([
-        sharingService.getConnections(),
-        sharingService.getRequests(),
-      ]);
+  useEffect(() => {
+    loadData(true);
+    fetchMyProfile();
 
-      if (connRes.success) setConnections(connRes.data || []);
-      if (reqRes.success) {
-        setIncoming(reqRes.data?.incoming || []);
-        setOutgoing(reqRes.data?.outgoing || []);
+    // Optimized Live Sync: Poll every 20 seconds instead of 3 seconds to eliminate network lag
+    const interval = setInterval(() => {
+      loadData(false);
+    }, 20000);
+
+    // Refresh immediately when returning to the tab or app
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        loadData(false);
       }
-    } catch (err) {
-      if (showLoadingSpinner) setError('Failed to load connections.');
-    } finally {
-      if (showLoadingSpinner) setLoading(false);
-    }
+    };
+
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+    };
+  }, [loadData, fetchMyProfile]);
+
+  const handleManualRefresh = () => {
+    setRefreshing(true);
+    loadData(false);
   };
 
   const copyMyId = () => {
@@ -223,6 +259,18 @@ export default function ConnectionsPage() {
         >
           <Search size={16} />
           Find by DocVault ID
+        </button>
+
+        <button
+          type="button"
+          className="connections-tab connections-tab--refresh"
+          onClick={handleManualRefresh}
+          disabled={refreshing}
+          title="Refresh connections"
+          style={{ marginLeft: 'auto', background: 'transparent' }}
+        >
+          <RefreshCw size={15} className={refreshing ? 'dv-spin' : ''} />
+          <span>{refreshing ? 'Syncing...' : 'Sync'}</span>
         </button>
       </div>
 

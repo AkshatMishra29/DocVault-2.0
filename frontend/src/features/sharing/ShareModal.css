@@ -154,6 +154,78 @@
   color: var(--color-text-primary, #1d2d3e);
 }
 
+.share-modal__my-id-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(0, 112, 242, 0.08), rgba(0, 112, 242, 0.03));
+  border: 1px solid rgba(0, 112, 242, 0.2);
+  border-radius: var(--radius-md, 8px);
+  padding: 0.65rem 0.85rem;
+  gap: 0.75rem;
+}
+
+.share-modal__my-id-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.share-modal__shield-icon {
+  color: var(--color-primary, #0070f2);
+  flex-shrink: 0;
+}
+
+.share-modal__my-id-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary, #5b738b);
+}
+
+.share-modal__my-id-code {
+  font-family: monospace;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-primary, #0070f2);
+  background: rgba(0, 112, 242, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.share-modal__copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary, #0070f2);
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #d9e1e8);
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.share-modal__copy-btn:hover {
+  background: var(--color-surface-hover, #f1f5f9);
+  border-color: var(--color-primary, #0070f2);
+}
+
+.friend-id-badge {
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary, #0070f2);
+  background: rgba(0, 112, 242, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
 .friend-id {
   font-family: monospace;
   font-size: 0.75rem;

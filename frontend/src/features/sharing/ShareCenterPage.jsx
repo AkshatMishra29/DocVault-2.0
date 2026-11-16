@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../auth/context/AuthContext";
 import { apiRequest } from "../../services/api";
 import {
   Share2, ShieldCheck, Lock, Clock, Eye, Download, Sparkles, Plus,
   Trash2, AlertTriangle, Key, ExternalLink, MessageSquare, Check, X,
-  FileText, Users, ArrowRight, RefreshCw, Send, CheckCircle2
+  FileText, Users, ArrowRight, RefreshCw, Send, CheckCircle2, Copy
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -19,10 +20,22 @@ import Skeleton from "../../components/common/Skeleton/Skeleton";
 import "./ShareCenterPage.css";
 
 export default function ShareCenterPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("SENT"); // 'SENT' | 'RECEIVED' | 'SMART_PACK'
   const [sentShares, setSentShares] = useState([]);
   const [receivedShares, setReceivedShares] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const [myDocVaultId, setMyDocVaultId] = useState(() => {
+    return user?.docVaultId || (() => {
+      try {
+        const stored = JSON.parse(localStorage.getItem('docvault_user') || localStorage.getItem('user') || '{}');
+        return stored.docVaultId || '';
+      } catch {
+        return '';
+      }
+    })();
+  });
 
   // Smart Pack State
   const [smartPurpose, setSmartPurpose] = useState("");
@@ -58,20 +71,33 @@ export default function ShareCenterPage() {
     fetchShares();
   }, []);
 
+  const copyMyId = () => {
+    if (myDocVaultId) {
+      navigator.clipboard.writeText(myDocVaultId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   async function fetchShares() {
     try {
       setLoading(true);
-      const [sentRes, recvRes, docsRes, connRes] = await Promise.all([
+      const [sentRes, recvRes, docsRes, connRes, meRes] = await Promise.all([
         apiRequest("/api/shares/sent").catch(() => ({ data: [] })),
         apiRequest("/api/shares/received").catch(() => ({ data: [] })),
         apiRequest("/api/documents").catch(() => ({ data: [] })),
         apiRequest("/api/connections").catch(() => ({ data: [] })),
+        user?.docVaultId ? Promise.resolve(null) : apiRequest("/api/auth/me").catch(() => null),
       ]);
 
       setSentShares(sentRes.data || []);
       setReceivedShares(recvRes.data || []);
       setUserDocs(docsRes.data || []);
       setUserConnections(connRes.data || []);
+
+      if (meRes?.success && meRes.user?.docVaultId) {
+        setMyDocVaultId(meRes.user.docVaultId);
+      }
     } catch (err) {
       console.warn("Failed to load sharing inventory:", err.message);
     } finally {
@@ -189,6 +215,41 @@ export default function ShareCenterPage() {
         title="Share Documents"
         subtitle="Share documents with trusted contacts and expiring links."
       />
+
+      {/* Hero Card: Prominently display User's DocVault Sharing ID */}
+      <div className="dv-my-id-card">
+        <div className="dv-my-id-card__left">
+          <div className="dv-my-id-badge-icon">
+            <ShieldCheck size={22} className="dv-shield-icon" />
+          </div>
+          <div className="dv-my-id-details">
+            <span className="dv-my-id-label">YOUR DOCVAULT SHARING ID</span>
+            <div className="dv-my-id-code-row">
+              <span className="dv-my-id-code">{myDocVaultId || "Loading ID..."}</span>
+              <button
+                type="button"
+                className="dv-copy-id-btn"
+                onClick={copyMyId}
+                disabled={!myDocVaultId}
+                title="Copy DocVault ID to clipboard"
+              >
+                {copied ? <Check size={14} color="#10b981" /> : <Copy size={14} />}
+                <span>{copied ? "Copied!" : "Copy ID"}</span>
+              </button>
+            </div>
+            <p className="dv-my-id-hint">
+              Give this ID to trusted family, partners, or contacts to connect and share end-to-end encrypted documents.
+            </p>
+          </div>
+        </div>
+        <div className="dv-my-id-card__actions">
+          <Link to="/connections" className="dv-manage-conns-link">
+            <Users size={16} />
+            <span>Manage Connections ({userConnections.length})</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
+      </div>
 
       {/* Tabs */}
       <div className="dv-share-tabs">
@@ -338,9 +399,19 @@ export default function ShareCenterPage() {
                     <div className="dv-share-card-header">
                       <div>
                         <h4 className="dv-share-purpose">{share.purpose}</h4>
-                        <span className="dv-share-recipient-info">
-                          To: {share.recipientUserId?.name || share.recipientEmail || "Expiring Link"}
-                        </span>
+                        <div className="dv-share-recipient-info">
+                          <span>To:</span>
+                          {share.recipientUserId ? (
+                            <strong className="dv-party-name">
+                              {share.recipientUserId.name || "User"}
+                              {share.recipientUserId.docVaultId && (
+                                <span className="dv-id-pill">{share.recipientUserId.docVaultId}</span>
+                              )}
+                            </strong>
+                          ) : (
+                            <span className="dv-party-link">{share.recipientEmail || "Expiring Secure Link"}</span>
+                          )}
+                        </div>
                       </div>
                       <Badge variant={isRevoked ? "danger" : isExpired ? "warning" : "success"} size="sm">
                         {isRevoked ? "Revoked" : isExpired ? "Expired" : "Active"}
@@ -420,9 +491,15 @@ export default function ShareCenterPage() {
                   <div className="dv-share-card-header">
                     <div>
                       <h4 className="dv-share-purpose">{share.purpose}</h4>
-                      <span className="dv-share-recipient-info">
-                        From: {share.ownerId?.name || "User"} ({share.ownerId?.docVaultId})
-                      </span>
+                      <div className="dv-share-recipient-info">
+                        <span>From:</span>
+                        <strong className="dv-party-name">
+                          {share.ownerId?.name || "User"}
+                          {share.ownerId?.docVaultId && (
+                            <span className="dv-id-pill">{share.ownerId.docVaultId}</span>
+                          )}
+                        </strong>
+                      </div>
                     </div>
                     <Badge variant="primary" size="sm">Active</Badge>
                   </div>
@@ -485,6 +562,18 @@ export default function ShareCenterPage() {
           </div>
         ) : (
           <form onSubmit={handleCreateShareSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+            {/* Sender identity banner */}
+            <div className="dv-modal-sharing-identity">
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <ShieldCheck size={16} color="var(--color-primary)" />
+                <span style={{ fontSize: "12px", color: "var(--color-text-secondary)" }}>Sharing as:</span>
+                <strong style={{ fontSize: "12px" }}>{user?.name || "DocVault User"}</strong>
+              </div>
+              {myDocVaultId && (
+                <span className="dv-id-pill" title="Your DocVault ID">{myDocVaultId}</span>
+              )}
+            </div>
+
             <Input
               label="Purpose / Package Name"
               placeholder="e.g. Home Loan Application, CA Audit, Car Registration"
@@ -531,19 +620,37 @@ export default function ShareCenterPage() {
 
             {shareForm.shareType === "CONNECTION" && (
               <div className="dv-form-group">
-                <label className="dv-input-label">Select Mutual Connection</label>
-                <select
-                  className="dv-select-control"
-                  value={shareForm.recipientUserId}
-                  onChange={(e) => setShareForm((p) => ({ ...p, recipientUserId: e.target.value }))}
-                >
-                  <option value="">-- Choose Connection --</option>
-                  {userConnections.map((c) => (
-                    <option key={c.otherUser?._id} value={c.otherUser?._id}>
-                      {c.otherUser?.name} ({c.otherUser?.docVaultId})
-                    </option>
-                  ))}
-                </select>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <label className="dv-input-label" style={{ margin: 0 }}>Select Mutual Connection</label>
+                  <Link to="/connections" style={{ fontSize: "11px", color: "var(--color-primary)", textDecoration: "none" }}>
+                    + Manage Connections
+                  </Link>
+                </div>
+                {userConnections.length === 0 ? (
+                  <div style={{ padding: "8px 12px", background: "var(--color-surface-subtle)", borderRadius: "var(--radius-md)", fontSize: "12px", color: "var(--color-text-secondary)", border: "1px dashed var(--color-border)" }}>
+                    No mutual connections found yet. Share your DocVault ID <strong>{myDocVaultId}</strong> with a contact, or{" "}
+                    <Link to="/connections" style={{ color: "var(--color-primary)", fontWeight: 600 }}>add them in Connections</Link>.
+                  </div>
+                ) : (
+                  <select
+                    className="dv-select-control"
+                    value={shareForm.recipientUserId}
+                    onChange={(e) => setShareForm((p) => ({ ...p, recipientUserId: e.target.value }))}
+                    required={shareForm.shareType === "CONNECTION"}
+                  >
+                    <option value="">-- Choose Connection by Name or DocVault ID --</option>
+                    {userConnections.map((c) => {
+                      const id = c.id || c._id || c.otherUser?._id;
+                      const name = c.name || c.otherUser?.name || "User";
+                      const docVaultId = c.docVaultId || c.otherUser?.docVaultId || "";
+                      return (
+                        <option key={id} value={id}>
+                          {name} {docVaultId ? `(${docVaultId})` : ""}
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
               </div>
             )}
 

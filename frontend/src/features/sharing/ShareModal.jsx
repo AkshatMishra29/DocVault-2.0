@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Users, UserCheck, UserX, X, Shield, Calendar, Download, Eye } from 'lucide-react';
+import { Lock, Users, UserCheck, UserX, X, Shield, Calendar, Download, Eye, Copy, Check, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../auth/context/AuthContext';
 import { sharingService } from '../../services/sharing.service';
 import './ShareModal.css';
 
 export default function ShareModal({ documentId, documentTitle, isOpen, onClose, onSaved }) {
+  const { user } = useAuth();
   const [audienceMode, setAudienceMode] = useState('ONLY_ME');
   const [mutualConnections, setMutualConnections] = useState([]);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
@@ -14,6 +16,24 @@ export default function ShareModal({ documentId, documentTitle, isOpen, onClose,
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const myDocVaultId = user?.docVaultId || (() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('docvault_user') || localStorage.getItem('user') || '{}');
+      return stored.docVaultId || '';
+    } catch {
+      return '';
+    }
+  })();
+
+  const copyMyId = () => {
+    if (myDocVaultId) {
+      navigator.clipboard.writeText(myDocVaultId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (isOpen && documentId) {
@@ -112,6 +132,26 @@ export default function ShareModal({ documentId, documentTitle, isOpen, onClose,
         </div>
 
         <div className="share-modal__body">
+          {/* Your DocVault ID Banner so user knows their own sharing identity */}
+          <div className="share-modal__my-id-banner">
+            <div className="share-modal__my-id-left">
+              <ShieldCheck size={16} className="share-modal__shield-icon" />
+              <span className="share-modal__my-id-tag">YOUR DOCVAULT ID:</span>
+              <span className="share-modal__my-id-code">{myDocVaultId || 'Loading...'}</span>
+            </div>
+            {myDocVaultId && (
+              <button
+                type="button"
+                className="share-modal__copy-btn"
+                onClick={copyMyId}
+                title="Copy your DocVault ID"
+              >
+                {copied ? <Check size={13} color="#10b981" /> : <Copy size={13} />}
+                <span>{copied ? 'Copied!' : 'Copy ID'}</span>
+              </button>
+            )}
+          </div>
+
           {error && (
             <div style={{ padding: '0.6rem 0.8rem', background: '#ffebee', color: '#c62828', borderRadius: '6px', fontSize: '0.9rem' }}>
               {error}
@@ -194,7 +234,7 @@ export default function ShareModal({ documentId, documentTitle, isOpen, onClose,
                       </div>
                       <div className="friend-info">
                         <span className="friend-name">{user.name || 'DocVault User'}</span>
-                        <span className="friend-id">{user.docVaultId}</span>
+                        <span className="friend-id-badge">{user.docVaultId || 'No ID'}</span>
                       </div>
                     </label>
                   ))}
@@ -224,7 +264,7 @@ export default function ShareModal({ documentId, documentTitle, isOpen, onClose,
                       </div>
                       <div className="friend-info">
                         <span className="friend-name">{user.name || 'DocVault User'}</span>
-                        <span className="friend-id">{user.docVaultId}</span>
+                        <span className="friend-id-badge">{user.docVaultId || 'No ID'}</span>
                       </div>
                     </label>
                   ))}
