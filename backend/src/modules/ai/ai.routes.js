@@ -54,6 +54,32 @@ function computeLexicalScore(doc, queryTokens) {
 }
 
 /**
+ * Computes exact lexical / keyword matching score across tracked asset attributes & flashcard custom fields
+ */
+function computeAssetScore(asset, queryTokens) {
+  let score = 0;
+  const name = (asset.name || '').toLowerCase();
+  const category = (asset.category || '').toLowerCase();
+  const desc = (asset.description || '').toLowerCase();
+  const notes = (asset.notes || '').toLowerCase();
+  const tags = (asset.tags || []).join(' ').toLowerCase();
+  const customFieldsStr = (asset.customFields || []).map(f => `${f.label} ${f.value}`).join(' ').toLowerCase();
+  const metadataStr = JSON.stringify(asset.metadata || {}).toLowerCase();
+
+  for (const token of queryTokens) {
+    if (token.length < 2) continue;
+    if (name.includes(token)) score += 8.0;
+    if (category.includes(token)) score += 4.0;
+    if (customFieldsStr.includes(token)) score += 6.0;
+    if (tags.includes(token)) score += 4.0;
+    if (desc.includes(token)) score += 4.0;
+    if (metadataStr.includes(token)) score += 3.0;
+    if (notes.includes(token)) score += 2.0;
+  }
+  return score;
+}
+
+/**
  * Core AI Query Handler
  * Enforces assertAiAllowed before any document context is passed to Groq or Hugging Face
  * Implements Smart Hybrid Retrieval (Dense Vector + Sparse Lexical + Reciprocal Rank Fusion)
@@ -85,6 +111,35 @@ async function handleAiQuery(req, res) {
       role: 'user',
       content: question,
     });
+
+    // 1. Tokenize query for Lexical & Asset Matching
+    const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'a', 'an', 'in', 'of', 'and', 'or', 'for', 'to', 'my', 'what', 'tell', 'show', 'give', 'me', 'about', 'this', 'that', 'with', 'from', 'have', 'i', 'as', 'created', 'flash', 'card', 'flashcard']);
+    const queryTokens = question.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(t => t.length > 1 && !stopWords.has(t));
+
+    // 2. Query Intent Analysis
+    const isOverviewQuery = /(?:all|every|overview|summarize|summary|inventory|list|what\s*(?:do\s*i\s*have|are\s*my\s*documents|documents\s*do\s*i\s*have|assets\s*do\s*i\s*have|is\s*in\s*my\s*vault))/i.test(question);
+    const isFlashcardQuery = /(?:flash\s*card|flashcard|asset|device|laptop|macbook|hardware|appliance|vehicle)/i.test(question);
+    const isDateQuery = /(?:when|date|issued|expiry|expire|due|completed|award|valid|renewal|time|day|month|year)/i.test(question);
+    const isCertQuery = /(?:certif|degree|diploma|grade|score|course|university|college|completion|mark|award)/i.test(question);
+    const isFinanceQuery = /(?:amount|total|bill|invoice|gst|price|cost|paid|tax|expense|salary|statement)/i.test(question);
+
+    // 3. Retrieve and Score User Assets / Flashcards
+    const allAssets = await Asset.find({ userId: req.user.userId }).lean().catch(() => []);
+    const scoredAssets = allAssets.map(a => ({
+      asset: a,
+      score: computeAssetScore(a, queryTokens) + (isFlashcardQuery ? 4.0 : 0)
+    })).sort((a, b) => b.score - a.score);
+
+    const matchingAssets = scoredAssets.filter(item => item.score > 0).map(item => item.asset);
+    const relevantAssets = matchingAssets.length > 0 ? matchingAssets : (isOverviewQuery ? allAssets : []);
+
+    // Set of document IDs linked to matching assets
+    const assetLinkedDocIds = new Set(
+      relevantAssets.flatMap(a => (a.linkedDocumentIds || []).map(id => String(id)))
+    );
 
     let documents = [];
 
@@ -141,19 +196,7 @@ async function handleAiQuery(req, res) {
       const validCandidates = candidates.filter(d => isAiAllowed(d));
 
       if (validCandidates.length > 0) {
-        // 1. Tokenize query for Lexical Match
-        const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'a', 'an', 'in', 'of', 'and', 'or', 'for', 'to', 'my', 'what', 'tell', 'show', 'give']);
-        const queryTokens = question.toLowerCase()
-          .replace(/[^a-z0-9\s]/g, ' ')
-          .split(/\s+/)
-          .filter(t => t.length > 1 && !stopWords.has(t));
-
-        // 2. Query Intent Analysis
-        const isDateQuery = /(?:when|date|issued|expiry|expire|due|completed|award|valid|renewal|time|day|month|year)/i.test(question);
-        const isCertQuery = /(?:certif|degree|diploma|grade|score|course|university|college|completion|mark|award)/i.test(question);
-        const isFinanceQuery = /(?:amount|total|bill|invoice|gst|price|cost|paid|tax|expense|salary|statement)/i.test(question);
-
-        // 3. Dense Vector Embeddings Generation
+        // Dense Vector Embeddings Generation
         let queryVector = [];
         try {
           queryVector = await generateEmbedding(question);
@@ -161,7 +204,7 @@ async function handleAiQuery(req, res) {
           console.warn('[AI Assistant] Semantic vector generation skipped:', err.message);
         }
 
-        // 4. Compute Dense and Lexical Rankings
+        // Compute Dense and Lexical Rankings
         const denseRankings = [...validCandidates]
           .map(d => ({
             id: String(d._id),
@@ -184,11 +227,14 @@ async function handleAiQuery(req, res) {
         const lexicalRankMap = new Map();
         lexicalRankings.forEach((item, idx) => lexicalRankMap.set(item.id, idx + 1));
 
-        // 5. Reciprocal Rank Fusion (RRF) with Intent Boosters
+        // Reciprocal Rank Fusion (RRF) with Intent Boosters & Strict Relevance Gate
         const scoredDocs = validCandidates.map(doc => {
           const docIdStr = String(doc._id);
           const dRank = denseRankMap.get(docIdStr) || 999;
           const lRank = lexicalRankMap.get(docIdStr) || 999;
+          const lexScore = lexicalRankings.find(r => r.id === docIdStr)?.score || 0;
+          const denseScore = denseRankings.find(r => r.id === docIdStr)?.score || 0;
+          const isLinkedToAsset = assetLinkedDocIds.has(docIdStr);
 
           // RRF core: 1 / (60 + rank)
           let rrf = (1.0 / (60 + dRank)) + (1.5 / (60 + lRank));
@@ -203,23 +249,26 @@ async function handleAiQuery(req, res) {
           if (isFinanceQuery && (doc.category === 'Tax Invoice' || doc.category === 'Purchase Receipt' || doc.category === 'Bank Statement')) {
             rrf += 0.04;
           }
+          if (isLinkedToAsset) {
+            rrf += 0.25; // Strongly prioritize documents linked to relevant asset
+          }
 
-          return { doc, rrf };
+          // Strict Relevance Criterion:
+          // A document is only relevant if it has lexical overlap, high semantic similarity,
+          // is linked to a matching asset, or the query is an overview query.
+          const isRelevant = isLinkedToAsset || lexScore > 0 || denseScore >= 0.48 || isOverviewQuery;
+
+          return { doc, rrf, isRelevant };
         });
 
-        // Sort by final fused RRF score and take top candidates (up to 5)
+        // Filter by relevance first, then sort by fused RRF score
         scoredDocs.sort((a, b) => b.rrf - a.rrf);
-        documents = scoredDocs.slice(0, 5).map(item => item.doc);
-        if (documents.length === 0) {
-          documents = validCandidates.slice(0, 5);
-        }
+        documents = scoredDocs.filter(item => item.isRelevant).slice(0, 5).map(item => item.doc);
       }
     }
 
-    const assets = await Asset.find({ userId: req.user.userId }).catch(() => []);
-
-    // If no AI-enabled documents are available and no assets exist
-    if (documents.length === 0 && assets.length === 0) {
+    // If no AI-enabled documents are relevant AND no relevant assets exist
+    if (documents.length === 0 && relevantAssets.length === 0) {
       const totalDocs = await Document.countDocuments({ userId: req.user.userId }).catch(() => 0);
       const storageOnlyDocs = await Document.countDocuments({
         userId: req.user.userId,
@@ -227,11 +276,12 @@ async function handleAiQuery(req, res) {
       }).catch(() => 0);
 
       let answer = '';
-      if (totalDocs > 0 && storageOnlyDocs === totalDocs) {
+      if (totalDocs > 0 && storageOnlyDocs === totalDocs && allAssets.length === 0) {
         answer = `You have **${totalDocs} document(s)** in your vault, but they are currently protected in **Storage-Only mode** (zero third-party AI egress). To allow DocVault AI to search and answer questions using these documents, please enable AI analysis in your Document Settings.`;
+      } else if (totalDocs === 0 && allAssets.length === 0) {
+        answer = 'Hello! I am your DocVault AI Assistant. You currently have no documents or tracked assets in your vault. Once you upload documents (like certificates, invoices, or policies) or create asset flashcards, I can answer questions, summarize content, and extract key details for you.';
       } else {
-        const rawAnswer = await answerDocumentQuery(question, [], []);
-        answer = typeof rawAnswer === 'string' ? rawAnswer : (rawAnswer?.answer || 'Hello! I am your DocVault AI Assistant. You currently have no AI-enabled documents uploaded. Once you upload documents (like certificates, invoices, or policies) with AI analysis enabled, I can answer questions, summarize content, and extract key dates for you.');
+        answer = `I could not find matching records for "${question}" in your currently uploaded documents or tracked assets.\n\nTip: You can ask questions about your stored documents (such as invoices, bills, certificates, or policies) or your tracked assets and flashcards.`;
       }
 
       await Message.create({
@@ -256,6 +306,7 @@ async function handleAiQuery(req, res) {
           sources: [],
           referencedDocIds: [],
           referencedDocs: [],
+          referencedAssets: [],
           actionItem: null,
         },
       });
@@ -266,15 +317,28 @@ async function handleAiQuery(req, res) {
       assertAiAllowed(d, 'RAG prompt construction');
     }
 
-    const rawAnswer = await answerDocumentQuery(question, documents, assets);
+    const rawAnswer = await answerDocumentQuery(question, documents, relevantAssets);
 
     // Format response cleanly for frontend
     const answer = typeof rawAnswer === 'string' ? rawAnswer : (rawAnswer?.answer || JSON.stringify(rawAnswer));
 
-    // Construct structured sources for deep linking
-    const isUnanswerable = /I cannot find that information in your currently uploaded documents/i.test(answer);
+    // Construct structured sources for deep linking (both Assets and Documents!)
+    const isUnanswerable = /I cannot find that information in your currently uploaded documents/i.test(answer) ||
+                           /I could not find matching records in your currently uploaded documents/i.test(answer);
     
-    const sources = isUnanswerable ? [] : documents.map(d => ({
+    const assetSources = isUnanswerable ? [] : relevantAssets.slice(0, 3).map(a => ({
+      type: 'asset',
+      documentId: a._id,
+      assetId: a._id,
+      title: `${a.name} (Flashcard)`,
+      category: `Asset • ${a.category || 'General'}`,
+      documentType: 'flashcard',
+      previewRoute: `/assets/${a._id}`,
+      downloadUrl: null,
+    }));
+
+    const docSources = isUnanswerable ? [] : documents.map(d => ({
+      type: 'document',
       documentId: d._id,
       title: d.title,
       category: d.category || 'Document',
@@ -284,11 +348,17 @@ async function handleAiQuery(req, res) {
       downloadUrl: `/api/documents/${d._id}/download`,
     }));
 
+    const sources = [...assetSources, ...docSources];
     const referencedDocIds = isUnanswerable ? [] : documents.map(d => d._id);
     const referencedDocs = isUnanswerable ? [] : documents.map(d => ({
       id: d._id,
       title: d.title,
       category: d.category
+    }));
+    const referencedAssets = isUnanswerable ? [] : relevantAssets.map(a => ({
+      id: a._id,
+      name: a.name,
+      category: a.category
     }));
 
     // Persist Assistant Message
@@ -320,6 +390,7 @@ async function handleAiQuery(req, res) {
         sources,
         referencedDocIds,
         referencedDocs,
+        referencedAssets,
         actionItem: null,
       },
     });

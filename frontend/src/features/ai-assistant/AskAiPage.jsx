@@ -8,7 +8,7 @@ import {
   ExternalLink, ShieldCheck, Info, Check, Copy, FileSpreadsheet,
   Plus, MessageSquare, Trash2, Edit3, ChevronLeft, ChevronRight,
   PanelLeftClose, PanelLeftOpen, Search, Clock, Eye, Download, X,
-  FileCheck, Shield, ChevronDown
+  FileCheck, Shield, ChevronDown, Layers
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -360,6 +360,7 @@ export default function AskAiPage() {
             sources: res.data.sources || [],
             referencedDocIds: res.data.referencedDocIds || [],
             referencedDocs: res.data.referencedDocs || [],
+            referencedAssets: res.data.referencedAssets || [],
             confidence: res.data.confidence || "high",
           },
         ]);
@@ -741,17 +742,19 @@ export default function AskAiPage() {
                       <div className="dv-chat-sources-block">
                         <div className="dv-sources-header">
                           <FileCheck size={13} className="dv-sources-icon" />
-                          <span className="dv-sources-title">Verified Source Documents</span>
+                          <span className="dv-sources-title">Verified Sources & Flashcards</span>
                         </div>
                         <div className="dv-sources-grid">
                           {m.sources.map((source, sIdx) => {
-                            const docId = source.documentId || source.id || source._id;
-                            const isPdf = (source.documentType || "").toLowerCase().includes("pdf");
+                            const isAsset = source.type === "asset" || source.documentType === "flashcard";
+                            const docId = source.documentId || source.assetId || source.id || source._id;
+                            const targetRoute = isAsset ? (source.previewRoute || `/assets/${docId}`) : (source.previewRoute || `/documents/${docId}`);
+
                             return (
-                              <div key={sIdx} className="dv-source-card">
+                              <div key={sIdx} className={`dv-source-card ${isAsset ? "dv-source-card--asset" : ""}`}>
                                 <div className="dv-source-card__left">
                                   <div className="dv-source-card__icon">
-                                    <FileText size={15} />
+                                    {isAsset ? <Layers size={15} style={{ color: "var(--color-primary)" }} /> : <FileText size={15} />}
                                   </div>
                                   <div className="dv-source-card__meta">
                                     <span className="dv-source-card__title" title={source.title}>
@@ -764,23 +767,26 @@ export default function AskAiPage() {
                                 </div>
 
                                 <div className="dv-source-card__actions">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenDocViewer(source)}
-                                    className="dv-source-btn dv-source-btn--preview"
-                                    title="Quick Preview inside Chat"
-                                  >
-                                    <Eye size={12} />
-                                    <span>Preview</span>
-                                  </button>
+                                  {!isAsset && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenDocViewer(source)}
+                                      className="dv-source-btn dv-source-btn--preview"
+                                      title="Quick Preview inside Chat"
+                                    >
+                                      <Eye size={12} />
+                                      <span>Preview</span>
+                                    </button>
+                                  )}
                                   <Link
-                                    to={source.previewRoute || `/documents/${docId}`}
-                                    target="_blank"
+                                    to={targetRoute}
+                                    target={isAsset ? "_self" : "_blank"}
                                     rel="noopener noreferrer"
                                     className="dv-source-btn dv-source-btn--open"
-                                    title="Open full document record"
+                                    title={isAsset ? "View Asset Flashcard" : "Open full document record"}
                                   >
                                     <ExternalLink size={12} />
+                                    {isAsset && <span style={{ marginLeft: 4 }}>Open Card</span>}
                                   </Link>
                                 </div>
                               </div>

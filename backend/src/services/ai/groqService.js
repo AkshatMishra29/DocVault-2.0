@@ -16,7 +16,7 @@ const CANDIDATE_CHAT_MODELS = [
 ].filter(Boolean);
 
 /**
- * Resilient Groq execution with multi-model fallback chain
+ * Resilient Groq execution with multi-model fallback chain and fail-fast timeouts
  */
 export async function executeGroqChatCompletion(params) {
   const groq = getGroqClient();
@@ -31,7 +31,7 @@ export async function executeGroqChatCompletion(params) {
       const response = await groq.chat.completions.create({
         ...params,
         model,
-      });
+      }, { timeout: 10000 });
       return response;
     } catch (err) {
       lastError = err;
@@ -192,9 +192,12 @@ ${rawText ? rawText.slice(0, 4000) : 'No OCR text available. Infer from filename
 /**
  * Answer questions based on retrieved document context and tracked assets (RAG Q&A)
  */
+/**
+ * Answer questions based on retrieved document context and tracked assets (RAG Q&A)
+ */
 export async function answerDocumentQuery(question, contextDocs = [], contextAssets = []) {
   const docContextString = contextDocs.length > 0 ? contextDocs.map((doc, idx) => `
-[Document ${idx + 1}]: "${doc.title}" (Category: ${doc.category})
+[Document ${idx + 1}]: "${doc.title}" (Category: ${doc.category || 'General'})
 Primary Document Date / Issue Date: ${doc.documentDate || doc.keyDetails?.['Issue Date'] || doc.keyDetails?.['Date'] || doc.keyDetails?.['Date of Issue'] || doc.keyDetails?.['ISSUE DATE'] || 'N/A'}
 Expiry / Due Date: ${doc.expiryDate || doc.keyDetails?.['Expiry Date'] || doc.keyDetails?.['EXPIRY DATE'] || 'N/A'}
 Summary: ${doc.summary || 'N/A'}
@@ -203,29 +206,45 @@ Extracted Document Content / Text:
 ${doc.extractedText ? doc.extractedText.slice(0, 3500) : 'N/A'}
 `).join('\n---\n') : 'No documents found.';
 
-  const assetContextString = contextAssets.length > 0 ? contextAssets.map((asset, idx) => `
-[Asset ${idx + 1}]: "${asset.name}" (Category: ${asset.category})
-Estimated Value: ${asset.estimatedValue || 'N/A'}
+  const assetContextString = contextAssets.length > 0 ? contextAssets.map((asset, idx) => {
+    const customFieldsFormatted = (asset.customFields && asset.customFields.length > 0)
+      ? asset.customFields.map(f => `${f.label}: ${f.value}`).join(' | ')
+      : 'None';
+
+    const metadataFormatted = (asset.metadata && Object.keys(asset.metadata).length > 0)
+      ? Object.entries(asset.metadata).map(([k, v]) => `${k}: ${v}`).join(' | ')
+      : 'None';
+
+    return `
+[Asset ${idx + 1} - Flashcard]: "${asset.name}" (Category: ${asset.category || 'General'})
 Status: ${asset.status || 'Active'}
+Estimated Value / Price: ${asset.estimatedValue || (asset.purchasePrice ? `₹${asset.purchasePrice}` : 'N/A')}
 Purchase Date: ${asset.purchaseDate || 'N/A'}
-Warranty Expiry: ${asset.warrantyExpiry || 'N/A'}
-Insurance Expiry: ${asset.insuranceExpiry || 'N/A'}
+Warranty Expiration: ${asset.warrantyExpiry || 'N/A'}
+Insurance Expiration: ${asset.insuranceExpiry || 'N/A'}
 Next Scheduled Service: ${asset.nextService || 'N/A'}
-`).join('\n---\n') : 'No tracked assets found.';
+Description / Purchase Notes: ${asset.description || 'N/A'}
+Additional Notes: ${asset.notes || 'N/A'}
+Custom Flashcard Fields: ${customFieldsFormatted}
+Technical Specs & Metadata: ${metadataFormatted}
+Tags: ${(asset.tags || []).join(', ') || 'None'}
+`;
+  }).join('\n---\n') : 'No tracked assets found.';
 
   const prompt = `You are the DocVault AI Assistant.
 SECURITY & ACCURACY RULES:
 1. You operate strictly within the user's isolated encrypted DocVault ecosystem.
-2. Answer the user's question directly, professionally, and accurately using the provided verified document records and tracked asset inventory below.
-3. If the user is asking a conversational greeting or overview (such as "hi", "hello", "what can you do?", "how does DocVault work?"), respond politely, introduce yourself as the DocVault AI Assistant, and briefly explain how you can help analyze and answer questions about their encrypted documents and assets.
-4. When asked about DATES (e.g. "when was my certificate issued?", "what is the date on my document?", "when does it expire?"), check "Primary Document Date / Issue Date", "Expiry / Due Date", and "Key Structured Details" first.
-5. If the user asks about names, certificates, courses, organizations, or numbers, locate the exact values from "Key Structured Details" and "Extracted Document Content".
-6. State dates and critical entities directly and prominently in bold.
-7. If neither the provided documents nor the tracked assets contain the answer, reply cleanly:
+2. Answer the user's question directly, professionally, and accurately using the provided verified document records and tracked asset flashcards below.
+3. If the user asks about an item, device, vehicle, warranty, or flashcard (e.g. laptop, MacBook, car, appliance, gadget, serial number), check "CONTEXT - TRACKED ASSETS & FLASHCARDS" first.
+4. If the user asks about an uploaded document (e.g. bill, invoice, certificate, policy), check "CONTEXT - STORED DOCUMENTS".
+5. If the user is asking a conversational greeting or overview (such as "hi", "hello", "what can you do?", "how does DocVault work?"), respond politely, introduce yourself as the DocVault AI Assistant, and briefly explain how you can help analyze and answer questions about their encrypted documents and tracked asset flashcards.
+6. When asked about DATES or WARRANTY (e.g. "when was my macbook purchased?", "when does it expire?", "warranty details"), inspect Warranty Expiration, Purchase Date, Description, and Custom Flashcard Fields.
+7. State dates, serial numbers, amounts, and critical entities directly and prominently in bold.
+8. If neither the provided documents nor the tracked assets contain the answer, reply cleanly:
 "I cannot find that information in your currently uploaded documents or tracked assets."
-8. Structure your responses cleanly with clear headings, bullet points, and highlight key identifiers.
+9. Structure your responses cleanly with clear headings, bullet points, and highlight key identifiers.
 
-CONTEXT - TRACKED ASSETS:
+CONTEXT - TRACKED ASSETS & FLASHCARDS:
 ${assetContextString}
 
 CONTEXT - STORED DOCUMENTS:
@@ -253,20 +272,121 @@ ${question}
 
 /**
  * Deterministic Grounded Query Solver:
- * Directly extracts answers from verified document context and structured attributes
+ * Directly extracts answers from verified document context or tracked asset flashcards
  * when live LLM execution is unavailable or rate-limited.
  */
 export function answerWithDeterministicGrounding(question, contextDocs = [], contextAssets = []) {
   const lowerQ = (question || '').toLowerCase();
-  const isDateQ = /(?:when|date|day|month|year|expiry|expire|due\s*date|issued|collection|printed)/i.test(lowerQ);
-  const isNameQ = /(?:who|name|consumer|customer|recipient|person|whom|billed\s*to)/i.test(lowerQ);
-  const isAccountQ = /(?:account\s*no|account\s*number|consumer\s*no|ca\s*no|receipt\s*no|transaction\s*id|policy\s*no)/i.test(lowerQ);
-  const isAmountQ = /(?:amount|how\s*much|cost|price|total|payable|paid|fee|charge|balance|bill\s*amount|bill\s*total)/i.test(lowerQ);
+  const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'a', 'an', 'in', 'of', 'and', 'or', 'for', 'to', 'my', 'what', 'tell', 'show', 'give', 'me', 'about', 'this', 'that', 'with', 'from', 'have', 'i', 'as']);
+  const queryTokens = lowerQ.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(t => t.length > 1 && !stopWords.has(t));
 
+  // 1. Evaluate Asset Match
+  let bestAsset = null;
+  let bestAssetScore = 0;
+  for (const asset of contextAssets) {
+    const name = (asset.name || '').toLowerCase();
+    const category = (asset.category || '').toLowerCase();
+    const desc = (asset.description || '').toLowerCase();
+    const customFieldsStr = (asset.customFields || []).map(f => `${f.label} ${f.value}`).join(' ').toLowerCase();
+
+    let score = 0;
+    for (const t of queryTokens) {
+      if (name.includes(t)) score += 8;
+      if (category.includes(t)) score += 4;
+      if (customFieldsStr.includes(t)) score += 6;
+      if (desc.includes(t)) score += 3;
+    }
+    if (score > bestAssetScore) {
+      bestAssetScore = score;
+      bestAsset = asset;
+    }
+  }
+
+  // 2. Evaluate Document Match
+  let bestDoc = null;
+  let bestDocScore = 0;
+  for (const doc of contextDocs) {
+    const title = (doc.title || '').toLowerCase();
+    const category = (doc.category || '').toLowerCase();
+    const text = (doc.extractedText || '').toLowerCase();
+
+    let score = 0;
+    for (const t of queryTokens) {
+      if (title.includes(t)) score += 8;
+      if (category.includes(t)) score += 4;
+      if (text.includes(t)) score += 2;
+    }
+    if (score > bestDocScore) {
+      bestDocScore = score;
+      bestDoc = doc;
+    }
+  }
+
+  // Determine Primary Target: Asset vs Document
+  const preferAsset = (bestAssetScore > 0 && bestAssetScore > bestDocScore) || (bestAssetScore > 0 && bestDocScore === 0);
+
+  // A. Answer from Asset Flashcard
+  if (preferAsset && bestAsset) {
+    const asset = bestAsset;
+    const isWarranty = /(?:warranty|expire|expiry|validity|guarantee)/i.test(lowerQ);
+    const isSerial = /(?:serial|imei|chassis|engine|id|number|model)/i.test(lowerQ);
+    const isPurchase = /(?:purchase|bought|buy|when|date)/i.test(lowerQ);
+    const isPrice = /(?:price|cost|amount|value|worth)/i.test(lowerQ);
+
+    const customMap = {};
+    (asset.customFields || []).forEach(f => {
+      customMap[f.label.toLowerCase()] = f.value;
+    });
+
+    let directHighlight = '';
+    if (isWarranty && (asset.warrantyExpiry || customMap['warranty expiration'] || customMap['warranty'])) {
+      const exp = asset.warrantyExpiry || customMap['warranty expiration'] || customMap['warranty'];
+      directHighlight = `The recorded warranty expiration for your **${asset.name}** is **${exp}**.\n\n`;
+    } else if (isSerial && (customMap['serial number'] || customMap['serial'] || asset.metadata?.serialNumber)) {
+      const sn = customMap['serial number'] || customMap['serial'] || asset.metadata?.serialNumber;
+      directHighlight = `The serial number for your **${asset.name}** is **${sn}**.\n\n`;
+    } else if (isPurchase && (asset.purchaseDate || asset.description)) {
+      directHighlight = `The purchase record for your **${asset.name}** indicates: **${asset.purchaseDate || asset.description}**.\n\n`;
+    } else if (isPrice && (asset.estimatedValue || asset.purchasePrice || customMap['price'])) {
+      directHighlight = `The recorded value/price for your **${asset.name}** is **${asset.estimatedValue || (asset.purchasePrice ? '₹' + asset.purchasePrice : customMap['price'])}**.\n\n`;
+    } else {
+      directHighlight = `Here are the verified records from your vault for **${asset.name}** (${asset.category}):\n\n`;
+    }
+
+    let record = `### Verified Asset Record (Flashcard)\n`;
+    record += `• **Asset Name:** ${asset.name} (${asset.category || 'General'})\n`;
+    record += `• **Status:** ${asset.status || 'Active'}\n`;
+    if (asset.warrantyExpiry || customMap['warranty expiration']) {
+      record += `• **Warranty Expiration:** **${asset.warrantyExpiry || customMap['warranty expiration']}**\n`;
+    }
+    if (customMap['serial number'] || asset.metadata?.serialNumber) {
+      record += `• **Serial Number:** \`${customMap['serial number'] || asset.metadata?.serialNumber}\`\n`;
+    }
+    if (asset.description) {
+      record += `• **Description / Purchase Note:** ${asset.description}\n`;
+    }
+    if (asset.estimatedValue || asset.purchasePrice) {
+      record += `• **Estimated Value:** ${asset.estimatedValue || ('₹' + asset.purchasePrice)}\n`;
+    }
+    (asset.customFields || []).forEach(f => {
+      if (!/warranty|serial/i.test(f.label)) {
+        record += `• **${f.label}:** ${f.value}\n`;
+      }
+    });
+
+    return directHighlight + record;
+  }
+
+  // B. Answer from Document
   if (contextDocs.length > 0) {
-    const primaryDoc = contextDocs[0];
+    const primaryDoc = bestDoc || contextDocs[0];
     const text = primaryDoc.extractedText || '';
     const keyDetails = primaryDoc.keyDetails || {};
+
+    const isDateQ = /(?:when|date|day|month|year|expiry|expire|due\s*date|issued|collection|printed)/i.test(lowerQ);
+    const isNameQ = /(?:who|name|consumer|customer|recipient|person|whom|billed\s*to)/i.test(lowerQ);
+    const isAccountQ = /(?:account\s*no|account\s*number|consumer\s*no|ca\s*no|receipt\s*no|transaction\s*id|policy\s*no)/i.test(lowerQ);
+    const isAmountQ = /(?:amount|how\s*much|cost|price|total|payable|paid|fee|charge|balance|bill\s*amount|bill\s*total)/i.test(lowerQ);
 
     // 1. Extract amount
     let amount = keyDetails['TOTAL AMOUNT'] || keyDetails['Total Amount'] || keyDetails['Amount'] || keyDetails['AMOUNT'] || null;
@@ -340,9 +460,10 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
     return directAnswer.trim();
   }
 
+  // C. Fallback to Asset if any exists
   if (contextAssets.length > 0) {
     const asset = contextAssets[0];
-    return `### Tracked Asset Details\n• **Asset:** ${asset.name} (${asset.category})\n• **Estimated Value:** ${asset.estimatedValue || 'N/A'}\n• **Status:** ${asset.status || 'Active'}\n• **Warranty Expiry:** ${asset.warrantyExpiry || 'N/A'}`;
+    return `### Tracked Asset Details\n• **Asset:** ${asset.name} (${asset.category || 'General'})\n• **Estimated Value:** ${asset.estimatedValue || 'N/A'}\n• **Status:** ${asset.status || 'Active'}\n• **Warranty Expiry:** ${asset.warrantyExpiry || 'N/A'}`;
   }
 
   return "I could not find matching records in your currently uploaded documents or tracked assets.";

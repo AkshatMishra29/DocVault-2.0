@@ -2,10 +2,19 @@ import mongoose from 'mongoose';
 
 const SourceDocumentSchema = new mongoose.Schema(
   {
+    type: {
+      type: String,
+      enum: ['document', 'asset'],
+      default: 'document',
+    },
+    assetId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Asset',
+    },
     documentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Document',
-      required: true,
+      required: false,
     },
     title: {
       type: String,
