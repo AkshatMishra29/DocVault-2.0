@@ -193,18 +193,79 @@ ${rawText ? rawText.slice(0, 4000) : 'No OCR text available. Infer from filename
  * Answer questions based on retrieved document context and tracked assets (RAG Q&A)
  */
 /**
+ * Extracts a query-relevant context window from multi-page documents
+ * ensuring specific clauses, page markers, and customer sections are preserved.
+ */
+export function extractRelevantContextWindow(fullText, question, budget = 45000) {
+  if (!fullText || fullText.length <= budget) {
+    return fullText || '';
+  }
+
+  const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'a', 'an', 'in', 'of', 'and', 'or', 'for', 'to', 'my', 'what', 'tell', 'show', 'give', 'me', 'about', 'this', 'that', 'with', 'from', 'have', 'i', 'as', 'please']);
+  const queryTokens = (question || '').toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(t => t.length > 1 && !stopWords.has(t));
+
+  // Split into page sections if available, else paragraphs
+  const rawSections = fullText.split(/(?=--- Page \d+ ---)/g);
+  const sections = rawSections.length > 1 ? rawSections : fullText.split(/\n\s*\n/);
+
+  // Always keep Section 1 (first page / metadata / introductory terms)
+  let result = sections[0].trim();
+  let currentLength = result.length;
+
+  const scoredSections = sections.slice(1).map(sec => {
+    const secLower = sec.toLowerCase();
+    let score = 0;
+    for (const t of queryTokens) {
+      if (secLower.includes(t)) score += 1;
+    }
+    return { sec: sec.trim(), score, len: sec.length };
+  });
+
+  // Prioritize sections with keyword hits
+  scoredSections.sort((a, b) => b.score - a.score);
+
+  const selectedExtraSections = [];
+  for (const item of scoredSections) {
+    if (currentLength + item.len + 50 <= budget) {
+      selectedExtraSections.push(item.sec);
+      currentLength += item.len + 50;
+    }
+  }
+
+  if (selectedExtraSections.length > 0) {
+    result += '\n\n[... Additional Multi-Page Sections ...]\n\n' + selectedExtraSections.join('\n\n');
+  }
+
+  return result.slice(0, budget);
+}
+
+/**
  * Answer questions based on retrieved document context and tracked assets (RAG Q&A)
  */
 export async function answerDocumentQuery(question, contextDocs = [], contextAssets = []) {
-  const docContextString = contextDocs.length > 0 ? contextDocs.map((doc, idx) => `
-[Document ${idx + 1}]: "${doc.title}" (Category: ${doc.category || 'General'})
+  // Support deep context budget: single targeted document gets up to 45,000 characters
+  // Multi-document queries get up to 18,000 characters per document
+  const maxDocChars = contextDocs.length === 1 ? 45000 : (contextDocs.length <= 3 ? 18000 : 10000);
+
+  const docContextString = contextDocs.length > 0 ? contextDocs.map((doc, idx) => {
+    let content = (doc.extractedText || '').trim();
+    if (content.length > maxDocChars) {
+      content = extractRelevantContextWindow(content, question, maxDocChars);
+    }
+
+    return `
+[Document ${idx + 1}]: "${doc.title}" (Category: ${doc.category || 'General'}, Pages: ${doc.pageCount || 1})
 Primary Document Date / Issue Date: ${doc.documentDate || doc.keyDetails?.['Issue Date'] || doc.keyDetails?.['Date'] || doc.keyDetails?.['Date of Issue'] || doc.keyDetails?.['ISSUE DATE'] || 'N/A'}
 Expiry / Due Date: ${doc.expiryDate || doc.keyDetails?.['Expiry Date'] || doc.keyDetails?.['EXPIRY DATE'] || 'N/A'}
 Summary: ${doc.summary || 'N/A'}
 Key Structured Details: ${JSON.stringify(doc.keyDetails || {})}
 Extracted Document Content / Text:
-${doc.extractedText ? doc.extractedText.slice(0, 3500) : 'N/A'}
-`).join('\n---\n') : 'No documents found.';
+${content || 'N/A'}
+`;
+  }).join('\n---\n') : 'No documents found.';
 
   const assetContextString = contextAssets.length > 0 ? contextAssets.map((asset, idx) => {
     const customFieldsFormatted = (asset.customFields && asset.customFields.length > 0)
@@ -235,14 +296,15 @@ Tags: ${(asset.tags || []).join(', ') || 'None'}
 SECURITY & ACCURACY RULES:
 1. You operate strictly within the user's isolated encrypted DocVault ecosystem.
 2. Answer the user's question directly, professionally, and accurately using the provided verified document records and tracked asset flashcards below.
-3. If the user asks about an item, device, vehicle, warranty, or flashcard (e.g. laptop, MacBook, car, appliance, gadget, serial number), check "CONTEXT - TRACKED ASSETS & FLASHCARDS" first.
-4. If the user asks about an uploaded document (e.g. bill, invoice, certificate, policy), check "CONTEXT - STORED DOCUMENTS".
-5. If the user is asking a conversational greeting or overview (such as "hi", "hello", "what can you do?", "how does DocVault work?"), respond politely, introduce yourself as the DocVault AI Assistant, and briefly explain how you can help analyze and answer questions about their encrypted documents and tracked asset flashcards.
-6. When asked about DATES or WARRANTY (e.g. "when was my macbook purchased?", "when does it expire?", "warranty details"), inspect Warranty Expiration, Purchase Date, Description, and Custom Flashcard Fields.
-7. State dates, serial numbers, amounts, and critical entities directly and prominently in bold.
-8. If neither the provided documents nor the tracked assets contain the answer, reply cleanly:
+3. For multi-page documents (marked with "--- Page X ---"), thoroughly inspect all pages from Page 1 to Page 25. When the user asks about specific content, customer details, clauses, terms, conditions, numbers, or statements, locate and extract the specific content from the corresponding page, and cite the page number (e.g. "On Page 5...", "According to Page 11...").
+4. If the user asks about an item, device, vehicle, warranty, or flashcard (e.g. laptop, MacBook, car, appliance, gadget, serial number), check "CONTEXT - TRACKED ASSETS & FLASHCARDS" first.
+5. If the user asks about an uploaded document (e.g. bill, invoice, certificate, policy, customer agreement), check "CONTEXT - STORED DOCUMENTS".
+6. If the user is asking a conversational greeting or overview (such as "hi", "hello", "what can you do?", "how does DocVault work?"), respond politely, introduce yourself as the DocVault AI Assistant, and briefly explain how you can help analyze and answer questions about their encrypted documents and tracked asset flashcards.
+7. When asked about DATES or WARRANTY (e.g. "when was my macbook purchased?", "when does it expire?", "warranty details"), inspect Warranty Expiration, Purchase Date, Description, and Custom Flashcard Fields.
+8. State dates, serial numbers, amounts, and critical entities directly and prominently in bold.
+9. If neither the provided documents nor the tracked assets contain the answer after checking all available pages, reply cleanly:
 "I cannot find that information in your currently uploaded documents or tracked assets."
-9. Structure your responses cleanly with clear headings, bullet points, and highlight key identifiers.
+10. Structure your responses cleanly with clear headings, bullet points, and highlight key identifiers.
 
 CONTEXT - TRACKED ASSETS & FLASHCARDS:
 ${assetContextString}
@@ -259,7 +321,7 @@ ${question}
       model: config.groq.model || 'qwen/qwen3.8-27b',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
-      max_tokens: 1000,
+      max_tokens: 1200,
     });
 
     return response.choices[0].message.content;
@@ -455,6 +517,23 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
     if (issuer) directAnswer += `• **Issuing Authority:** ${issuer}\n`;
     if (primaryDoc.summary && primaryDoc.summary !== 'Uploaded document stored securely in your encrypted DocVault.') {
       directAnswer += `• **Summary:** ${primaryDoc.summary}\n`;
+    }
+
+    // 7. Search for specific content matching user query tokens across multi-page text
+    if (queryTokens.length > 0 && text) {
+      const matchingExcerpts = [];
+      const paragraphs = text.split(/\n+/).map(l => l.trim()).filter(l => l.length > 15);
+      for (const p of paragraphs) {
+        const pLower = p.toLowerCase();
+        const hits = queryTokens.filter(t => pLower.includes(t)).length;
+        if (hits >= Math.min(2, queryTokens.length)) {
+          matchingExcerpts.push(p);
+          if (matchingExcerpts.length >= 3) break;
+        }
+      }
+      if (matchingExcerpts.length > 0) {
+        directAnswer += `\n**Relevant Document Content:**\n` + matchingExcerpts.map(e => `> ${e}`).join('\n\n') + '\n';
+      }
     }
 
     return directAnswer.trim();

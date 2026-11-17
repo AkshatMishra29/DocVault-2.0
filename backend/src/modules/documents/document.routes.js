@@ -236,7 +236,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       sizeBytes: buffer.length,
       fileSizeFormatted: `${(buffer.length / 1024).toFixed(1)} KB`,
       storagePath: 'mongodb-embedded',
-      extractedText: isStorageOnly ? '[REDACTED - STORAGE ONLY DOCUMENT]' : (validationResult?.extractedText || ''),
+      extractedText: isStorageOnly ? '[REDACTED - STORAGE ONLY DOCUMENT]' : (pdfText || validationResult?.extractedText || ''),
       summary: isStorageOnly
         ? (sensitiveCheck.isSensitive
             ? `Protected in Storage-Only vault (${sensitiveCheck.reason}). Zero AI processing.`
@@ -469,9 +469,14 @@ router.get('/:id/download', requireAuth, async (req, res) => {
     }
 
     const fileBuffer = Buffer.from(doc.fileData, 'base64');
+    const rawFilename = (doc.originalName || doc.title || 'document').replace(/[\r\n"']/g, '_');
+    const asciiFilename = rawFilename.replace(/[^\x20-\x7E]/g, '_') || 'document';
+    const encodedFilename = encodeURIComponent(rawFilename);
+
     res.setHeader('Content-Type', doc.mimetype || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `inline; filename="${doc.originalName || doc.title}"`);
+    res.setHeader('Content-Disposition', `inline; filename="${asciiFilename}"; filename*=UTF-8''${encodedFilename}`);
     res.setHeader('Content-Length', fileBuffer.length);
+    res.setHeader('Accept-Ranges', 'bytes');
     res.send(fileBuffer);
   } catch (err) {
     res.status(500).send('Error streaming document file: ' + err.message);

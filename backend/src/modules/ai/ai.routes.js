@@ -120,7 +120,7 @@ async function handleAiQuery(req, res) {
       .filter(t => t.length > 1 && !stopWords.has(t));
 
     // 2. Query Intent Analysis
-    const isOverviewQuery = /(?:all|every|overview|summarize|summary|inventory|list|what\s*(?:do\s*i\s*have|are\s*my\s*documents|documents\s*do\s*i\s*have|assets\s*do\s*i\s*have|is\s*in\s*my\s*vault))/i.test(question);
+    const isOverviewQuery = /(?:all|every|overview|summarize|summary|inventory|list|what\s*(?:do\s*i\s*have|are\s*my\s*documents|documents\s*do\s*i\s*have|assets\s*do\s*i\s*have|is\s*in\s*my\s*vault)|fetch\s*(?:the\s*)?document|get\s*(?:the\s*)?document|show\s*(?:the\s*)?document|open\s*(?:the\s*)?document)/i.test(question);
     const isFlashcardQuery = /(?:flash\s*card|flashcard|asset|device|laptop|macbook|hardware|appliance|vehicle)/i.test(question);
     const isDateQuery = /(?:when|date|issued|expiry|expire|due|completed|award|valid|renewal|time|day|month|year)/i.test(question);
     const isCertQuery = /(?:certif|degree|diploma|grade|score|course|university|college|completion|mark|award)/i.test(question);

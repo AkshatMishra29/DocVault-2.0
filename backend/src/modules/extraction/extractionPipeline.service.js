@@ -163,14 +163,21 @@ export async function executeDocumentExtractionPipeline({
     if (signature.detectedType === 'application/pdf') {
       extractedText = await extractTextFromPDF(buffer);
 
-      // If PDF text layer is minimal (< 50 chars), fallback to image OCR
+      // If PDF text layer is minimal (< 50 chars), fallback to image OCR across pages
       if (!extractedText || extractedText.length < 50) {
-        console.log('[OCR] Scanned PDF detected. Rendering page buffer for local OCR...');
-        const imagePages = await convertPdfToImages(buffer);
+        console.log('[OCR] Scanned PDF detected. Rendering page buffers for local multi-page OCR...');
+        const pagesToRender = Math.min(pageCount || 1, 15);
+        const imagePages = await convertPdfToImages(buffer, pagesToRender);
         if (imagePages && imagePages.length > 0) {
-          const firstPage = imagePages[0];
-          extractedText = await extractTextFromImage(firstPage);
-          visualBase64 = firstPage.toString('base64');
+          const pageTexts = [];
+          for (let pIdx = 0; pIdx < imagePages.length; pIdx++) {
+            const pageText = await extractTextFromImage(imagePages[pIdx]);
+            if (pageText && pageText.trim()) {
+              pageTexts.push(`--- Page ${pIdx + 1} ---\n${pageText.trim()}`);
+            }
+          }
+          extractedText = pageTexts.join('\n\n');
+          visualBase64 = imagePages[0].toString('base64');
           visualMimeType = 'image/png';
         }
       }

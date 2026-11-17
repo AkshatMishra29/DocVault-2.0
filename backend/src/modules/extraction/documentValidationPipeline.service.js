@@ -336,18 +336,23 @@ export async function classifyDocumentVsNonDocument(buffer, metadata, quality) {
   let isDocument = false;
   let nonDocCategory = null;
 
-  if (skinRatio > 0.15 && paperRatio < 0.20) {
-    isDocument = false;
-    nonDocCategory = 'PERSON_PORTRAIT';
-  } else if (vibrantRatio > 0.35 && paperRatio < 0.15) {
+  if (vibrantRatio > 0.45) {
+    // Unconditional vibrant colors = natural scenery, outdoor, artwork, or casual photo
     isDocument = false;
     nonDocCategory = 'NATURAL_SCENERY';
-  } else if (isSceneryByVisionModel && paperRatio < 0.20) {
+  } else if (vibrantRatio > 0.30 && paperRatio < 0.65) {
+    // Vibrant landscape / outdoor / storefront with clouds or sky areas
+    isDocument = false;
+    nonDocCategory = 'NATURAL_SCENERY';
+  } else if (isSceneryByVisionModel && paperRatio < 0.35) {
     isDocument = false;
     nonDocCategory = 'LANDSCAPE_SCENERY';
-  } else if (isBuildingByVisionModel && paperRatio < 0.25 && vibrantRatio > 0.20) {
+  } else if (isBuildingByVisionModel && paperRatio < 0.35 && vibrantRatio > 0.18) {
     isDocument = false;
     nonDocCategory = 'BUILDING_OR_STOREFRONT';
+  } else if (skinRatio > 0.15 && paperRatio < 0.70) {
+    isDocument = false;
+    nonDocCategory = 'PERSON_PORTRAIT';
   } else if (paperRatio > 0.25 || isDocByVisionModel || (textRatio > 0.03 && textRatio < 0.25 && paperRatio > 0.18)) {
     isDocument = true;
   } else if (paperRatio < 0.12) {
@@ -613,10 +618,20 @@ export async function validateDocumentPipeline(buffer, options = {}) {
   // CRITICAL DECISION RULES
   // ───────────────────────────────────────────────────────────────────────────
 
+  const combinedText = `${options.originalname || ''} ${readability.extractedText || ''}`.toLowerCase();
+  const hasIdentityOrLegalKeywords = /(?:government|govt|republic|identity|aadhaar|pan\s*card|passport|voter|election|driving|licence|license|dob|birth|gender|male|female|father|address|tenant|landlord|lease|rent|agreement|premises|witness|notary|stamp|affidavit|deed|undertaking|employee|student|valid\s*upto|authorized\s*signatory|permanent\s*account)/i.test(combinedText);
+
+  // Security Guardrail: People in Documents (ID Cards, Passports, Rent Agreements, Affidavits)
+  // If an image has a photo of a person (e.g. passport photo affixed to ID card or rent deed),
+  // but verified identity or contract keywords and structured lines exist, ACCEPT IT as a legitimate document!
+  const isDocumentWithPhoto = (docClassification.nonDocCategory === 'PERSON_PORTRAIT' || docClassification.nonDocCategory === 'CASUAL_PHOTO') &&
+    hasIdentityOrLegalKeywords &&
+    (readability.wordCount >= 4 || readability.lineCount >= 2);
+
   // Rule 1: Non-Document Rejection (Problem A)
   // Even if OCR found isolated letters on a road sign or shop, if the visual
   // classifier determined it is a natural landscape, building, or casual photo, REJECT IT.
-  if (!docClassification.isDocument) {
+  if (!docClassification.isDocument && !isDocumentWithPhoto) {
     // If it has isolated text (like a road sign "STOP" or "ROUTE 66"), it is incidental text!
     return {
       status: 'rejected',

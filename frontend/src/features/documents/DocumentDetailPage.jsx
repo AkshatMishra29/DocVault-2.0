@@ -490,7 +490,7 @@ export default function DocumentDetailPage() {
                         <div className="dv-field-item__top">
                           <div>
                             <span className="dv-field-item__name">
-                              {field.fieldName.replace(/_/g, " ")}
+                              {String(field.fieldName || field.label || 'Field').replace(/_/g, " ")}
                             </span>
                             <div className="dv-field-item__value">
                               {String(field.value)}
@@ -556,7 +556,7 @@ export default function DocumentDetailPage() {
                   <div className="dv-entity-table">
                     {Object.entries(doc.keyDetails).map(([key, val]) => (
                       <div key={key} className="dv-entity-row">
-                        <span className="dv-entity-key">{key.replace(/_/g, " ")}</span>
+                        <span className="dv-entity-key">{String(key || '').replace(/_/g, " ")}</span>
                         <span className="dv-entity-val">{String(val)}</span>
                       </div>
                     ))}
@@ -721,7 +721,7 @@ export default function DocumentDetailPage() {
       <Modal
         isOpen={Boolean(editingField)}
         onClose={() => setEditingField(null)}
-        title={`Edit Field: ${editingField?.fieldName.replace(/_/g, " ").toUpperCase()}`}
+        title={`Edit Field: ${String(editingField?.fieldName || 'Field').replace(/_/g, " ").toUpperCase()}`}
       >
         <div style={{ marginBottom: "16px" }}>
           <p style={{ fontSize: "13px", color: "var(--color-text-secondary)", marginBottom: "8px" }}>

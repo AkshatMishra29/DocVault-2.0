@@ -134,6 +134,43 @@ function ChatTable({ children }) {
   );
 }
 
+// Resilient Error Boundary for in-chat document viewer modal
+class DocViewerErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.warn("[DocViewerErrorBoundary] Preview renderer caught error:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="dv-viewer-modal-state dv-viewer-modal-state--error">
+          <AlertCircle size={28} color="#EF4444" />
+          <span>Inline preview could not be displayed by this browser.</span>
+          {this.props.streamUrl && (
+            <div style={{ marginTop: 14, display: 'flex', gap: 10 }}>
+              <a href={this.props.streamUrl} target="_blank" rel="noopener noreferrer" className="dv-viewer-modal-btn">
+                <ExternalLink size={14} />
+                <span>Open in New Tab</span>
+              </a>
+              <a href={this.props.streamUrl} download={this.props.title || "document"} className="dv-viewer-modal-btn">
+                <Download size={14} />
+                <span>Download</span>
+              </a>
+            </div>
+          )}
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function AskAiPage() {
   const [messages, setMessages] = useState([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
@@ -154,6 +191,7 @@ export default function AskAiPage() {
   // In-Chat Quick Document Viewer Modal
   const [viewerDoc, setViewerDoc] = useState(null);
   const [viewerBlobUrl, setViewerBlobUrl] = useState(null);
+  const [viewerStreamUrl, setViewerStreamUrl] = useState(null);
   const [viewerLoading, setViewerLoading] = useState(false);
   const [viewerError, setViewerError] = useState(null);
 
@@ -415,41 +453,39 @@ export default function AskAiPage() {
     handleSend(prompt);
   };
 
-  // Open Quick Document Viewer in chat
-  const handleOpenDocViewer = async (source) => {
-    if (!source || !source.documentId) return;
-    setViewerDoc(source);
-    setViewerLoading(true);
+  // Open Quick Document Viewer in chat with direct stream URL & fallback
+  const handleOpenDocViewer = (source) => {
+    if (!source) return;
+    const docId = source.documentId || source.assetId || source.id || source._id;
+    if (!docId) return;
+
+    const token = localStorage.getItem("token") || localStorage.getItem("docvault_token") || "";
+    const streamUrl = `${API_BASE_URL}/api/documents/${docId}/download?token=${encodeURIComponent(token)}`;
+
+    setViewerDoc({
+      ...source,
+      documentId: docId,
+      title: String(source.title || "Document Preview"),
+      documentType: String(source.documentType || source.format || "PDF"),
+      category: source.category || "Document",
+      previewRoute: source.previewRoute || `/documents/${docId}`,
+    });
+    setViewerStreamUrl(streamUrl);
+    setViewerLoading(false);
     setViewerError(null);
-    setViewerBlobUrl(null);
-
-    try {
-      const token = localStorage.getItem("token") || localStorage.getItem("docvault_token");
-      const res = await fetch(`${API_BASE_URL}/api/documents/${source.documentId}/download`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (!res.ok) {
-        throw new Error(`Failed to load document (${res.status} ${res.statusText})`);
-      }
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      setViewerBlobUrl(url);
-    } catch (err) {
-      setViewerError(err.message || "Failed to load document file.");
-    } finally {
-      setViewerLoading(false);
-    }
   };
 
   const handleCloseDocViewer = () => {
     if (viewerBlobUrl) {
-      URL.revokeObjectURL(viewerBlobUrl);
+      try {
+        URL.revokeObjectURL(viewerBlobUrl);
+      } catch (_e) {}
     }
     setViewerDoc(null);
+    setViewerStreamUrl(null);
     setViewerBlobUrl(null);
     setViewerError(null);
+    setViewerLoading(false);
   };
 
   // Filter conversations
@@ -770,7 +806,7 @@ export default function AskAiPage() {
                                   {!isAsset && (
                                     <button
                                       type="button"
-                                      onClick={() => handleOpenDocViewer(source)}
+                                      onClick={() => handleOpenDocViewer({ ...source, documentId: docId })}
                                       className="dv-source-btn dv-source-btn--preview"
                                       title="Quick Preview inside Chat"
                                     >
@@ -934,76 +970,115 @@ export default function AskAiPage() {
       <Modal
         isOpen={Boolean(viewerDoc)}
         onClose={handleCloseDocViewer}
-        title={viewerDoc ? `${viewerDoc.title}` : "Document Preview"}
-        size="lg"
+        title={viewerDoc ? String(viewerDoc.title || "Document Preview") : "Document Preview"}
+        maxWidth="920px"
+        className="dv-viewer-modal-dialog"
       >
-        <div className="dv-viewer-modal-content">
-          <div className="dv-viewer-modal-bar">
-            <div className="dv-viewer-modal-badges">
-              <Badge variant="outline" size="sm">{viewerDoc?.category || "Document"}</Badge>
-              {viewerDoc?.pageNumber && <Badge variant="neutral" size="sm">Page {viewerDoc.pageNumber}</Badge>}
-            </div>
-            <div className="dv-viewer-modal-actions">
-              {viewerBlobUrl && (
-                <a
-                  href={viewerBlobUrl}
-                  download={viewerDoc?.title || "document"}
-                  className="dv-viewer-modal-btn"
-                >
-                  <Download size={14} />
-                  <span>Download</span>
-                </a>
-              )}
-              {viewerDoc && (
-                <Link
-                  to={viewerDoc.previewRoute || `/documents/${viewerDoc.documentId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="dv-viewer-modal-btn"
-                >
-                  <ExternalLink size={14} />
-                  <span>Open Full Record</span>
-                </Link>
-              )}
-            </div>
-          </div>
-
-          <div className="dv-viewer-modal-frame-container">
-            {viewerLoading && (
-              <div className="dv-viewer-modal-state">
-                <div className="dv-viewer-spinner" />
-                <span>Loading secure document stream...</span>
+        <DocViewerErrorBoundary streamUrl={viewerStreamUrl} title={viewerDoc?.title}>
+          <div className="dv-viewer-modal-content">
+            <div className="dv-viewer-modal-bar">
+              <div className="dv-viewer-modal-badges">
+                <Badge variant="outline" size="sm">{viewerDoc?.category || "Document"}</Badge>
+                {viewerDoc?.pageNumber && <Badge variant="neutral" size="sm">Page {viewerDoc.pageNumber}</Badge>}
               </div>
-            )}
-
-            {viewerError && (
-              <div className="dv-viewer-modal-state dv-viewer-modal-state--error">
-                <AlertCircle size={24} color="#EF4444" />
-                <span>{viewerError}</span>
-              </div>
-            )}
-
-            {!viewerLoading && !viewerError && viewerBlobUrl && (
-              <>
-                {(viewerDoc?.documentType || "").toLowerCase().includes("pdf") ? (
-                  <iframe
-                    src={viewerBlobUrl}
-                    title={viewerDoc?.title}
-                    className="dv-viewer-modal-iframe"
-                  />
-                ) : (
-                  <div className="dv-viewer-modal-img-wrap">
-                    <img
-                      src={viewerBlobUrl}
-                      alt={viewerDoc?.title}
-                      className="dv-viewer-modal-image"
-                    />
-                  </div>
+              <div className="dv-viewer-modal-actions">
+                {viewerStreamUrl && (
+                  <>
+                    <a
+                      href={viewerStreamUrl}
+                      download={viewerDoc?.title || "document"}
+                      className="dv-viewer-modal-btn"
+                    >
+                      <Download size={14} />
+                      <span>Download</span>
+                    </a>
+                    <a
+                      href={viewerStreamUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="dv-viewer-modal-btn"
+                    >
+                      <ExternalLink size={14} />
+                      <span>Open in Tab</span>
+                    </a>
+                  </>
                 )}
-              </>
-            )}
+                {viewerDoc && (
+                  <Link
+                    to={viewerDoc.previewRoute || `/documents/${viewerDoc.documentId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="dv-viewer-modal-btn"
+                  >
+                    <Eye size={14} />
+                    <span>Full Record</span>
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            <div className="dv-viewer-modal-frame-container">
+              {viewerLoading && (
+                <div className="dv-viewer-modal-state">
+                  <div className="dv-viewer-spinner" />
+                  <span>Loading secure document stream...</span>
+                </div>
+              )}
+
+              {viewerError && (
+                <div className="dv-viewer-modal-state dv-viewer-modal-state--error">
+                  <AlertCircle size={24} color="#EF4444" />
+                  <span>{viewerError}</span>
+                  {viewerStreamUrl && (
+                    <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                      <a href={viewerStreamUrl} target="_blank" rel="noopener noreferrer" className="dv-viewer-modal-btn">
+                        <ExternalLink size={14} />
+                        <span>Open in New Tab</span>
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!viewerLoading && !viewerError && viewerStreamUrl && (
+                <>
+                  {(viewerDoc?.documentType || "").toLowerCase().includes("pdf") ? (
+                    <object
+                      data={viewerStreamUrl}
+                      type="application/pdf"
+                      className="dv-viewer-modal-iframe"
+                      aria-label={viewerDoc?.title || "Document PDF"}
+                    >
+                      <div className="dv-viewer-modal-state">
+                        <FileText size={36} color="#64748B" />
+                        <span>Embedded preview not available on this browser.</span>
+                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                          <a href={viewerStreamUrl} target="_blank" rel="noopener noreferrer" className="dv-viewer-modal-btn">
+                            <ExternalLink size={14} />
+                            <span>Open in New Tab</span>
+                          </a>
+                          <a href={viewerStreamUrl} download={viewerDoc?.title || "document.pdf"} className="dv-viewer-modal-btn">
+                            <Download size={14} />
+                            <span>Download</span>
+                          </a>
+                        </div>
+                      </div>
+                    </object>
+                  ) : (
+                    <div className="dv-viewer-modal-img-wrap">
+                      <img
+                        src={viewerStreamUrl}
+                        alt={viewerDoc?.title || "Document Image"}
+                        className="dv-viewer-modal-image"
+                        onError={() => setViewerError("Unable to display document image. Please download or view full record.")}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        </DocViewerErrorBoundary>
       </Modal>
     </div>
   );

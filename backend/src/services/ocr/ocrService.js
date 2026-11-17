@@ -1,16 +1,36 @@
 import { PDFParse } from 'pdf-parse';
+import { convert } from 'pdf-img-convert';
 import Tesseract from 'tesseract.js';
 import sharp from 'sharp';
 
 /**
  * OCR Service for multi-format text extraction (PDFs, JPGs, PNGs)
- * Implements privacy-first local OCR with preprocessing via Sharp.
+ * Implements privacy-first local OCR with preprocessing via Sharp and multi-page preservation.
  */
 
+/**
+ * Extracts text from all pages of a digital PDF, annotating page boundaries
+ * (e.g. --- Page 1 ---, --- Page 2 ---) to preserve structured grounding for AI Copilot.
+ */
 export async function extractTextFromPDF(buffer) {
   try {
     const parser = new PDFParse({ data: buffer });
     const result = await parser.getText();
+
+    if (result && Array.isArray(result.pages) && result.pages.length > 1) {
+      const pageSections = result.pages
+        .map(p => {
+          const pageNum = p.num || 1;
+          const text = (p.text || '').trim();
+          return text ? `--- Page ${pageNum} ---\n${text}` : '';
+        })
+        .filter(Boolean);
+
+      if (pageSections.length > 0) {
+        return pageSections.join('\n\n');
+      }
+    }
+
     if (result && typeof result.text === 'string') {
       return result.text.trim();
     }
@@ -38,34 +58,18 @@ export async function extractTextFromImage(buffer) {
   }
 }
 
-export async function convertPdfToImages(buffer, maxPages = 2, scale = 1.5) {
+/**
+ * Rasterize PDF pages into PNG image buffers using pdf-img-convert.
+ * Supports multi-page document inspection and OCR fallback.
+ */
+export async function convertPdfToImages(buffer, maxPages = 5, scale = 1.5) {
   try {
-    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-    const { createCanvas } = await import('canvas');
-
-    const loadingTask = pdfjsLib.getDocument({
-      data: new Uint8Array(buffer),
-      disableFontFace: true,
-      useSystemFonts: true,
-    });
-    const doc = await loadingTask.promise;
-    const numPages = Math.min(doc.numPages, maxPages);
-    const buffers = [];
-
-    for (let i = 1; i <= numPages; i++) {
-      const page = await doc.getPage(i);
-      const viewport = page.getViewport({ scale });
-      const canvas = createCanvas(viewport.width, viewport.height);
-      const ctx = canvas.getContext('2d');
-
-      // White solid background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, viewport.width, viewport.height);
-
-      await page.render({ canvasContext: ctx, viewport }).promise;
-      buffers.push(canvas.toBuffer('image/png'));
+    const pageNumbers = Array.from({ length: maxPages }, (_, i) => i + 1);
+    const converted = await convert(buffer, { page_numbers: pageNumbers, scale });
+    if (!Array.isArray(converted) || converted.length === 0) {
+      return null;
     }
-    return buffers;
+    return converted.map(pageData => Buffer.from(pageData));
   } catch (err) {
     console.warn('[OCR Service] PDF to image conversion error:', err.message);
     return null;
