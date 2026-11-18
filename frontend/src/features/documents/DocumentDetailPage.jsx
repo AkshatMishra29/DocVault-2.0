@@ -4,7 +4,8 @@ import { apiRequest, API_BASE_URL } from "../../services/api";
 import { 
   ArrowLeft, Download, Trash2, Calendar, FileText, CheckCircle2,
   ShieldCheck, AlertTriangle, ExternalLink, Link2, Sparkles,
-  Lock, Edit3, Check, X, Shield, Cpu, Tag, Activity, FileCheck2, Clock, Share2
+  Lock, Edit3, Check, X, Shield, Cpu, Tag, Activity, FileCheck2, Clock, Share2,
+  Eye
 } from "lucide-react";
 import ShareModal from "../sharing/ShareModal";
 
@@ -120,6 +121,7 @@ export default function DocumentDetailPage() {
   const [verifyMessage, setVerifyMessage] = useState("");
   const [linkMessage, setLinkMessage] = useState("");
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   useEffect(() => {
     async function loadDocAndAssets() {
@@ -277,6 +279,14 @@ export default function DocumentDetailPage() {
                 onClick={() => setShowShareModal(true)}
               >
                 Share / Access
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={Eye}
+                onClick={() => setShowPreviewModal(true)}
+              >
+                Preview Original
               </Button>
               <Link to={`/ask-ai?docId=${doc._id}`}>
                 <Button variant="outline" size="sm" icon={Sparkles}>
@@ -759,6 +769,86 @@ export default function DocumentDetailPage() {
             Save Correction
           </Button>
         </div>
+      </Modal>
+
+      {/* Original Document Preview Modal */}
+      <Modal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        title={doc ? String(doc.title || "Document Preview") : "Document Preview"}
+        maxWidth="940px"
+        className="dv-preview-modal-dialog"
+      >
+        {doc && (
+          <div className="dv-preview-modal-content">
+            <div className="dv-preview-modal-bar">
+              <div className="dv-preview-modal-badges">
+                <Badge variant="primary" size="sm">{doc.category || "General"}</Badge>
+                <Badge variant="outline" size="sm">{doc.format || "PDF"}</Badge>
+                {doc.originalName && (
+                  <span className="dv-preview-modal-filename" title={doc.originalName}>
+                    <code>{doc.originalName}</code>
+                  </span>
+                )}
+              </div>
+              <div className="dv-preview-modal-actions">
+                <a
+                  href={downloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="dv-preview-modal-btn"
+                  title="Open in new browser tab"
+                >
+                  <ExternalLink size={14} />
+                  <span>Open in Tab</span>
+                </a>
+                <a
+                  href={downloadUrl}
+                  download={doc.originalName || doc.title || "document"}
+                  className="dv-preview-modal-btn"
+                  title="Download file"
+                >
+                  <Download size={14} />
+                  <span>Download</span>
+                </a>
+              </div>
+            </div>
+
+            <div className="dv-preview-modal-frame-container">
+              {(doc.format || "").toUpperCase() === "PDF" || (doc.mimetype || "").includes("pdf") ? (
+                <object
+                  data={downloadUrl}
+                  type="application/pdf"
+                  className="dv-preview-modal-iframe"
+                  aria-label={doc.title || "Original Document PDF"}
+                >
+                  <div className="dv-preview-modal-state">
+                    <FileText size={40} color="#64748B" />
+                    <span>Embedded PDF preview not supported directly by this browser.</span>
+                    <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                      <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="dv-preview-modal-btn">
+                        <ExternalLink size={14} />
+                        <span>Open PDF in Tab</span>
+                      </a>
+                      <a href={downloadUrl} download={doc.title || "document.pdf"} className="dv-preview-modal-btn">
+                        <Download size={14} />
+                        <span>Download PDF</span>
+                      </a>
+                    </div>
+                  </div>
+                </object>
+              ) : (
+                <div className="dv-preview-modal-img-wrap">
+                  <img
+                    src={downloadUrl}
+                    alt={doc.title || "Document Preview"}
+                    className="dv-preview-modal-image"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Delete Confirmation Dialog */}

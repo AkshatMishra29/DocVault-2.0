@@ -439,9 +439,9 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
     return directHighlight + record;
   }
 
-  // B. Answer from Document
-  if (contextDocs.length > 0) {
-    const primaryDoc = bestDoc || contextDocs[0];
+  // B. Answer from Document (Only if there is a verified relevance score match)
+  if (bestDoc && bestDocScore > 0) {
+    const primaryDoc = bestDoc;
     const text = primaryDoc.extractedText || '';
     const keyDetails = primaryDoc.keyDetails || {};
 
@@ -539,11 +539,24 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
     return directAnswer.trim();
   }
 
-  // C. Fallback to Asset if any exists
-  if (contextAssets.length > 0) {
-    const asset = contextAssets[0];
-    return `### Tracked Asset Details\n• **Asset:** ${asset.name} (${asset.category || 'General'})\n• **Estimated Value:** ${asset.estimatedValue || 'N/A'}\n• **Status:** ${asset.status || 'Active'}\n• **Warranty Expiry:** ${asset.warrantyExpiry || 'N/A'}`;
+  // C. Overview Query Support
+  const isOverviewQuery = /(?:all|every|overview|summarize|summary|inventory|list|what\s*(?:do\s*i\s*have|are\s*my\s*documents|documents\s*do\s*i\s*have|assets\s*do\s*i\s*have|is\s*in\s*my\s*vault)|my\s*vault)/i.test(lowerQ);
+  if (isOverviewQuery && (contextDocs.length > 0 || contextAssets.length > 0)) {
+    let summary = `### Vault Summary\n`;
+    if (contextAssets.length > 0) {
+      summary += `\n**Tracked Assets & Flashcards:**\n`;
+      contextAssets.forEach(a => {
+        summary += `• **${a.name}** (${a.category || 'General'})\n`;
+      });
+    }
+    if (contextDocs.length > 0) {
+      summary += `\n**Verified Stored Documents:**\n`;
+      contextDocs.forEach(d => {
+        summary += `• **${d.title}** (${d.category || 'Document'})\n`;
+      });
+    }
+    return summary.trim();
   }
 
-  return "I could not find matching records in your currently uploaded documents or tracked assets.";
+  return 'I could not find matching records in your currently uploaded documents or tracked assets.';
 }

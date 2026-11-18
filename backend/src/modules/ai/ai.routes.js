@@ -155,6 +155,10 @@ async function handleAiQuery(req, res) {
         return res.status(404).json({ success: false, error: 'Document not found' });
       }
 
+      if (doc.status === 'REJECTED' || doc.reviewStatus === 'rejected' || doc.reject_reason) {
+        return res.status(400).json({ success: false, error: 'Cannot query a document that was rejected during validation.' });
+      }
+
       // Auto-backfill aiConsent for user-owned ai_enabled documents if missing
       if ((doc.aiPolicy === 'ai_enabled' || doc.privacyMode === 'PROCESSABLE') && (!doc.aiConsent || !doc.aiConsent.grantedAt)) {
         doc.aiConsent = {
@@ -172,6 +176,7 @@ async function handleAiQuery(req, res) {
       const accessibleDocIds = await DocumentAccessControlService.getAccessibleDocumentIds(req.user.userId, 'view');
 
       // Filter strictly by aiPolicy === 'ai_enabled' (or legacy PROCESSABLE) and sensitiveFlag !== true
+      // Exclude REJECTED, non-documents, or failed processing documents
       const candidates = await Document.find({
         _id: { $in: accessibleDocIds },
         $or: [
@@ -179,6 +184,10 @@ async function handleAiQuery(req, res) {
           { privacyMode: 'PROCESSABLE' },
         ],
         sensitiveFlag: { $ne: true },
+        status: { $nin: ['REJECTED', 'failed', 'rejected'] },
+        processingStatus: { $nin: ['failed', 'needs_retake'] },
+        reviewStatus: { $ne: 'rejected' },
+        reject_reason: null,
       }).select('-fileData');
 
       // Auto-backfill aiConsent for user-owned ai_enabled documents if missing
@@ -192,8 +201,14 @@ async function handleAiQuery(req, res) {
         }
       }
 
-      // Double-check with in-memory privacy gate
-      const validCandidates = candidates.filter(d => isAiAllowed(d));
+      // Double-check with in-memory privacy gate and non-document filter
+      const validCandidates = candidates.filter(d => {
+        if (!isAiAllowed(d)) return false;
+        if (d.status === 'REJECTED' || d.status === 'failed' || d.reviewStatus === 'rejected') return false;
+        if (d.reject_reason) return false;
+        if (/synthetic landscape|non-document/i.test(d.title || '') || /synthetic landscape/i.test(d.extractedText || '')) return false;
+        return true;
+      });
 
       if (validCandidates.length > 0) {
         // Dense Vector Embeddings Generation

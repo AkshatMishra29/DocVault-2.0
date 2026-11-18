@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { apiRequest } from "../../services/api";
+import { apiRequest, API_BASE_URL } from "../../services/api";
 import { 
   FileText, Search, Plus, Filter, ArrowUpDown, Calendar,
   LayoutGrid, List, ChevronRight, Download, Star, ShieldCheck,
-  AlertCircle, X, Users, Share2, CheckSquare, CheckCircle2, ArrowRight
+  AlertCircle, X, Users, Share2, CheckSquare, CheckCircle2, ArrowRight,
+  Eye, ExternalLink
 } from "lucide-react";
 import { sharingService } from "../../services/sharing.service";
 
@@ -98,6 +99,35 @@ export default function DocumentsPage() {
   const [sortBy, setSortBy] = useState("newest");   // 'newest' | 'oldest' | 'title' | 'expiry'
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [selectedChecklistId, setSelectedChecklistId] = useState("home_loan");
+
+  // Original Document Quick Preview Modal State
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [previewStreamUrl, setPreviewStreamUrl] = useState(null);
+  const [previewError, setPreviewError] = useState(null);
+
+  const handleOpenPreview = (e, targetDocument) => {
+    if (e) e.stopPropagation();
+    if (!targetDocument) return;
+    const token = localStorage.getItem("token") || localStorage.getItem("docvault_token") || "";
+    const docId = targetDocument._id || targetDocument.documentId;
+    const streamUrl = `${API_BASE_URL}/api/documents/${docId}/download?token=${encodeURIComponent(token)}`;
+    setPreviewDoc({
+      ...targetDocument,
+      _id: docId,
+      title: targetDocument.title || "Document Preview",
+      category: targetDocument.category || "General",
+      format: targetDocument.format || "PDF",
+      originalName: targetDocument.originalName || targetDocument.title,
+    });
+    setPreviewStreamUrl(streamUrl);
+    setPreviewError(null);
+  };
+
+  const handleClosePreview = () => {
+    setPreviewDoc(null);
+    setPreviewStreamUrl(null);
+    setPreviewError(null);
+  };
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -373,12 +403,23 @@ export default function DocumentsPage() {
                   </div>
 
                   <div className="dv-doc-card__footer">
-                    <span className="dv-doc-card__meta-tag">
-                      {item.permissions?.download ? 'View + Download' : 'View Only'}
-                    </span>
-                    <span className="dv-doc-card__filesize">
-                      {item.expiresAt ? `Expires ${new Date(item.expiresAt).toLocaleDateString()}` : 'Continuous'}
-                    </span>
+                    <div className="dv-doc-card__meta-group">
+                      <span className="dv-doc-card__meta-tag">
+                        {item.permissions?.download ? 'View + Download' : 'View Only'}
+                      </span>
+                      <span className="dv-doc-card__filesize">
+                        {item.expiresAt ? `Expires ${new Date(item.expiresAt).toLocaleDateString()}` : 'Continuous'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="dv-doc-preview-pill"
+                      onClick={(e) => handleOpenPreview(e, { ...item, _id: item.documentId })}
+                      title="Preview original document"
+                    >
+                      <Eye size={12} />
+                      <span>Preview</span>
+                    </button>
                   </div>
                 </Card>
               ))}
@@ -466,12 +507,23 @@ export default function DocumentsPage() {
                 )}
 
                 <div className="dv-doc-card__footer">
-                  <span className="dv-doc-card__meta-tag">
-                    {doc.category || "General"} • {doc.format || "PDF"}
-                  </span>
-                  <span className="dv-doc-card__filesize">
-                    {doc.fileSizeFormatted || "Stored"}
-                  </span>
+                  <div className="dv-doc-card__meta-group">
+                    <span className="dv-doc-card__meta-tag">
+                      {doc.category || "General"} • {doc.format || "PDF"}
+                    </span>
+                    <span className="dv-doc-card__filesize">
+                      {doc.fileSizeFormatted || "Stored"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="dv-doc-preview-pill"
+                    onClick={(e) => handleOpenPreview(e, doc)}
+                    title="Preview original document"
+                  >
+                    <Eye size={12} />
+                    <span>Preview</span>
+                  </button>
                 </div>
               </Card>
             ))}
@@ -543,13 +595,24 @@ export default function DocumentsPage() {
                       </span>
                     </td>
                     <td style={{ textAlign: "right" }}>
-                      <Link 
-                        to={`/documents/${doc._id}`} 
-                        onClick={(e) => e.stopPropagation()}
-                        className="dv-table-inspect-link"
-                      >
-                        Inspect <ChevronRight size={14} />
-                      </Link>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", justifyContent: "flex-end" }}>
+                        <button
+                          type="button"
+                          className="dv-table-preview-btn"
+                          onClick={(e) => handleOpenPreview(e, doc)}
+                          title="Preview original document"
+                        >
+                          <Eye size={12} />
+                          <span>Preview</span>
+                        </button>
+                        <Link 
+                          to={`/documents/${doc._id}`} 
+                          onClick={(e) => e.stopPropagation()}
+                          className="dv-table-inspect-link"
+                        >
+                          Inspect <ChevronRight size={14} />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -558,6 +621,109 @@ export default function DocumentsPage() {
           </div>
         )}
       </div>
+
+      {/* =========================================================================
+          ORIGINAL DOCUMENT PREVIEW MODAL
+          ========================================================================= */}
+      <Modal
+        isOpen={Boolean(previewDoc)}
+        onClose={handleClosePreview}
+        title={previewDoc ? String(previewDoc.title || "Document Preview") : "Document Preview"}
+        maxWidth="940px"
+        className="dv-preview-modal-dialog"
+      >
+        {previewDoc && (
+          <div className="dv-preview-modal-content">
+            <div className="dv-preview-modal-bar">
+              <div className="dv-preview-modal-badges">
+                <Badge variant="primary" size="sm">{previewDoc.category || "General"}</Badge>
+                <Badge variant="outline" size="sm">{previewDoc.format || "PDF"}</Badge>
+                {previewDoc.originalName && (
+                  <span className="dv-preview-modal-filename" title={previewDoc.originalName}>
+                    <code>{previewDoc.originalName}</code>
+                  </span>
+                )}
+              </div>
+              <div className="dv-preview-modal-actions">
+                {previewStreamUrl && (
+                  <>
+                    <a
+                      href={previewStreamUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="dv-preview-modal-btn"
+                      title="Open in new browser tab"
+                    >
+                      <ExternalLink size={14} />
+                      <span>Open in Tab</span>
+                    </a>
+                    <a
+                      href={previewStreamUrl}
+                      download={previewDoc.originalName || previewDoc.title || "document"}
+                      className="dv-preview-modal-btn"
+                      title="Download file"
+                    >
+                      <Download size={14} />
+                      <span>Download</span>
+                    </a>
+                  </>
+                )}
+                <Link
+                  to={`/documents/${previewDoc._id}`}
+                  className="dv-preview-modal-btn dv-preview-modal-btn--highlight"
+                  title="View full extracted metadata and facts"
+                  onClick={handleClosePreview}
+                >
+                  <FileText size={14} />
+                  <span>Inspect Details</span>
+                </Link>
+              </div>
+            </div>
+
+            <div className="dv-preview-modal-frame-container">
+              {previewStreamUrl ? (
+                (previewDoc.format || "").toUpperCase() === "PDF" || (previewDoc.mimetype || "").includes("pdf") ? (
+                  <object
+                    data={previewStreamUrl}
+                    type="application/pdf"
+                    className="dv-preview-modal-iframe"
+                    aria-label={previewDoc.title || "Original Document PDF"}
+                  >
+                    <div className="dv-preview-modal-state">
+                      <FileText size={40} color="#64748B" />
+                      <span>Embedded PDF preview not supported directly by this browser.</span>
+                      <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                        <a href={previewStreamUrl} target="_blank" rel="noopener noreferrer" className="dv-preview-modal-btn">
+                          <ExternalLink size={14} />
+                          <span>Open PDF in Tab</span>
+                        </a>
+                        <a href={previewStreamUrl} download={previewDoc.title || "document.pdf"} className="dv-preview-modal-btn">
+                          <Download size={14} />
+                          <span>Download PDF</span>
+                        </a>
+                      </div>
+                    </div>
+                  </object>
+                ) : (
+                  <div className="dv-preview-modal-img-wrap">
+                    <img
+                      src={previewStreamUrl}
+                      alt={previewDoc.title || "Document Preview"}
+                      className="dv-preview-modal-image"
+                      onError={() => setPreviewError("Failed to render document image preview.")}
+                    />
+                  </div>
+                )
+              ) : (
+                <div className="dv-preview-modal-state">
+                  <AlertCircle size={28} color="#EF4444" />
+                  <span>Preview stream unavailable.</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Life Event Checklists Modal (Part C) */}
       <Modal
