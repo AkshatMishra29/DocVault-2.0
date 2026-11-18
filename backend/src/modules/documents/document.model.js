@@ -120,8 +120,14 @@ const DocumentSchema = new mongoose.Schema({
   // Validation Service Fields
   doc_type: { 
     type: String, 
-    enum: ['printed', 'handwritten', 'mixed', 'scanned', 'id_card', 'legal_document', 'invoice', 'receipt', 'bill', 'certificate', 'insurance_policy', 'bank_statement', 'other'],
-    default: 'printed',
+    enum: [
+      // Document family types (returned by classifyDocumentType)
+      'invoice', 'receipt', 'bill', 'id_card', 'certificate', 'insurance_policy',
+      'bank_statement', 'legal_document', 'vehicle_document',
+      // Generic / quality-based types
+      'printed', 'handwritten', 'mixed', 'scanned', 'other'
+    ],
+    default: 'other',
     index: true 
   },
   score: { type: Number, default: null },

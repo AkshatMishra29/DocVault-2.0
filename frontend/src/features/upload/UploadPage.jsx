@@ -360,11 +360,21 @@ export default function UploadPage() {
                 </div>
               )}
 
-              {/* Privacy Mode Option Selector */}
+              {/* Privacy Mode Option Selector — locked during upload */}
               <div className="dv-privacy-selector-box">
-                <span className="dv-privacy-selector-title">Processing & Privacy Preferences</span>
-                <div className="dv-privacy-options">
-                  <label 
+                <span className="dv-privacy-selector-title">
+                  Processing &amp; Privacy Preferences
+                  {uploading && (
+                    <span style={{ marginLeft: 10, fontSize: "11px", color: "var(--color-text-secondary)", fontWeight: 500 }}>
+                      🔒 Locked during upload
+                    </span>
+                  )}
+                </span>
+                <div
+                  className="dv-privacy-options"
+                  style={uploading ? { opacity: 0.55, pointerEvents: "none", userSelect: "none" } : {}}
+                >
+                  <label
                     className={`dv-privacy-option ${privacyMode === "PROCESSABLE" ? "dv-privacy-option--active" : ""}`}
                   >
                     <input
@@ -372,7 +382,8 @@ export default function UploadPage() {
                       name="privacyConsent"
                       value="PROCESSABLE"
                       checked={privacyMode === "PROCESSABLE"}
-                      onChange={() => setPrivacyMode("PROCESSABLE")}
+                      onChange={() => !uploading && setPrivacyMode("PROCESSABLE")}
+                      disabled={uploading}
                     />
                     <div className="dv-popt-text">
                       <div className="dv-popt-header">
@@ -383,7 +394,7 @@ export default function UploadPage() {
                     </div>
                   </label>
 
-                  <label 
+                  <label
                     className={`dv-privacy-option ${privacyMode === "STORAGE_ONLY" ? "dv-privacy-option--active" : ""}`}
                   >
                     <input
@@ -391,7 +402,8 @@ export default function UploadPage() {
                       name="privacyConsent"
                       value="STORAGE_ONLY"
                       checked={privacyMode === "STORAGE_ONLY"}
-                      onChange={() => setPrivacyMode("STORAGE_ONLY")}
+                      onChange={() => !uploading && setPrivacyMode("STORAGE_ONLY")}
+                      disabled={uploading}
                     />
                     <div className="dv-popt-text">
                       <div className="dv-popt-header">

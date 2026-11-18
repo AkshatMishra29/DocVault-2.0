@@ -578,7 +578,7 @@ export function classifyDocumentType(text = '', filename = '') {
     return 'vehicle_document';
   }
 
-  return 'other_document';
+  return 'other';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -629,10 +629,7 @@ export async function validateDocumentPipeline(buffer, options = {}) {
     (readability.wordCount >= 4 || readability.lineCount >= 2);
 
   // Rule 1: Non-Document Rejection (Problem A)
-  // Even if OCR found isolated letters on a road sign or shop, if the visual
-  // classifier determined it is a natural landscape, building, or casual photo, REJECT IT.
   if (!docClassification.isDocument && !isDocumentWithPhoto) {
-    // If it has isolated text (like a road sign "STOP" or "ROUTE 66"), it is incidental text!
     return {
       status: 'rejected',
       reason_code: 'NON_DOCUMENT_IMAGE',
@@ -642,6 +639,30 @@ export async function validateDocumentPipeline(buffer, options = {}) {
       document_type: null,
       image_quality: quality,
       text_readability: readability,
+      model_version: '2.0.0-hybrid',
+    };
+  }
+
+  // Rule 1b: Handwritten Document Detection
+  // Tesseract struggles with cursive — low OCR confidence (20-55%) with some words = handwritten.
+  const isHandwritten = docClassification.isDocument &&
+    readability.wordCount >= 2 &&
+    readability.meanConfidence < 60 &&
+    readability.meanConfidence > 10 &&
+    quality.contrast > 40;
+
+  if (isHandwritten) {
+    return {
+      status: 'accepted',
+      reason_code: null,
+      message: 'Handwritten document detected and accepted.',
+      suggestion: null,
+      document_classification: 'DOCUMENT',
+      document_confidence: 0.80,
+      document_type: 'handwritten',
+      image_quality: quality,
+      text_readability: readability,
+      extractedText: readability.extractedText,
       model_version: '2.0.0-hybrid',
     };
   }
@@ -665,7 +686,24 @@ export async function validateDocumentPipeline(buffer, options = {}) {
   }
 
   // Rule 3: Genuine Document with Blurry Text (Problem B)
+  // If blurry but OCR still found meaningful content, accept with lower confidence.
   if (readability.isUnreadablyBlurry) {
+    if (readability.wordCount >= 5 && readability.meanConfidence >= 40) {
+      const docTypeBlurry = classifyDocumentType(readability.extractedText, options.originalname || '');
+      return {
+        status: 'accepted',
+        reason_code: null,
+        message: 'Document accepted with moderate clarity.',
+        suggestion: null,
+        document_classification: 'DOCUMENT',
+        document_confidence: 0.78,
+        document_type: docTypeBlurry,
+        image_quality: quality,
+        text_readability: readability,
+        extractedText: readability.extractedText,
+        model_version: '2.0.0-hybrid',
+      };
+    }
     return {
       status: 'review',
       reason_code: 'IMAGE_BLURRY',
@@ -689,7 +727,7 @@ export async function validateDocumentPipeline(buffer, options = {}) {
       suggestion: 'Ensure the document text is clearly visible and not cut off or washed out.',
       document_classification: 'DOCUMENT',
       document_confidence: 0.75,
-      document_type: 'other_document',
+      document_type: 'other',
       image_quality: quality,
       text_readability: readability,
       model_version: '2.0.0-hybrid',

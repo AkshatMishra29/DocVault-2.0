@@ -305,6 +305,15 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     const category = sensitiveCheck.isSensitive ? 'Identity' : (inferredCategory || 'Other');
 
     // 6. Persist Document Record with Validation Audit Data
+    // Sanitize doc_type: map any unknown value to 'other' so Mongoose enum never rejects it.
+    const VALID_DOC_TYPES = new Set([
+      'invoice', 'receipt', 'bill', 'id_card', 'certificate', 'insurance_policy',
+      'bank_statement', 'legal_document', 'vehicle_document',
+      'printed', 'handwritten', 'mixed', 'scanned', 'other',
+    ]);
+    const rawDocType = validationResult?.doc_type || validationResult?.document_type || 'other';
+    const safeDocType = VALID_DOC_TYPES.has(rawDocType) ? rawDocType : 'other';
+
     const docData = {
       userId: req.user.userId,
       title: (req.body.title || originalname).replace(/\.[^/.]+$/, ''),
@@ -336,7 +345,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       sha256,
       pageCount,
       pipelineVersion: config.pipeline?.version || '1.0.0',
-      doc_type: validationResult?.doc_type || 'printed',
+      doc_type: safeDocType,
       score: validationResult?.score !== undefined ? validationResult.score : 0.90,
       reject_reason: null,
       validated_at: new Date(),
