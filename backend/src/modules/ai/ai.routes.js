@@ -80,6 +80,129 @@ function computeAssetScore(asset, queryTokens) {
 }
 
 /**
+ * Production-Grade Source & Flashcard Resolver:
+ * Disambiguates whether the query/answer was resolved from an Asset Flashcard,
+ * a Stored Document, or an Overview, and eliminates cross-contamination.
+ */
+export function resolveQuerySourcesAndEntities({
+  answer = '',
+  question = '',
+  documents = [],
+  relevantAssets = [],
+  matchingAssets = [],
+  scoredAssets = [],
+  isOverviewQuery = false,
+}) {
+  const isUnanswerable = /I cannot find that information in your currently uploaded documents/i.test(answer) ||
+                         /I could not find matching records in your currently uploaded documents/i.test(answer) ||
+                         /I could not find matching records/i.test(answer);
+
+  const lowerAnswer = (answer || '').toLowerCase();
+  const lowerQ = (question || '').toLowerCase();
+
+  // Check which assets were directly cited in the answer or specifically targeted in query
+  const citedAssets = isUnanswerable ? [] : relevantAssets.filter(a => {
+    const aName = (a.name || '').toLowerCase();
+    return aName && (lowerAnswer.includes(aName) || lowerQ.includes(aName));
+  });
+
+  // Check which documents were directly cited in the answer or specifically targeted in query
+  const citedDocs = isUnanswerable ? [] : documents.filter(d => {
+    const dTitle = (d.title || '').toLowerCase();
+    return dTitle && (lowerAnswer.includes(dTitle) || lowerQ.includes(dTitle));
+  });
+
+  let finalAssets = [];
+  let finalDocs = [];
+
+  if (isUnanswerable) {
+    finalAssets = [];
+    finalDocs = [];
+  } else if (citedAssets.length > 0) {
+    // Query answered from Asset Flashcard(s)
+    finalAssets = citedAssets;
+    // Only attach documents if they are explicitly linked to this asset OR explicitly cited in answer
+    finalDocs = documents.filter(d => {
+      const isLinked = citedAssets.some(a => (a.linkedDocumentIds || []).map(String).includes(String(d._id)));
+      const isExplicitlyCited = d.title && lowerAnswer.includes(d.title.toLowerCase());
+      return isLinked || isExplicitlyCited;
+    });
+  } else if (citedDocs.length > 0) {
+    // Query answered from Document(s)
+    finalDocs = citedDocs;
+    // Only attach assets if they are explicitly linked or cited
+    finalAssets = relevantAssets.filter(a => {
+      const isLinked = citedDocs.some(d => (a.linkedDocumentIds || []).map(String).includes(String(d._id)));
+      const isExplicitlyCited = a.name && lowerAnswer.includes(a.name.toLowerCase());
+      return isLinked || isExplicitlyCited;
+    });
+  } else if (isOverviewQuery) {
+    finalAssets = relevantAssets.slice(0, 3);
+    finalDocs = documents.slice(0, 3);
+  } else {
+    // Single item resolution fallback where name was not explicitly echoed in answer text
+    const topAssetScore = scoredAssets[0]?.score || 0;
+    if (topAssetScore >= 6 && matchingAssets.length > 0) {
+      finalAssets = matchingAssets.slice(0, 1);
+      finalDocs = documents.filter(d => (matchingAssets[0].linkedDocumentIds || []).map(String).includes(String(d._id)));
+    } else if (documents.length > 0) {
+      finalDocs = documents.slice(0, 1);
+      finalAssets = [];
+    } else if (matchingAssets.length > 0) {
+      finalAssets = matchingAssets.slice(0, 1);
+      finalDocs = [];
+    }
+  }
+
+  const assetSources = isUnanswerable ? [] : finalAssets.map(a => ({
+    type: 'asset',
+    documentId: a._id,
+    assetId: a._id,
+    title: `${a.name} (Flashcard)`,
+    category: `Asset • ${a.category || 'General'}`,
+    documentType: 'flashcard',
+    previewRoute: `/assets/${a._id}`,
+    downloadUrl: null,
+  }));
+
+  const pageMatch = answer ? answer.match(/\(Page\s*(\d+)\)/i) : null;
+  const citedPage = pageMatch ? parseInt(pageMatch[1], 10) : null;
+
+  const docSources = isUnanswerable ? [] : finalDocs.map(d => ({
+    type: 'document',
+    documentId: d._id,
+    title: d.title,
+    category: d.category || 'Document',
+    documentType: d.format || (d.mimetype?.includes('pdf') ? 'pdf' : (d.mimetype?.includes('image') ? 'image' : 'document')),
+    pageNumber: citedPage || d.pageCount || 1,
+    previewRoute: `/documents/${d._id}`,
+    downloadUrl: `/api/documents/${d._id}/download`,
+  }));
+
+  const sources = [...assetSources, ...docSources];
+  const referencedDocIds = isUnanswerable ? [] : finalDocs.map(d => d._id);
+  const referencedDocs = isUnanswerable ? [] : finalDocs.map(d => ({
+    id: d._id,
+    title: d.title,
+    category: d.category
+  }));
+  const referencedAssets = isUnanswerable ? [] : finalAssets.map(a => ({
+    id: a._id,
+    name: a.name,
+    category: a.category
+  }));
+
+  return {
+    sources,
+    referencedDocIds,
+    referencedDocs,
+    referencedAssets,
+    finalAssets,
+    finalDocs,
+  };
+}
+
+/**
  * Core AI Query Handler
  * Enforces assertAiAllowed before any document context is passed to Groq or Hugging Face
  * Implements Smart Hybrid Retrieval (Dense Vector + Sparse Lexical + Reciprocal Rank Fusion)
@@ -269,9 +392,13 @@ async function handleAiQuery(req, res) {
           }
 
           // Strict Relevance Criterion:
-          // A document is only relevant if it has lexical overlap, high semantic similarity,
-          // is linked to a matching asset, or the query is an overview query.
-          const isRelevant = isLinkedToAsset || lexScore > 0 || denseScore >= 0.48 || isOverviewQuery;
+          // If query matched an asset strongly, an unlinked document is only relevant if it has lexical overlap.
+          // Dense semantic similarity without lexical overlap requires high confidence (>= 0.65) and no asset conflict.
+          const hasAssetTarget = matchingAssets.length > 0 && (scoredAssets[0]?.score || 0) >= 4;
+          const isRelevant = isLinkedToAsset || 
+                             lexScore > 0 || 
+                             (!hasAssetTarget && denseScore >= 0.65) || 
+                             isOverviewQuery;
 
           return { doc, rrf, isRelevant };
         });
@@ -338,53 +465,20 @@ async function handleAiQuery(req, res) {
     const answer = typeof rawAnswer === 'string' ? rawAnswer : (rawAnswer?.answer || JSON.stringify(rawAnswer));
 
     // Construct structured sources for direct document forwarding and deep linking
-    const isUnanswerable = /I cannot find that information in your currently uploaded documents/i.test(answer) ||
-                           /I could not find matching records in your currently uploaded documents/i.test(answer);
-    
-    // Prioritize only the specific asset(s) and document(s) directly cited or answered
-    const relevantAssetCandidates = relevantAssets.filter(a => answer.toLowerCase().includes(a.name.toLowerCase()));
-    const finalAssets = relevantAssetCandidates.length > 0 ? relevantAssetCandidates : relevantAssets.slice(0, 2);
-
-    const assetSources = isUnanswerable ? [] : finalAssets.map(a => ({
-      type: 'asset',
-      documentId: a._id,
-      assetId: a._id,
-      title: `${a.name} (Flashcard)`,
-      category: `Asset • ${a.category || 'General'}`,
-      documentType: 'flashcard',
-      previewRoute: `/assets/${a._id}`,
-      downloadUrl: null,
-    }));
-
-    const relevantDocCandidates = documents.filter(d => answer.toLowerCase().includes(d.title.toLowerCase()));
-    const finalDocs = relevantDocCandidates.length > 0 ? relevantDocCandidates : documents.slice(0, 2);
-
-    const pageMatch = answer.match(/\(Page\s*(\d+)\)/i);
-    const citedPage = pageMatch ? parseInt(pageMatch[1], 10) : null;
-
-    const docSources = isUnanswerable ? [] : finalDocs.map(d => ({
-      type: 'document',
-      documentId: d._id,
-      title: d.title,
-      category: d.category || 'Document',
-      documentType: d.format || (d.mimetype?.includes('pdf') ? 'pdf' : (d.mimetype?.includes('image') ? 'image' : 'document')),
-      pageNumber: citedPage || d.pageCount || 1,
-      previewRoute: `/documents/${d._id}`,
-      downloadUrl: `/api/documents/${d._id}/download`,
-    }));
-
-    const sources = [...assetSources, ...docSources];
-    const referencedDocIds = isUnanswerable ? [] : finalDocs.map(d => d._id);
-    const referencedDocs = isUnanswerable ? [] : finalDocs.map(d => ({
-      id: d._id,
-      title: d.title,
-      category: d.category
-    }));
-    const referencedAssets = isUnanswerable ? [] : finalAssets.map(a => ({
-      id: a._id,
-      name: a.name,
-      category: a.category
-    }));
+    const {
+      sources,
+      referencedDocIds,
+      referencedDocs,
+      referencedAssets
+    } = resolveQuerySourcesAndEntities({
+      answer,
+      question,
+      documents,
+      relevantAssets,
+      matchingAssets,
+      scoredAssets,
+      isOverviewQuery
+    });
 
     // Persist Assistant Message
     await Message.create({

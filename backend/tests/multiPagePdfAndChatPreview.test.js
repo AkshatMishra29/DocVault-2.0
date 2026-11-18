@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import fs from 'fs';
+import path from 'path';
 import { extractTextFromPDF } from '../src/services/ocr/ocrService.js';
 import { extractRelevantContextWindow, answerDocumentQuery } from '../src/services/ai/groqService.js';
 
@@ -8,7 +9,10 @@ describe('Multi-Page Document & In-Chat Document Preview Pipeline', () => {
 
   it('1. Extracts multi-page text with clear page annotations', async () => {
     // Generate a multi-page PDF text string structure
-    const sampleText = await extractTextFromPDF(fs.readFileSync('sample_motor_policy.pdf'));
+    const pdfPath = fs.existsSync('backend/sample_motor_policy.pdf')
+      ? 'backend/sample_motor_policy.pdf'
+      : (fs.existsSync('sample_motor_policy.pdf') ? 'sample_motor_policy.pdf' : path.resolve(import.meta.dirname, '../sample_motor_policy.pdf'));
+    const sampleText = await extractTextFromPDF(fs.readFileSync(pdfPath));
     assert.ok(sampleText.length > 50, 'PDF text must be extracted');
     assert.ok(sampleText.includes('HDFC ERGO') || sampleText.includes('POL-MOT'), 'Key policy details must be present');
   });

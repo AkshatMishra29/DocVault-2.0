@@ -294,7 +294,7 @@ Tags: ${(asset.tags || []).join(', ') || 'None'}
 
   const prompt = `You are the DocVault AI Assistant.
 CORE OPERATING PRINCIPLE:
-Be laser-focused, direct, and concise. Answer EXACTLY and ONLY what the user asked without dumping unrelated fields, excessive preamble, or redundant document metadata tables. The user can view the original document directly if they wish to inspect full context.
+Provide an executive, production-grade response that is laser-focused, direct, and concise. Answer EXACTLY and ONLY what the user asked without dumping unrelated fields, excessive preamble, or redundant document metadata tables. The user can view the original document or asset flashcard directly for full context.
 
 RULES:
 1. Direct & Laser-Focused:
@@ -302,17 +302,24 @@ RULES:
    - If the user asks for a date, state that specific date directly.
    - If the user asks for an amount, state that specific amount directly.
    - If the user asks for a specific clause, condition, term, notice period, or SLA, provide that exact clause/statement and cite the page number (e.g. "According to **[Document Title]** (Page 5): ...").
-   - If the user asks about an asset/flashcard (e.g. MacBook, car, appliance, warranty), answer the specific requested field (warranty date, serial number, purchase date) directly.
+   - If the user asks about an asset/flashcard (e.g. MacBook, laptop, car, appliance, warranty), answer the specific requested field (warranty date, serial number, purchase date) directly.
    - Do NOT dump unrelated fields (like account numbers, transaction IDs, or other clauses) unless the user specifically asked for them.
-2. Document Forwarding / Direct Referral:
-   - Always conclude your answer with a single polite line indicating the user can review the original document directly for full context:
-     "*For full details or complete contract terms, you can view the document directly below.*"
-3. Multi-Page Accuracy:
+2. Context-Aware Document / Flashcard Referral:
+   - If answering primarily from an asset flashcard:
+     Conclude your answer with: "*For complete details, you can open your asset flashcard directly below.*"
+   - If answering primarily from a document:
+     Conclude your answer with: "*For full details or complete verification, you can view the original document directly below.*"
+   - If answering an overview or both:
+     Conclude with: "*For full details, you can view the verified records directly below.*"
+3. Strict Entity Isolation:
+   - If the user asks about an asset (such as MacBook), answer strictly regarding that asset and its linked records. Do NOT mention or cite unrelated documents (such as electricity bills, tax forms, or utilities) present in the context.
+   - If the user asks about a document (such as an electricity bill), answer strictly regarding that document and do NOT mention unrelated assets.
+4. Multi-Page Accuracy:
    - For multi-page documents (marked with "--- Page X ---"), thoroughly inspect all pages from Page 1 to Page 25 to find the exact statement or clause requested. Cite the specific page where the answer is found.
-4. Not Found:
+5. Not Found:
    - If neither the provided documents nor the tracked assets contain the answer after checking all available pages, reply cleanly:
      "I cannot find that information in your currently uploaded documents or tracked assets."
-5. Professional & Crisp:
+6. Professional & Crisp:
    - Keep answers clear, readable, and free of unnecessary introductory filler.
 
 CONTEXT - TRACKED ASSETS & FLASHCARDS:
@@ -470,29 +477,29 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
 
     if (isWarranty && (asset.warrantyExpiry || customMap['warranty expiration'] || customMap['warranty'] || customMap['panel warranty'])) {
       const exp = asset.warrantyExpiry || customMap['warranty expiration'] || customMap['warranty'] || customMap['panel warranty'];
-      return `The recorded warranty expiration for your **${asset.name}** is **${exp}**.*${docReferral}`;
+      return `The recorded warranty expiration for your **${asset.name}** is **${exp}**.${docReferral}`;
     }
 
     if (isSerial && (customMap['serial number'] || customMap['serial'] || customMap['engine number'] || customMap['chassis number'] || asset.metadata?.serialNumber)) {
       if (customMap['engine number']) {
         const eng = customMap['engine number'];
         const chs = customMap['chassis number'] ? ` (Chassis: \`${customMap['chassis number']}\`)` : '';
-        return `The engine number for your **${asset.name}** is \`${eng}\`${chs}.*${docReferral}`;
+        return `The engine number for your **${asset.name}** is \`${eng}\`${chs}.${docReferral}`;
       }
       const sn = customMap['serial number'] || customMap['serial'] || customMap['chassis number'] || asset.metadata?.serialNumber;
-      return `The serial number for your **${asset.name}** is \`${sn}\`.*${docReferral}`;
+      return `The serial number for your **${asset.name}** is \`${sn}\`.${docReferral}`;
     }
 
     if (isPurchase && (asset.purchaseDate || asset.description)) {
       const details = asset.purchaseDate
         ? (asset.description ? `**${asset.purchaseDate}** (${asset.description})` : `**${asset.purchaseDate}**`)
         : asset.description;
-      return `The purchase record for your **${asset.name}** indicates: ${details}.*${docReferral}`;
+      return `The purchase record for your **${asset.name}** indicates: ${details}.${docReferral}`;
     }
 
     if (isPrice && (asset.estimatedValue || asset.purchasePrice || customMap['price'])) {
       const val = asset.estimatedValue || (asset.purchasePrice ? '₹' + asset.purchasePrice : customMap['price']);
-      return `The recorded price/value for your **${asset.name}** is **${val}**.*${docReferral}`;
+      return `The recorded price/value for your **${asset.name}** is **${val}**.${docReferral}`;
     }
 
     // General flashcard query
@@ -533,7 +540,7 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
     const isTxIdQ = /(?:transaction\s*id|receipt\s*no|receipt\s*number|reference\s*number)/i.test(lowerQ);
     const isAmountQ = /(?:what\s+is\s+the\s+(?:total|amount|bill|cost|fee|price)|how\s*much|total\s*amount|bill\s*amount|payable\s*amount|total\s*due|net\s*payable)/i.test(lowerQ);
 
-    const docReferral = `\n\n*For full details or complete verification, you can view the document directly below.*`;
+    const docReferral = `\n\n*For full details or complete verification, you can view the original document directly below.*`;
 
     // 1. Specific Clause / Multi-Page Excerpt Match (e.g. SLA, termination, liability, penalty, contract terms)
     const isPureMetadataQ = (isDateQ || isAmountQ || isNameQ || isAccountQ || isTxIdQ);

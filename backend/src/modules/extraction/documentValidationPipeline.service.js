@@ -638,7 +638,24 @@ export async function validateDocumentPipeline(buffer, options = {}) {
     };
   }
 
-  // Rule 1b: Genuine Document with Blurry Text (Problem B -> Review / Reject with IMAGE_BLURRY)
+  // Rule 1b: Genuine Document with Unreadably Small Text (Problem B)
+  // When text is microscopic relative to resolution, advise user to move closer
+  if (readability.isTinyText) {
+    return {
+      status: 'review',
+      reason_code: 'TEXT_TOO_SMALL',
+      message: 'A document appears to be present, but its text is too small to read reliably.',
+      suggestion: 'Move closer to the document and capture it in better lighting.',
+      document_classification: 'DOCUMENT',
+      document_confidence: 0.85,
+      document_type: classifyDocumentType(readability.extractedText, options.originalname || ''),
+      image_quality: quality,
+      text_readability: readability,
+      model_version: '2.0.0-hybrid',
+    };
+  }
+
+  // Rule 1c: Genuine Document with Blurry Text (Problem B -> Review / Reject with IMAGE_BLURRY)
   // Blurry documents must NEVER be accepted or misclassified as handwritten
   if (quality.isSevereBlur || readability.isUnreadablyBlurry || quality.isBlurry) {
     return {
@@ -681,40 +698,7 @@ export async function validateDocumentPipeline(buffer, options = {}) {
     };
   }
 
-  // Rule 2: Genuine Document with Unreadably Small Text (Problem B)
-  // Distinguish document validity from readability:
-  // Identify it as a document, mark readability as insufficient, ask for closer photo.
-  if (readability.isTinyText) {
-    return {
-      status: 'review',
-      reason_code: 'TEXT_TOO_SMALL',
-      message: 'A document appears to be present, but its text is too small to read reliably.',
-      suggestion: 'Move closer to the document and capture it in better lighting.',
-      document_classification: 'DOCUMENT',
-      document_confidence: 0.85,
-      document_type: classifyDocumentType(readability.extractedText, options.originalname || ''),
-      image_quality: quality,
-      text_readability: readability,
-      model_version: '2.0.0-hybrid',
-    };
-  }
 
-  // Rule 3: Genuine Document with Blurry Text (Problem B -> Review / Reject with IMAGE_BLURRY)
-  // Never accept unreadably blurry documents into the vault
-  if (quality.isSevereBlur || readability.isUnreadablyBlurry) {
-    return {
-      status: 'review',
-      reason_code: 'IMAGE_BLURRY',
-      message: 'The uploaded document image is too blurry to extract or verify text reliably.',
-      suggestion: 'Hold your camera steady, ensure good lighting, and ensure the document is in sharp focus.',
-      document_classification: 'DOCUMENT',
-      document_confidence: 0.35,
-      document_type: classifyDocumentType(readability.extractedText, options.originalname || ''),
-      image_quality: quality,
-      text_readability: readability,
-      model_version: '2.0.0-hybrid',
-    };
-  }
 
   // Rule 4: Genuine Document with No Readable Text Anywhere
   if (readability.wordCount === 0 && readability.extractedText.length < 5) {
