@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import Tesseract from 'tesseract.js';
 import { pipeline, RawImage } from '@huggingface/transformers';
+import { calculateLaplacianVariance } from './documentImageValidation.service.js';
 
 /**
  * DocVault Intelligent Multi-Stage Document Detection & OCR Validation Pipeline
@@ -205,35 +206,29 @@ export async function assessImageQuality(buffer, metadata) {
     };
   }
 
-  // Laplacian variance for sharpness
-  const laplacianKernel = {
-    width: 3,
-    height: 3,
-    kernel: [0, 1, 0, 1, -4, 1, 0, 1, 0],
-  };
-
-  const edgeResult = await sharp(buffer)
+  // Discrete 2D Laplacian variance for sharpness & blur detection
+  const lapRaw = await sharp(buffer)
     .resize({ width: 400, withoutEnlargement: true })
-    .greyscale()
-    .convolve(laplacianKernel)
+    .flatten({ background: '#ffffff' })
+    .toColourspace('b-w')
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  const edgeStats = await sharp(edgeResult.data, {
-    raw: { width: edgeResult.info.width, height: edgeResult.info.height, channels: 1 }
-  }).stats();
-
-  const sharpness = parseFloat(edgeStats.channels[0].stdev.toFixed(2));
+  const lapStats = calculateLaplacianVariance(lapRaw.data, lapRaw.info.width, lapRaw.info.height);
+  const sharpness = lapStats.stdev;
+  const sharpnessVariance = lapStats.variance;
   const contrast = parseFloat((ch0.max - ch0.min).toFixed(2));
 
   return {
     qualityPassed: true,
     isSolidBlank: false,
     sharpness,
+    sharpnessVariance,
     contrast,
     brightness: parseFloat(luminanceMean.toFixed(1)),
-    isBlurry: sharpness < 3.5,
-    isSoftFocus: sharpness >= 3.5 && sharpness < 8.0,
+    isBlurry: sharpness < 4.0 || sharpnessVariance < 16.0,
+    isSevereBlur: sharpness < 2.5 || sharpnessVariance < 6.0,
+    isSoftFocus: sharpness >= 4.0 && sharpness < 8.0,
     width: metadata.width,
     height: metadata.height,
     aspectRatio: parseFloat((metadata.width / metadata.height).toFixed(2)),
@@ -507,8 +502,8 @@ export async function assessTextReadability(buffer, metadata, quality) {
     const hasUnresolvableDistantText = lines.length === 0 && quality.contrast >= 100 && (metadata.width >= 1200 || metadata.height >= 1200);
     const isTinyText = hasDetectedTinyLines || hasUnresolvableDistantText;
 
-    // Unreadable due to blur + low confidence
-    const isUnreadablyBlurry = (quality.isBlurry && quality.contrast < 80) || (quality.isBlurry && meanConfidence < 42 && !isTinyText);
+    // Unreadable due to blur (variance below legibility threshold)
+    const isUnreadablyBlurry = quality.isSevereBlur || (quality.isBlurry && meanConfidence < 65);
 
     // Readability decision
     const readable = !isTinyText && !isUnreadablyBlurry && (words.length >= 3 || fullText.length >= 10);
@@ -643,9 +638,28 @@ export async function validateDocumentPipeline(buffer, options = {}) {
     };
   }
 
-  // Rule 1b: Handwritten Document Detection
-  // Tesseract struggles with cursive — low OCR confidence (20-55%) with some words = handwritten.
+  // Rule 1b: Genuine Document with Blurry Text (Problem B -> Review / Reject with IMAGE_BLURRY)
+  // Blurry documents must NEVER be accepted or misclassified as handwritten
+  if (quality.isSevereBlur || readability.isUnreadablyBlurry || quality.isBlurry) {
+    return {
+      status: 'review',
+      reason_code: 'IMAGE_BLURRY',
+      message: 'The uploaded document image is too blurry to extract or verify text reliably.',
+      suggestion: 'Hold your camera steady, ensure good lighting, and ensure the document is in sharp focus.',
+      document_classification: 'DOCUMENT',
+      document_confidence: 0.35,
+      document_type: classifyDocumentType(readability.extractedText, options.originalname || ''),
+      image_quality: quality,
+      text_readability: readability,
+      model_version: '2.0.0-hybrid',
+    };
+  }
+
+  // Rule 1c: Handwritten Document Detection
+  // Genuine handwritten notes with sharp pen strokes but cursive/irregular letters
   const isHandwritten = docClassification.isDocument &&
+    !quality.isBlurry &&
+    !quality.isSevereBlur &&
     readability.wordCount >= 2 &&
     readability.meanConfidence < 60 &&
     readability.meanConfidence > 10 &&
@@ -685,32 +699,16 @@ export async function validateDocumentPipeline(buffer, options = {}) {
     };
   }
 
-  // Rule 3: Genuine Document with Blurry Text (Problem B)
-  // If blurry but OCR still found meaningful content, accept with lower confidence.
-  if (readability.isUnreadablyBlurry) {
-    if (readability.wordCount >= 5 && readability.meanConfidence >= 40) {
-      const docTypeBlurry = classifyDocumentType(readability.extractedText, options.originalname || '');
-      return {
-        status: 'accepted',
-        reason_code: null,
-        message: 'Document accepted with moderate clarity.',
-        suggestion: null,
-        document_classification: 'DOCUMENT',
-        document_confidence: 0.78,
-        document_type: docTypeBlurry,
-        image_quality: quality,
-        text_readability: readability,
-        extractedText: readability.extractedText,
-        model_version: '2.0.0-hybrid',
-      };
-    }
+  // Rule 3: Genuine Document with Blurry Text (Problem B -> Review / Reject with IMAGE_BLURRY)
+  // Never accept unreadably blurry documents into the vault
+  if (quality.isSevereBlur || readability.isUnreadablyBlurry) {
     return {
       status: 'review',
       reason_code: 'IMAGE_BLURRY',
-      message: 'A document appears to be present, but the image is too blurry to read the text clearly.',
-      suggestion: 'Hold your camera steady and ensure good focus on the document.',
+      message: 'The uploaded document image is too blurry to extract or verify text reliably.',
+      suggestion: 'Hold your camera steady, ensure good lighting, and ensure the document is in sharp focus.',
       document_classification: 'DOCUMENT',
-      document_confidence: 0.80,
+      document_confidence: 0.35,
       document_type: classifyDocumentType(readability.extractedText, options.originalname || ''),
       image_quality: quality,
       text_readability: readability,

@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import sharp from 'sharp';
+import { calculateLaplacianVariance } from './documentImageValidation.service.js';
 
 /**
  * DocVault Ingestion Guardrail Service
@@ -96,6 +97,19 @@ export async function inspectImageGuardrails(buffer, filename) {
       (ch0.mean < 15 && ch0.max < 40);
     if (isBlank) {
       throw new Error('Security Guardrail: Uploaded image appears to be blank or a single solid color.');
+    }
+
+    // 2b. Blur detection guardrail (motion blur / out-of-focus camera capture)
+    const lapRaw = await sharp(buffer)
+      .resize({ width: 400, withoutEnlargement: true })
+      .flatten({ background: '#ffffff' })
+      .toColourspace('b-w')
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const lapStats = calculateLaplacianVariance(lapRaw.data, lapRaw.info.width, lapRaw.info.height);
+    if (lapStats.stdev < 3.0 || lapStats.variance < 9.0) {
+      throw new Error('Security Guardrail: Uploaded image is too blurry to be processed as a secure document. Please retake the photo with sharp focus.');
     }
 
     // 3. Document vs. Casual Photo Heuristic Analysis

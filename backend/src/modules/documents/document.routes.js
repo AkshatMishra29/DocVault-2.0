@@ -214,6 +214,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
         }
       } else if (signature.detectedType.startsWith('image/')) {
         await validateImageSafety(buffer);
+        await validateDocumentImage(buffer);
         // Multi-Stage Intelligent Document Detection & Readability Engine
         const serviceVal = await validateWithService({
           quarantinePath: quarantineFilePath,

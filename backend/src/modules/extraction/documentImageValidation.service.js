@@ -23,6 +23,46 @@ import sharp from 'sharp';
  *    — Full-frame horizontal + vertical dark divider detection
  */
 
+/**
+ * Computes exact discrete 2D Laplacian variance & standard deviation
+ * on raw greyscale pixel buffer.
+ * High variance (> 15) indicates crisp, legible document text edges.
+ * Low variance (< 3.0) indicates severe camera/motion blur or out-of-focus unreadable text.
+ */
+export function calculateLaplacianVariance(rawBuffer, width, height) {
+  let sum = 0;
+  let sumSq = 0;
+  let count = 0;
+
+  for (let y = 1; y < height - 1; y++) {
+    const rowOffset = y * width;
+    const prevRowOffset = (y - 1) * width;
+    const nextRowOffset = (y + 1) * width;
+
+    for (let x = 1; x < width - 1; x++) {
+      const idx = rowOffset + x;
+      // 3x3 Discrete Laplacian kernel: [0, 1, 0; 1, -4, 1; 0, 1, 0]
+      const lap = -4 * rawBuffer[idx]
+        + rawBuffer[idx - 1]
+        + rawBuffer[idx + 1]
+        + rawBuffer[prevRowOffset + x]
+        + rawBuffer[nextRowOffset + x];
+
+      sum += lap;
+      sumSq += lap * lap;
+      count++;
+    }
+  }
+
+  if (count === 0) return { variance: 0, stdev: 0 };
+  const mean = sum / count;
+  const variance = Math.max(0, (sumSq / count) - (mean * mean));
+  return {
+    variance: parseFloat(variance.toFixed(2)),
+    stdev: parseFloat(Math.sqrt(variance).toFixed(2)),
+  };
+}
+
 export class DocumentImageValidationError extends Error {
   constructor(message, reasonCode = 'INVALID_DOCUMENT_IMAGE') {
     super(message);
@@ -70,30 +110,31 @@ export async function validateDocumentImage(buffer, metadata = {}) {
     );
   }
 
-  // ── Step 2: Laplacian edge variance (blur + near-blank ensemble signal) ──
-  const laplacianKernel = {
-    width: 3,
-    height: 3,
-    kernel: [0, 1, 0, 1, -4, 1, 0, 1, 0],
-  };
-
-  const edgeResult = await sharp(buffer)
+  // ── Step 2: Accurate Discrete Laplacian Variance (Blur & Quality Detection) ──
+  const lapRaw = await sharp(buffer)
     .resize({ width: 400, withoutEnlargement: true })
-    .greyscale()
-    .convolve(laplacianKernel)
+    .flatten({ background: '#ffffff' })
+    .toColourspace('b-w')
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  const edgeStats = await sharp(edgeResult.data, {
-    raw: { width: edgeResult.info.width, height: edgeResult.info.height, channels: 1 }
-  }).stats();
-  const edgeVariance = edgeStats.channels[0].stdev;
+  const lapStats = calculateLaplacianVariance(lapRaw.data, lapRaw.info.width, lapRaw.info.height);
+  const edgeVariance = lapStats.stdev;
 
   // A-3: Near-blank (high luminance, no dark ink text anywhere in the document)
   if (luminanceMean > 230 && ch0.min > 200 && edgeVariance < 2.0) {
     throw new DocumentImageValidationError(
       'This image appears nearly blank with insufficient readable content. Please upload a clear document scan.',
       'BLANK_IMAGE'
+    );
+  }
+
+  // A-4: Blurry Image Guardrail
+  // Reject blurred / out-of-focus captures where text is illegible
+  if (lapStats.stdev < 3.0 || lapStats.variance < 9.0) {
+    throw new DocumentImageValidationError(
+      'The uploaded document image is too blurry to be processed securely. Please hold your camera steady, ensure clear focus on the text, and recapture.',
+      'IMAGE_BLURRY'
     );
   }
 

@@ -45,7 +45,7 @@ def detect_text_and_readability(img_resized: Image.Image, heuristics: Dict[str, 
     )
 
     # Case B: Unreadably blurry
-    is_unreadably_blurry = heuristics.get("is_blurry", False) and heuristics.get("contrast", 0) < 70
+    is_unreadably_blurry = heuristics.get("is_severe_blur", False) or heuristics.get("is_blurry", False)
 
     # Readability flag
     has_sufficient_text = estimated_lines >= 2 and edge_density > 0.02 and heuristics.get("text_ratio", 0) > 0.015

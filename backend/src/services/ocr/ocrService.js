@@ -1,5 +1,4 @@
 import { PDFParse } from 'pdf-parse';
-import { convert } from 'pdf-img-convert';
 import Tesseract from 'tesseract.js';
 import sharp from 'sharp';
 
@@ -59,17 +58,19 @@ export async function extractTextFromImage(buffer) {
 }
 
 /**
- * Rasterize PDF pages into PNG image buffers using pdf-img-convert.
+ * Rasterize PDF pages into PNG image buffers using PDFParse.getScreenshot.
  * Supports multi-page document inspection and OCR fallback.
  */
 export async function convertPdfToImages(buffer, maxPages = 5, scale = 1.5) {
   try {
-    const pageNumbers = Array.from({ length: maxPages }, (_, i) => i + 1);
-    const converted = await convert(buffer, { page_numbers: pageNumbers, scale });
-    if (!Array.isArray(converted) || converted.length === 0) {
-      return null;
+    const parser = new PDFParse({ data: buffer });
+    const screenshot = await parser.getScreenshot({ scale, imageBuffer: true });
+    if (screenshot && Array.isArray(screenshot.pages) && screenshot.pages.length > 0) {
+      return screenshot.pages
+        .slice(0, maxPages)
+        .map(page => Buffer.from(page.data));
     }
-    return converted.map(pageData => Buffer.from(pageData));
+    return null;
   } catch (err) {
     console.warn('[OCR Service] PDF to image conversion error:', err.message);
     return null;

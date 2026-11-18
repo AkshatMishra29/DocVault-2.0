@@ -98,9 +98,11 @@ def analyze_image_heuristics(img: Image.Image) -> Dict[str, Any]:
         + gray[1:-1, 2:]
     )
     sharpness = float(np.std(lap)) if lap.size > 0 else 0.0
+    sharpness_variance = float(np.var(lap)) if lap.size > 0 else 0.0
     contrast = float(np.max(gray) - np.min(gray))
 
-    is_blurry = sharpness < 3.5
+    is_blurry = sharpness < 4.0 or sharpness_variance < 16.0
+    is_severe_blur = sharpness < 2.5 or sharpness_variance < 6.0
 
     # 4. Critical Scenery & Casual Landscape Detection
     is_natural_scenery = (vibrant_ratio > 0.55 and paper_ratio < 0.35) or (vibrant_ratio > 0.30 and paper_ratio < 0.30)
@@ -116,9 +118,11 @@ def analyze_image_heuristics(img: Image.Image) -> Dict[str, Any]:
         "vibrant_ratio": round(vibrant_ratio, 3),
         "skin_ratio": round(skin_ratio, 3),
         "sharpness": round(sharpness, 2),
+        "sharpness_variance": round(sharpness_variance, 2),
         "contrast": round(contrast, 2),
         "luminance": round(luminance, 1),
         "is_blurry": is_blurry,
+        "is_severe_blur": is_severe_blur,
         "is_natural_scenery": is_natural_scenery,
         "is_casual_portrait": is_casual_portrait,
         "processed_image": img_resized,

@@ -72,14 +72,14 @@ def fuse_validation_decision(
             "reason": "A document appears to be present, but its text is too small to read reliably. Please capture closer.",
         }
 
-    # 5. Genuine Document with Blurry Text (Problem B -> REVIEW)
-    if text_data.get("is_unreadably_blurry", False):
+    # 5. Genuine Document with Blurry Text (Problem B -> REVIEW / REJECT with IMAGE_BLURRY)
+    if text_data.get("is_unreadably_blurry", False) or heuristics.get("is_severe_blur", False):
         return {
             "decision": "REVIEW",
             "doc_type": classification.get("detected_doc_type") or "printed",
-            "score": 0.52,
+            "score": 0.35,
             "reason_code": "IMAGE_BLURRY",
-            "reason": "A document was detected, but the image is too blurry to extract text reliably.",
+            "reason": "The uploaded document image is too blurry to extract or verify text reliably.",
         }
 
     # 6. Genuine Document with Zero Detectable Text (REVIEW)
