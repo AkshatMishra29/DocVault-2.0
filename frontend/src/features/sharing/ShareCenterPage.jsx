@@ -253,31 +253,33 @@ export default function ShareCenterPage() {
 
       {/* Tabs */}
       <div className="dv-share-tabs">
-        <button
-          type="button"
-          className={`dv-share-tab-btn ${activeTab === "SENT" ? "dv-share-tab-btn--active" : ""}`}
-          onClick={() => setActiveTab("SENT")}
-        >
-          <Share2 size={16} /> Sent Shares ({sentShares.length})
-        </button>
+        <div className="dv-share-tabs__list">
+          <button
+            type="button"
+            className={`dv-share-tab-btn ${activeTab === "SENT" ? "dv-share-tab-btn--active" : ""}`}
+            onClick={() => setActiveTab("SENT")}
+          >
+            <Share2 size={16} /> Sent Shares ({sentShares.length})
+          </button>
 
-        <button
-          type="button"
-          className={`dv-share-tab-btn ${activeTab === "RECEIVED" ? "dv-share-tab-btn--active" : ""}`}
-          onClick={() => setActiveTab("RECEIVED")}
-        >
-          <Users size={16} /> Shared With Me ({receivedShares.length})
-        </button>
+          <button
+            type="button"
+            className={`dv-share-tab-btn ${activeTab === "RECEIVED" ? "dv-share-tab-btn--active" : ""}`}
+            onClick={() => setActiveTab("RECEIVED")}
+          >
+            <Users size={16} /> Shared With Me ({receivedShares.length})
+          </button>
 
-        <button
-          type="button"
-          className={`dv-share-tab-btn ${activeTab === "SMART_PACK" ? "dv-share-tab-btn--active" : ""}`}
-          onClick={() => setActiveTab("SMART_PACK")}
-        >
-          <Sparkles size={16} /> Smart Share Pack
-        </button>
+          <button
+            type="button"
+            className={`dv-share-tab-btn ${activeTab === "SMART_PACK" ? "dv-share-tab-btn--active" : ""}`}
+            onClick={() => setActiveTab("SMART_PACK")}
+          >
+            <Sparkles size={16} /> Smart Share Pack
+          </button>
+        </div>
 
-        <div style={{ marginLeft: "auto" }}>
+        <div className="dv-share-tabs__action">
           <Button
             variant="primary"
             size="md"

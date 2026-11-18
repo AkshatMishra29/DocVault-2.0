@@ -49,9 +49,36 @@
 
 .connections-tabs {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   border-bottom: 1px solid var(--color-border, #d9e1e8);
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.connections-tabs__list {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.connections-tab--refresh {
+  flex-shrink: 0;
+  margin-left: 0 !important;
+}
+
+@media (max-width: 640px) {
+  .connections-tabs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .connections-tab--refresh {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .dv-spin {

@@ -226,40 +226,42 @@ export default function ConnectionsPage() {
       {success && <div className="alert alert-success" style={{ marginBottom: '1rem', padding: '0.75rem', background: '#e8f5e9', color: '#2e7d32', borderRadius: '8px' }}>{success}</div>}
 
       <div className="connections-tabs">
-        <button
-          className={`connections-tab ${activeTab === 'mutual' ? 'connections-tab--active' : ''}`}
-          onClick={() => setActiveTab('mutual')}
-        >
-          <Users size={16} />
-          Connections
-          <span className="badge-count">{connections.length}</span>
-        </button>
+        <div className="connections-tabs__list">
+          <button
+            className={`connections-tab ${activeTab === 'mutual' ? 'connections-tab--active' : ''}`}
+            onClick={() => setActiveTab('mutual')}
+          >
+            <Users size={16} />
+            Connections
+            <span className="badge-count">{connections.length}</span>
+          </button>
 
-        <button
-          className={`connections-tab ${activeTab === 'incoming' ? 'connections-tab--active' : ''}`}
-          onClick={() => setActiveTab('incoming')}
-        >
-          <Clock size={16} />
-          Requests Received
-          {incoming.length > 0 && <span className="badge-count">{incoming.length}</span>}
-        </button>
+          <button
+            className={`connections-tab ${activeTab === 'incoming' ? 'connections-tab--active' : ''}`}
+            onClick={() => setActiveTab('incoming')}
+          >
+            <Clock size={16} />
+            Requests Received
+            {incoming.length > 0 && <span className="badge-count">{incoming.length}</span>}
+          </button>
 
-        <button
-          className={`connections-tab ${activeTab === 'outgoing' ? 'connections-tab--active' : ''}`}
-          onClick={() => setActiveTab('outgoing')}
-        >
-          <UserPlus size={16} />
-          Sent Requests
-          {outgoing.length > 0 && <span className="badge-count">{outgoing.length}</span>}
-        </button>
+          <button
+            className={`connections-tab ${activeTab === 'outgoing' ? 'connections-tab--active' : ''}`}
+            onClick={() => setActiveTab('outgoing')}
+          >
+            <UserPlus size={16} />
+            Sent Requests
+            {outgoing.length > 0 && <span className="badge-count">{outgoing.length}</span>}
+          </button>
 
-        <button
-          className={`connections-tab ${activeTab === 'search' ? 'connections-tab--active' : ''}`}
-          onClick={() => setActiveTab('search')}
-        >
-          <Search size={16} />
-          Find by DocVault ID
-        </button>
+          <button
+            className={`connections-tab ${activeTab === 'search' ? 'connections-tab--active' : ''}`}
+            onClick={() => setActiveTab('search')}
+          >
+            <Search size={16} />
+            Find by DocVault ID
+          </button>
+        </div>
 
         <button
           type="button"
@@ -267,7 +269,6 @@ export default function ConnectionsPage() {
           onClick={handleManualRefresh}
           disabled={refreshing}
           title="Refresh connections"
-          style={{ marginLeft: 'auto', background: 'transparent' }}
         >
           <RefreshCw size={15} className={refreshing ? 'dv-spin' : ''} />
           <span>{refreshing ? 'Syncing...' : 'Sync'}</span>

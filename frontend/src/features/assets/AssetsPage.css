@@ -716,3 +716,28 @@
   color: #A1A1AA;
   border: 1px solid rgba(113, 113, 122, 0.3);
 }
+
+/* Assets Filter Toolbar */
+.dv-assets-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+
+.dv-toolbar-create-btn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .dv-assets-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dv-toolbar-create-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

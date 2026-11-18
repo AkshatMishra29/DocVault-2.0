@@ -608,17 +608,7 @@ export default function AskAiPage() {
           </div>
         </aside>
 
-        {/* Collapsed Sidebar Restore Button */}
-        {!isSidebarOpen && (
-          <button
-            type="button"
-            className="dv-ai-sidebar-restore-btn"
-            onClick={() => setIsSidebarOpen(true)}
-            title="Expand chat history"
-          >
-            <PanelLeftOpen size={16} />
-          </button>
-        )}
+
 
         {/* =========================================================================
             MOBILE SLIDE-OUT DRAWER
@@ -694,6 +684,18 @@ export default function AskAiPage() {
           {/* Top Chat Bar: Mobile Drawer Trigger, Active Scope, Reset */}
           <div className="dv-ai-chat-header">
             <div className="dv-ai-chat-header__left">
+              {/* Desktop Collapsed Sidebar Restore Button */}
+              {!isSidebarOpen && (
+                <button
+                  type="button"
+                  className="dv-ai-sidebar-restore-btn"
+                  onClick={() => setIsSidebarOpen(true)}
+                  title="Expand chat history"
+                >
+                  <PanelLeftOpen size={16} />
+                </button>
+              )}
+
               {/* Mobile Drawer Button */}
               <button
                 type="button"
