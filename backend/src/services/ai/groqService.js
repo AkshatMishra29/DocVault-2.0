@@ -490,11 +490,19 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
       return `The serial number for your **${asset.name}** is \`${sn}\`.${docReferral}`;
     }
 
-    if (isPurchase && (asset.purchaseDate || asset.description)) {
-      const details = asset.purchaseDate
-        ? (asset.description ? `**${asset.purchaseDate}** (${asset.description})` : `**${asset.purchaseDate}**`)
-        : asset.description;
-      return `The purchase record for your **${asset.name}** indicates: ${details}.${docReferral}`;
+    if (isPurchase && (asset.purchaseDate || asset.description || asset.notes || customMap['purchase date'] || customMap['purchased'])) {
+      const explicitDate = asset.purchaseDate || customMap['purchase date'] || customMap['purchased'] || customMap['date of purchase'];
+      if (explicitDate) {
+        return `The recorded purchase date for your **${asset.name}** is **${explicitDate}**.${docReferral}`;
+      }
+      const rawNotes = `${asset.description || ''} ${asset.notes || ''}`.trim();
+      const dateMatch = rawNotes.match(/\b((?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}|\d{1,2}(?:st|nd|rd|th)?\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?),?\s+\d{4}|\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2}|\d{1,2}[-\/.]\d{1,2}[-\/.]\d{2,4})\b/i);
+      if (dateMatch) {
+        const cleanDate = dateMatch[1].replace(/(\d+)(st|nd|rd|th)/i, '$1');
+        const descSuffix = asset.description ? ` (${asset.description})` : '';
+        return `The recorded purchase date for your **${asset.name}** is **${cleanDate}**${descSuffix}.${docReferral}`;
+      }
+      return `The purchase record for your **${asset.name}** indicates: ${asset.description || asset.notes}.${docReferral}`;
     }
 
     if (isPrice && (asset.estimatedValue || asset.purchasePrice || customMap['price'])) {

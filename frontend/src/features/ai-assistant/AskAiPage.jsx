@@ -453,17 +453,45 @@ export default function AskAiPage() {
     handleSend(prompt);
   };
 
-  // Open Quick Document Viewer in chat with direct stream URL & fallback
-  const handleOpenDocViewer = (source) => {
+  // Open Quick Viewer in chat for both Documents and Asset Flashcards
+  const handleOpenDocViewer = async (source) => {
     if (!source) return;
     const docId = source.documentId || source.assetId || source.id || source._id;
     if (!docId) return;
+
+    const isAsset = source.type === "asset" || source.documentType === "flashcard";
+
+    if (isAsset) {
+      setViewerLoading(true);
+      setViewerError(null);
+      setViewerStreamUrl(null);
+      setViewerDoc({
+        ...source,
+        isAsset: true,
+        documentId: docId,
+        title: String(source.title || "Asset Flashcard"),
+        previewRoute: source.previewRoute || `/assets/${docId}`,
+      });
+
+      try {
+        const res = await apiRequest(`/api/assets/${docId}`);
+        if (res.success && res.data) {
+          setViewerDoc(prev => ({ ...prev, assetData: res.data }));
+        }
+      } catch (err) {
+        console.warn("[AskAI] Failed to load full asset details for preview:", err);
+      } finally {
+        setViewerLoading(false);
+      }
+      return;
+    }
 
     const token = localStorage.getItem("token") || localStorage.getItem("docvault_token") || "";
     const streamUrl = `${API_BASE_URL}/api/documents/${docId}/download?token=${encodeURIComponent(token)}`;
 
     setViewerDoc({
       ...source,
+      isAsset: false,
       documentId: docId,
       title: String(source.title || "Document Preview"),
       documentType: String(source.documentType || source.format || "PDF"),
@@ -805,23 +833,21 @@ export default function AskAiPage() {
                                 </div>
 
                                 <div className="dv-source-card__actions">
-                                  {!isAsset && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenDocViewer({ ...source, documentId: docId })}
-                                      className="dv-source-btn dv-source-btn--preview"
-                                      title="Quick Preview inside Chat"
-                                    >
-                                      <Eye size={12} />
-                                      <span>Preview</span>
-                                    </button>
-                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenDocViewer({ ...source, documentId: docId })}
+                                    className="dv-source-btn dv-source-btn--preview"
+                                    title={isAsset ? "Quick Preview Flashcard inside Chat" : "Quick Preview inside Chat"}
+                                  >
+                                    <Eye size={12} />
+                                    <span>Preview</span>
+                                  </button>
                                   <Link
                                     to={targetRoute}
                                     target={isAsset ? "_self" : "_blank"}
                                     rel="noopener noreferrer"
                                     className="dv-source-btn dv-source-btn--open"
-                                    title={isAsset ? "View Asset Flashcard" : "Open full document record"}
+                                    title={isAsset ? "View Full Asset Card" : "Open full document record"}
                                   >
                                     <ExternalLink size={12} />
                                     {isAsset && <span style={{ marginLeft: 4 }}>Open Card</span>}
@@ -1007,74 +1033,148 @@ export default function AskAiPage() {
                 )}
                 {viewerDoc && (
                   <Link
-                    to={viewerDoc.previewRoute || `/documents/${viewerDoc.documentId}`}
-                    target="_blank"
+                    to={viewerDoc.previewRoute || (viewerDoc.isAsset ? `/assets/${viewerDoc.documentId}` : `/documents/${viewerDoc.documentId}`)}
+                    target={viewerDoc.isAsset ? "_self" : "_blank"}
                     rel="noopener noreferrer"
                     className="dv-viewer-modal-btn"
                   >
                     <Eye size={14} />
-                    <span>Full Record</span>
+                    <span>{viewerDoc.isAsset ? "Full Flashcard" : "Full Record"}</span>
                   </Link>
                 )}
               </div>
             </div>
 
             <div className="dv-viewer-modal-frame-container">
-              {viewerLoading && (
-                <div className="dv-viewer-modal-state">
-                  <div className="dv-viewer-spinner" />
-                  <span>Loading secure document stream...</span>
-                </div>
-              )}
+              {viewerDoc?.isAsset ? (
+                <div className="dv-asset-preview-modal-body">
+                  {viewerLoading ? (
+                    <div className="dv-viewer-modal-state">
+                      <div className="dv-viewer-spinner" />
+                      <span>Loading asset flashcard...</span>
+                    </div>
+                  ) : (
+                    <div className="dv-asset-modal-card">
+                      <div className="dv-asset-modal-header">
+                        <div className="dv-asset-modal-title-row">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <Layers size={22} style={{ color: "var(--color-primary)" }} />
+                            <div>
+                              <h3 className="dv-asset-modal-name">{viewerDoc.assetData?.name || viewerDoc.title}</h3>
+                              <span className="dv-asset-modal-category">{viewerDoc.assetData?.category || viewerDoc.category || "General Asset"}</span>
+                            </div>
+                          </div>
+                          <span className="dv-asset-modal-status-badge">
+                            {viewerDoc.assetData?.status || "Active"}
+                          </span>
+                        </div>
+                      </div>
 
-              {viewerError && (
-                <div className="dv-viewer-modal-state dv-viewer-modal-state--error">
-                  <AlertCircle size={24} color="#EF4444" />
-                  <span>{viewerError}</span>
-                  {viewerStreamUrl && (
-                    <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-                      <a href={viewerStreamUrl} target="_blank" rel="noopener noreferrer" className="dv-viewer-modal-btn">
-                        <ExternalLink size={14} />
-                        <span>Open in New Tab</span>
-                      </a>
+                      <div className="dv-asset-modal-grid">
+                        {viewerDoc.assetData?.warrantyExpiry && (
+                          <div className="dv-asset-modal-item">
+                            <span className="dv-asset-modal-label">Warranty Expiration</span>
+                            <span className="dv-asset-modal-val dv-asset-modal-val--highlight">{viewerDoc.assetData.warrantyExpiry}</span>
+                          </div>
+                        )}
+                        {viewerDoc.assetData?.purchaseDate && (
+                          <div className="dv-asset-modal-item">
+                            <span className="dv-asset-modal-label">Purchase Date</span>
+                            <span className="dv-asset-modal-val">{viewerDoc.assetData.purchaseDate}</span>
+                          </div>
+                        )}
+                        {(viewerDoc.assetData?.estimatedValue || viewerDoc.assetData?.purchasePrice) ? (
+                          <div className="dv-asset-modal-item">
+                            <span className="dv-asset-modal-label">Value / Price</span>
+                            <span className="dv-asset-modal-val">{viewerDoc.assetData.estimatedValue || `₹${viewerDoc.assetData.purchasePrice}`}</span>
+                          </div>
+                        ) : null}
+                        {(viewerDoc.assetData?.customFields || []).map((f, i) => (
+                          <div key={i} className="dv-asset-modal-item">
+                            <span className="dv-asset-modal-label">{f.label}</span>
+                            <span className="dv-asset-modal-val">{f.value}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {viewerDoc.assetData?.description && (
+                        <div className="dv-asset-modal-desc">
+                          <span className="dv-asset-modal-label">Notes & Description</span>
+                          <p>{viewerDoc.assetData.description}</p>
+                        </div>
+                      )}
+
+                      <div className="dv-asset-modal-actions">
+                        <Link
+                          to={viewerDoc.previewRoute || `/assets/${viewerDoc.documentId}`}
+                          className="dv-viewer-modal-btn dv-viewer-modal-btn--primary"
+                        >
+                          <ExternalLink size={14} />
+                          <span>Open Full Asset Details</span>
+                        </Link>
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
-
-              {!viewerLoading && !viewerError && viewerStreamUrl && (
+              ) : (
                 <>
-                  {(viewerDoc?.documentType || "").toLowerCase().includes("pdf") ? (
-                    <object
-                      data={viewerStreamUrl}
-                      type="application/pdf"
-                      className="dv-viewer-modal-iframe"
-                      aria-label={viewerDoc?.title || "Document PDF"}
-                    >
-                      <div className="dv-viewer-modal-state">
-                        <FileText size={36} color="#64748B" />
-                        <span>Embedded preview not available on this browser.</span>
-                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  {viewerLoading && (
+                    <div className="dv-viewer-modal-state">
+                      <div className="dv-viewer-spinner" />
+                      <span>Loading secure document stream...</span>
+                    </div>
+                  )}
+
+                  {viewerError && (
+                    <div className="dv-viewer-modal-state dv-viewer-modal-state--error">
+                      <AlertCircle size={24} color="#EF4444" />
+                      <span>{viewerError}</span>
+                      {viewerStreamUrl && (
+                        <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
                           <a href={viewerStreamUrl} target="_blank" rel="noopener noreferrer" className="dv-viewer-modal-btn">
                             <ExternalLink size={14} />
                             <span>Open in New Tab</span>
                           </a>
-                          <a href={viewerStreamUrl} download={viewerDoc?.title || "document.pdf"} className="dv-viewer-modal-btn">
-                            <Download size={14} />
-                            <span>Download</span>
-                          </a>
                         </div>
-                      </div>
-                    </object>
-                  ) : (
-                    <div className="dv-viewer-modal-img-wrap">
-                      <img
-                        src={viewerStreamUrl}
-                        alt={viewerDoc?.title || "Document Image"}
-                        className="dv-viewer-modal-image"
-                        onError={() => setViewerError("Unable to display document image. Please download or view full record.")}
-                      />
+                      )}
                     </div>
+                  )}
+
+                  {!viewerLoading && !viewerError && viewerStreamUrl && (
+                    <>
+                      {(viewerDoc?.documentType || "").toLowerCase().includes("pdf") ? (
+                        <object
+                          data={viewerStreamUrl}
+                          type="application/pdf"
+                          className="dv-viewer-modal-iframe"
+                          aria-label={viewerDoc?.title || "Document PDF"}
+                        >
+                          <div className="dv-viewer-modal-state">
+                            <FileText size={36} color="#64748B" />
+                            <span>Embedded preview not available on this browser.</span>
+                            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                              <a href={viewerStreamUrl} target="_blank" rel="noopener noreferrer" className="dv-viewer-modal-btn">
+                                <ExternalLink size={14} />
+                                <span>Open in New Tab</span>
+                              </a>
+                              <a href={viewerStreamUrl} download={viewerDoc?.title || "document.pdf"} className="dv-viewer-modal-btn">
+                                <Download size={14} />
+                                <span>Download</span>
+                              </a>
+                            </div>
+                          </div>
+                        </object>
+                      ) : (
+                        <div className="dv-viewer-modal-img-wrap">
+                          <img
+                            src={viewerStreamUrl}
+                            alt={viewerDoc?.title || "Document Image"}
+                            className="dv-viewer-modal-image"
+                            onError={() => setViewerError("Unable to display document image. Please download or view full record.")}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </>
               )}
