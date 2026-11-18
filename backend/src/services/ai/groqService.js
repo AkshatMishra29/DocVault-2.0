@@ -293,18 +293,27 @@ Tags: ${(asset.tags || []).join(', ') || 'None'}
   }).join('\n---\n') : 'No tracked assets found.';
 
   const prompt = `You are the DocVault AI Assistant.
-SECURITY & ACCURACY RULES:
-1. You operate strictly within the user's isolated encrypted DocVault ecosystem.
-2. Answer the user's question directly, professionally, and accurately using the provided verified document records and tracked asset flashcards below.
-3. For multi-page documents (marked with "--- Page X ---"), thoroughly inspect all pages from Page 1 to Page 25. When the user asks about specific content, customer details, clauses, terms, conditions, numbers, or statements, locate and extract the specific content from the corresponding page, and cite the page number (e.g. "On Page 5...", "According to Page 11...").
-4. If the user asks about an item, device, vehicle, warranty, or flashcard (e.g. laptop, MacBook, car, appliance, gadget, serial number), check "CONTEXT - TRACKED ASSETS & FLASHCARDS" first.
-5. If the user asks about an uploaded document (e.g. bill, invoice, certificate, policy, customer agreement), check "CONTEXT - STORED DOCUMENTS".
-6. If the user is asking a conversational greeting or overview (such as "hi", "hello", "what can you do?", "how does DocVault work?"), respond politely, introduce yourself as the DocVault AI Assistant, and briefly explain how you can help analyze and answer questions about their encrypted documents and tracked asset flashcards.
-7. When asked about DATES or WARRANTY (e.g. "when was my macbook purchased?", "when does it expire?", "warranty details"), inspect Warranty Expiration, Purchase Date, Description, and Custom Flashcard Fields.
-8. State dates, serial numbers, amounts, and critical entities directly and prominently in bold.
-9. If neither the provided documents nor the tracked assets contain the answer after checking all available pages, reply cleanly:
-"I cannot find that information in your currently uploaded documents or tracked assets."
-10. Structure your responses cleanly with clear headings, bullet points, and highlight key identifiers.
+CORE OPERATING PRINCIPLE:
+Be laser-focused, direct, and concise. Answer EXACTLY and ONLY what the user asked without dumping unrelated fields, excessive preamble, or redundant document metadata tables. The user can view the original document directly if they wish to inspect full context.
+
+RULES:
+1. Direct & Laser-Focused:
+   - Provide the answer directly in your first sentence. Highlight critical values, dates, amounts, names, terms, and numbers in bold.
+   - If the user asks for a date, state that specific date directly.
+   - If the user asks for an amount, state that specific amount directly.
+   - If the user asks for a specific clause, condition, term, notice period, or SLA, provide that exact clause/statement and cite the page number (e.g. "According to **[Document Title]** (Page 5): ...").
+   - If the user asks about an asset/flashcard (e.g. MacBook, car, appliance, warranty), answer the specific requested field (warranty date, serial number, purchase date) directly.
+   - Do NOT dump unrelated fields (like account numbers, transaction IDs, or other clauses) unless the user specifically asked for them.
+2. Document Forwarding / Direct Referral:
+   - Always conclude your answer with a single polite line indicating the user can review the original document directly for full context:
+     "*For full details or complete contract terms, you can view the document directly below.*"
+3. Multi-Page Accuracy:
+   - For multi-page documents (marked with "--- Page X ---"), thoroughly inspect all pages from Page 1 to Page 25 to find the exact statement or clause requested. Cite the specific page where the answer is found.
+4. Not Found:
+   - If neither the provided documents nor the tracked assets contain the answer after checking all available pages, reply cleanly:
+     "I cannot find that information in your currently uploaded documents or tracked assets."
+5. Professional & Crisp:
+   - Keep answers clear, readable, and free of unnecessary introductory filler.
 
 CONTEXT - TRACKED ASSETS & FLASHCARDS:
 ${assetContextString}
@@ -333,13 +342,70 @@ ${question}
 }
 
 /**
+ * Locates the most relevant paragraph/clause across multi-page document text
+ * and identifies the exact page number where it appears.
+ */
+export function findMatchingExcerptWithPage(text, queryTokens) {
+  if (!text || !queryTokens || queryTokens.length === 0) return null;
+
+  // Split into page sections if annotated
+  const rawPages = text.split(/(?=--- Page \d+ ---)/g);
+  const pages = [];
+
+  for (const pageBlock of rawPages) {
+    const pageMatch = pageBlock.match(/--- Page (\d+) ---/);
+    const pageNum = pageMatch ? parseInt(pageMatch[1], 10) : 1;
+    const cleanContent = pageBlock.replace(/--- Page \d+ ---/g, '').trim();
+    pages.push({ pageNum, content: cleanContent });
+  }
+
+  let bestParagraph = null;
+  let bestScore = 0;
+  let bestPage = 1;
+
+  for (const p of pages) {
+    const paragraphs = p.content
+      .split(/\n+/)
+      .map(l => l.trim())
+      .filter(l => l.length > 15);
+
+    for (const para of paragraphs) {
+      const paraLower = para.toLowerCase();
+      let score = 0;
+      let matchedTokens = 0;
+
+      for (const t of queryTokens) {
+        if (paraLower.includes(t)) {
+          matchedTokens++;
+          score += 2;
+          if (new RegExp(`\\b${t}\\b`, 'i').test(paraLower)) {
+            score += 2;
+          }
+        }
+      }
+
+      if (score > bestScore && matchedTokens >= Math.min(2, queryTokens.length)) {
+        bestScore = score;
+        bestParagraph = para;
+        bestPage = p.pageNum;
+      }
+    }
+  }
+
+  if (bestScore >= 4 && bestParagraph) {
+    return { excerpt: bestParagraph, page: bestPage, score: bestScore };
+  }
+  return null;
+}
+
+/**
  * Deterministic Grounded Query Solver:
  * Directly extracts answers from verified document context or tracked asset flashcards
  * when live LLM execution is unavailable or rate-limited.
  */
 export function answerWithDeterministicGrounding(question, contextDocs = [], contextAssets = []) {
   const lowerQ = (question || '').toLowerCase();
-  const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'a', 'an', 'in', 'of', 'and', 'or', 'for', 'to', 'my', 'what', 'tell', 'show', 'give', 'me', 'about', 'this', 'that', 'with', 'from', 'have', 'i', 'as']);
+  const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'a', 'an', 'in', 'of', 'and', 'or', 'for', 'to', 'my', 'what', 'tell', 'show', 'give', 'me', 'about', 'this', 'that', 'with', 'from', 'have', 'i', 'as', 'please']);
   const queryTokens = lowerQ.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(t => t.length > 1 && !stopWords.has(t));
 
   // 1. Evaluate Asset Match
@@ -387,36 +453,50 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
   // Determine Primary Target: Asset vs Document
   const preferAsset = (bestAssetScore > 0 && bestAssetScore > bestDocScore) || (bestAssetScore > 0 && bestDocScore === 0);
 
-  // A. Answer from Asset Flashcard
+  // A. Answer from Asset Flashcard (Laser-focused, direct field response)
   if (preferAsset && bestAsset) {
     const asset = bestAsset;
-    const isWarranty = /(?:warranty|expire|expiry|validity|guarantee)/i.test(lowerQ);
-    const isSerial = /(?:serial|imei|chassis|engine|id|number|model)/i.test(lowerQ);
-    const isPurchase = /(?:purchase|bought|buy|when|date)/i.test(lowerQ);
-    const isPrice = /(?:price|cost|amount|value|worth)/i.test(lowerQ);
+    const isWarranty = /\b(?:warranty|expire|expiry|validity|guarantee)\b/i.test(lowerQ);
+    const isSerial = /\b(?:serial|imei|chassis|engine|id|number|model)\b/i.test(lowerQ);
+    const isPurchase = /\b(?:purchase|purchased|bought|buy)\b|(?:when\s+(?:did|was|i))/i.test(lowerQ);
+    const isPrice = /\b(?:price|cost|amount|value|worth)\b/i.test(lowerQ);
 
     const customMap = {};
     (asset.customFields || []).forEach(f => {
       customMap[f.label.toLowerCase()] = f.value;
     });
 
-    let directHighlight = '';
-    if (isWarranty && (asset.warrantyExpiry || customMap['warranty expiration'] || customMap['warranty'])) {
-      const exp = asset.warrantyExpiry || customMap['warranty expiration'] || customMap['warranty'];
-      directHighlight = `The recorded warranty expiration for your **${asset.name}** is **${exp}**.\n\n`;
-    } else if (isSerial && (customMap['serial number'] || customMap['serial'] || asset.metadata?.serialNumber)) {
-      const sn = customMap['serial number'] || customMap['serial'] || asset.metadata?.serialNumber;
-      directHighlight = `The serial number for your **${asset.name}** is **${sn}**.\n\n`;
-    } else if (isPurchase && (asset.purchaseDate || asset.description)) {
-      directHighlight = `The purchase record for your **${asset.name}** indicates: **${asset.purchaseDate || asset.description}**.\n\n`;
-    } else if (isPrice && (asset.estimatedValue || asset.purchasePrice || customMap['price'])) {
-      directHighlight = `The recorded value/price for your **${asset.name}** is **${asset.estimatedValue || (asset.purchasePrice ? '₹' + asset.purchasePrice : customMap['price'])}**.\n\n`;
-    } else {
-      directHighlight = `Here are the verified records from your vault for **${asset.name}** (${asset.category}):\n\n`;
+    const docReferral = `\n\n*For complete details, you can open your asset flashcard directly below.*`;
+
+    if (isWarranty && (asset.warrantyExpiry || customMap['warranty expiration'] || customMap['warranty'] || customMap['panel warranty'])) {
+      const exp = asset.warrantyExpiry || customMap['warranty expiration'] || customMap['warranty'] || customMap['panel warranty'];
+      return `The recorded warranty expiration for your **${asset.name}** is **${exp}**.*${docReferral}`;
     }
 
-    let record = `### Verified Asset Record (Flashcard)\n`;
-    record += `• **Asset Name:** ${asset.name} (${asset.category || 'General'})\n`;
+    if (isSerial && (customMap['serial number'] || customMap['serial'] || customMap['engine number'] || customMap['chassis number'] || asset.metadata?.serialNumber)) {
+      if (customMap['engine number']) {
+        const eng = customMap['engine number'];
+        const chs = customMap['chassis number'] ? ` (Chassis: \`${customMap['chassis number']}\`)` : '';
+        return `The engine number for your **${asset.name}** is \`${eng}\`${chs}.*${docReferral}`;
+      }
+      const sn = customMap['serial number'] || customMap['serial'] || customMap['chassis number'] || asset.metadata?.serialNumber;
+      return `The serial number for your **${asset.name}** is \`${sn}\`.*${docReferral}`;
+    }
+
+    if (isPurchase && (asset.purchaseDate || asset.description)) {
+      const details = asset.purchaseDate
+        ? (asset.description ? `**${asset.purchaseDate}** (${asset.description})` : `**${asset.purchaseDate}**`)
+        : asset.description;
+      return `The purchase record for your **${asset.name}** indicates: ${details}.*${docReferral}`;
+    }
+
+    if (isPrice && (asset.estimatedValue || asset.purchasePrice || customMap['price'])) {
+      const val = asset.estimatedValue || (asset.purchasePrice ? '₹' + asset.purchasePrice : customMap['price']);
+      return `The recorded price/value for your **${asset.name}** is **${val}**.*${docReferral}`;
+    }
+
+    // General flashcard query
+    let record = `Here are the verified records for your **${asset.name}** (${asset.category || 'General'}):\n\n`;
     record += `• **Status:** ${asset.status || 'Active'}\n`;
     if (asset.warrantyExpiry || customMap['warranty expiration']) {
       record += `• **Warranty Expiration:** **${asset.warrantyExpiry || customMap['warranty expiration']}**\n`;
@@ -425,7 +505,7 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
       record += `• **Serial Number:** \`${customMap['serial number'] || asset.metadata?.serialNumber}\`\n`;
     }
     if (asset.description) {
-      record += `• **Description / Purchase Note:** ${asset.description}\n`;
+      record += `• **Description:** ${asset.description}\n`;
     }
     if (asset.estimatedValue || asset.purchasePrice) {
       record += `• **Estimated Value:** ${asset.estimatedValue || ('₹' + asset.purchasePrice)}\n`;
@@ -435,108 +515,104 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
         record += `• **${f.label}:** ${f.value}\n`;
       }
     });
-
-    return directHighlight + record;
+    record += docReferral;
+    return record;
   }
 
-  // B. Answer from Document (Only if there is a verified relevance score match)
+  // B. Answer from Document (Laser-focused on user's exact requested detail)
   if (bestDoc && bestDocScore > 0) {
     const primaryDoc = bestDoc;
     const text = primaryDoc.extractedText || '';
     const keyDetails = primaryDoc.keyDetails || {};
 
-    const isDateQ = /(?:when|date|day|month|year|expiry|expire|due\s*date|issued|collection|printed)/i.test(lowerQ);
-    const isNameQ = /(?:who|name|consumer|customer|recipient|person|whom|billed\s*to)/i.test(lowerQ);
-    const isAccountQ = /(?:account\s*no|account\s*number|consumer\s*no|ca\s*no|receipt\s*no|transaction\s*id|policy\s*no)/i.test(lowerQ);
-    const isAmountQ = /(?:amount|how\s*much|cost|price|total|payable|paid|fee|charge|balance|bill\s*amount|bill\s*total)/i.test(lowerQ);
+    const matchedExcerpt = findMatchingExcerptWithPage(text, queryTokens);
 
-    // 1. Extract amount
-    let amount = keyDetails['TOTAL AMOUNT'] || keyDetails['Total Amount'] || keyDetails['Amount'] || keyDetails['AMOUNT'] || null;
-    if (!amount) {
-      const amountMatch = text.match(/(?:total\s*amount\s*(?:received|paid|due|payable)?|amount\s*(?:received|paid|due|payable)?|total\s*(?:received|paid|payable)?|grand\s*total|net\s*payable|bill\s*amount)[:.\s]*(?:₹|rs\.?|inr|\$|€|£)?\s*([0-9,]+(?:\.[0-9]{2})?(?:\s*\([^\)]+\))?(?:\s*only)?)/i);
-      if (amountMatch) amount = amountMatch[1].trim();
+    const isDateQ = /(?:when\s+(?:was|is|did|are)|what\s+is\s+the\s+(?:due\s*date|bill\s*date|issue\s*date|expiry|payment\s*date|date)|due\s*date|expiry\s*date|expiration\s*date|date\s+of\s+issue|issued\s+on)/i.test(lowerQ);
+    const isNameQ = /(?:who\s+is|who\s+issued|issued\s+to|whom|whose|consumer\s*name|customer\s*name|recipient\s*name|billed\s*to)/i.test(lowerQ);
+    const isAccountQ = /(?:what\s+is\s+the\s+account|account\s*no|account\s*number|consumer\s*no|ca\s*no|policy\s*no)/i.test(lowerQ);
+    const isTxIdQ = /(?:transaction\s*id|receipt\s*no|receipt\s*number|reference\s*number)/i.test(lowerQ);
+    const isAmountQ = /(?:what\s+is\s+the\s+(?:total|amount|bill|cost|fee|price)|how\s*much|total\s*amount|bill\s*amount|payable\s*amount|total\s*due|net\s*payable)/i.test(lowerQ);
+
+    const docReferral = `\n\n*For full details or complete verification, you can view the document directly below.*`;
+
+    // 1. Specific Clause / Multi-Page Excerpt Match (e.g. SLA, termination, liability, penalty, contract terms)
+    const isPureMetadataQ = (isDateQ || isAmountQ || isNameQ || isAccountQ || isTxIdQ);
+    if (matchedExcerpt && (!isPureMetadataQ || matchedExcerpt.score >= 8)) {
+      return `According to **${primaryDoc.title}** (Page ${matchedExcerpt.page}):\n\n> ${matchedExcerpt.excerpt}${docReferral}`;
     }
 
-    // 2. Extract consumer / recipient
-    let consumer = keyDetails['CONSUMER NAME'] || keyDetails['Consumer Name'] || keyDetails['Recipient Name'] || keyDetails['RECIPIENT NAME'] || null;
-    if (!consumer) {
-      const consumerMatch = text.match(/(?:consumer\s*name|customer\s*name|billed\s*to|recipient(?:\s*name)?|name)[:.\s]+([A-Z][A-Za-z\s\/\.]{2,45})/i);
-      if (consumerMatch) consumer = consumerMatch[1].trim().split('\n')[0];
-    }
-
-    // 3. Extract account number
-    let accountNo = keyDetails['ACCOUNT NUMBER'] || keyDetails['Account No'] || keyDetails['ACCOUNT NO'] || null;
-    if (!accountNo) {
-      const accMatch = text.match(/(?:account\s*no\.?|consumer\s*no\.?|ca\s*no\.?)[:.\s]*([A-Za-z0-9\-_]{4,25})/i);
-      if (accMatch) accountNo = accMatch[1].trim();
-    }
-
-    // 4. Extract transaction / receipt ID
-    let txId = keyDetails['TRANSACTION ID'] || keyDetails['Transaction ID'] || null;
-    if (!txId) {
-      const txMatch = text.match(/(?:transaction\s*id\.?|receipt\s*no\.?|bill\s*no\.?)[:.\s]*([A-Za-z0-9\-_]{5,35})/i);
-      if (txMatch) txId = txMatch[1].trim();
-    }
-
-    // 5. Extract date
-    let docDate = primaryDoc.documentDate || keyDetails['ISSUE DATE'] || keyDetails['DOCUMENT DATE'] || null;
-    if (!docDate) {
-      const dateMatch = text.match(/(?:collection\s*date|printed\s*date|payment\s*date|bill\s*date|issue\s*date|due\s*date)[:.\s]*([0-9]{1,2}[-\/.][0-9]{1,2}[-\/.][0-9]{2,4})/i);
-      if (dateMatch) docDate = dateMatch[1].trim();
-    }
-
-    // 6. Extract issuer / provider
-    let issuer = keyDetails['ISSUING AUTHORITY'] || keyDetails['Issuing Organization'] || null;
-    if (!issuer && text) {
-      const firstLines = text.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 3);
-      const authorityLine = firstLines.find(l => /(?:nigam|ltd|limited|board|corporation|bank|department|university|hospital)/i.test(l));
-      if (authorityLine) issuer = authorityLine;
-    }
-
-    let directAnswer = '';
-    if (isNameQ && consumer) {
-      directAnswer = `The **${primaryDoc.title}** is issued to **${consumer}**.\n\n`;
-    } else if (isDateQ && (docDate || primaryDoc.expiryDate)) {
-      directAnswer = `The recorded date for **${primaryDoc.title}** is **${docDate || primaryDoc.expiryDate}**.\n\n`;
-    } else if (isAccountQ && (accountNo || txId)) {
-      directAnswer = `The account identifier for **${primaryDoc.title}** is ` + (accountNo ? `**${accountNo}**` : `**${txId}**`) + `.\n\n`;
-    } else if (isAmountQ && amount) {
-      const formattedAmt = amount.startsWith('₹') || amount.startsWith('$') ? amount : `₹${amount}`;
-      directAnswer = `The amount of your **${primaryDoc.title}** is **${formattedAmt}**.\n\n`;
-    } else {
-      directAnswer = `Here are the verified records from your vault for **${primaryDoc.title}**:\n\n`;
-    }
-
-    directAnswer += `### Verified Vault Record\n`;
-    if (amount) directAnswer += `• **Total Amount:** **${amount.startsWith('₹') || amount.startsWith('$') ? amount : `₹${amount}`}**\n`;
-    if (consumer) directAnswer += `• **Consumer / Recipient:** ${consumer}\n`;
-    if (accountNo) directAnswer += `• **Account Number:** \`${accountNo}\`\n`;
-    if (docDate) directAnswer += `• **Issue / Payment Date:** ${docDate}\n`;
-    if (primaryDoc.expiryDate) directAnswer += `• **Expiry / Due Date:** ${primaryDoc.expiryDate}\n`;
-    if (txId) directAnswer += `• **Transaction ID:** \`${txId}\`\n`;
-    if (issuer) directAnswer += `• **Issuing Authority:** ${issuer}\n`;
-    if (primaryDoc.summary && primaryDoc.summary !== 'Uploaded document stored securely in your encrypted DocVault.') {
-      directAnswer += `• **Summary:** ${primaryDoc.summary}\n`;
-    }
-
-    // 7. Search for specific content matching user query tokens across multi-page text
-    if (queryTokens.length > 0 && text) {
-      const matchingExcerpts = [];
-      const paragraphs = text.split(/\n+/).map(l => l.trim()).filter(l => l.length > 15);
-      for (const p of paragraphs) {
-        const pLower = p.toLowerCase();
-        const hits = queryTokens.filter(t => pLower.includes(t)).length;
-        if (hits >= Math.min(2, queryTokens.length)) {
-          matchingExcerpts.push(p);
-          if (matchingExcerpts.length >= 3) break;
-        }
+    // 2. Amount Query
+    if (isAmountQ) {
+      let amount = keyDetails['TOTAL AMOUNT'] || keyDetails['Total Amount'] || keyDetails['Amount'] || keyDetails['AMOUNT'] || null;
+      if (!amount) {
+        const amountMatch = text.match(/(?:total\s*amount\s*(?:received|paid|due|payable)?|amount\s*(?:received|paid|due|payable)?|total\s*(?:received|paid|payable)?|grand\s*total|net\s*payable|bill\s*amount)[:.\s]*(?:₹|rs\.?|inr|\$|€|£)?\s*([0-9,]+(?:\.[0-9]{2})?(?:\s*\([^\)]+\))?(?:\s*only)?)/i);
+        if (amountMatch) amount = amountMatch[1].trim();
       }
-      if (matchingExcerpts.length > 0) {
-        directAnswer += `\n**Relevant Document Content:**\n` + matchingExcerpts.map(e => `> ${e}`).join('\n\n') + '\n';
+      if (amount) {
+        const formattedAmt = amount.startsWith('₹') || amount.startsWith('$') ? amount : `₹${amount}`;
+        return `The total amount for **${primaryDoc.title}** is **${formattedAmt}**.${docReferral}`;
       }
     }
 
-    return directAnswer.trim();
+    // 3. Consumer / Recipient Name Query
+    if (isNameQ) {
+      let consumer = keyDetails['CONSUMER NAME'] || keyDetails['Consumer Name'] || keyDetails['Recipient Name'] || keyDetails['RECIPIENT NAME'] || keyDetails['Owner Name'] || null;
+      if (!consumer) {
+        const consumerMatch = text.match(/(?:consumer\s*name|customer\s*name|billed\s*to|recipient(?:\s*name)?|name)[:.\s]+([A-Z][A-Za-z\s\/\.]{2,45})/i);
+        if (consumerMatch) consumer = consumerMatch[1].trim().split('\n')[0];
+      }
+      if (consumer) {
+        return `The document **${primaryDoc.title}** is issued to **${consumer}**.${docReferral}`;
+      }
+    }
+
+    // 4. Account Number Query
+    if (isAccountQ) {
+      let accountNo = keyDetails['ACCOUNT NUMBER'] || keyDetails['Account No'] || keyDetails['ACCOUNT NO'] || keyDetails['Registration No'] || null;
+      if (!accountNo) {
+        const accMatch = text.match(/(?:account\s*no\.?|consumer\s*no\.?|ca\s*no\.?)[:.\s]*([A-Za-z0-9\-_]{4,25})/i);
+        if (accMatch) accountNo = accMatch[1].trim();
+      }
+      if (accountNo) {
+        return `The account number for **${primaryDoc.title}** is \`${accountNo}\`.${docReferral}`;
+      }
+    }
+
+    // 5. Transaction ID Query
+    if (isTxIdQ) {
+      let txId = keyDetails['TRANSACTION ID'] || keyDetails['Transaction ID'] || null;
+      if (!txId) {
+        const txMatch = text.match(/(?:transaction\s*id\.?|receipt\s*no\.?|bill\s*no\.?)[:.\s]*([A-Za-z0-9\-_]{5,35})/i);
+        if (txMatch) txId = txMatch[1].trim();
+      }
+      if (txId) {
+        return `The transaction ID for **${primaryDoc.title}** is \`${txId}\`.${docReferral}`;
+      }
+    }
+
+    // 6. Date Query
+    if (isDateQ) {
+      let docDate = primaryDoc.documentDate || keyDetails['ISSUE DATE'] || keyDetails['DOCUMENT DATE'] || null;
+      if (!docDate) {
+        const dateMatch = text.match(/(?:collection\s*date|printed\s*date|payment\s*date|bill\s*date|issue\s*date|due\s*date)[:.\s]*([0-9]{1,2}[-\/.][0-9]{1,2}[-\/.][0-9]{2,4})/i);
+        if (dateMatch) docDate = dateMatch[1].trim();
+      }
+      if (docDate || primaryDoc.expiryDate) {
+        const dateStr = docDate ? `**${docDate}**` : '';
+        const expiryStr = primaryDoc.expiryDate ? ` (due: **${primaryDoc.expiryDate}**)` : '';
+        return `The recorded date for **${primaryDoc.title}** is ${dateStr}${expiryStr}.${docReferral}`;
+      }
+    }
+
+    // 7. Fallback: Excerpt or Summary
+    if (matchedExcerpt) {
+      return `According to **${primaryDoc.title}** (Page ${matchedExcerpt.page}):\n\n> ${matchedExcerpt.excerpt}${docReferral}`;
+    }
+
+    return `Here are the verified records for **${primaryDoc.title}** (${primaryDoc.category}):\n\n` +
+      (primaryDoc.summary ? `• **Summary:** ${primaryDoc.summary}\n` : '') +
+      (primaryDoc.documentDate ? `• **Date:** ${primaryDoc.documentDate}\n` : '') +
+      docReferral;
   }
 
   // C. Overview Query Support
@@ -555,6 +631,7 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
         summary += `• **${d.title}** (${d.category || 'Document'})\n`;
       });
     }
+    summary += `\n*You can tap any document or flashcard below to open and view it directly.*`;
     return summary.trim();
   }
 

@@ -337,11 +337,15 @@ async function handleAiQuery(req, res) {
     // Format response cleanly for frontend
     const answer = typeof rawAnswer === 'string' ? rawAnswer : (rawAnswer?.answer || JSON.stringify(rawAnswer));
 
-    // Construct structured sources for deep linking (both Assets and Documents!)
+    // Construct structured sources for direct document forwarding and deep linking
     const isUnanswerable = /I cannot find that information in your currently uploaded documents/i.test(answer) ||
                            /I could not find matching records in your currently uploaded documents/i.test(answer);
     
-    const assetSources = isUnanswerable ? [] : relevantAssets.slice(0, 3).map(a => ({
+    // Prioritize only the specific asset(s) and document(s) directly cited or answered
+    const relevantAssetCandidates = relevantAssets.filter(a => answer.toLowerCase().includes(a.name.toLowerCase()));
+    const finalAssets = relevantAssetCandidates.length > 0 ? relevantAssetCandidates : relevantAssets.slice(0, 2);
+
+    const assetSources = isUnanswerable ? [] : finalAssets.map(a => ({
       type: 'asset',
       documentId: a._id,
       assetId: a._id,
@@ -352,25 +356,31 @@ async function handleAiQuery(req, res) {
       downloadUrl: null,
     }));
 
-    const docSources = isUnanswerable ? [] : documents.map(d => ({
+    const relevantDocCandidates = documents.filter(d => answer.toLowerCase().includes(d.title.toLowerCase()));
+    const finalDocs = relevantDocCandidates.length > 0 ? relevantDocCandidates : documents.slice(0, 2);
+
+    const pageMatch = answer.match(/\(Page\s*(\d+)\)/i);
+    const citedPage = pageMatch ? parseInt(pageMatch[1], 10) : null;
+
+    const docSources = isUnanswerable ? [] : finalDocs.map(d => ({
       type: 'document',
       documentId: d._id,
       title: d.title,
       category: d.category || 'Document',
       documentType: d.format || (d.mimetype?.includes('pdf') ? 'pdf' : (d.mimetype?.includes('image') ? 'image' : 'document')),
-      pageNumber: d.pageCount || 1,
+      pageNumber: citedPage || d.pageCount || 1,
       previewRoute: `/documents/${d._id}`,
       downloadUrl: `/api/documents/${d._id}/download`,
     }));
 
     const sources = [...assetSources, ...docSources];
-    const referencedDocIds = isUnanswerable ? [] : documents.map(d => d._id);
-    const referencedDocs = isUnanswerable ? [] : documents.map(d => ({
+    const referencedDocIds = isUnanswerable ? [] : finalDocs.map(d => d._id);
+    const referencedDocs = isUnanswerable ? [] : finalDocs.map(d => ({
       id: d._id,
       title: d.title,
       category: d.category
     }));
-    const referencedAssets = isUnanswerable ? [] : relevantAssets.map(a => ({
+    const referencedAssets = isUnanswerable ? [] : finalAssets.map(a => ({
       id: a._id,
       name: a.name,
       category: a.category
