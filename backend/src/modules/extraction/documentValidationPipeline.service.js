@@ -336,11 +336,11 @@ export async function classifyDocumentVsNonDocument(buffer, metadata, quality) {
   let isDocument = false;
   let nonDocCategory = null;
 
-  if (vibrantRatio > 0.45) {
+  if (vibrantRatio > 0.55 && paperRatio < 0.35) {
     // Unconditional vibrant colors = natural scenery, outdoor, artwork, or casual photo
     isDocument = false;
     nonDocCategory = 'NATURAL_SCENERY';
-  } else if (vibrantRatio > 0.30 && paperRatio < 0.65) {
+  } else if (vibrantRatio > 0.30 && paperRatio < 0.30) {
     // Vibrant landscape / outdoor / storefront with clouds or sky areas
     isDocument = false;
     nonDocCategory = 'NATURAL_SCENERY';

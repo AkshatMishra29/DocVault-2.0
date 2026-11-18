@@ -32,6 +32,12 @@ export const config = {
     clientId: process.env.GOOGLE_CLIENT_ID || '940417312093-vftovh8cf0r3q5jr45jt1659bgnh7n1e.apps.googleusercontent.com',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   },
+  validator: {
+    serviceUrl: process.env.VALIDATOR_SERVICE_URL || 'http://127.0.0.1:8001',
+    internalToken: process.env.INTERNAL_VALIDATOR_TOKEN || 'docvault-internal-secret-token-2026',
+    quarantineDir: process.env.QUARANTINE_DIR || path.resolve(process.cwd(), 'uploads', 'quarantine'),
+    timeoutMs: parseInt(process.env.VALIDATOR_TIMEOUT_MS || '10000', 10),
+  },
   pipeline: {
     version: process.env.PIPELINE_VERSION || '1.0.0',
     noticeVersion: process.env.NOTICE_VERSION || '1.0.0',

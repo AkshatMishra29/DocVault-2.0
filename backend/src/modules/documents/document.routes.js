@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 import { requireAuth } from '../../middleware/auth.middleware.js';
 import { upload } from '../../middleware/upload.middleware.js';
 import { Document, Deadline, AuditLog } from '../../models/index.js';
@@ -10,6 +12,7 @@ import { enqueueDocumentJob, cancelJobsForDocument } from '../pipeline/jobQueue.
 import { validateFileSignature, validateImageSafety, validatePdfSafety, generateSafeServerFilename, UploadSecurityError } from '../extraction/uploadValidation.service.js';
 import { validateDocumentImage, DocumentImageValidationError } from '../extraction/documentImageValidation.service.js';
 import { validateDocumentPipeline, DocumentValidationPipelineError } from '../extraction/documentValidationPipeline.service.js';
+import { validateWithService } from '../extraction/validatorClient.service.js';
 import { extractTextFromPDF, convertPdfToImages } from '../../services/ocr/ocrService.js';
 import { checkUploadRateLimit } from '../extraction/uploadRateLimiter.js';
 import { DocumentAccessControlService } from '../sharing/accessControl.service.js';
@@ -86,6 +89,43 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/documents/:id/status - Status endpoint for polling/validation state
+router.get('/:id/status', requireAuth, async (req, res) => {
+  try {
+    const access = await DocumentAccessControlService.canViewDocument(req.user.userId, req.params.id);
+    if (!access.allowed) {
+      return res.status(access.reason === 'Document not found' ? 404 : 403).json({
+        success: false,
+        error: access.reason || 'Access denied to this document.',
+      });
+    }
+
+    const doc = await Document.findById(req.params.id).select(
+      'status processingStatus doc_type score reject_reason validated_at title originalName sha256'
+    );
+    if (!doc) {
+      return res.status(404).json({ success: false, error: 'Document not found' });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: doc._id,
+        status: doc.status,
+        processingStatus: doc.processingStatus,
+        doc_type: doc.doc_type,
+        score: doc.score,
+        reject_reason: doc.reject_reason,
+        validated_at: doc.validated_at,
+        sha256: doc.sha256,
+        title: doc.title,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 /**
  * POST /api/documents/upload
  * 
@@ -97,6 +137,7 @@ router.get('/:id', requireAuth, async (req, res) => {
  * 5. Asynchronous Job Enqueue: Returns immediately with status 'queued', eliminating timeouts
  */
 router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
+  let quarantineFilePath = null;
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No file provided' });
@@ -110,9 +151,22 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
 
     const { originalname, mimetype, buffer } = req.file;
 
-    // 1. Layer 1: Strict File Security & Signature Validation
+    // 1. Deterministic SHA-256 calculation
+    const sha256 = crypto.createHash('sha256').update(buffer).digest('hex');
+
+    // 2. Quarantine Write (isolated temporary holding before validation & encryption)
+    const quarantineDir = config.validator?.quarantineDir || path.resolve(process.cwd(), 'uploads', 'quarantine');
+    if (!fs.existsSync(quarantineDir)) {
+      fs.mkdirSync(quarantineDir, { recursive: true });
+    }
+    const safeQuarantineName = `${Date.now()}_${sha256.slice(0, 12)}_${originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    quarantineFilePath = path.join(quarantineDir, safeQuarantineName);
+    fs.writeFileSync(quarantineFilePath, buffer);
+
+    // 3. Layer 1: Strict File Security & Multi-Stage Validation
     let signature;
     let pageCount = 1;
+    let pdfText = '';
     let validationResult = null;
 
     try {
@@ -123,22 +177,31 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
         pageCount = pdfCheck.pageCount;
 
         // Verify PDF contains readable text or valid document page structure (reject blank PDF)
-        const pdfText = await extractTextFromPDF(buffer);
+        pdfText = await extractTextFromPDF(buffer);
         const cleanPdfText = pdfText.replace(/-- \d+ of \d+ --/g, '').replace(/\s+/g, ' ').trim();
         if (cleanPdfText.length < 15) {
           // If digital text layer is minimal, inspect rendered first page image
           try {
             const renderedPages = await convertPdfToImages(buffer, 1, 1.0);
             if (renderedPages && renderedPages.length > 0) {
-              validationResult = await validateDocumentPipeline(renderedPages[0], { mimetype: 'image/png', originalname });
-              if (validationResult.status === 'rejected' || validationResult.status === 'review') {
+              const serviceVal = await validateWithService({
+                quarantinePath: quarantineFilePath,
+                sha256,
+                buffer: renderedPages[0],
+                originalname,
+                mimetype: 'image/png',
+              });
+              validationResult = serviceVal;
+              if (serviceVal.decision === 'REJECT' || serviceVal.decision === 'REVIEW') {
+                if (quarantineFilePath && fs.existsSync(quarantineFilePath)) fs.unlinkSync(quarantineFilePath);
                 return res.status(400).json({
                   success: false,
-                  status: validationResult.status,
-                  error: validationResult.message,
-                  code: validationResult.reason_code,
-                  suggestion: validationResult.suggestion,
-                  document_classification: validationResult.document_classification,
+                  status: serviceVal.decision,
+                  error: serviceVal.reason,
+                  code: serviceVal.reason_code,
+                  suggestion: serviceVal.suggestion || 'Document clarity or structure could not be verified.',
+                  doc_type: serviceVal.doc_type,
+                  score: serviceVal.score,
                 });
               }
             }
@@ -152,20 +215,34 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       } else if (signature.detectedType.startsWith('image/')) {
         await validateImageSafety(buffer);
         // Multi-Stage Intelligent Document Detection & Readability Engine
-        validationResult = await validateDocumentPipeline(buffer, { mimetype, originalname });
+        const serviceVal = await validateWithService({
+          quarantinePath: quarantineFilePath,
+          sha256,
+          buffer,
+          originalname,
+          mimetype: signature.detectedType,
+        });
+        validationResult = serviceVal;
 
-        if (validationResult.status === 'rejected' || validationResult.status === 'review') {
+        if (serviceVal.decision === 'REJECT' || serviceVal.decision === 'REVIEW') {
+          if (quarantineFilePath && fs.existsSync(quarantineFilePath)) fs.unlinkSync(quarantineFilePath);
           return res.status(400).json({
             success: false,
-            status: validationResult.status,
-            error: validationResult.message,
-            code: validationResult.reason_code,
-            suggestion: validationResult.suggestion,
-            document_classification: validationResult.document_classification,
+            status: serviceVal.decision,
+            error: serviceVal.reason,
+            code: serviceVal.reason_code,
+            suggestion: serviceVal.suggestion || (serviceVal.decision === 'REJECT'
+              ? 'Please upload a clear photograph or scan of a legitimate document.'
+              : 'Document image clarity is borderline. Please retake the photo with better lighting.'),
+            doc_type: serviceVal.doc_type,
+            score: serviceVal.score,
           });
         }
       }
     } catch (valErr) {
+      if (quarantineFilePath && fs.existsSync(quarantineFilePath)) {
+        try { fs.unlinkSync(quarantineFilePath); } catch (_) {}
+      }
       const statusCode = (valErr instanceof UploadSecurityError || valErr instanceof DocumentImageValidationError || valErr instanceof DocumentValidationPipelineError) ? 400 : 500;
       return res.status(statusCode).json({
         success: false,
@@ -175,16 +252,19 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       });
     }
 
-    // 2. Compute deterministic SHA-256
-    const sha256 = crypto.createHash('sha256').update(buffer).digest('hex');
+    // Move from quarantine to permanent encrypted storage (clean up quarantine file)
+    if (quarantineFilePath && fs.existsSync(quarantineFilePath)) {
+      try { fs.unlinkSync(quarantineFilePath); } catch (_) {}
+      quarantineFilePath = null;
+    }
 
-    // 3. Local In-Process Sensitive Document Detection
+    // 4. Local In-Process Sensitive Document Detection
     const sensitiveCheck = detectSensitiveDocument({
       filename: originalname,
       buffer,
     });
 
-    // 4. Determine AI Policy: Sensitive files are strictly FORCED to storage_only
+    // 5. Determine AI Policy: Sensitive files are strictly FORCED to storage_only
     let requestedPolicy = req.body.aiPolicy;
     if (!requestedPolicy) {
       if (req.body.userConsent === 'PROCESSABLE' || req.body.privacyMode === 'PROCESSABLE' || req.body.userConsent === 'ai_enabled') {
@@ -213,18 +293,18 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     const initialStatus = isStorageOnly ? 'storage_only' : 'queued';
     let inferredCategory = req.body.category;
     if (!inferredCategory || inferredCategory === 'Other') {
-      if (validationResult?.document_type === 'invoice') inferredCategory = 'Finance';
-      else if (validationResult?.document_type === 'receipt') inferredCategory = 'Receipts';
-      else if (validationResult?.document_type === 'bill') inferredCategory = 'Bills';
-      else if (validationResult?.document_type === 'id_card') inferredCategory = 'Identity';
-      else if (validationResult?.document_type === 'certificate') inferredCategory = 'Education';
-      else if (validationResult?.document_type === 'insurance_policy') inferredCategory = 'Insurance';
-      else if (validationResult?.document_type === 'vehicle_document') inferredCategory = 'Automobile';
-      else if (validationResult?.document_type === 'legal_document') inferredCategory = 'Property';
+      if (validationResult?.doc_type === 'invoice' || validationResult?.document_type === 'invoice') inferredCategory = 'Finance';
+      else if (validationResult?.doc_type === 'receipt' || validationResult?.document_type === 'receipt') inferredCategory = 'Receipts';
+      else if (validationResult?.doc_type === 'bill' || validationResult?.document_type === 'bill') inferredCategory = 'Bills';
+      else if (validationResult?.doc_type === 'id_card' || validationResult?.document_type === 'id_card') inferredCategory = 'Identity';
+      else if (validationResult?.doc_type === 'certificate' || validationResult?.document_type === 'certificate') inferredCategory = 'Education';
+      else if (validationResult?.doc_type === 'insurance_policy' || validationResult?.document_type === 'insurance_policy') inferredCategory = 'Insurance';
+      else if (validationResult?.doc_type === 'vehicle_document' || validationResult?.document_type === 'vehicle_document') inferredCategory = 'Automobile';
+      else if (validationResult?.doc_type === 'legal_document' || validationResult?.document_type === 'legal_document') inferredCategory = 'Property';
     }
     const category = sensitiveCheck.isSensitive ? 'Identity' : (inferredCategory || 'Other');
 
-    // 5. Persist Document Record
+    // 6. Persist Document Record with Validation Audit Data
     const docData = {
       userId: req.user.userId,
       title: (req.body.title || originalname).replace(/\.[^/.]+$/, ''),
@@ -251,11 +331,15 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       sensitiveFlag: sensitiveCheck.isSensitive,
       sensitiveReason: sensitiveCheck.reason,
       aiConsent,
-      status: initialStatus,
+      status: isStorageOnly ? 'storage_only' : 'ACCEPTED',
       processingStatus: initialStatus,
       sha256,
       pageCount,
       pipelineVersion: config.pipeline?.version || '1.0.0',
+      doc_type: validationResult?.doc_type || 'printed',
+      score: validationResult?.score !== undefined ? validationResult.score : 0.90,
+      reject_reason: null,
+      validated_at: new Date(),
       extractedFields: [],
       reviewStatus: 'not_required',
     };
@@ -315,6 +399,9 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       status: savedDoc.status,
     });
   } catch (err) {
+    if (quarantineFilePath && fs.existsSync(quarantineFilePath)) {
+      try { fs.unlinkSync(quarantineFilePath); } catch (_) {}
+    }
     console.error('[Upload Pipeline Error]', err.message);
     const statusCode = err.message.startsWith('Security Guardrail:') || err.message.includes('exceeds maximum') ? 400 : 500;
     res.status(statusCode).json({ success: false, error: err.message });
@@ -452,6 +539,10 @@ router.get('/:id/download', requireAuth, async (req, res) => {
     const doc = await Document.findById(req.params.id);
     if (!doc) {
       return res.status(404).send('Document not found');
+    }
+
+    if (doc.status === 'REJECTED' || doc.status === 'PENDING') {
+      return res.status(403).send(`Cannot download document with status "${doc.status}".`);
     }
 
     if (!doc.fileData) {

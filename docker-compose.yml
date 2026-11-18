@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # ───────────────────────────────────────────────────────────────────────────
+  # 1. Document Validator Service (Isolated ML & Heuristic Guardrail)
+  # ───────────────────────────────────────────────────────────────────────────
+  validator:
+    build:
+      context: ./validator
+      dockerfile: Dockerfile
+    container_name: docvault-validator
+    restart: unless-stopped
+    environment:
+      - INTERNAL_VALIDATOR_TOKEN=docvault-internal-secret-token-2026
+      - OMP_NUM_THREADS=2
+      - ONNX_NUM_THREADS=2
+    volumes:
+      # Read-only mount of the shared quarantine volume (Zero tampering possible)
+      - docvault_quarantine:/quarantine:ro
+    networks:
+      - internal_net
+    expose:
+      - "8001"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1024M
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 2. Main Backend Application (Node.js Express API)
+  # ───────────────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: docvault-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - NODE_ENV=production
+      - VALIDATOR_SERVICE_URL=http://validator:8001
+      - INTERNAL_VALIDATOR_TOKEN=docvault-internal-secret-token-2026
+      - QUARANTINE_DIR=/quarantine
+    volumes:
+      # Read-write mount for initial file quarantine and encryption processing
+      - docvault_quarantine:/quarantine:rw
+    networks:
+      - internal_net
+      - public_net
+    depends_on:
+      - validator
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 3. Frontend Web Client (React + Vite)
+  # ───────────────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: docvault-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    networks:
+      - public_net
+    depends_on:
+      - backend
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NETWORKS & VOLUMES
+# ─────────────────────────────────────────────────────────────────────────────
+networks:
+  # Internal network with NO outbound internet access (Locked-down ML environment)
+  internal_net:
+    driver: bridge
+    internal: true
+
+  # Public network for frontend/backend client ingress
+  public_net:
+    driver: bridge
+
+volumes:
+  # Shared quarantine volume between backend and validator
+  docvault_quarantine:
+    driver: local

@@ -104,13 +104,30 @@ const DocumentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['queued', 'processing', 'completed', 'needs_review', 'needs_retake', 'failed', 'storage_only'],
-    default: 'queued',
+    enum: [
+      // Architecture Status Standard (PENDING, ACCEPTED, REJECTED, REVIEW)
+      'PENDING', 'ACCEPTED', 'REJECTED', 'REVIEW',
+      // Legacy Pipeline status compatibility
+      'queued', 'processing', 'completed', 'needs_review', 'needs_retake', 'failed', 'storage_only'
+    ],
+    default: 'PENDING',
     index: true,
   },
   sha256: { type: String, index: true },
   pageCount: { type: Number, default: 1 },
   pipelineVersion: { type: String, default: '1.0.0' },
+
+  // Validation Service Fields
+  doc_type: { 
+    type: String, 
+    enum: ['printed', 'handwritten', 'mixed', 'scanned', 'id_card', 'legal_document', 'invoice', 'receipt', 'bill', 'certificate', 'insurance_policy', 'bank_statement', 'other'],
+    default: 'printed',
+    index: true 
+  },
+  score: { type: Number, default: null },
+  reject_reason: { type: String, default: null },
+  validated_at: { type: Date, default: null },
+  quarantinePath: { type: String, default: null },
 
   // Backward compatibility fields
   privacyMode: {
