@@ -185,16 +185,22 @@ export function resolveQuerySourcesAndEntities({
   const pageMatch = answer ? answer.match(/\(Page\s*(\d+)\)/i) : null;
   const citedPage = pageMatch ? parseInt(pageMatch[1], 10) : null;
 
-  const docSources = isUnanswerable ? [] : finalDocs.map(d => ({
-    type: 'document',
-    documentId: d._id,
-    title: d.title,
-    category: d.category || 'Document',
-    documentType: d.format || (d.mimetype?.includes('pdf') ? 'pdf' : (d.mimetype?.includes('image') ? 'image' : 'document')),
-    pageNumber: citedPage || d.pageCount || 1,
-    previewRoute: `/documents/${d._id}`,
-    downloadUrl: `/api/documents/${d._id}/download`,
-  }));
+  const docSources = isUnanswerable ? [] : finalDocs.map(d => {
+    let cleanCat = d.category || 'Document';
+    if (/resume|cv/i.test(d.title || '') && (/insurance|other|admit/i.test(cleanCat) || cleanCat === 'Document')) {
+      cleanCat = 'Resume / CV';
+    }
+    return {
+      type: 'document',
+      documentId: d._id,
+      title: d.title,
+      category: cleanCat,
+      documentType: d.format || (d.mimetype?.includes('pdf') ? 'pdf' : (d.mimetype?.includes('image') ? 'image' : 'document')),
+      pageNumber: citedPage || 1,
+      previewRoute: `/documents/${d._id}`,
+      downloadUrl: `/api/documents/${d._id}/download`,
+    };
+  });
 
   const sources = [...assetSources, ...docSources];
   const referencedDocIds = isUnanswerable ? [] : finalDocs.map(d => d._id);

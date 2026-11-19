@@ -1,46 +1,35 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { config } from '../src/config/index.js';
-import { answerWithDeterministicGrounding } from '../src/services/ai/groqService.js';
+import { answerWithDeterministicGrounding, parseStructuredResume } from '../src/services/ai/groqService.js';
+import { classifyDocumentByRules } from '../src/modules/extraction/ruleExtraction.service.js';
 
 test('🧪 Ask AI Resume & Complex Project Architecture Engine Suite', async (t) => {
-  const mockResumeDoc = {
-    _id: 'doc-resume-01',
-    title: 'Akshat Mishra - Full Stack AI Engineer Resume',
+  const mockSapResumeDoc = {
+    _id: 'doc-sap-resume-01',
+    title: 'Akshat Resume for SAP Roles',
     category: 'Resume / CV',
     documentDate: '2026-11-01',
-    summary: 'Senior Full Stack & AI Systems Engineer with 4+ years of experience designing high-throughput distributed RAG pipelines, microservices, and React architectures.',
-    keyDetails: {
-      'Candidate or Recipient Name': 'Akshat Mishra',
-      'Current Title / Role': 'Lead Full Stack AI Engineer',
-      'Core Skills / Tech Stack': 'Node.js, Express, React, TypeScript, Python, Groq LLMs, ONNX Runtime, MongoDB, Docker, TailwindCSS',
-      'Projects': 'DocVault 2.0 (Zero-Knowledge AI Document Intelligence), DiHE High-Efficiency OCR Engine',
-      'Issue Date': '2026-11-01'
-    },
+    summary: 'Uploaded document stored securely in your encrypted DocVault.',
+    keyDetails: { 'File Name': 'Akshat Resume for SAP Roles.pdf' },
     extractedText: `
 --- Page 1 ---
 AKSHAT MISHRA
-Email: akshat@docvault.dev | Portfolio: https://github.com/AkshatMishra29
+Email: akshat@docvault.dev | LinkedIn: linkedin.com/in/akshatmishra
 SUMMARY:
-Full Stack & AI Systems Engineer specializing in privacy-preserving document intelligence, edge inference, and high-performance React architectures.
+Full Stack Enterprise Architect and SAP Certified Generative AI Developer with a strong interest in B2B SaaS and customer acquisition.
+CERTIFICATIONS:
+• SAP Certified Generative AI Developer
+• AWS Certified Solutions Architect - Associate
+• AMD AI Academy Certified Agent Developer
+SKILLS:
+SAP BTP, SAP CAP, Node.js, Python, React, TypeScript, LangChain, Groq SDK, MongoDB
 EXPERIENCE:
-DocVault Systems - Lead Architect (2024 - Present)
-- Engineered hybrid semantic search combining dense vector embeddings with Reciprocal Rank Fusion (RRF).
-- Implemented multi-stage computer vision guardrails using ONNX MobileNetV4 and Laplacian variance analysis.
-- Deployed Groq-accelerated 120-Billion parameter reasoning pipelines achieving sub-1200ms roundtrips.
+DocVault Systems - Senior Full Stack AI Engineer (2024 - Present)
+- Architected enterprise document processing pipelines and zero-knowledge RAG engine.
+- Integrated SAP Generative AI Hub connectors for enterprise document management.
 EDUCATION:
-B.Tech in Computer Science & Engineering (2020 - 2024)
---- Page 2 ---
-TECHNICAL PROJECTS:
-1. DocVault 2.0:
-   - Full stack encrypted vault featuring client-side SHA-256 duplicate prevention, AES-256 encryption, and zero-leak entity isolation.
-   - Microservices architecture powered by Node.js, Express, MongoDB, and React with Lucide icons and TailwindCSS.
-2. DiHE Hybrid Extraction Engine:
-   - Hybrid OCR combining Tesseract, Groq Vision OCR, and structured metadata normalization.
-SKILLS MATRIX:
-Languages: JavaScript, TypeScript, Python, SQL, C++
-Frameworks & Libraries: React, Node.js, Express.js, TailwindCSS, Mongoose, ONNX Runtime Web
-DevOps & Cloud: Docker, Groq Hardware, AWS S3, CI/CD, Git
+B.Tech in Computer Science (2020 - 2024)
 `
   };
 
@@ -75,57 +64,77 @@ DOCVAULT 2.0 ARCHITECTURAL BLUEPRINT
     title: 'Electricity Bill Receipt',
     category: 'Purchase Receipt',
     documentDate: '2026-11-11',
-    summary: 'Payment receipt for electricity utility consumer #99214.',
+    summary: 'Electricity bill payment receipt of ₹225 for consumer SARIKA MISHRA (Account No: 0671805000) at Madhyanchal Vidyut Vitran Nigam Ltd on 11-11-2026.',
     keyDetails: {
-      'Consumer Name': 'City Power Customer',
-      'Total Amount': '₹1,450.00',
-      'Issue Date': '2026-11-11'
+      'CONSUMER NAME': 'SARIKA MISHRA',
+      'ACCOUNT NUMBER': '0671805000',
+      'TOTAL AMOUNT': '₹225.00',
+      'ISSUE DATE': '2026-11-11'
     },
-    extractedText: 'Electricity Bill Receipt. Consumer Name: City Power Customer. Total Amount: ₹1,450.00. Date: 2026-11-11.'
+    extractedText: 'Electricity Bill Payment Receipt. Madhyanchal Vidyut Vitran Nigam Ltd. Consumer Name: SARIKA MISHRA. Account No: 0671805000. Total Amount Paid: ₹225.00. Payment Date: 11-11-2026. Status: Paid.'
   };
 
   await t.test('1. Groq Config is configured with 120B model', () => {
     assert.equal(config.groq.model, 'openai/gpt-oss-120b');
   });
 
-  await t.test('2. Resume query extracts candidate name, role, tech stack, and projects without hallucinating electricity bill', () => {
+  await t.test('2. Resume query extracts certifications as itemized list, NOT a broken 1-sentence snippet', () => {
     const answer = answerWithDeterministicGrounding(
-      'give me the candidate resume details and technical skills',
-      [mockElectricityDoc, mockResumeDoc],
+      'give me my sap resume and give me the list of certfications present in ti',
+      [mockElectricityDoc, mockSapResumeDoc],
+      []
+    );
+
+    assert.match(answer, /Verified Certifications/i);
+    assert.match(answer, /SAP Certified Generative AI Developer/i);
+    assert.match(answer, /AWS Certified Solutions Architect/i);
+    assert.match(answer, /AMD AI Academy/i);
+    // Entity isolation: MUST NOT contain electricity bill details
+    assert.doesNotMatch(answer, /Electricity Bill Receipt/i);
+    assert.doesNotMatch(answer, /SARIKA MISHRA/i);
+    assert.doesNotMatch(answer, /₹225/i);
+  });
+
+  await t.test('3. Detailed content query of resume extracts candidate name, summary, certs, skills, and experience', () => {
+    const answer = answerWithDeterministicGrounding(
+      'give me the detailed content of the sap resume',
+      [mockElectricityDoc, mockSapResumeDoc],
       []
     );
 
     assert.match(answer, /Akshat Mishra/i);
-    assert.match(answer, /Lead Full Stack AI Engineer/i);
-    assert.match(answer, /Node\.js|Python|React/i);
-    assert.match(answer, /DocVault 2\.0/i);
-    // Entity isolation check: MUST NOT contain electricity bill
+    assert.match(answer, /SAP Certified Generative AI Developer/i);
+    assert.match(answer, /SAP BTP|Node\.js|Python|React/i);
+    assert.match(answer, /DocVault Systems/i);
     assert.doesNotMatch(answer, /Electricity Bill Receipt/i);
-    assert.doesNotMatch(answer, /City Power Customer/i);
-    assert.doesNotMatch(answer, /₹1,450/i);
   });
 
-  await t.test('3. Project Architecture query extracts system design and technical components without utility leakage', () => {
+  await t.test('4. Electricity bill query returns clean structured metrics card', () => {
     const answer = answerWithDeterministicGrounding(
-      'what is the architecture and tech stack of the project',
-      [mockElectricityDoc, mockProjectDoc],
+      'give me the electricity bill of the last month',
+      [mockElectricityDoc, mockSapResumeDoc],
       []
     );
 
-    assert.match(answer, /DocVault 2\.0 System Architecture/i);
-    assert.match(answer, /Groq 120B LLM|ONNX Runtime/i);
-    assert.doesNotMatch(answer, /Electricity Bill Receipt/i);
-    assert.doesNotMatch(answer, /₹1,450/i);
+    assert.match(answer, /SARIKA MISHRA/i);
+    assert.match(answer, /0671805000/);
+    assert.match(answer, /225/);
+    assert.match(answer, /2026-11-11|11-11-2026/);
+    assert.match(answer, /Madhyanchal Vidyut Vitran Nigam Ltd/i);
+    assert.doesNotMatch(answer, /Akshat Mishra/i);
+    assert.doesNotMatch(answer, /SAP/i);
   });
 
-  await t.test('4. Specific candidate experience query cites multi-page resume excerpt accurately', () => {
-    const answer = answerWithDeterministicGrounding(
-      'what is the candidate experience at DocVault Systems',
-      [mockResumeDoc],
-      []
-    );
+  await t.test('5. classifyDocumentByRules classifies resume as Resume / CV and NOT Insurance Policy', () => {
+    const res = classifyDocumentByRules(mockSapResumeDoc.extractedText, 'Akshat Resume for SAP Roles.pdf');
+    assert.equal(res.category, 'Resume / CV');
+    assert.notEqual(res.category, 'Insurance Policy');
+  });
 
-    assert.match(answer, /Akshat Mishra/i);
-    assert.match(answer, /DocVault Systems|Full Stack/i);
+  await t.test('6. parseStructuredResume extracts all key sections from OCR text', () => {
+    const parsed = parseStructuredResume(mockSapResumeDoc.extractedText, mockSapResumeDoc);
+    assert.equal(parsed.candidateName, 'AKSHAT MISHRA');
+    assert.ok(parsed.certifications.some(c => c.includes('SAP Certified Generative AI Developer')));
+    assert.ok(parsed.skills.length > 0);
   });
 });

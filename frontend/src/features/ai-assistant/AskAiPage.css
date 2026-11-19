@@ -1057,6 +1057,30 @@
 }
 
 .dv-source-card__sub {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.dv-source-card__badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: rgba(0, 81, 180, 0.08);
+  color: #0051B4;
+}
+
+[data-theme="dark"] .dv-source-card__badge {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+}
+
+.dv-source-card__page {
   font-size: 11px;
   color: #64748B;
 }

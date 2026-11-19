@@ -216,6 +216,8 @@ export function classifyDocumentByRules(text, filename = '') {
   const lower = (text + ' ' + filename).toLowerCase();
 
   const scores = {
+    'Resume / CV': 0,
+    'Technical Architecture': 0,
     'Tax Invoice': 0,
     'Insurance Policy': 0,
     'Admit Card': 0,
@@ -226,6 +228,20 @@ export function classifyDocumentByRules(text, filename = '') {
     'Medical Report': 0,
   };
 
+  // Resume / Curriculum Vitae rules
+  const hasResumeIndicator = /resume|curriculum\s*vitae|\bcv\b/i.test(lower) || /resume/i.test(filename);
+  if (hasResumeIndicator) {
+    scores['Resume / CV'] += 60;
+  }
+  if (/work\s*experience|employment\s*history|technical\s*skills|core\s*skills|professional\s*summary|skills\s*matrix|education\s*history|certifications?|projects?\s*worked|technologies\s*used|github\.com|linkedin\.com/i.test(lower)) {
+    scores['Resume / CV'] += 40;
+  }
+
+  // Technical Architecture & Project Portfolio rules
+  if (/system\s*architecture|architectural\s*blueprint|software\s*design|component\s*diagram|api\s*documentation|tech\s*stack|database\s*schema|microservices/i.test(lower)) {
+    scores['Technical Architecture'] += 45;
+  }
+
   // Tax / GST Invoice rules
   if (/tax\s*invoice|gstin|gst\s*invoice|bill\s*of\s*supply|hsn\s*code|cgst|sgst|igst/.test(lower)) {
     scores['Tax Invoice'] += 35;
@@ -234,8 +250,8 @@ export function classifyDocumentByRules(text, filename = '') {
     scores['Tax Invoice'] += 30;
   }
 
-  // Insurance Policy rules
-  if (/insurance|policy\s*number|sum\s*insured|premium|tpa|cashless|claim|motor\s*policy|health\s*policy/.test(lower)) {
+  // Insurance Policy rules (suppressed if document is explicitly a Resume/CV)
+  if (!hasResumeIndicator && /insurance|policy\s*number|sum\s*insured|premium|tpa|cashless|claim|motor\s*policy|health\s*policy/.test(lower)) {
     scores['Insurance Policy'] += 40;
   }
 

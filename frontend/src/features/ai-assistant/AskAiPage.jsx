@@ -816,6 +816,13 @@ export default function AskAiPage() {
                             const docId = source.documentId || source.assetId || source.id || source._id;
                             const targetRoute = isAsset ? (source.previewRoute || `/assets/${docId}`) : (source.previewRoute || `/documents/${docId}`);
 
+                            // Normalize category if title indicates resume but category was misclassified
+                            const rawCategory = source.category || "Document";
+                            const isResumeTitle = /resume|cv/i.test(source.title || "");
+                            const displayCategory = (isResumeTitle && (/insurance|other|admit/i.test(rawCategory) || rawCategory === "Document"))
+                              ? "Resume / CV"
+                              : rawCategory;
+
                             return (
                               <div key={sIdx} className={`dv-source-card ${isAsset ? "dv-source-card--asset" : ""}`}>
                                 <div className="dv-source-card__left">
@@ -823,12 +830,13 @@ export default function AskAiPage() {
                                     {isAsset ? <Layers size={15} style={{ color: "var(--color-primary)" }} /> : <FileText size={15} />}
                                   </div>
                                   <div className="dv-source-card__meta">
-                                    <span className="dv-source-card__title" title={source.title}>
+                                    <div className="dv-source-card__title" title={source.title}>
                                       {source.title}
-                                    </span>
-                                    <span className="dv-source-card__sub">
-                                      {source.category} {source.pageNumber ? `• Page ${source.pageNumber}` : ""}
-                                    </span>
+                                    </div>
+                                    <div className="dv-source-card__sub">
+                                      <span className="dv-source-card__badge">{displayCategory}</span>
+                                      {source.pageNumber ? <span className="dv-source-card__page"> • Page {source.pageNumber}</span> : null}
+                                    </div>
                                   </div>
                                 </div>
 
