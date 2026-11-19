@@ -47,7 +47,9 @@ function computeLexicalScore(doc, queryTokens) {
     if (token.length < 2) continue;
     const isIntentToken = intentTokens.has(token);
     const weightMult = isIntentToken ? 0.2 : 1.0;
-    const tokenRegex = (token === 'certificate' || token === 'certficate') ? /certif|certf/ : new RegExp(token);
+    const tokenRegex = (token === 'certificate' || token === 'certficate') ? /certif|certf/
+      : (token === 'resume' || token === 'cv') ? /resume|cv|curriculum/
+      : new RegExp(token);
 
     if (tokenRegex.test(title)) score += 8.0 * (isIntentToken ? 0.3 : 1.0);
     if (tokenRegex.test(category)) score += 6.0 * (isIntentToken ? 0.3 : 1.0);
@@ -295,6 +297,8 @@ async function handleAiQuery(req, res) {
     const isDateQuery = /(?:when|date|issued|expiry|expire|due|completed|award|valid|renewal|time|day|month|year)/i.test(question);
     const isCertQuery = /(?:certif|certf|degree|diploma|grade|score|course|university|college|completion|mark|award)/i.test(question);
     const isFinanceQuery = /(?:amount|total|bill|invoice|gst|price|cost|paid|tax|expense|salary|statement)/i.test(question);
+    const isResumeQuery = /(?:resume|cv|curriculum\s*vitae|candidate|experience|work\s*history|skills?|education|qualification|hire|hiring|portfolio|profile|bio|projects?|accomplishments?|achievements?|technolog(?:y|ies)|applicant|developer|engineer|tech\s*stack)/i.test(question);
+    const isProjectQuery = /(?:project|architecture|stack|technology|tech\s*stack|features?|implementation|backend|frontend|framework|design|code|system|component|guardrail)/i.test(question);
 
     // 3. Retrieve and Score User Assets / Flashcards
     const allAssets = await Asset.find({ userId: req.user.userId }).lean().catch(() => []);
@@ -442,6 +446,22 @@ async function handleAiQuery(req, res) {
             }
             if (doc.category === 'Academic Certificate' || /certif|certf/i.test(doc.title)) {
               rrf -= 0.20; // Prevent certificates from competing with financial receipts
+            }
+          }
+          if (isResumeQuery) {
+            if (['Resume / CV', 'Employment Document'].includes(doc.category) || /resume|cv|curriculum/i.test(doc.title) || /experience|skills|education/i.test(doc.extractedText)) {
+              rrf += 0.25; // Strongly boost resume documents for career/skills/work queries
+            }
+            if (/bill|receipt|invoice|tax|statement|electricity/i.test(doc.title) || ['Purchase Receipt', 'Tax Invoice', 'Bank Statement'].includes(doc.category)) {
+              rrf -= 0.25; // Suppress utility bills/receipts on resume queries
+            }
+          }
+          if (isProjectQuery) {
+            if (['Technical Architecture', 'Project Portfolio'].includes(doc.category) || /architecture|project|portfolio/i.test(doc.title) || /architecture|system design|backend|frontend/i.test(doc.extractedText)) {
+              rrf += 0.25; // Strongly boost project documentation
+            }
+            if (/bill|receipt|invoice|tax|statement|electricity/i.test(doc.title) || ['Purchase Receipt', 'Tax Invoice'].includes(doc.category)) {
+              rrf -= 0.20;
             }
           }
           if (isLinkedToAsset) {

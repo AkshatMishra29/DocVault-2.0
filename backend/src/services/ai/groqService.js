@@ -9,10 +9,10 @@ function getGroqClient() {
 }
 
 const CANDIDATE_CHAT_MODELS = [
-  'qwen/qwen3.8-27b',
-  'openai/gpt-oss-120b',
-  'openai/gpt-oss-20b',
-  'openai/gpt-oss-safeguard-20b',
+  'openai/gpt-oss-120b',          // Primary 120-Billion parameter flagship model for deep logic & resume/project reasoning
+  'qwen/qwen3.8-27b',             // High-speed multimodal 27B model
+  'openai/gpt-oss-20b',           // Ultra-fast 20B reasoning model
+  'openai/gpt-oss-safeguard-20b', // Safety fallback
   config.groq.model,
 ].filter(Boolean);
 
@@ -53,23 +53,26 @@ export async function extractDocumentMetadata(rawText, filename, imageBase64 = n
     try {
       console.log(`[Groq Vision OCR] Attempting visual multimodal extraction for: ${filename} using qwen/qwen3.8-27b...`);
       const visionPrompt = `You are the DocVault Universal Production Document Vision Engine.
-Analyze the provided document image (such as an academic certificate, invoice, policy, receipt, or identity card) and extract its complete content and metadata.
-Pay special attention to dates (issue date, completion date, award date), recipient/organization names, certificate/credential IDs, and all readable text.
+Analyze the provided document image (such as a resume, CV, academic certificate, project architecture, invoice, policy, receipt, or identity card) and extract its complete content and metadata.
+Pay special attention to candidate/recipient names, project titles, technical skills, dates (issue date, graduation, experience duration), organization names, credential IDs, and all readable text.
 
 Return ONLY a valid JSON object (no markdown, no backticks):
 {
-  "title": "A short, descriptive title for this document (e.g. 'Stanford Machine Learning Certificate')",
-  "category": "One of: 'Academic Certificate', 'Tax Invoice', 'Purchase Receipt', 'Insurance Policy', 'Warranty Document', 'Medical Report', 'Admit Card', 'Bank Statement', 'Identity Document', 'Employment Document', 'Other'",
-  "documentDate": "Primary document date (e.g. Issue Date, Certificate Award Date, Invoice Date, Completion Date) in YYYY-MM-DD or readable format if found, otherwise null",
+  "title": "A short, descriptive title for this document (e.g. 'Akshat Mishra - Full Stack AI Engineer Resume' or 'Stanford Machine Learning Certificate')",
+  "category": "One of: 'Resume / CV', 'Technical Architecture', 'Project Portfolio', 'Academic Certificate', 'Tax Invoice', 'Purchase Receipt', 'Insurance Policy', 'Warranty Document', 'Medical Report', 'Admit Card', 'Bank Statement', 'Identity Document', 'Employment Document', 'Other'",
+  "documentDate": "Primary document date (e.g. Issue Date, Certificate Award Date, Resume Date, Invoice Date, Completion Date) in YYYY-MM-DD or readable format if found, otherwise null",
   "expiryDate": "YYYY-MM-DD format if an expiration, renewal, or validity end date is present, otherwise null",
-  "summary": "A concise 2-3 sentence executive summary explaining what this document is, recipient/issuer, and critical facts.",
+  "summary": "A concise 2-3 sentence executive summary explaining what this document is, recipient/candidate, and critical facts or technical projects.",
   "keyDetails": {
-    "Recipient Name": "Name of person awarded/billed/insured if present",
+    "Candidate or Recipient Name": "Name of candidate/person if present",
+    "Current Title / Role": "Professional title or target role if resume",
+    "Core Skills / Tech Stack": "Key technologies, programming languages, and frameworks",
+    "Projects": "Key project names and descriptions mentioned",
     "Issuing Organization": "Institution, University, Company, or Authority",
     "Certificate or Credential ID": "Certificate No, Roll No, or ID if present",
     "Issue Date": "Date issued, awarded, or signed",
     "Course or Program": "Course/degree title if applicable",
-    "Additional Details": "Any other critical numbers or values"
+    "Additional Details": "Any other critical numbers, links, or values"
   },
   "tags": ["array", "of", "3-5", "relevant", "search", "keywords"],
   "extractedText": "Complete readable verbatim transcription of all text and labels detected in this document image"
@@ -125,16 +128,19 @@ Filename: ${filename}`;
 
   const prompt = `You are the DocVault AI Universal Information Extraction Engine.
 Analyze the following document text and return ONLY a valid JSON object (no markdown, no backticks, no commentary).
-Extract all critical metadata, paying special attention to certificate dates, recipient names, issuing organizations, and identifiers.
+Extract all critical metadata, paying special attention to candidate/recipient names, technical skills, projects, certificate dates, issuing organizations, and identifiers.
 
 {
-  "title": "A short, descriptive title for this document (e.g. 'Stanford Machine Learning Certificate')",
-  "category": "One of: 'Academic Certificate', 'Tax Invoice', 'Purchase Receipt', 'Insurance Policy', 'Warranty Document', 'Medical Report', 'Admit Card', 'Academic Certificate', 'Bank Statement', 'Identity Document', 'Employment Document', 'Other'",
-  "documentDate": "Primary date of this document (e.g. Issue Date, Certificate Date, Invoice Date, Award Date, Completion Date) in YYYY-MM-DD or readable format if found, otherwise null",
+  "title": "A short, descriptive title for this document (e.g. 'Akshat Mishra - Full Stack AI Engineer Resume' or 'Stanford Machine Learning Certificate')",
+  "category": "One of: 'Resume / CV', 'Technical Architecture', 'Project Portfolio', 'Academic Certificate', 'Tax Invoice', 'Purchase Receipt', 'Insurance Policy', 'Warranty Document', 'Medical Report', 'Admit Card', 'Bank Statement', 'Identity Document', 'Employment Document', 'Other'",
+  "documentDate": "Primary date of this document (e.g. Issue Date, Certificate Date, Resume Date, Invoice Date, Award Date, Completion Date) in YYYY-MM-DD or readable format if found, otherwise null",
   "expiryDate": "YYYY-MM-DD format if an expiration, renewal, or warranty end date is present, otherwise null",
-  "summary": "A concise 2-3 sentence executive summary explaining what this document is, recipient/issuer, and key facts.",
+  "summary": "A concise 2-3 sentence executive summary explaining what this document is, recipient/candidate, and key technical facts or projects.",
   "keyDetails": {
-    "Recipient Name": "Name of person awarded/billed/insured if present",
+    "Candidate or Recipient Name": "Name of candidate/person if present",
+    "Current Title / Role": "Professional title or role if resume",
+    "Core Skills / Tech Stack": "Key technologies, programming languages, and frameworks",
+    "Projects": "Key project names and descriptions mentioned",
     "Issuing Organization": "Institution, Company, or Authority",
     "Certificate or Credential ID": "Certificate No, Roll No, or ID if present",
     "Issue Date": "Date issued, awarded, or signed",
@@ -145,7 +151,7 @@ Extract all critical metadata, paying special attention to certificate dates, re
 
 Filename: ${filename}
 Document Text:
-${rawText ? rawText.slice(0, 4000) : 'No OCR text available. Infer from filename.'}
+${rawText ? rawText.slice(0, 24000) : 'No OCR text available. Infer from filename.'}
 `;
 
   try {
@@ -248,9 +254,9 @@ export function extractRelevantContextWindow(fullText, question, budget = 45000)
  * Answer questions based on retrieved document context and tracked assets (RAG Q&A)
  */
 export async function answerDocumentQuery(question, contextDocs = [], contextAssets = []) {
-  // Support deep context budget: single targeted document gets up to 45,000 characters
-  // Multi-document queries get up to 18,000 characters per document
-  const maxDocChars = contextDocs.length === 1 ? 45000 : (contextDocs.length <= 3 ? 18000 : 10000);
+  // Support deep context budget: single targeted document gets up to 60,000 characters
+  // Multi-document queries get up to 25,000 characters per document
+  const maxDocChars = contextDocs.length === 1 ? 60000 : (contextDocs.length <= 3 ? 25000 : 12000);
 
   const docContextString = contextDocs.length > 0 ? contextDocs.map((doc, idx) => {
     let content = (doc.extractedText || '').trim();
@@ -318,12 +324,21 @@ RULES:
    - If the matching document does not state the requested field (e.g. issue date), state clearly: "I could not find a recorded issue date on your **[Document Title]**", rather than borrowing details from another document.
    - If the user asks about an asset (such as MacBook), answer strictly regarding that asset and its linked records. Do NOT mention or cite unrelated documents (such as electricity bills, tax forms, or utilities) present in the context.
    - If the user asks about a document (such as an electricity bill), answer strictly regarding that document and do NOT mention unrelated assets.
-4. Multi-Page Accuracy:
+4. Resume & Candidate Intelligence:
+   - When answering questions about resumes, CVs, job history, work experience, candidates, or hiring evaluation:
+     a. Extract and clearly structure: Candidate Name, Current/Target Role, Total Experience, Core Skills & Tech Stack matrix (Languages, Frameworks, Cloud, Databases, Tools).
+     b. Highlight featured projects, architectures built, key measurable impacts, and technical achievements.
+     c. If asked for a technical critique, interview summary, or role suitability, provide a thorough, structured, and insightful assessment grounded in the candidate's actual documented accomplishments.
+5. Technical Project & Architecture Breakdown:
+   - When answering questions about technical projects, system architectures, workflows, design patterns, backend/frontend engineering, or security guardrails:
+     a. Provide an in-depth breakdown of the project architecture, component responsibilities, tech stack choices, data flows, and security measures.
+     b. Present complex concepts clearly with bullet points, component diagrams (ASCII/Markdown), and actionable insights.
+6. Multi-Page Accuracy:
    - For multi-page documents (marked with "--- Page X ---"), thoroughly inspect all pages from Page 1 to Page 25 to find the exact statement or clause requested. Cite the specific page where the answer is found.
-5. Not Found:
+7. Not Found:
    - If neither the provided documents nor the tracked assets contain the answer after checking all available pages, reply cleanly:
      "I cannot find that information in your currently uploaded documents or tracked assets."
-6. Professional & Crisp:
+8. Professional & Crisp:
    - Keep answers clear, readable, and free of unnecessary introductory filler.
 
 CONTEXT - TRACKED ASSETS & FLASHCARDS:
@@ -338,10 +353,10 @@ ${question}
 
   try {
     const response = await executeGroqChatCompletion({
-      model: config.groq.model || 'qwen/qwen3.8-27b',
+      model: config.groq.model || 'openai/gpt-oss-120b',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
-      max_tokens: 1200,
+      max_tokens: 2500,
     });
 
     return response.choices[0].message.content;
@@ -448,6 +463,8 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
   // 2. Evaluate Document Match
   const isCertQ = /(?:certif|certf|degree|diploma|grade|score|course|university|college|completion|mark|award)/i.test(lowerQ);
   const isFinanceQ = /(?:amount|total|bill|invoice|gst|price|cost|paid|tax|expense|salary|statement|electricity)/i.test(lowerQ);
+  const isResumeQ = /(?:resume|cv|curriculum\s*vitae|candidate|experience|work\s*history|skills?|qualification|applicant|developer|engineer|tech\s*stack)/i.test(lowerQ);
+  const isProjectQ = /(?:project|architecture|stack|technology|tech\s*stack|features?|implementation|backend|frontend|framework|design|system|guardrail)/i.test(lowerQ);
   const intentTokens = new Set(['date', 'issue', 'issued', 'due', 'expiry', 'expire', 'amount', 'total', 'price', 'cost', 'fee', 'who', 'name', 'account', 'number', 'status', 'summary', 'details']);
 
   let bestDoc = null;
@@ -480,6 +497,24 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
         score += 15;
       }
       if (category === 'academic certificate' || /certif|certf/i.test(title)) {
+        score -= 20;
+      }
+    }
+
+    if (isResumeQ) {
+      if (category === 'resume / cv' || category === 'employment document' || /resume|cv|curriculum/i.test(title)) {
+        score += 20;
+      }
+      if (/bill|receipt|invoice|statement|electricity/i.test(title) || /purchase receipt|tax invoice/i.test(category)) {
+        score -= 20;
+      }
+    }
+
+    if (isProjectQ) {
+      if (category === 'technical architecture' || category === 'project portfolio' || /project|architecture|portfolio/i.test(title)) {
+        score += 20;
+      }
+      if (/bill|receipt|invoice|statement|electricity/i.test(title) || /purchase receipt|tax invoice/i.test(category)) {
         score -= 20;
       }
     }
@@ -657,7 +692,38 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
       }
     }
 
-    // 7. Fallback: Excerpt or Summary
+    // 7. Resume & Professional Profile Query
+    if (isResumeQ || primaryDoc.category === 'Resume / CV' || /resume|cv/i.test(primaryDoc.title)) {
+      const candidateName = keyDetails['Candidate or Recipient Name'] || keyDetails['Candidate Name'] || keyDetails['Recipient Name'] || keyDetails['Name'] || null;
+      const currentRole = keyDetails['Current Title / Role'] || keyDetails['Current Role'] || keyDetails['Role'] || keyDetails['Title'] || null;
+      const skills = keyDetails['Core Skills / Tech Stack'] || keyDetails['Skills'] || keyDetails['Tech Stack'] || null;
+      const projects = keyDetails['Projects'] || null;
+
+      let resumeAnswer = `Here are the verified resume records for **${primaryDoc.title}**:\n\n`;
+      if (candidateName) resumeAnswer += `• **Candidate Name:** **${candidateName}**\n`;
+      if (currentRole) resumeAnswer += `• **Role / Title:** **${currentRole}**\n`;
+      if (skills) resumeAnswer += `• **Core Skills & Tech Stack:** ${skills}\n`;
+      if (projects) resumeAnswer += `• **Key Projects:** ${projects}\n`;
+      if (primaryDoc.summary) resumeAnswer += `• **Executive Summary:** ${primaryDoc.summary}\n`;
+      if (primaryDoc.documentDate) resumeAnswer += `• **Document Date:** ${primaryDoc.documentDate}\n`;
+      resumeAnswer += docReferral;
+      return resumeAnswer;
+    }
+
+    // 8. Technical Architecture & Project Portfolio Query
+    if (isProjectQ || ['Technical Architecture', 'Project Portfolio'].includes(primaryDoc.category) || /architecture|project/i.test(primaryDoc.title)) {
+      let projAnswer = `Here are the verified technical details for **${primaryDoc.title}** (${primaryDoc.category}):\n\n`;
+      if (primaryDoc.summary) projAnswer += `• **Overview:** ${primaryDoc.summary}\n`;
+      const techStack = keyDetails['Core Skills / Tech Stack'] || keyDetails['Tech Stack'] || keyDetails['Technologies'] || null;
+      if (techStack) projAnswer += `• **Architecture & Stack:** ${techStack}\n`;
+      const projects = keyDetails['Projects'] || null;
+      if (projects) projAnswer += `• **System Components:** ${projects}\n`;
+      if (matchedExcerpt) projAnswer += `\n**Key Architectural Note (Page ${matchedExcerpt.page}):**\n> ${matchedExcerpt.excerpt}\n`;
+      projAnswer += docReferral;
+      return projAnswer;
+    }
+
+    // 9. Fallback: Excerpt or Summary
     if (matchedExcerpt) {
       return `According to **${primaryDoc.title}** (Page ${matchedExcerpt.page}):\n\n> ${matchedExcerpt.excerpt}${docReferral}`;
     }
