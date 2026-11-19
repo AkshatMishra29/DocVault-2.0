@@ -1,6 +1,7 @@
 import Groq from 'groq-sdk';
 import { config } from '../../config/index.js';
 import { normalizeDateToIso } from '../../modules/extraction/ruleExtraction.service.js';
+import { classifyConversationalIntent } from '../../modules/ai/conversationalIntent.service.js';
 
 function getGroqClient() {
   const apiKey = (config.groq.apiKey || process.env.GROQ_API_KEY || '').trim();
@@ -414,6 +415,10 @@ export function findMatchingExcerptWithPage(text, queryTokens) {
  * when live LLM execution is unavailable or rate-limited.
  */
 export function answerWithDeterministicGrounding(question, contextDocs = [], contextAssets = []) {
+  // Check fast conversational intent (greetings, pleasantries, gratitude, capabilities)
+  const conv = classifyConversationalIntent(question);
+  if (conv) return conv.response;
+
   const lowerQ = (question || '').toLowerCase();
   const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'a', 'an', 'in', 'of', 'and', 'or', 'for', 'to', 'my', 'what', 'tell', 'show', 'give', 'me', 'about', 'this', 'that', 'with', 'from', 'have', 'i', 'as', 'please']);
   const queryTokens = lowerQ.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(t => t.length > 1 && !stopWords.has(t));

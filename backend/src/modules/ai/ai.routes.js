@@ -8,6 +8,7 @@ import { answerDocumentQuery } from '../../services/ai/groqService.js';
 import { generateEmbedding } from '../../services/ai/huggingFaceService.js';
 import { assertAiAllowed, isAiAllowed, PrivacyPolicyViolationError } from '../../services/pipeline/privacyGate.js';
 import { DocumentAccessControlService } from '../sharing/accessControl.service.js';
+import { classifyConversationalIntent } from './conversationalIntent.service.js';
 
 const router = Router();
 
@@ -248,6 +249,38 @@ async function handleAiQuery(req, res) {
       role: 'user',
       content: question,
     });
+
+    // 0. Conversational & Greeting Intent Classifier (Fast-Path)
+    // Resolves pure greetings, gratitude, pleasantries, and assistant identity in < 1ms
+    const conversationalMatch = classifyConversationalIntent(question);
+    if (conversationalMatch && !docId) {
+      await Message.create({
+        conversationId: conversation._id,
+        userId: req.user.userId,
+        role: 'assistant',
+        content: conversationalMatch.response,
+        sources: [],
+        referencedDocIds: [],
+        confidence: 'high',
+      });
+
+      conversation.lastMessageAt = new Date();
+      await conversation.save();
+
+      return res.json({
+        success: true,
+        data: {
+          conversationId: conversation._id,
+          answer: conversationalMatch.response,
+          confidence: 'high',
+          sources: [],
+          referencedDocIds: [],
+          referencedDocs: [],
+          referencedAssets: [],
+          actionItem: null,
+        },
+      });
+    }
 
     // 1. Tokenize query for Lexical & Asset Matching
     const stopWords = new Set(['the', 'is', 'at', 'which', 'on', 'a', 'an', 'in', 'of', 'and', 'or', 'for', 'to', 'my', 'what', 'tell', 'show', 'give', 'me', 'about', 'this', 'that', 'with', 'from', 'have', 'i', 'as', 'created', 'flash', 'card', 'flashcard']);
