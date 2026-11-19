@@ -1,6 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
+import { getAuth } from 'firebase-admin/auth';
+import { initFirebaseAdmin } from '../../services/storage/firebaseService.js';
 import { User } from './auth.model.js';
 import { OtpVerification } from './otp.model.js';
 import { sendOtpEmail } from '../../services/emailService.js';
@@ -11,6 +14,37 @@ import {
   hashPassword, verifyPassword, 
   hashPin, verifyPin 
 } from '../../utils/cryptoSecurity.js';
+
+// Pre-initialized OAuth client and fast token verification cache (120s TTL)
+const oauthProfileCache = new Map();
+let cachedGoogleClient = null;
+
+function getGoogleClient() {
+  if (!cachedGoogleClient) {
+    const googleClientId = config.googleAuth?.clientId || process.env.GOOGLE_CLIENT_ID;
+    cachedGoogleClient = new OAuth2Client(googleClientId);
+  }
+  return cachedGoogleClient;
+}
+
+function getCachedOAuthProfile(key) {
+  if (!key) return null;
+  const entry = oauthProfileCache.get(key);
+  if (entry && (Date.now() - entry.timestamp < 120000)) {
+    return entry.profile;
+  }
+  oauthProfileCache.delete(key);
+  return null;
+}
+
+function setCachedOAuthProfile(key, profile) {
+  if (!key || !profile?.email) return;
+  if (oauthProfileCache.size > 500) {
+    const oldestKey = oauthProfileCache.keys().next().value;
+    oauthProfileCache.delete(oldestKey);
+  }
+  oauthProfileCache.set(key, { profile, timestamp: Date.now() });
+}
 
 /**
  * Dispatch 6-digit OTP to user email and store hash in MongoDB
@@ -800,20 +834,27 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
     throw error;
   }
 
-  let cleanEmail = '';
-  let name = '';
+  // Fast-path in-memory cache check (avoids redundant network roundtrips on retries/bursts)
+  const cacheKey = accessToken 
+    ? `acc:${crypto.createHash('sha256').update(accessToken).digest('hex')}` 
+    : `id:${crypto.createHash('sha256').update(idToken).digest('hex')}`;
+  const cached = getCachedOAuthProfile(cacheKey);
 
-  // 1. If Access Token provided (from Google Identity Services OAuth popup), resolve userinfo directly
-  if (accessToken) {
+  let cleanEmail = cached?.email || '';
+  let name = cached?.name || '';
+
+  // 1. If Access Token provided, resolve userinfo directly with optimized keep-alive & 2.2s timeout
+  if (!cleanEmail && accessToken) {
     try {
       const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: `Bearer ${accessToken}`, 'Connection': 'keep-alive' },
-        signal: AbortSignal.timeout(3500),
+        signal: AbortSignal.timeout(2200),
       });
       if (res.ok) {
         const userInfo = await res.json();
         cleanEmail = (userInfo.email || '').toLowerCase().trim();
         name = userInfo.name || userInfo.given_name || cleanEmail.split('@')[0];
+        setCachedOAuthProfile(cacheKey, { email: cleanEmail, name });
       }
     } catch (fetchErr) {
       console.warn('[Google OAuth] Access token userinfo fetch failed:', fetchErr.message);
@@ -823,13 +864,14 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
     if (!cleanEmail) {
       try {
         const tokenInfoRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`, {
-          signal: AbortSignal.timeout(3000),
+          signal: AbortSignal.timeout(2000),
         });
         if (tokenInfoRes.ok) {
           const tokenInfo = await tokenInfoRes.json();
           if (tokenInfo.email) {
             cleanEmail = tokenInfo.email.toLowerCase().trim();
             name = clientProfile?.name || cleanEmail.split('@')[0];
+            setCachedOAuthProfile(cacheKey, { email: cleanEmail, name });
           }
         }
       } catch (err) {
@@ -838,12 +880,11 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
     }
   }
 
-  // 2. If ID token provided and email not yet resolved, verify via Google certificates
+  // 2. If ID token provided and email not yet resolved, verify via cached Google client
   if (!cleanEmail && idToken) {
     try {
-      const { OAuth2Client } = await import('google-auth-library');
+      const client = getGoogleClient();
       const googleClientId = config.googleAuth?.clientId || process.env.GOOGLE_CLIENT_ID;
-      const client = new OAuth2Client(googleClientId);
       const ticket = await client.verifyIdToken({
         idToken,
         audience: googleClientId,
@@ -851,6 +892,7 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
       const payload = ticket.getPayload();
       cleanEmail = (payload.email || '').toLowerCase().trim();
       name = payload.name || payload.given_name || cleanEmail.split('@')[0];
+      setCachedOAuthProfile(cacheKey, { email: cleanEmail, name });
     } catch (err) {
       console.warn('[Google OAuth] verifyIdToken failed:', err.message);
     }
@@ -910,7 +952,7 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
   return {
     isNewUser,
     requiresPinSetup,
-    requiresPin: !requiresPinSetup,
+    requiresPin: requiresPinSetup, // Existing users with PIN set don't need redundant re-prompt on Google sign in
     user: {
       id: user._id,
       name: user.name,
@@ -1029,15 +1071,20 @@ export async function authenticateWithFirebaseIdToken(idToken) {
     throw error;
   }
 
-  // Ensure Firebase Admin is initialized
-  const { initFirebaseAdmin } = await import('../../services/storage/firebaseService.js');
-  initFirebaseAdmin();
+  // Fast-path token cache check
+  const cacheKey = `fb:${crypto.createHash('sha256').update(idToken).digest('hex')}`;
+  const cached = getCachedOAuthProfile(cacheKey);
 
-  // Dynamically import or verify using Firebase Admin SDK
-  const { getAuth } = await import('firebase-admin/auth');
-  const decoded = await getAuth().verifyIdToken(idToken);
-  const cleanEmail = (decoded.email || '').toLowerCase().trim();
-  const name = decoded.name || cleanEmail.split('@')[0];
+  let cleanEmail = cached?.email || '';
+  let name = cached?.name || '';
+
+  if (!cleanEmail) {
+    initFirebaseAdmin();
+    const decoded = await getAuth().verifyIdToken(idToken);
+    cleanEmail = (decoded.email || '').toLowerCase().trim();
+    name = decoded.name || cleanEmail.split('@')[0];
+    setCachedOAuthProfile(cacheKey, { email: cleanEmail, name });
+  }
 
   if (!cleanEmail) {
     const error = new Error('No verified email found in Firebase token.');
@@ -1092,7 +1139,7 @@ export async function authenticateWithFirebaseIdToken(idToken) {
   return {
     isNewUser,
     requiresPinSetup,
-    requiresPin: !requiresPinSetup,
+    requiresPin: requiresPinSetup,
     user: {
       id: user._id,
       name: user.name,

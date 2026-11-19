@@ -154,6 +154,37 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     // 1. Deterministic SHA-256 calculation
     const sha256 = crypto.createHash('sha256').update(buffer).digest('hex');
 
+    // 1.5 Security Guardrail: Duplicate Document Check
+    // Rejects re-uploading identical documents to prevent vault duplication and resource waste
+    const allowDuplicate = req.body.allowDuplicate === 'true' || req.query.allowDuplicate === 'true';
+    if (!allowDuplicate) {
+      const existingDoc = await Document.findOne({
+        userId: req.user.userId,
+        $or: [{ sha256 }, { fileHash: sha256 }],
+        status: { $nin: ['DELETED', 'deleted', 'REJECTED'] },
+      }).select('_id title originalName category documentDate createdAt validated_at status');
+
+      if (existingDoc) {
+        const uploadDate = existingDoc.createdAt 
+          ? new Date(existingDoc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : 'earlier';
+        return res.status(409).json({
+          success: false,
+          code: 'DUPLICATE_DOCUMENT',
+          status: 'DUPLICATE',
+          error: `Duplicate Document Detected: You have already secured this exact document in your vault as "${existingDoc.title}" (${uploadDate}).`,
+          suggestion: `This document is already safely encrypted in your vault. You can view, search, or share the existing copy instead of uploading a duplicate.`,
+          duplicateDocument: {
+            id: existingDoc._id,
+            title: existingDoc.title,
+            category: existingDoc.category,
+            originalName: existingDoc.originalName,
+            date: existingDoc.documentDate || uploadDate,
+          },
+        });
+      }
+    }
+
     // 2. Quarantine Write (isolated temporary holding before validation & encryption)
     const quarantineDir = config.validator?.quarantineDir || path.resolve(process.cwd(), 'uploads', 'quarantine');
     if (!fs.existsSync(quarantineDir)) {

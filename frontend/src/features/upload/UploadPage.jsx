@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { apiRequest } from "../../services/api";
 import { 
   UploadCloud, FileText, CheckCircle2, AlertCircle, ArrowRight, Camera, Zap,
-  ShieldCheck, Sparkles, Lock, Pencil
+  ShieldCheck, Sparkles, Lock, Pencil, ShieldAlert, Eye, ExternalLink
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -27,6 +27,7 @@ export default function UploadPage() {
   const [progressStage, setProgressStage] = useState("");
   const [error, setError] = useState("");
   const [suggestion, setSuggestion] = useState("");
+  const [duplicateDoc, setDuplicateDoc] = useState(null);
   const [uploadedDoc, setUploadedDoc] = useState(null);
 
   const navigate = useNavigate();
@@ -142,6 +143,7 @@ export default function UploadPage() {
   const validateAndSetFile = (selectedFile) => {
     setError("");
     setSuggestion("");
+    setDuplicateDoc(null);
     const validTypes = ["application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp"];
     if (!validTypes.includes(selectedFile.type)) {
       setError("Supported file formats are PDF, PNG, JPG, and WEBP.");
@@ -157,11 +159,12 @@ export default function UploadPage() {
     setCustomTitle(baseName);
   };
 
-  const handleUpload = async () => {
+  const handleUpload = async (forceDuplicate = false) => {
     if (!file) return;
 
     setUploading(true);
     setError("");
+    setDuplicateDoc(null);
     setProgressStage("Checking file security & signatures...");
 
     const formData = new FormData();
@@ -170,6 +173,9 @@ export default function UploadPage() {
     formData.append("privacyMode", privacyMode);
     formData.append("aiPolicy", privacyMode === "STORAGE_ONLY" ? "storage_only" : "ai_enabled");
     formData.append("noticeVersion", "1.0.0");
+    if (forceDuplicate) {
+      formData.append("allowDuplicate", "true");
+    }
     // Append custom title so backend saves it under the user's chosen name
     const finalTitle = customTitle.trim() || file.name.replace(/\.[^/.]+$/, "");
     formData.append("title", finalTitle);
@@ -196,6 +202,14 @@ export default function UploadPage() {
 
       clearTimeout(stageTimer1);
       clearTimeout(stageTimer2);
+
+      // Handle Duplicate Document Guardrail detection
+      if (res.code === "DUPLICATE_DOCUMENT" || res.status === "DUPLICATE") {
+        setDuplicateDoc(res.duplicateDocument);
+        setError(res.error || "Duplicate document detected.");
+        setSuggestion(res.suggestion || "This file is already secured in your vault.");
+        return;
+      }
 
       if (res.success && res.data) {
         let finalDoc = res.data;
@@ -433,7 +447,49 @@ export default function UploadPage() {
                 </div>
               </div>
 
-              {error && (
+              {/* Duplicate Document Guardrail Card */}
+              {duplicateDoc ? (
+                <div className="dv-duplicate-alert-card" role="alert">
+                  <div className="dv-duplicate-alert-header">
+                    <div className="dv-duplicate-alert-icon">
+                      <ShieldAlert size={22} />
+                    </div>
+                    <div>
+                      <h4 className="dv-duplicate-alert-title">Security Guardrail: Duplicate Document</h4>
+                      <p className="dv-duplicate-alert-desc">
+                        You have already secured this exact file as <strong>"{duplicateDoc.title}"</strong> ({duplicateDoc.date || "Active in Vault"}).
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="dv-duplicate-alert-actions">
+                    <Link to={`/documents/${duplicateDoc.id}`} className="dv-btn-view-existing">
+                      <Eye size={15} />
+                      <span>View Existing Document</span>
+                    </Link>
+                    <button
+                      type="button"
+                      className="dv-btn-choose-different"
+                      onClick={() => {
+                        setFile(null);
+                        setDuplicateDoc(null);
+                        setError("");
+                        setSuggestion("");
+                      }}
+                    >
+                      Choose a Different File
+                    </button>
+                    <button
+                      type="button"
+                      className="dv-btn-force-upload"
+                      onClick={() => handleUpload(true)}
+                      title="Keep two identical copies in your vault"
+                    >
+                      Save as Duplicate Copy Anyway
+                    </button>
+                  </div>
+                </div>
+              ) : error ? (
                 <div className="dv-upload-error" role="alert">
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                     <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 2, color: "var(--color-danger)" }} />
@@ -447,7 +503,7 @@ export default function UploadPage() {
                     </div>
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {uploading && (
                 <div className="dv-upload-progress-box">

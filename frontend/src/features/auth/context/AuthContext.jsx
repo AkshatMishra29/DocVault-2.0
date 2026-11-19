@@ -320,13 +320,20 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('docvault_token', res.token);
       }
 
-      handleLoginSuccess(res.user, res.requiresPin);
+      const isSetup = Boolean(res.requiresPinSetup || res.isNewUser || res.user?.pinSet === false);
+      if (isSetup) {
+        handleLoginSuccess(res.user, true);
+      } else {
+        // Direct instant unlock for verified Google OAuth!
+        handlePinSuccess(res.token, res.user);
+      }
+
       return { 
         success: true, 
         user: res.user, 
-        requiresPin: res.requiresPin, 
-        requiresPinSetup: res.requiresPinSetup,
-        isNewUser: res.isNewUser 
+        requiresPin: isSetup, 
+        requiresPinSetup: isSetup, 
+        isNewUser: Boolean(res.isNewUser) 
       };
     } catch (err) {
       return { success: false, error: err.message || 'Network error during Google authentication.' };
@@ -373,12 +380,18 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('docvault_token', res.token);
       }
 
-      handleLoginSuccess(res.user, res.requiresPin);
+      const isSetup = Boolean(res.requiresPinSetup || res.isNewUser || !res.user?.pinSet);
+      if (isSetup) {
+        handleLoginSuccess(res.user, true);
+      } else {
+        handlePinSuccess(res.token, res.user);
+      }
+
       return { 
         success: true, 
         user: res.user, 
-        requiresPin: res.requiresPin,
-        requiresPinSetup: Boolean(res.requiresPinSetup || !res.user?.pinSet),
+        requiresPin: isSetup,
+        requiresPinSetup: isSetup,
         isNewUser: Boolean(res.isNewUser)
       };
     } catch (err) {

@@ -172,6 +172,10 @@ const DocumentSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
+// Fast deduplication indices to prevent duplicate uploads per user
+DocumentSchema.index({ userId: 1, sha256: 1 });
+DocumentSchema.index({ userId: 1, fileHash: 1 });
+
 // Middleware to sync sha256 <-> fileHash and aiPolicy <-> privacyMode
 DocumentSchema.pre('save', function () {
   this.updatedAt = new Date();
