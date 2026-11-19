@@ -16,8 +16,8 @@
 
 @media (max-width: 1024px) {
   .dv-ai-page {
-    /* Clear mobile bottom bar (88px) and top header */
-    height: calc(100dvh - 64px - 88px - env(safe-area-inset-bottom, 0px));
+    /* Responsive height that respects mobile header and bottom clearance */
+    height: calc(100dvh - 100px - env(safe-area-inset-bottom, 0px));
   }
 }
 

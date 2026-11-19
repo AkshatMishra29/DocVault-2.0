@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { apiRequest } from "../../services/api";
 import { 
   UploadCloud, FileText, CheckCircle2, AlertCircle, ArrowRight, Camera, Zap,
@@ -30,6 +30,23 @@ export default function UploadPage() {
   const [uploadedDoc, setUploadedDoc] = useState(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Auto-trigger camera or file selector when routed from Swipe Drawer
+  useEffect(() => {
+    const mode = location.state?.mode || (new URLSearchParams(location.search)).get("mode");
+    if (mode === "camera") {
+      const timer = setTimeout(() => {
+        document.getElementById("dv-camera-input")?.click();
+      }, 150);
+      return () => clearTimeout(timer);
+    } else if (mode === "file" || mode === "gallery") {
+      const timer = setTimeout(() => {
+        document.getElementById("dv-file-input")?.click();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state?.mode, location.search]);
 
   const handleDrag = (e) => {
     e.preventDefault();

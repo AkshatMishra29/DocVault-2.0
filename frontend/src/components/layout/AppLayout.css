@@ -21,7 +21,8 @@
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); /* Complete clearance for mobile nav */
+  /* Enough bottom space so last card is never obscured by nav */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
 @media (min-width: 1025px) {
@@ -52,8 +53,9 @@
   }
 }
 
+/* Mobile nav wrapper — transparent pass-through so BottomNav binds to full viewport */
 .dv-mobile-nav-wrapper {
-  display: block;
+  display: contents;
 }
 
 @media (min-width: 1025px) {
