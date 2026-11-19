@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { 
@@ -21,6 +21,8 @@ export default function EnterPinPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [bioLoading, setBioLoading] = useState(false);
+  // Ref to signal popstate trap to stand down during programmatic navigation
+  const unlockingRef = useRef(false);
   const [lockoutRemaining, setLockoutRemaining] = useState(0);
   const [showSessionMenu, setShowSessionMenu] = useState(false);
   
@@ -101,6 +103,8 @@ export default function EnterPinPage() {
     if (!isVaultUnlocked && !isSetupMode) {
       window.history.pushState(null, "", window.location.href);
       const handlePopState = () => {
+        // Stand down immediately if we are in the middle of a successful unlock
+        if (unlockingRef.current) return;
         window.history.pushState(null, "", window.location.href);
       };
       window.addEventListener("popstate", handlePopState);
@@ -238,11 +242,7 @@ export default function EnterPinPage() {
       const nextPin = pin + digit;
       setPin(nextPin);
       setError("");
-
-      // Auto-submit when length reached
-      if (nextPin.length === pinLength) {
-        handleUnlock(nextPin);
-      }
+      // No auto-submit — user must press "Unlock vault" button or Enter key
     }
   };
 
@@ -331,30 +331,38 @@ export default function EnterPinPage() {
     setLoading(true);
     setError("");
 
-    const result = await verifyPin(email, submittedPin);
+    try {
+      const result = await verifyPin(email, submittedPin);
 
-    if (result.success) {
-      localStorage.removeItem("pending_pin_email");
-      if (email) localStorage.removeItem(`dv_lock_until_${email}`);
-      navigate("/dashboard", { replace: true });
-    } else {
-      setLoading(false);
-      setPin("");
-      if (result.requiresPinSetup) {
-        sessionStorage.setItem("docvault_requires_pin_setup", "true");
-        setIsSetupMode(true);
-        return;
-      }
-      if (result.remainingSeconds || result.lockUntil) {
-        const secs = result.remainingSeconds || 300;
-        setLockoutRemaining(secs);
-        if (email && result.lockUntil) {
-          localStorage.setItem(`dv_lock_until_${email}`, result.lockUntil);
-        }
-        setError(result.error || "Vault is locked for 5 minutes due to consecutive failed attempts.");
+      if (result.success) {
+        localStorage.removeItem("pending_pin_email");
+        if (email) localStorage.removeItem(`dv_lock_until_${email}`);
+        // Signal the popstate trap to stand down before we navigate
+        unlockingRef.current = true;
+        navigate("/dashboard", { replace: true });
       } else {
-        setError(result.error || "Incorrect Security PIN. Please try again.");
+        setPin("");
+        if (result.requiresPinSetup) {
+          sessionStorage.setItem("docvault_requires_pin_setup", "true");
+          setIsSetupMode(true);
+          return;
+        }
+        if (result.remainingSeconds || result.lockUntil) {
+          const secs = result.remainingSeconds || 300;
+          setLockoutRemaining(secs);
+          if (email && result.lockUntil) {
+            localStorage.setItem(`dv_lock_until_${email}`, result.lockUntil);
+          }
+          setError(result.error || "Vault is locked for 5 minutes due to consecutive failed attempts.");
+        } else {
+          setError(result.error || "Incorrect Security PIN. Please try again.");
+        }
       }
+    } catch (err) {
+      setError(err.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      // Always reset loading so UI never stays frozen
+      setLoading(false);
     }
   };
 
@@ -368,6 +376,7 @@ export default function EnterPinPage() {
     if (result.success) {
       localStorage.removeItem("pending_pin_email");
       if (email) localStorage.removeItem(`dv_lock_until_${email}`);
+      unlockingRef.current = true;
       navigate("/dashboard", { replace: true });
     } else {
       if (result.remainingSeconds || result.lockUntil) {
