@@ -19,7 +19,12 @@
   <b>DocVault</b> is an end-to-end, privacy-isolated personal knowledge custodian. It transforms scattered PDFs, physical warranty cards, blurred smartphone snapshots, medical records, and government identifications into structured, self-organizing digital intelligence — backed by dual-tier cryptographic isolation, automated expiry notifications, and a strictly bounded, zero-hallucination conversational AI.
 </p>
 
+> 🌟 **Visiting from LinkedIn or looking for a simple, non-technical walkthrough?**  
+> Check out the [**DocVault Simple Features & Progress Guide**](PROJECT_OVERVIEW.md) — written in plain, friendly English for everyone!
+
 [The Narrative](#-the-narrative--why-docvault) •
+[Simple Overview](PROJECT_OVERVIEW.md) •
+[Progress Report](PROJECT_PROGRESS.md) •
 [For Evaluators](#-evaluator--academic-defense-brief) •
 [Core Features](#-comprehensive-feature-suite) •
 [Architecture](#-system-architecture) •
