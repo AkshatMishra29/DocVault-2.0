@@ -172,4 +172,42 @@ describe('🧪 Ask AI Flashcard & Document Integration Suite', () => {
     assert.strictEqual(result.sources.length, 0, 'Sources must be empty');
     assert.strictEqual(result.referencedDocIds.length, 0, 'Referenced docs must be empty');
   });
+
+  it('9. Certificate vs Utility Isolation: "what is the issue date of this certficate" answers AMD certificate date and NEVER leaks Electricity Bill', () => {
+    const amdDoc = {
+      _id: '6afe7ae743a4fdcab23fad6e',
+      title: 'AI Agents on AMD Certficate (level-2)',
+      category: 'Academic Certificate',
+      documentDate: '2026-11-16',
+      extractedText: '--- Page 1 ---\nAMD AI Academy\nCERTIFICATE OF COMPLETION\nAkshat Mishra\nDate: 11/16/2026',
+      keyDetails: { 'Issue Date': '2026-11-16', 'Recipient Name': 'Akshat Mishra' }
+    };
+
+    const question = 'what is the issue date of this certficate';
+    // Both Electricity Doc and AMD Doc present in vault context
+    const answer = answerWithDeterministicGrounding(question, [electricityDoc, amdDoc], []);
+
+    assert.ok(answer.includes('2026-11-16'), 'Answer must contain the certificate issue date 2026-11-16');
+    assert.ok(answer.includes('AI Agents on AMD Certficate (level-2)'), 'Answer must cite the AMD certificate title');
+    assert.ok(!answer.includes('Electricity Bill'), 'Answer must NEVER leak or mention Electricity Bill Receipt');
+    assert.ok(!answer.includes('2026-11-11'), 'Answer must NEVER return the electricity bill date');
+  });
+
+  it('10. Certificate Without Date: returns clear not-found message for certificate and NEVER swaps in Electricity Bill', () => {
+    const amdDocNoDate = {
+      _id: '6afe7ae743a4fdcab23fad6e',
+      title: 'AI Agents on AMD Certficate (level-2)',
+      category: 'Other',
+      documentDate: null,
+      extractedText: '--- Page 1 ---\nAMD AI Academy\nCERTIFICATE OF COMPLETION\nAkshat Mishra',
+      keyDetails: {}
+    };
+
+    const question = 'what is the issue date of this certficate';
+    const answer = answerWithDeterministicGrounding(question, [electricityDoc, amdDocNoDate], []);
+
+    assert.ok(answer.includes('could not find a recorded issue date on your **AI Agents on AMD Certficate (level-2)**'), 'Must state issue date not found on certificate');
+    assert.ok(!answer.includes('Electricity Bill'), 'Answer must NEVER default to Electricity Bill');
+    assert.ok(!answer.includes('2026-11-11'), 'Answer must NEVER return the electricity bill date');
+  });
 });

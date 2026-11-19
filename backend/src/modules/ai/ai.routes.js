@@ -39,16 +39,30 @@ function computeLexicalScore(doc, queryTokens) {
   const expDate = (doc.expiryDate || '').toLowerCase();
   const keyDetailsStr = JSON.stringify(doc.keyDetails || {}).toLowerCase();
 
+  // Intent/attribute tokens should not hijack document entity matching
+  const intentTokens = new Set(['date', 'issue', 'issued', 'due', 'expiry', 'expire', 'amount', 'total', 'price', 'cost', 'fee', 'who', 'name', 'account', 'number', 'status', 'summary', 'details']);
+
   for (const token of queryTokens) {
     if (token.length < 2) continue;
-    if (title.includes(token)) score += 6.0;
-    if (category.includes(token)) score += 5.0;
-    if (docDate.includes(token)) score += 6.0;
-    if (expDate.includes(token)) score += 6.0;
-    if (keyDetailsStr.includes(token)) score += 5.0;
-    if (tags.includes(token)) score += 3.5;
-    if (summary.includes(token)) score += 2.5;
-    if (extractedText.includes(token)) score += 1.5;
+    const isIntentToken = intentTokens.has(token);
+    const weightMult = isIntentToken ? 0.2 : 1.0;
+    const tokenRegex = (token === 'certificate' || token === 'certficate') ? /certif|certf/ : new RegExp(token);
+
+    if (tokenRegex.test(title)) score += 8.0 * (isIntentToken ? 0.3 : 1.0);
+    if (tokenRegex.test(category)) score += 6.0 * (isIntentToken ? 0.3 : 1.0);
+    if (!isIntentToken && tokenRegex.test(tags)) score += 4.0;
+    if (!isIntentToken && tokenRegex.test(summary)) score += 3.0;
+    if (tokenRegex.test(extractedText)) score += 2.0 * weightMult;
+
+    if (isIntentToken) {
+      if (docDate.includes(token)) score += 0.5;
+      if (expDate.includes(token)) score += 0.5;
+      if (keyDetailsStr.includes(token)) score += 0.5;
+    } else {
+      if (docDate.includes(token)) score += 4.0;
+      if (expDate.includes(token)) score += 4.0;
+      if (keyDetailsStr.includes(token)) score += 4.0;
+    }
   }
   return score;
 }
@@ -246,7 +260,7 @@ async function handleAiQuery(req, res) {
     const isOverviewQuery = /(?:all|every|overview|summarize|summary|inventory|list|what\s*(?:do\s*i\s*have|are\s*my\s*documents|documents\s*do\s*i\s*have|assets\s*do\s*i\s*have|is\s*in\s*my\s*vault)|fetch\s*(?:the\s*)?document|get\s*(?:the\s*)?document|show\s*(?:the\s*)?document|open\s*(?:the\s*)?document)/i.test(question);
     const isFlashcardQuery = /(?:flash\s*card|flashcard|asset|device|laptop|macbook|hardware|appliance|vehicle)/i.test(question);
     const isDateQuery = /(?:when|date|issued|expiry|expire|due|completed|award|valid|renewal|time|day|month|year)/i.test(question);
-    const isCertQuery = /(?:certif|degree|diploma|grade|score|course|university|college|completion|mark|award)/i.test(question);
+    const isCertQuery = /(?:certif|certf|degree|diploma|grade|score|course|university|college|completion|mark|award)/i.test(question);
     const isFinanceQuery = /(?:amount|total|bill|invoice|gst|price|cost|paid|tax|expense|salary|statement)/i.test(question);
 
     // 3. Retrieve and Score User Assets / Flashcards
@@ -377,15 +391,25 @@ async function handleAiQuery(req, res) {
           // RRF core: 1 / (60 + rank)
           let rrf = (1.0 / (60 + dRank)) + (1.5 / (60 + lRank));
 
-          // Domain Intent Boosters
+          // Domain Intent Boosters & Cross-Domain Penalties
           if (isDateQuery && (doc.documentDate || doc.expiryDate)) {
             rrf += 0.04;
           }
-          if (isCertQuery && (doc.category === 'Academic Certificate' || doc.category === 'Certificates' || /certificate/i.test(doc.title))) {
-            rrf += 0.05;
+          if (isCertQuery) {
+            if (doc.category === 'Academic Certificate' || doc.category === 'Certificates' || /certif|certf/i.test(doc.title) || /certif|certf/i.test(doc.extractedText)) {
+              rrf += 0.12;
+            }
+            if (/bill|receipt|invoice|tax|salary|statement/i.test(doc.title) || ['Purchase Receipt', 'Tax Invoice', 'Bank Statement'].includes(doc.category)) {
+              rrf -= 0.20; // Prevent utility bills/receipts from competing with certificates
+            }
           }
-          if (isFinanceQuery && (doc.category === 'Tax Invoice' || doc.category === 'Purchase Receipt' || doc.category === 'Bank Statement')) {
-            rrf += 0.04;
+          if (isFinanceQuery) {
+            if (doc.category === 'Tax Invoice' || doc.category === 'Purchase Receipt' || doc.category === 'Bank Statement' || /bill|receipt|invoice/i.test(doc.title)) {
+              rrf += 0.08;
+            }
+            if (doc.category === 'Academic Certificate' || /certif|certf/i.test(doc.title)) {
+              rrf -= 0.20; // Prevent certificates from competing with financial receipts
+            }
           }
           if (isLinkedToAsset) {
             rrf += 0.25; // Strongly prioritize documents linked to relevant asset

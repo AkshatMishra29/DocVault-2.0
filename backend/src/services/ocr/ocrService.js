@@ -61,7 +61,7 @@ export async function extractTextFromImage(buffer) {
  * Rasterize PDF pages into PNG image buffers using PDFParse.getScreenshot.
  * Supports multi-page document inspection and OCR fallback.
  */
-export async function convertPdfToImages(buffer, maxPages = 5, scale = 1.5) {
+export async function convertPdfToImages(buffer, maxPages = 5, scale = 2.0) {
   try {
     const parser = new PDFParse({ data: buffer });
     const screenshot = await parser.getScreenshot({ scale, imageBuffer: true });

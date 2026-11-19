@@ -46,8 +46,9 @@ export async function executeGroqChatCompletion(params) {
  * Extract structured metadata, entity fields, and expiry dates from document text
  */
 export async function extractDocumentMetadata(rawText, filename, imageBase64 = null) {
-  // If no text was extracted (e.g. image document or scanned PDF), use Groq Multimodal Vision (Qwen 3.8 27B)
-  if ((!rawText || rawText.trim().length < 20) && imageBase64) {
+  // If no text was extracted, text is sparse, or missing critical fields (like date/identifiers), and imageBase64 is available, use Groq Multimodal Vision (Qwen 3.8 27B)
+  const isSparseOrNeedsVision = (!rawText || rawText.trim().length < 250 || !/(?:date|issued|awarded|completion|receipt|invoice|policy|\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i.test(rawText));
+  if (isSparseOrNeedsVision && imageBase64) {
     try {
       console.log(`[Groq Vision OCR] Attempting visual multimodal extraction for: ${filename} using qwen/qwen3.8-27b...`);
       const visionPrompt = `You are the DocVault Universal Production Document Vision Engine.
@@ -311,7 +312,9 @@ RULES:
      Conclude your answer with: "*For full details or complete verification, you can view the original document directly below.*"
    - If answering an overview or both:
      Conclude with: "*For full details, you can view the verified records directly below.*"
-3. Strict Entity Isolation:
+3. Strict Entity & Document Isolation:
+   - If the user asks about a specific document (e.g. a certificate, policy, or electricity bill), answer strictly regarding that matching document. If multiple documents are in the context, do NOT substitute or cite an unrelated document (e.g. do not answer with an electricity bill when the user asked about a certificate).
+   - If the matching document does not state the requested field (e.g. issue date), state clearly: "I could not find a recorded issue date on your **[Document Title]**", rather than borrowing details from another document.
    - If the user asks about an asset (such as MacBook), answer strictly regarding that asset and its linked records. Do NOT mention or cite unrelated documents (such as electricity bills, tax forms, or utilities) present in the context.
    - If the user asks about a document (such as an electricity bill), answer strictly regarding that document and do NOT mention unrelated assets.
 4. Multi-Page Accuracy:
@@ -438,6 +441,10 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
   }
 
   // 2. Evaluate Document Match
+  const isCertQ = /(?:certif|certf|degree|diploma|grade|score|course|university|college|completion|mark|award)/i.test(lowerQ);
+  const isFinanceQ = /(?:amount|total|bill|invoice|gst|price|cost|paid|tax|expense|salary|statement|electricity)/i.test(lowerQ);
+  const intentTokens = new Set(['date', 'issue', 'issued', 'due', 'expiry', 'expire', 'amount', 'total', 'price', 'cost', 'fee', 'who', 'name', 'account', 'number', 'status', 'summary', 'details']);
+
   let bestDoc = null;
   let bestDocScore = 0;
   for (const doc of contextDocs) {
@@ -447,10 +454,31 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
 
     let score = 0;
     for (const t of queryTokens) {
-      if (title.includes(t)) score += 8;
-      if (category.includes(t)) score += 4;
-      if (text.includes(t)) score += 2;
+      const isIntent = intentTokens.has(t);
+      const tokenRegex = (t === 'certificate' || t === 'certficate') ? /certif|certf/ : new RegExp(t);
+      if (tokenRegex.test(title)) score += isIntent ? 2 : 10;
+      if (tokenRegex.test(category)) score += isIntent ? 2 : 8;
+      if (tokenRegex.test(text)) score += isIntent ? 0.5 : 3;
     }
+
+    if (isCertQ) {
+      if (category === 'academic certificate' || category === 'certificates' || /certif|certf/i.test(title)) {
+        score += 15;
+      }
+      if (/bill|receipt|invoice|tax|salary|statement/i.test(title) || /purchase receipt|tax invoice|bank statement/i.test(category)) {
+        score -= 20;
+      }
+    }
+
+    if (isFinanceQ) {
+      if (/bill|receipt|invoice|tax|salary|statement/i.test(title) || /purchase receipt|tax invoice|bank statement/i.test(category)) {
+        score += 15;
+      }
+      if (category === 'academic certificate' || /certif|certf/i.test(title)) {
+        score -= 20;
+      }
+    }
+
     if (score > bestDocScore) {
       bestDocScore = score;
       bestDoc = doc;
@@ -607,15 +635,20 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
 
     // 6. Date Query
     if (isDateQ) {
-      let docDate = primaryDoc.documentDate || keyDetails['ISSUE DATE'] || keyDetails['DOCUMENT DATE'] || null;
+      let docDate = primaryDoc.documentDate || keyDetails['ISSUE DATE'] || keyDetails['Issue Date'] || keyDetails['DOCUMENT DATE'] || keyDetails['Document Date'] || null;
       if (!docDate) {
-        const dateMatch = text.match(/(?:collection\s*date|printed\s*date|payment\s*date|bill\s*date|issue\s*date|due\s*date)[:.\s]*([0-9]{1,2}[-\/.][0-9]{1,2}[-\/.][0-9]{2,4})/i);
-        if (dateMatch) docDate = dateMatch[1].trim();
+        const dateMatch = text.match(/(?:collection\s*date|printed\s*date|payment\s*date|bill\s*date|issue\s*date|due\s*date|date[:.\s-]*|[¢|~]?\s*)([0-9]{1,2}[-\/.][0-9]{1,2}[-\/.][0-9]{2,4})/i);
+        if (dateMatch) {
+          const raw = dateMatch[1].trim();
+          docDate = normalizeDateToIso(raw) || raw;
+        }
       }
       if (docDate || primaryDoc.expiryDate) {
         const dateStr = docDate ? `**${docDate}**` : '';
         const expiryStr = primaryDoc.expiryDate ? ` (due: **${primaryDoc.expiryDate}**)` : '';
         return `The recorded date for **${primaryDoc.title}** is ${dateStr}${expiryStr}.${docReferral}`;
+      } else {
+        return `I could not find a recorded issue date on your **${primaryDoc.title}**.${docReferral}`;
       }
     }
 

@@ -71,8 +71,8 @@ const MONTH_NAMES = {
 export const DATE_PATTERNS = [
   // YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD
   /\b((?:19|20)\d{2}[-\/.](?:0?[1-9]|1[0-2])[-\/.](?:0?[1-9]|[12]\d|3[01]))\b/g,
-  // DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
-  /\b((?:0?[1-9]|[12]\d|3[01])[-\/.](?:0?[1-9]|1[0-2])[-\/.](?:19|20)\d{2})\b/g,
+  // DD/MM/YYYY, MM/DD/YYYY, DD-MM-YYYY, MM-DD-YYYY, DD.MM.YYYY
+  /\b((?:0?[1-9]|[12]\d|3[01])[-\/.](?:0?[1-9]|[12]\d|3[01])[-\/.](?:19|20)\d{2})\b/g,
   // DD-MMM-YYYY or DD MMM YYYY or DDth MMM YYYY (e.g. 14th September 2022, 15-Aug-2025)
   /\b((?:0?[1-9]|[12]\d|3[01])(?:st|nd|rd|th)?[\s,./-]+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s,./-]+(?:19|20)\d{2})\b/gi,
   // MMM DD, YYYY (e.g. September 14, 2022)
@@ -243,7 +243,7 @@ export function classifyDocumentByRules(text, filename = '') {
   if (/admit\s*card|roll\s*number|examination|hall\s*ticket|center\s*code|candidate/.test(lower)) {
     scores['Admit Card'] += 40;
   }
-  if (/degree|marksheet|diploma|university|board\s*of\s*education|passed\s*with|semester|certif(?:icate|ication|y|ied)|completion|awarded\s*to|presented\s*to|conferred|accreditation|achievement|course\s*of|program\s*of/.test(lower)) {
+  if (/degree|marksheet|diploma|university|board\s*of\s*education|passed\s*with|semester|certif(?:icate|ication|y|ied)?|certf(?:icate)?|completion|awarded\s*to|presented\s*to|conferred|accreditation|achievement|course\s*of|program\s*of/.test(lower)) {
     scores['Academic Certificate'] += 40;
   }
 

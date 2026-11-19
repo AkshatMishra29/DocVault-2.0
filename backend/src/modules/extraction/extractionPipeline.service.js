@@ -260,13 +260,11 @@ export async function executeDocumentExtractionPipeline({
 
         const aiResultRaw = await extractDocumentMetadata(safeWrappedText, originalname, visualBase64);
 
-        // If local OCR text was sparse but Groq Vision extracted the transcription, adopt it
-        if ((!extractedText || extractedText.length < 15) && aiResultRaw?.extractedText) {
+        // If Groq Vision extracted more complete text than local OCR, adopt it
+        if (aiResultRaw?.extractedText && aiResultRaw.extractedText.length > (extractedText || '').length) {
           extractedText = aiResultRaw.extractedText;
         }
-        const effectiveSourceText = (extractedText && extractedText.length > 10)
-          ? extractedText
-          : (aiResultRaw?.extractedText || extractedText || '');
+        const effectiveSourceText = (aiResultRaw?.extractedText ? `${extractedText}\n${aiResultRaw.extractedText}` : extractedText) || '';
 
         // Grounding & Anti-Hallucination Guardrail: Validate all extracted metadata against source text
         const aiResult = validateExtractionAgainstSourceEvidence(aiResultRaw, effectiveSourceText);
