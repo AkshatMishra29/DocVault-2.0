@@ -952,7 +952,7 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
     const fetchUserInfo = async () => {
       const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: `Bearer ${cleanAccessToken}`, 'Connection': 'keep-alive' },
-        signal: AbortSignal.timeout(1800),
+        signal: AbortSignal.timeout(4000),
       });
       if (!res.ok) throw new Error(`UserInfo HTTP ${res.status}`);
       const data = await res.json();
@@ -966,7 +966,7 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
     const fetchTokenInfo = async () => {
       const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(cleanAccessToken)}`, {
         headers: { 'Connection': 'keep-alive' },
-        signal: AbortSignal.timeout(1800),
+        signal: AbortSignal.timeout(4000),
       });
       if (!res.ok) throw new Error(`TokenInfo HTTP ${res.status}`);
       const data = await res.json();
@@ -986,6 +986,12 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
       }
     } catch (raceErr) {
       console.warn('[Google OAuth] Parallel token resolution failed:', raceErr.message);
+      // Fallback: If client fetched profile directly from Google CDN in browser
+      if (clientProfile?.email) {
+        cleanEmail = clientProfile.email.toLowerCase().trim();
+        name = clientProfile.name || cleanEmail.split('@')[0];
+        setCachedOAuthProfile(cacheKey, { email: cleanEmail, name });
+      }
     }
   }
 

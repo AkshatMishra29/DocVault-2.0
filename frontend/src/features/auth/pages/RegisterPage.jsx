@@ -97,18 +97,19 @@ export default function RegisterPage() {
       setInfoMessage("");
       setGoogleLoading(true);
       try {
-        // Concurrently pre-fetch user profile from the browser's active Google connection
-        const profileFetch = fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        })
-          .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null);
-
-        // Race with a 120ms budget: if browser finishes profile fetch instantly, send it to eliminate server hops
-        const clientProfile = await Promise.race([
-          profileFetch,
-          new Promise((resolve) => setTimeout(() => resolve(null), 120)),
-        ]);
+        // Concurrently fetch user profile directly from Google CDN in browser
+        let clientProfile = null;
+        try {
+          const profileRes = await Promise.race([
+            fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+              headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 800)),
+          ]);
+          if (profileRes?.ok) {
+            clientProfile = await profileRes.json();
+          }
+        } catch (e) {}
 
         const result = await loginWithGoogleToken(
           null, 
