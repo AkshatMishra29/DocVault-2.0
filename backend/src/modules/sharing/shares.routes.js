@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import { requireAuth } from '../../middleware/auth.middleware.js';
 import { DocumentShareService } from './documentShare.service.js';
 import { CentralShareAccessService } from './centralShareAccess.service.js';
@@ -9,6 +10,7 @@ import { SharePrivacyService } from './sharePrivacy.service.js';
 import { DocumentShare, SHARE_STATUS, ShareAccessLog } from './models/index.js';
 import { Document } from '../documents/document.model.js';
 import { User } from '../auth/auth.model.js';
+import { lookupRecipientHandler } from './sharing.routes.js';
 
 const router = Router();
 
@@ -52,11 +54,20 @@ router.get('/received', requireAuth, async (req, res) => {
 });
 
 /**
+ * GET /api/shares/lookup-recipient
+ * Safe lookup of recipient by DocVault ID or Email (Unified alias)
+ */
+router.get('/lookup-recipient', requireAuth, lookupRecipientHandler);
+
+/**
  * GET /api/shares/:id
  * Retrieve share metadata and status (Authorized for owner or recipient)
  */
 router.get('/:id', async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid share ID format.' });
+    }
     const share = await DocumentShare.findById(req.params.id)
       .populate('documentIds', 'title category format fileSizeFormatted createdAt summary')
       .populate('ownerId', 'name docVaultId')

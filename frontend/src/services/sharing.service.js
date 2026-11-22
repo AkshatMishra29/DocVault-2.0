@@ -13,10 +13,23 @@ export const sharingService = {
   async lookupRecipient(query) {
     if (!query) return { success: false, error: 'Query is empty' };
     const cleanQ = encodeURIComponent(query.trim());
-    const res = await fetch(`${API_BASE_URL}/api/sharing/lookup-recipient?q=${cleanQ}`, {
-      headers: getAuthHeader(),
-    });
-    return res.json();
+    try {
+      let res = await fetch(`${API_BASE_URL}/api/sharing/lookup-recipient?q=${cleanQ}`, {
+        headers: getAuthHeader(),
+      });
+      if (!res.ok) {
+        // Fallback to unified alias endpoint if needed
+        const fallbackRes = await fetch(`${API_BASE_URL}/api/shares/lookup-recipient?q=${cleanQ}`, {
+          headers: getAuthHeader(),
+        });
+        if (fallbackRes.ok) {
+          return await fallbackRes.json();
+        }
+      }
+      return await res.json();
+    } catch (err) {
+      return { success: false, error: err.message || 'Lookup request failed.' };
+    }
   },
 
   // Direct share creation

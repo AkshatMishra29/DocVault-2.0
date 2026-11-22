@@ -82,7 +82,11 @@ export default function ShareCenterPage() {
     setVerifyingRecipient(true);
     setRecipientVerifyError("");
     try {
-      const res = await apiRequest(`/api/sharing/lookup-recipient?q=${encodeURIComponent(q.trim())}`);
+      let res = await apiRequest(`/api/sharing/lookup-recipient?q=${encodeURIComponent(q.trim())}`);
+      if (!res.success && res.error && res.error.includes("Cast to ObjectId")) {
+        // Fallback to alias endpoint if cloud cache/deploy is in transition
+        res = await apiRequest(`/api/shares/lookup-recipient?q=${encodeURIComponent(q.trim())}`);
+      }
       if (res.success && res.data) {
         setVerifiedRecipient(res.data);
         setRecipientVerifyError("");

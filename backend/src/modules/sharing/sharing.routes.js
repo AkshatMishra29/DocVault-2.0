@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import { requireAuth } from '../../middleware/auth.middleware.js';
 import { DocumentAccessControlService } from './accessControl.service.js';
 import {
@@ -21,10 +22,9 @@ import { User } from '../auth/auth.model.js';
 const router = Router();
 
 /**
- * GET /api/sharing/lookup-recipient
- * Safe lookup of recipient by DocVault ID or Email for sharing
+ * Reusable recipient lookup handler for DocVault ID or Email verification
  */
-router.get('/lookup-recipient', requireAuth, async (req, res) => {
+export async function lookupRecipientHandler(req, res) {
   try {
     const q = (req.query.q || '').trim();
     if (!q) {
@@ -58,7 +58,13 @@ router.get('/lookup-recipient', requireAuth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
-});
+}
+
+/**
+ * GET /api/sharing/lookup-recipient
+ * Safe lookup of recipient by DocVault ID or Email for sharing
+ */
+router.get('/lookup-recipient', requireAuth, lookupRecipientHandler);
 
 /**
  * GET /api/sharing/received
@@ -219,9 +225,12 @@ router.get('/sent', requireAuth, async (req, res) => {
  * GET /api/sharing/:documentId
  * Get sharing policy & active grants for a specific document
  */
-router.get('/:documentId', requireAuth, async (req, res) => {
+router.get('/:documentId', requireAuth, async (req, res, next) => {
   try {
     const { documentId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(documentId)) {
+      return next();
+    }
     const doc = await Document.findOne({ _id: documentId, userId: req.user.userId });
     if (!doc) {
       return res.status(404).json({ success: false, error: 'Document not found or unauthorized.' });
@@ -468,6 +477,9 @@ router.post('/access-requests/:id/reject', requireAuth, async (req, res) => {
  */
 router.get('/audit/:documentId', requireAuth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.documentId)) {
+      return res.status(400).json({ success: false, error: 'Invalid document ID format.' });
+    }
     const doc = await Document.findOne({ _id: req.params.documentId, userId: req.user.userId });
     if (!doc) {
       return res.status(404).json({ success: false, error: 'Document not found or unauthorized.' });

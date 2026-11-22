@@ -14,7 +14,6 @@ import { SharePrivacyService } from './sharePrivacy.service.js';
 import { ConnectionService } from './connection.service.js';
 import { Document } from '../documents/document.model.js';
 import { User } from '../auth/auth.model.js';
-import { User } from '../auth/auth.model.js';
 
 export class CentralShareAccessService {
   /**

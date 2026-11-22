@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import {
   DocumentAccessPolicy,
   AUDIENCE_MODE,
@@ -29,6 +30,9 @@ export class DocumentAccessControlService {
    */
   static async canAccessDocument(userId, documentId, action = 'view') {
     if (!userId || !documentId) return { allowed: false, reason: 'Missing credentials or document' };
+    if (!mongoose.Types.ObjectId.isValid(documentId)) {
+      return { allowed: false, reason: 'Invalid document ID format' };
+    }
 
     const doc = await Document.findById(documentId).select('userId title sensitiveFlag aiPolicy category');
     if (!doc) return { allowed: false, reason: 'Document not found' };

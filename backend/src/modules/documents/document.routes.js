@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
@@ -52,6 +53,9 @@ router.get('/', requireAuth, async (req, res) => {
 // GET /api/documents/:id - Get single document details (Protected with Central Access Control)
 router.get('/:id', requireAuth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid document ID format' });
+    }
     const access = await DocumentAccessControlService.canViewDocument(req.user.userId, req.params.id);
     if (!access.allowed) {
       return res.status(access.reason === 'Document not found' ? 404 : 403).json({

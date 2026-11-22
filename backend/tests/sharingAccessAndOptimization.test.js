@@ -260,4 +260,48 @@ describe('🚀 DocVault Sharing Authorization & Optimization Suite', () => {
     DocumentShareGrant.findOneAndUpdate = origGrantUpsert;
     ConnectionService.ensureOwnerApproved = origEnsure;
   });
+
+  it('9. DocumentAccessControlService: safely rejects invalid ObjectId string without Mongoose CastError', async () => {
+    const userId = new mongoose.Types.ObjectId();
+    const result = await DocumentAccessControlService.canAccessDocument(userId, 'lookup-recipient');
+    assert.strictEqual(result.allowed, false);
+    assert.strictEqual(result.reason, 'Invalid document ID format');
+  });
+
+  it('10. lookupRecipientHandler: safely verifies recipient by DocVault ID and Email', async () => {
+    const { lookupRecipientHandler } = await import('../src/modules/sharing/sharing.routes.js');
+    const { User } = await import('../src/modules/auth/auth.model.js');
+
+    const origFindOne = User.findOne;
+    const callerId = new mongoose.Types.ObjectId();
+    const targetId = new mongoose.Types.ObjectId();
+
+    User.findOne = (query) => ({
+      select: async () => {
+        if (query.docVaultId === 'DV-RECIPIENT-99') {
+          return { _id: targetId, name: 'Alice Recipient', docVaultId: 'DV-RECIPIENT-99', email: 'alice@example.com' };
+        }
+        return null;
+      },
+    });
+
+    let statusCode = 200;
+    let jsonBody = null;
+    const req = {
+      user: { userId: callerId },
+      query: { q: 'DV-RECIPIENT-99' },
+    };
+    const res = {
+      status(code) { statusCode = code; return this; },
+      json(body) { jsonBody = body; return this; },
+    };
+
+    await lookupRecipientHandler(req, res);
+    assert.strictEqual(statusCode, 200);
+    assert.strictEqual(jsonBody.success, true);
+    assert.strictEqual(jsonBody.data.docVaultId, 'DV-RECIPIENT-99');
+    assert.strictEqual(jsonBody.data.name, 'Alice Recipient');
+
+    User.findOne = origFindOne;
+  });
 });
