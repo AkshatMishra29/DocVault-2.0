@@ -13,6 +13,7 @@ import { initFirebaseAdmin } from './services/storage/firebaseService.js';
 import { startJobWorker } from './modules/pipeline/jobQueue.service.js';
 import { backfillDocVaultIds } from './modules/auth/docVaultId.util.js';
 import { startSharingExpiryWorker } from './modules/sharing/expiryWorker.service.js';
+import { prewarmGoogleOAuth } from './modules/auth/auth.service.js';
 
 /* ==========================================================================
    Server Initialization
@@ -31,6 +32,9 @@ async function startServer() {
 
     // Start background document share expiry worker
     startSharingExpiryWorker();
+
+    // Pre-warm Google OAuth public certificates and TLS connection pool
+    prewarmGoogleOAuth();
 
     app.listen(config.port, () => {
       console.log(`[DocVault Server] API running on http://localhost:${config.port}`);

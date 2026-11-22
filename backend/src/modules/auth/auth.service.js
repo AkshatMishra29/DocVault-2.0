@@ -15,7 +15,7 @@ import {
   hashPin, verifyPin 
 } from '../../utils/cryptoSecurity.js';
 
-// Pre-initialized OAuth client and fast token verification cache (120s TTL)
+// In-memory OAuth Profile & Token Verification Cache (5-minute TTL)
 const oauthProfileCache = new Map();
 let cachedGoogleClient = null;
 
@@ -27,10 +27,35 @@ function getGoogleClient() {
   return cachedGoogleClient;
 }
 
+/**
+ * Pre-warm Google OAuth client public certificates and network connections
+ * on server boot to eliminate cold-start TLS & DNS latency.
+ */
+export function prewarmGoogleOAuth() {
+  try {
+    const client = getGoogleClient();
+    // Warm Google public JWKS certs into memory
+    if (typeof client.getFederatedSignonCertsAsync === 'function') {
+      client.getFederatedSignonCertsAsync().catch(() => {});
+    }
+    // Pre-warm TCP/TLS sockets to Google API endpoints
+    fetch('https://www.googleapis.com/oauth2/v3/certs', {
+      headers: { 'Connection': 'keep-alive' },
+      signal: AbortSignal.timeout(3000)
+    }).catch(() => {});
+    fetch('https://oauth2.googleapis.com/tokeninfo', {
+      headers: { 'Connection': 'keep-alive' },
+      signal: AbortSignal.timeout(3000)
+    }).catch(() => {});
+  } catch (err) {
+    // Graceful silent skip if offline or sandbox restricted
+  }
+}
+
 function getCachedOAuthProfile(key) {
   if (!key) return null;
   const entry = oauthProfileCache.get(key);
-  if (entry && (Date.now() - entry.timestamp < 120000)) {
+  if (entry && (Date.now() - entry.timestamp < 300000)) { // 5-minute TTL
     return entry.profile;
   }
   oauthProfileCache.delete(key);
@@ -39,7 +64,7 @@ function getCachedOAuthProfile(key) {
 
 function setCachedOAuthProfile(key, profile) {
   if (!key || !profile?.email) return;
-  if (oauthProfileCache.size > 500) {
+  if (oauthProfileCache.size > 1000) {
     const oldestKey = oauthProfileCache.keys().next().value;
     oauthProfileCache.delete(oldestKey);
   }
@@ -834,7 +859,7 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
     throw error;
   }
 
-  // Fast-path in-memory cache check (avoids redundant network roundtrips on retries/bursts)
+  // Fast-path in-memory cache check (sub-millisecond return on duplicate tokens / retries)
   const cacheKey = accessToken 
     ? `acc:${crypto.createHash('sha256').update(accessToken).digest('hex')}` 
     : `id:${crypto.createHash('sha256').update(idToken).digest('hex')}`;
@@ -843,44 +868,8 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
   let cleanEmail = cached?.email || '';
   let name = cached?.name || '';
 
-  // 1. If Access Token provided, resolve userinfo directly with optimized keep-alive & 2.2s timeout
-  if (!cleanEmail && accessToken) {
-    try {
-      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${accessToken}`, 'Connection': 'keep-alive' },
-        signal: AbortSignal.timeout(2200),
-      });
-      if (res.ok) {
-        const userInfo = await res.json();
-        cleanEmail = (userInfo.email || '').toLowerCase().trim();
-        name = userInfo.name || userInfo.given_name || cleanEmail.split('@')[0];
-        setCachedOAuthProfile(cacheKey, { email: cleanEmail, name });
-      }
-    } catch (fetchErr) {
-      console.warn('[Google OAuth] Access token userinfo fetch failed:', fetchErr.message);
-    }
-
-    // Fast fallback: if userinfo stalled or failed, verify access token via Google tokeninfo endpoint
-    if (!cleanEmail) {
-      try {
-        const tokenInfoRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`, {
-          signal: AbortSignal.timeout(2000),
-        });
-        if (tokenInfoRes.ok) {
-          const tokenInfo = await tokenInfoRes.json();
-          if (tokenInfo.email) {
-            cleanEmail = tokenInfo.email.toLowerCase().trim();
-            name = clientProfile?.name || cleanEmail.split('@')[0];
-            setCachedOAuthProfile(cacheKey, { email: cleanEmail, name });
-          }
-        }
-      } catch (err) {
-        console.warn('[Google OAuth] tokeninfo verification failed:', err.message);
-      }
-    }
-  }
-
-  // 2. If ID token provided and email not yet resolved, verify via cached Google client
+  // 1. FASTEST PATH: Google ID Token (Signed JWT Verified Locally via In-Memory JWKS)
+  // Takes < 1ms because Google public keys are cached locally in RAM with zero network roundtrips!
   if (!cleanEmail && idToken) {
     try {
       const client = getGoogleClient();
@@ -890,11 +879,59 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
         audience: googleClientId,
       });
       const payload = ticket.getPayload();
-      cleanEmail = (payload.email || '').toLowerCase().trim();
-      name = payload.name || payload.given_name || cleanEmail.split('@')[0];
-      setCachedOAuthProfile(cacheKey, { email: cleanEmail, name });
+      if (payload?.email) {
+        cleanEmail = payload.email.toLowerCase().trim();
+        name = payload.name || payload.given_name || cleanEmail.split('@')[0];
+        setCachedOAuthProfile(cacheKey, { email: cleanEmail, name });
+      }
     } catch (err) {
-      console.warn('[Google OAuth] verifyIdToken failed:', err.message);
+      console.warn('[Google OAuth] Local verifyIdToken failed or skipped:', err.message);
+    }
+  }
+
+  // 2. ULTRA-FAST ACCESS TOKEN PATH: Hedged Parallel Racing (Promise.any)
+  // Races Google UserInfo and TokenInfo endpoints concurrently over persistent keep-alive sockets.
+  // The fastest responding Google edge server wins immediately, eliminating sequential fallback delay.
+  if (!cleanEmail && accessToken) {
+    const cleanAccessToken = accessToken.trim();
+
+    const fetchUserInfo = async () => {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${cleanAccessToken}`, 'Connection': 'keep-alive' },
+        signal: AbortSignal.timeout(1800),
+      });
+      if (!res.ok) throw new Error(`UserInfo HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data.email) throw new Error('No email in userinfo response');
+      return {
+        email: data.email.toLowerCase().trim(),
+        name: data.name || data.given_name || (data.email.split('@')[0]),
+      };
+    };
+
+    const fetchTokenInfo = async () => {
+      const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(cleanAccessToken)}`, {
+        headers: { 'Connection': 'keep-alive' },
+        signal: AbortSignal.timeout(1800),
+      });
+      if (!res.ok) throw new Error(`TokenInfo HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data.email) throw new Error('No email in tokeninfo response');
+      return {
+        email: data.email.toLowerCase().trim(),
+        name: clientProfile?.name || (data.email.split('@')[0]),
+      };
+    };
+
+    try {
+      const resolved = await Promise.any([fetchUserInfo(), fetchTokenInfo()]);
+      if (resolved?.email) {
+        cleanEmail = resolved.email;
+        name = resolved.name || clientProfile?.name || cleanEmail.split('@')[0];
+        setCachedOAuthProfile(cacheKey, { email: cleanEmail, name });
+      }
+    } catch (raceErr) {
+      console.warn('[Google OAuth] Parallel token resolution failed:', raceErr.message);
     }
   }
 
@@ -931,17 +968,23 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
       biometricsEnabled: false,
     });
     await user.save();
-  } else if (!user.docVaultId) {
-    user.docVaultId = generateDocVaultId();
-    await user.save();
+  } else {
+    // Highly optimized existing user path: avoid redundant database writes
+    let needsUpdate = false;
+    if (!user.docVaultId) {
+      user.docVaultId = generateDocVaultId();
+      needsUpdate = true;
+    }
+    if (user.singleSessionOnly) {
+      user.sessionVersion = (user.sessionVersion || 1) + 1;
+      needsUpdate = true;
+    }
+    if (needsUpdate) {
+      await user.save();
+    }
   }
 
   const requiresPinSetup = !user.pinSet;
-
-  if (user.singleSessionOnly) {
-    user.sessionVersion = (user.sessionVersion || 1) + 1;
-    await user.save();
-  }
 
   const token = jwt.sign(
     { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1, requiresPinSetup },

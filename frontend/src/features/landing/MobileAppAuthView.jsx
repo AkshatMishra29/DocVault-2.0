@@ -157,7 +157,24 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
     onSuccess: async (tokenResponse) => {
       setLoginError("");
       try {
-        const result = await loginWithGoogleToken(null, tokenResponse.access_token);
+        // Concurrently pre-fetch user profile from the browser's active Google connection
+        const profileFetch = fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null);
+
+        const clientProfile = await Promise.race([
+          profileFetch,
+          new Promise((resolve) => setTimeout(() => resolve(null), 120)),
+        ]);
+
+        const result = await loginWithGoogleToken(
+          null, 
+          tokenResponse.access_token,
+          clientProfile ? { email: clientProfile.email, name: clientProfile.name } : null
+        );
+
         if (result?.success) {
           const targetEmail = result.user?.email;
           const pinLen = result.user?.pinLength || 4;
@@ -166,22 +183,23 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
           localStorage.setItem('pending_pin_email', targetEmail);
           sessionStorage.setItem('docvault_pending_email', targetEmail);
           sessionStorage.setItem('docvault_pin_length', pinLen.toString());
+
           if (isSetup) {
             sessionStorage.setItem('docvault_requires_pin_setup', 'true');
+            navigate("/enter-pin", { 
+              replace: true,
+              state: { 
+                email: targetEmail, 
+                name: result.user?.name,
+                pinLength: pinLen,
+                isSetup,
+                requiresPinSetup: isSetup
+              } 
+            });
           } else {
             sessionStorage.removeItem('docvault_requires_pin_setup');
+            navigate("/dashboard", { replace: true });
           }
-
-          navigate("/enter-pin", { 
-            replace: true,
-            state: { 
-              email: targetEmail, 
-              name: result.user?.name,
-              pinLength: pinLen,
-              isSetup,
-              requiresPinSetup: isSetup
-            } 
-          });
         } else {
           setLoginError(result?.error || "Google sign-in could not complete.");
         }

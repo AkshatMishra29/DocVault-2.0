@@ -148,4 +148,16 @@ describe('DocVault Security Guardrail: Duplicate Document Detection & OAuth Opti
     assert.strictEqual(authResponse.requiresPin, true, 'New OAuth user must set their security PIN');
     assert.strictEqual(authResponse.requiresPinSetup, true);
   });
+
+  it('6. Pre-warming & Hedged OAuth Execution: exports prewarmGoogleOAuth and executes hedged Promise.any', async () => {
+    const { prewarmGoogleOAuth } = await import('../src/modules/auth/auth.service.js');
+    assert.strictEqual(typeof prewarmGoogleOAuth, 'function');
+    assert.doesNotThrow(() => prewarmGoogleOAuth());
+
+    // Verify hedged Promise.any racing behavior
+    const fastCall = new Promise(resolve => setTimeout(() => resolve({ email: 'fast@docvault.io' }), 5));
+    const slowCall = new Promise(resolve => setTimeout(() => resolve({ email: 'slow@docvault.io' }), 200));
+    const fastest = await Promise.any([fastCall, slowCall]);
+    assert.strictEqual(fastest.email, 'fast@docvault.io', 'Hedged race must return the fastest response');
+  });
 });

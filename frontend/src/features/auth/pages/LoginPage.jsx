@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useGoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
 import { Mail, Lock, ArrowRight, ShieldCheck, HelpCircle, KeyRound, Sparkles, CheckCircle2 } from "lucide-react";
 import AboutDocVaultModal from "../../../components/common/AboutModal/AboutDocVaultModal";
@@ -95,8 +95,25 @@ export default function LoginPage() {
       setInfoMessage("");
       setGoogleLoading(true);
       try {
-        // Fast direct authentication — avoids redundant client-side roundtrip
-        const result = await loginWithGoogleToken(null, tokenResponse.access_token);
+        // Concurrently pre-fetch user profile from the browser's active Google connection
+        const profileFetch = fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null);
+
+        // Race with a 120ms budget: if browser finishes profile fetch instantly, send it to eliminate server hops
+        const clientProfile = await Promise.race([
+          profileFetch,
+          new Promise((resolve) => setTimeout(() => resolve(null), 120)),
+        ]);
+
+        const result = await loginWithGoogleToken(
+          null, 
+          tokenResponse.access_token, 
+          clientProfile ? { email: clientProfile.email, name: clientProfile.name } : null
+        );
+
         if (result?.success) {
           const targetEmail = result.user?.email;
           const pinLen = result.user?.pinLength || 4;
@@ -136,6 +153,50 @@ export default function LoginPage() {
       console.warn("[GCP OAuth] Window closed or error:", err);
       setGoogleLoading(false);
     }
+  });
+
+  // Google One Tap Instant 1-Click Authentication
+  useGoogleOneTapLogin({
+    onSuccess: async (credentialResponse) => {
+      if (!credentialResponse?.credential) return;
+      setError("");
+      setGoogleLoading(true);
+      try {
+        const result = await loginWithGoogleToken(credentialResponse.credential, null);
+        if (result?.success) {
+          const targetEmail = result.user?.email;
+          const pinLen = result.user?.pinLength || 4;
+          const isSetup = Boolean(result.requiresPinSetup || result.isNewUser || result.user?.pinSet === false);
+
+          if (isSetup) {
+            localStorage.setItem("pending_pin_email", targetEmail);
+            sessionStorage.setItem("docvault_pending_email", targetEmail);
+            sessionStorage.setItem("docvault_pin_length", pinLen.toString());
+            sessionStorage.setItem("docvault_requires_pin_setup", "true");
+
+            navigate("/enter-pin", { 
+              replace: true,
+              state: { 
+                email: targetEmail, 
+                name: result.user?.name,
+                pinLength: pinLen,
+                isSetup: true,
+                requiresPinSetup: true
+              } 
+            });
+          } else {
+            sessionStorage.removeItem("docvault_requires_pin_setup");
+            navigate("/dashboard", { replace: true });
+          }
+        }
+      } catch (err) {
+        console.warn("[Google One Tap] Login failed:", err);
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: () => {},
+    disabled: Boolean(user && isVaultUnlocked),
   });
 
   const handleOpenResetModal = () => {
