@@ -25,13 +25,19 @@ function rateLimit(windowMs = 60000, maxRequests = 30) {
  * GET /api/connections/lookup/:docVaultId
  * Public lookup: Reveals ONLY name and docVaultId. Zero documents, assets or family details exposed!
  */
-router.get('/lookup/:docVaultId', requireAuth, rateLimit(60000, 20), async (req, res) => {
+router.get('/lookup/:docVaultId', requireAuth, rateLimit(60000, 30), async (req, res) => {
   try {
-    const cleanId = req.params.docVaultId.trim().toUpperCase();
-    const user = await User.findOne({ docVaultId: cleanId }).select('name docVaultId createdAt');
+    const rawParam = req.params.docVaultId.trim();
+    let user = null;
+    if (rawParam.includes('@')) {
+      user = await User.findOne({ email: rawParam.toLowerCase() }).select('name docVaultId createdAt');
+    } else {
+      const cleanId = rawParam.toUpperCase();
+      user = await User.findOne({ docVaultId: cleanId }).select('name docVaultId createdAt');
+    }
 
     if (!user) {
-      return res.status(404).json({ success: false, error: 'No user found with this DocVault ID.' });
+      return res.status(404).json({ success: false, error: 'No user found with this DocVault ID or email.' });
     }
 
     res.json({

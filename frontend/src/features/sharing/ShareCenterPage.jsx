@@ -65,7 +65,38 @@ export default function ShareCenterPage() {
     redactTermsText: "",
   });
 
+  const [recipientInput, setRecipientInput] = useState("");
+  const [verifiedRecipient, setVerifiedRecipient] = useState(null);
+  const [verifyingRecipient, setVerifyingRecipient] = useState(false);
+  const [recipientVerifyError, setRecipientVerifyError] = useState("");
   const [createdShareResult, setCreatedShareResult] = useState(null);
+
+  const handleVerifyRecipientInput = async (val) => {
+    const q = val !== undefined ? val : recipientInput;
+    if (!q || !q.trim()) {
+      setVerifiedRecipient(null);
+      setRecipientVerifyError("");
+      return;
+    }
+
+    setVerifyingRecipient(true);
+    setRecipientVerifyError("");
+    try {
+      const res = await apiRequest(`/api/sharing/lookup-recipient?q=${encodeURIComponent(q.trim())}`);
+      if (res.success && res.data) {
+        setVerifiedRecipient(res.data);
+        setRecipientVerifyError("");
+      } else {
+        setVerifiedRecipient(null);
+        setRecipientVerifyError(res.error || "User not found. Enter a valid DocVault ID or email.");
+      }
+    } catch (err) {
+      setVerifiedRecipient(null);
+      setRecipientVerifyError(err.message || "User lookup failed.");
+    } finally {
+      setVerifyingRecipient(false);
+    }
+  };
 
   useEffect(() => {
     fetchShares();
@@ -162,12 +193,17 @@ export default function ShareCenterPage() {
         });
       }
 
+      const targetUserId = verifiedRecipient?.id || shareForm.recipientUserId || null;
+      const targetEmail = verifiedRecipient?.email || (recipientInput.includes('@') ? recipientInput.trim() : shareForm.recipientEmail) || null;
+      const targetDocVaultId = verifiedRecipient?.docVaultId || (!recipientInput.includes('@') && recipientInput.trim() ? recipientInput.trim() : null);
+
       const payload = {
         documentIds: shareForm.documentIds,
         purpose: shareForm.purpose || "Secure Document Access",
         shareType: shareForm.shareType,
-        recipientUserId: shareForm.recipientUserId || null,
-        recipientEmail: shareForm.recipientEmail || null,
+        recipientUserId: targetUserId,
+        recipientDocVaultId: targetDocVaultId,
+        recipientEmail: targetEmail,
         expiresInHours: Number(shareForm.expiresInHours),
         permissions: shareForm.permissions,
         password: shareForm.password || null,
@@ -615,43 +651,94 @@ export default function ShareCenterPage() {
                 value={shareForm.shareType}
                 onChange={(e) => setShareForm((p) => ({ ...p, shareType: e.target.value }))}
               >
-                <option value="CONNECTION">Mutual DocVault Connection</option>
+                <option value="CONNECTION">DocVault User / Email</option>
                 <option value="LINK">Expiring Cryptographic Link</option>
               </select>
             </div>
 
             {shareForm.shareType === "CONNECTION" && (
               <div className="dv-form-group">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <label className="dv-input-label" style={{ margin: 0 }}>Select Mutual Connection</label>
-                  <Link to="/connections" style={{ fontSize: "11px", color: "var(--color-primary)", textDecoration: "none" }}>
-                    + Manage Connections
-                  </Link>
-                </div>
-                {userConnections.length === 0 ? (
-                  <div style={{ padding: "8px 12px", background: "var(--color-surface-subtle)", borderRadius: "var(--radius-md)", fontSize: "12px", color: "var(--color-text-secondary)", border: "1px dashed var(--color-border)" }}>
-                    No mutual connections found yet. Share your DocVault ID <strong>{myDocVaultId}</strong> with a contact, or{" "}
-                    <Link to="/connections" style={{ color: "var(--color-primary)", fontWeight: 600 }}>add them in Connections</Link>.
-                  </div>
-                ) : (
-                  <select
-                    className="dv-select-control"
-                    value={shareForm.recipientUserId}
-                    onChange={(e) => setShareForm((p) => ({ ...p, recipientUserId: e.target.value }))}
-                    required={shareForm.shareType === "CONNECTION"}
+                <label className="dv-input-label">Enter Recipient DocVault ID or Email</label>
+                <div style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
+                  <input
+                    type="text"
+                    className="dv-input-control"
+                    placeholder="e.g. DV-XXXX-XXXX or name@example.com"
+                    value={recipientInput}
+                    onChange={(e) => {
+                      setRecipientInput(e.target.value);
+                      setVerifiedRecipient(null);
+                      setRecipientVerifyError("");
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleVerifyRecipientInput();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="dv-btn-verify"
+                    style={{ padding: "0 14px", background: "var(--color-primary)", color: "#fff", border: "none", borderRadius: "var(--radius-md)", fontWeight: 600, fontSize: "12px", cursor: "pointer", whiteSpace: "nowrap" }}
+                    onClick={() => handleVerifyRecipientInput()}
+                    disabled={verifyingRecipient || !recipientInput.trim()}
                   >
-                    <option value="">-- Choose Connection by Name or DocVault ID --</option>
-                    {userConnections.map((c) => {
-                      const id = c.id || c._id || c.otherUser?._id;
-                      const name = c.name || c.otherUser?.name || "User";
-                      const docVaultId = c.docVaultId || c.otherUser?.docVaultId || "";
-                      return (
-                        <option key={id} value={id}>
-                          {name} {docVaultId ? `(${docVaultId})` : ""}
-                        </option>
-                      );
-                    })}
-                  </select>
+                    {verifyingRecipient ? "Checking..." : "Verify"}
+                  </button>
+                </div>
+
+                {recipientVerifyError && (
+                  <span style={{ fontSize: "11px", color: "var(--color-danger)", display: "block", marginBottom: "6px" }}>
+                    {recipientVerifyError}
+                  </span>
+                )}
+
+                {verifiedRecipient && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "var(--radius-md)", padding: "6px 10px", marginBottom: "8px" }}>
+                    <CheckCircle2 size={16} color="#10b981" />
+                    <span style={{ fontSize: "12px", fontWeight: 600 }}>{verifiedRecipient.name}</span>
+                    {verifiedRecipient.docVaultId && <span className="dv-id-pill">{verifiedRecipient.docVaultId}</span>}
+                    {verifiedRecipient.email && <span style={{ fontSize: "11px", color: "var(--color-text-secondary)" }}>({verifiedRecipient.email})</span>}
+                  </div>
+                )}
+
+                {userConnections.length > 0 && (
+                  <div>
+                    <span style={{ fontSize: "11px", color: "var(--color-text-secondary)", display: "block", marginBottom: "4px" }}>
+                      Or select from existing connections:
+                    </span>
+                    <select
+                      className="dv-select-control"
+                      value={shareForm.recipientUserId}
+                      onChange={(e) => {
+                        const selId = e.target.value;
+                        setShareForm((p) => ({ ...p, recipientUserId: selId }));
+                        const found = userConnections.find((c) => (c.id || c._id || c.otherUser?._id) === selId);
+                        if (found) {
+                          setVerifiedRecipient({
+                            id: found.id || found._id || found.otherUser?._id,
+                            name: found.name || found.otherUser?.name || "User",
+                            docVaultId: found.docVaultId || found.otherUser?.docVaultId || "",
+                            email: found.email || "",
+                          });
+                          setRecipientInput(found.docVaultId || found.name || "");
+                        }
+                      }}
+                    >
+                      <option value="">-- Choose Mutual Connection --</option>
+                      {userConnections.map((c) => {
+                        const id = c.id || c._id || c.otherUser?._id;
+                        const name = c.name || c.otherUser?.name || "User";
+                        const docVaultId = c.docVaultId || c.otherUser?.docVaultId || "";
+                        return (
+                          <option key={id} value={id}>
+                            {name} {docVaultId ? `(${docVaultId})` : ""}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
                 )}
               </div>
             )}

@@ -4,6 +4,8 @@ import {
   DocumentShareGrant,
   GRANT_STATUS,
   GRANT_SOURCE,
+  DocumentShare,
+  SHARE_STATUS,
   SharingRule,
   RULE_SCOPE,
   ShareAccessLog,
@@ -13,16 +15,17 @@ import {
 } from './models/index.js';
 import { ConnectionService } from './connection.service.js';
 import { Document } from '../documents/document.model.js';
+import { User } from '../auth/auth.model.js';
 
 export class DocumentAccessControlService {
   /**
    * Determine whether a user can access a document for a specific action ('view' or 'download')
    * Central evaluation:
    * 1. If owner => full access
-   * 2. If document explicitly marked ONLY_ME / PRIVATE => deny
-   * 3. Must be MUTUAL connection with owner
-   * 4. Check active, non-expired DocumentShareGrant
-   * 5. Check action permission (view vs download)
+   * 2. If blocked by owner => deny
+   * 3. Check active DocumentShareGrant
+   * 4. Check active direct DocumentShare
+   * 5. Check DocumentAccessPolicy (Audience mode)
    */
   static async canAccessDocument(userId, documentId, action = 'view') {
     if (!userId || !documentId) return { allowed: false, reason: 'Missing credentials or document' };
@@ -35,47 +38,105 @@ export class DocumentAccessControlService {
       return { allowed: true, isOwner: true, doc };
     }
 
-    // 2. Check document policy: if explicitly ONLY_ME, deny immediately
-    const policy = await DocumentAccessPolicy.findOne({ documentId });
-    if (policy && policy.audienceMode === AUDIENCE_MODE.ONLY_ME) {
-      return { allowed: false, reason: 'Document is private' };
+    // 2. Block check: Has the owner blocked this user?
+    const isBlocked = await ConnectionService.isBlocked(doc.userId, userId);
+    if (isBlocked) {
+      return { allowed: false, reason: 'Access denied: user is blocked by document owner.' };
     }
 
-    // 3. Must be connection authorized to receive from doc owner
-    const canReceive = await ConnectionService.canReceiveFromOwner(userId, doc.userId);
-    if (!canReceive) {
-      return { allowed: false, reason: 'Recipient not authorized by document owner' };
-    }
-
-    // 4. Query active grant for this specific user
+    // 3. Query active grant for this specific user
     const grant = await DocumentShareGrant.findOne({
       documentId,
       recipientId: userId,
       status: GRANT_STATUS.ACTIVE,
     });
 
-    if (!grant) {
-      return { allowed: false, reason: 'No active sharing grant found' };
+    if (grant) {
+      // Expiry verification
+      if (grant.expiresAt && new Date(grant.expiresAt) <= new Date()) {
+        grant.status = GRANT_STATUS.EXPIRED;
+        await grant.save().catch(() => {});
+      } else {
+        // Action permission check (view vs download)
+        if (action === 'download' && !grant.permissions?.download) {
+          return { allowed: false, reason: 'Download permission not granted' };
+        }
+        if (action === 'view' && grant.permissions?.view === false) {
+          return { allowed: false, reason: 'View permission not granted' };
+        }
+        return { allowed: true, isOwner: false, grant, doc };
+      }
     }
 
-    // 5. Expiry verification (at request-time, deterministic without Redis)
-    if (grant.expiresAt && new Date(grant.expiresAt) <= new Date()) {
-      // Mark expired lazily
-      grant.status = GRANT_STATUS.EXPIRED;
-      await grant.save().catch(() => {});
-      return { allowed: false, reason: 'Document share grant has expired' };
+    // 4. Query active DocumentShare (Direct Share by User ID or Email)
+    const userDoc = await User.findById(userId).select('email');
+    const userEmail = userDoc?.email ? userDoc.email.toLowerCase().trim() : null;
+
+    const shareQuery = {
+      documentIds: documentId,
+      status: SHARE_STATUS.ACTIVE,
+      $or: [
+        { recipientUserId: userId },
+        ...(userEmail ? [{ recipientEmail: userEmail }] : []),
+      ],
+    };
+
+    const directShare = await DocumentShare.findOne(shareQuery);
+    if (directShare) {
+      if (directShare.expiresAt && new Date(directShare.expiresAt) <= new Date()) {
+        directShare.status = SHARE_STATUS.EXPIRED;
+        await directShare.save().catch(() => {});
+      } else {
+        if (action === 'download' && !directShare.permissions?.download) {
+          return { allowed: false, reason: 'Download permission not granted' };
+        }
+        if (action === 'view' && directShare.permissions?.view === false) {
+          return { allowed: false, reason: 'View permission not granted' };
+        }
+        return { allowed: true, isOwner: false, share: directShare, doc };
+      }
     }
 
-    // 6. Action permission check (view vs download)
-    if (action === 'download' && !grant.permissions.download) {
-      return { allowed: false, reason: 'Download permission not granted' };
+    // 5. Check DocumentAccessPolicy (Audience Policy)
+    const policy = await DocumentAccessPolicy.findOne({ documentId });
+    if (policy) {
+      if (policy.audienceMode === AUDIENCE_MODE.ONLY_ME) {
+        return { allowed: false, reason: 'Document is private' };
+      }
+
+      if (policy.expiresAt && new Date(policy.expiresAt) <= new Date()) {
+        return { allowed: false, reason: 'Document share policy has expired' };
+      }
+
+      const isEligible = await ConnectionService.canReceiveFromOwner(userId, doc.userId);
+      let audienceAllowed = false;
+
+      if (policy.audienceMode === AUDIENCE_MODE.ALL_CONNECTIONS && isEligible) {
+        audienceAllowed = true;
+      } else if (policy.audienceMode === AUDIENCE_MODE.SELECTED) {
+        const inSelected = (policy.selectedUserIds || []).some(
+          (id) => id.toString() === userId.toString()
+        );
+        if (inSelected) audienceAllowed = true;
+      } else if (policy.audienceMode === AUDIENCE_MODE.ALL_EXCEPT && isEligible) {
+        const inExcluded = (policy.excludedUserIds || []).some(
+          (id) => id.toString() === userId.toString()
+        );
+        if (!inExcluded) audienceAllowed = true;
+      }
+
+      if (audienceAllowed) {
+        if (action === 'download' && !policy.permissions?.download) {
+          return { allowed: false, reason: 'Download permission not granted' };
+        }
+        if (action === 'view' && policy.permissions?.view === false) {
+          return { allowed: false, reason: 'View permission not granted' };
+        }
+        return { allowed: true, isOwner: false, policy, doc };
+      }
     }
 
-    if (action === 'view' && !grant.permissions.view) {
-      return { allowed: false, reason: 'View permission not granted' };
-    }
-
-    return { allowed: true, isOwner: false, grant, doc };
+    return { allowed: false, reason: 'No active sharing authorization found for this document' };
   }
 
   /**
@@ -93,7 +154,7 @@ export class DocumentAccessControlService {
   }
 
   /**
-   * Get all accessible document IDs for a user (Owned + Shared via active grant)
+   * Get all accessible document IDs for a user (Owned + Shared via active grant or direct share)
    */
   static async getAccessibleDocumentIds(userId, action = 'view') {
     const ownedDocs = await Document.find({ userId }).select('_id');
@@ -115,7 +176,31 @@ export class DocumentAccessControlService {
     const grants = await DocumentShareGrant.find(grantQuery).select('documentId');
     const sharedIds = grants.map((g) => g.documentId);
 
-    return Array.from(new Set([...ownedIds.map(String), ...sharedIds.map(String)]));
+    // Also include document IDs from active DocumentShare
+    const userDoc = await User.findById(userId).select('email');
+    const userEmail = userDoc?.email ? userDoc.email.toLowerCase().trim() : null;
+
+    const shareQuery = {
+      status: SHARE_STATUS.ACTIVE,
+      $or: [
+        { recipientUserId: userId },
+        ...(userEmail ? [{ recipientEmail: userEmail }] : []),
+      ],
+      $and: [
+        { $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }] },
+      ],
+    };
+
+    if (action === 'download') {
+      shareQuery['permissions.download'] = true;
+    } else {
+      shareQuery['permissions.view'] = { $ne: false };
+    }
+
+    const directShares = await DocumentShare.find(shareQuery).select('documentIds');
+    const directShareIds = directShares.flatMap((s) => s.documentIds || []);
+
+    return Array.from(new Set([...ownedIds.map(String), ...sharedIds.map(String), ...directShareIds.map(String)]));
   }
 
   /**
@@ -161,8 +246,11 @@ export class DocumentAccessControlService {
     } else if (audienceMode === AUDIENCE_MODE.ALL_CONNECTIONS) {
       recipientIds = eligibleIds;
     } else if (audienceMode === AUDIENCE_MODE.SELECTED) {
-      // Must be a subset of eligible connections
-      recipientIds = selectedUserIds.filter((id) => eligibleIds.includes(id.toString()));
+      recipientIds = selectedUserIds.map((id) => (typeof id === 'object' ? id._id || id : id).toString());
+      // Ensure owner approval is established for each selected recipient
+      for (const recId of recipientIds) {
+        await ConnectionService.ensureOwnerApproved(ownerId, recId).catch(() => {});
+      }
     } else if (audienceMode === AUDIENCE_MODE.ALL_EXCEPT) {
       const excludedSet = new Set(excludedUserIds.map((id) => id.toString()));
       recipientIds = eligibleIds.filter((id) => !excludedSet.has(id));

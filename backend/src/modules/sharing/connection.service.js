@@ -379,10 +379,54 @@ export class ConnectionService {
   }
 
   /**
+   * Check if user1 has blocked user2
+   */
+  static async isBlocked(user1Id, user2Id) {
+    if (!user1Id || !user2Id) return false;
+    const { userA, userB } = getOrderedPair(user1Id, user2Id);
+    const conn = await UserConnection.findOne({ userA, userB });
+    return conn?.status === USER_CONNECTION_STATUS.BLOCKED;
+  }
+
+  /**
+   * Ensure owner approval is established when owner shares with recipient
+   */
+  static async ensureOwnerApproved(ownerId, recipientId) {
+    if (!ownerId || !recipientId || ownerId.toString() === recipientId.toString()) return null;
+    const { userA, userB, isUserA } = getOrderedPair(ownerId, recipientId);
+
+    let conn = await UserConnection.findOne({ userA, userB });
+    if (!conn) {
+      conn = await UserConnection.create({
+        userA,
+        userB,
+        userAApprovedB: isUserA ? true : false,
+        userBApprovedA: isUserA ? false : true,
+        status: USER_CONNECTION_STATUS.ONE_WAY,
+        connectedAt: new Date(),
+      });
+    } else if (conn.status !== USER_CONNECTION_STATUS.BLOCKED) {
+      if (isUserA) {
+        conn.userAApprovedB = true;
+      } else {
+        conn.userBApprovedA = true;
+      }
+      if (conn.userAApprovedB && conn.userBApprovedA) {
+        conn.status = USER_CONNECTION_STATUS.MUTUAL;
+      } else {
+        conn.status = USER_CONNECTION_STATUS.ONE_WAY;
+      }
+      await conn.save();
+    }
+    return conn;
+  }
+
+  /**
    * Check if userA is authorized to receive documents from ownerId
    * Authorized if:
    * 1. Mutual connection
    * 2. OR owner explicitly approved userA (one-way grant allowed by owner)
+   * 3. OR owner has active DocumentShareGrant to userA
    */
   static async canReceiveFromOwner(recipientId, ownerId) {
     if (!recipientId || !ownerId) return false;
@@ -392,10 +436,18 @@ export class ConnectionService {
     const conn = await UserConnection.findOne({
       userA,
       userB,
-      status: { $ne: USER_CONNECTION_STATUS.BLOCKED },
     });
 
-    if (!conn) return false;
+    if (!conn) {
+      const hasGrant = await DocumentShareGrant.exists({
+        ownerId,
+        recipientId,
+        status: GRANT_STATUS.ACTIVE,
+      });
+      return Boolean(hasGrant);
+    }
+
+    if (conn.status === USER_CONNECTION_STATUS.BLOCKED) return false;
     if (conn.status === USER_CONNECTION_STATUS.MUTUAL) return true;
 
     // If owner approved recipient, owner can share to recipient

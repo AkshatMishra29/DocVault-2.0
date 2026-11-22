@@ -19,6 +19,49 @@ import {
 const oauthProfileCache = new Map();
 let cachedGoogleClient = null;
 
+export async function claimPendingSharesForUser(user) {
+  if (!user || !user.email) return;
+  try {
+    const { DocumentShare, SHARE_STATUS, DocumentShareGrant, GRANT_STATUS, GRANT_SOURCE } = await import('../sharing/models/index.js');
+    const { ConnectionService } = await import('../sharing/connection.service.js');
+    const cleanEmail = user.email.toLowerCase().trim();
+
+    const pendingShares = await DocumentShare.find({
+      recipientEmail: cleanEmail,
+      status: SHARE_STATUS.ACTIVE,
+      $or: [{ recipientUserId: null }, { recipientUserId: { $exists: false } }],
+    });
+
+    for (const share of pendingShares) {
+      share.recipientUserId = user._id;
+      await share.save().catch(() => {});
+
+      if (share.documentIds && share.documentIds.length > 0) {
+        for (const docId of share.documentIds) {
+          await DocumentShareGrant.findOneAndUpdate(
+            { documentId: docId, recipientId: user._id },
+            {
+              ownerId: share.ownerId,
+              permissions: {
+                view: share.permissions?.view !== false,
+                download: Boolean(share.permissions?.download),
+              },
+              status: GRANT_STATUS.ACTIVE,
+              source: GRANT_SOURCE.BULK_SHARE,
+              expiresAt: share.expiresAt,
+            },
+            { upsert: true, new: true }
+          ).catch(() => {});
+        }
+      }
+
+      await ConnectionService.ensureOwnerApproved(share.ownerId, user._id).catch(() => {});
+    }
+  } catch (err) {
+    // Non-blocking background sync
+  }
+}
+
 function getGoogleClient() {
   if (!cachedGoogleClient) {
     const googleClientId = config.googleAuth?.clientId || process.env.GOOGLE_CLIENT_ID;
@@ -248,6 +291,7 @@ export async function registerUser({ name, email, password, pin, phone, otp }) {
   });
 
   await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
 
   const token = jwt.sign(
     { userId: user._id, email: user.email, sessionVersion: user.sessionVersion },
@@ -339,6 +383,8 @@ export async function loginUser({ email, password }) {
     await user.save();
   }
 
+  claimPendingSharesForUser(user).catch(() => {});
+
   // If user entered valid PIN directly in login field, they are already pinVerified!
   const pinVerified = Boolean(matchedViaPin);
 
@@ -424,6 +470,7 @@ export async function resetPasswordWithOtp({ email, otp, newPassword, newPin }) 
   user.failedAttempts = 0;
   user.lockUntil = null;
   await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
 
   const token = jwt.sign(
     { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1 },
@@ -581,6 +628,7 @@ export async function verifyUserPin({ email, pin }) {
     if (user.failedAttempts >= 5) {
       user.lockUntil = new Date(Date.now() + 5 * 60 * 1000);
       await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
       const error = new Error('Too many failed attempts. Your vault has been locked for 5 minutes.');
       error.status = 423;
       error.lockUntil = user.lockUntil;
@@ -589,6 +637,7 @@ export async function verifyUserPin({ email, pin }) {
     }
 
     await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
     const attemptsLeft = 5 - user.failedAttempts;
     const error = new Error(`Invalid Vault Security PIN. ${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} remaining before 5-minute lockout.`);
     error.status = 401;
@@ -612,6 +661,7 @@ export async function verifyUserPin({ email, pin }) {
 
   if (needsSave) {
     await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
   }
 
   const sessionToken = jwt.sign(
@@ -656,6 +706,7 @@ export async function getCurrentUser(userId) {
   if (!user.docVaultId) {
     user.docVaultId = generateDocVaultId();
     await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
   }
 
   return {
@@ -701,6 +752,7 @@ export async function updateSessionSettings(userId, { singleSessionOnly, autoLoc
   }
 
   await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
 
   const newToken = jwt.sign(
     {
@@ -763,6 +815,7 @@ export async function registerBiometricCredential(userId, { credentialId, public
 
   user.biometricsEnabled = true;
   await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
 
   return {
     success: true,
@@ -822,6 +875,7 @@ export async function verifyBiometricUnlock({ email, credentialId, clientChallen
     user.sessionVersion = (user.sessionVersion || 1) + 1;
   }
   await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
 
   const sessionToken = jwt.sign(
     {
@@ -968,6 +1022,7 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
       biometricsEnabled: false,
     });
     await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
   } else {
     // Highly optimized existing user path: avoid redundant database writes
     let needsUpdate = false;
@@ -981,6 +1036,7 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
     }
     if (needsUpdate) {
       await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
     }
   }
 
@@ -1073,6 +1129,7 @@ export async function setupCredentials({ userId, email, pin, password }) {
   }
 
   await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
 
   const token = jwt.sign(
     { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1 },
@@ -1161,9 +1218,11 @@ export async function authenticateWithFirebaseIdToken(idToken) {
       biometricsEnabled: false,
     });
     await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
   } else if (!user.docVaultId) {
     user.docVaultId = generateDocVaultId();
     await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
   }
 
   const requiresPinSetup = !user.pinSet;
@@ -1171,6 +1230,7 @@ export async function authenticateWithFirebaseIdToken(idToken) {
   if (user.singleSessionOnly) {
     user.sessionVersion = (user.sessionVersion || 1) + 1;
     await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
   }
 
   const token = jwt.sign(
@@ -1258,6 +1318,7 @@ export async function resetPinWithOtp({ email, otp, newPin }) {
   user.failedAttempts = 0;
   user.lockUntil = null;
   await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
 
   const token = jwt.sign(
     { userId: user._id, email: user.email, sessionVersion: user.sessionVersion || 1 },
@@ -1314,6 +1375,7 @@ export async function changePin({ userId, currentPin, newPin }) {
   user.pinHash = await hashPin(cleanNewPin);
   user.pinLength = cleanNewPin.length === 6 ? 6 : 4;
   await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
 
   return {
     success: true,
@@ -1381,6 +1443,7 @@ export async function changePassword({ userId, currentPassword, newPassword, pin
 
   user.passwordHash = await hashPassword(newPassword);
   await user.save();
+  claimPendingSharesForUser(user).catch(() => {});
 
   return {
     success: true,

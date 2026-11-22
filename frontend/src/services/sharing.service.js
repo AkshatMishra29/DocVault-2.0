@@ -9,6 +9,26 @@ function getAuthHeader() {
 }
 
 export const sharingService = {
+  // Recipient lookup (supports DocVault ID or Email)
+  async lookupRecipient(query) {
+    if (!query) return { success: false, error: 'Query is empty' };
+    const cleanQ = encodeURIComponent(query.trim());
+    const res = await fetch(`${API_BASE_URL}/api/sharing/lookup-recipient?q=${cleanQ}`, {
+      headers: getAuthHeader(),
+    });
+    return res.json();
+  },
+
+  // Direct share creation
+  async directShare(data) {
+    const res = await fetch(`${API_BASE_URL}/api/shares`, {
+      method: 'POST',
+      headers: getAuthHeader(),
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
   // Connection lookups & requests
   async lookupUser(docVaultId) {
     const cleanId = encodeURIComponent(docVaultId.trim());

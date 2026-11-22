@@ -2,6 +2,9 @@ import {
   DocumentShare,
   SHARE_STATUS,
   SHARE_TYPE,
+  DocumentShareGrant,
+  GRANT_STATUS,
+  GRANT_SOURCE,
   RedactedDocument,
   ShareNotification,
   NOTIFICATION_TYPE,
@@ -25,6 +28,7 @@ export class DocumentShareService {
       shareType = SHARE_TYPE.CONNECTION,
       recipientUserId = null,
       recipientEmail = null,
+      recipientDocVaultId = null,
       recipientPhone = null,
       expiresInHours = null, // e.g. 1, 24, 168 (7d), 720 (30d), or custom
       customExpiryDate = null,
@@ -52,15 +56,35 @@ export class DocumentShareService {
       throw new Error('One or more selected documents do not belong to you or do not exist.');
     }
 
-    // 2. Connection verification if sharing directly with connection
-    if (shareType === SHARE_TYPE.CONNECTION && recipientUserId) {
-      const isConnection = await ConnectionService.canReceiveFromOwner(recipientUserId, ownerId);
-      if (!isConnection) {
-        throw new Error('Selected recipient is not an authorized mutual connection.');
+    // 2. Resolve recipient identity by DocVault ID, Email, or User ID
+    let resolvedRecipientUserId = recipientUserId || null;
+    let resolvedRecipientEmail = recipientEmail ? recipientEmail.toLowerCase().trim() : null;
+
+    if (recipientDocVaultId && !resolvedRecipientUserId) {
+      const cleanDocVaultId = recipientDocVaultId.trim().toUpperCase();
+      const userByDocVaultId = await User.findOne({ docVaultId: cleanDocVaultId }).select('_id email name');
+      if (userByDocVaultId) {
+        resolvedRecipientUserId = userByDocVaultId._id;
+        if (!resolvedRecipientEmail) resolvedRecipientEmail = userByDocVaultId.email;
       }
     }
 
-    // 3. Compute Expiry Date
+    if (resolvedRecipientEmail && !resolvedRecipientUserId) {
+      const userByEmail = await User.findOne({ email: resolvedRecipientEmail }).select('_id email name');
+      if (userByEmail) {
+        resolvedRecipientUserId = userByEmail._id;
+      }
+    }
+
+    // 3. Auto-establish connection authorization if sharing directly with identified user
+    if (resolvedRecipientUserId) {
+      if (resolvedRecipientUserId.toString() === ownerId.toString()) {
+        throw new Error('You cannot share documents with yourself.');
+      }
+      await ConnectionService.ensureOwnerApproved(ownerId, resolvedRecipientUserId).catch(() => {});
+    }
+
+    // 4. Compute Expiry Date
     let expiresAt = null;
     if (customExpiryDate) {
       expiresAt = new Date(customExpiryDate);
@@ -68,16 +92,16 @@ export class DocumentShareService {
       expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
     }
 
-    // 4. Generate Expiring Token (if link share or direct email/phone share)
+    // 5. Generate Expiring Token (if link share or direct email/phone share)
     let tokenHash = null;
     let rawToken = null;
-    if (shareType === SHARE_TYPE.LINK || recipientEmail || recipientPhone) {
+    if (shareType === SHARE_TYPE.LINK || resolvedRecipientEmail || recipientPhone || !resolvedRecipientUserId) {
       const generated = ShareVerificationService.generateShareToken();
       rawToken = generated.rawToken;
       tokenHash = generated.hash;
     }
 
-    // 5. Hash Password (if provided)
+    // 6. Hash Password (if provided)
     let passwordHash = null;
     let passwordRequired = false;
     if (password && password.trim().length > 0) {
@@ -85,7 +109,7 @@ export class DocumentShareService {
       passwordRequired = true;
     }
 
-    // 6. Genuine PDF & Image Redaction Processing (if requested)
+    // 7. Genuine PDF & Image Redaction Processing (if requested)
     const redactedDocMap = new Map();
     for (const doc of verifiedDocs) {
       const docIdStr = doc._id.toString();
@@ -100,17 +124,20 @@ export class DocumentShareService {
       }
     }
 
-    // 7. Persist DocumentShare Record
+    // 8. Persist DocumentShare Record
     const share = await DocumentShare.create({
       ownerId,
       documentIds,
       purpose,
-      shareType,
-      recipientUserId,
-      recipientEmail,
+      shareType: resolvedRecipientUserId ? SHARE_TYPE.CONNECTION : SHARE_TYPE.LINK,
+      recipientUserId: resolvedRecipientUserId,
+      recipientEmail: resolvedRecipientEmail,
       recipientPhone,
       tokenHash,
-      permissions,
+      permissions: {
+        view: permissions.view !== false,
+        download: Boolean(permissions.download),
+      },
       status: SHARE_STATUS.ACTIVE,
       expiresAt,
       passwordHash,
@@ -122,10 +149,30 @@ export class DocumentShareService {
       redactedDocMap,
     });
 
-    // 8. Record in audit log
+    // 9. Synchronize DocumentShareGrant records for seamless access across vault & Ask AI
+    if (resolvedRecipientUserId) {
+      for (const docId of documentIds) {
+        await DocumentShareGrant.findOneAndUpdate(
+          { documentId: docId, recipientId: resolvedRecipientUserId },
+          {
+            ownerId,
+            permissions: {
+              view: permissions.view !== false,
+              download: Boolean(permissions.download),
+            },
+            status: GRANT_STATUS.ACTIVE,
+            source: GRANT_SOURCE.BULK_SHARE,
+            expiresAt,
+          },
+          { upsert: true, new: true }
+        ).catch(() => {});
+      }
+    }
+
+    // 10. Record in audit log
     await ShareAccessLog.create({
       ownerId,
-      recipientId: recipientUserId,
+      recipientId: resolvedRecipientUserId,
       documentId: documentIds[0],
       action: SHARE_ACTION.CREATED,
       metadata: {
@@ -136,11 +183,11 @@ export class DocumentShareService {
       },
     }).catch(() => {});
 
-    // 9. Send In-App Notification if recipient is a DocVault user
-    if (recipientUserId) {
+    // 11. Send In-App Notification if recipient is a DocVault user
+    if (resolvedRecipientUserId) {
       const ownerUser = await User.findById(ownerId).select('name docVaultId');
       await ShareNotification.create({
-        userId: recipientUserId,
+        userId: resolvedRecipientUserId,
         senderId: ownerId,
         type: NOTIFICATION_TYPE.SHARED,
         title: 'New Documents Shared With You',
@@ -152,7 +199,7 @@ export class DocumentShareService {
     return {
       share,
       rawToken, // Only returned at creation time so owner can copy the link
-      shareUrl: rawToken ? `/shares/access/${rawToken}` : null,
+      shareUrl: rawToken ? `/shares/access/${rawToken}` : `/shares/${share._id}/view`,
     };
   }
 
@@ -168,6 +215,18 @@ export class DocumentShareService {
     share.status = SHARE_STATUS.REVOKED;
     share.revokedAt = new Date();
     await share.save();
+
+    // Revoke any corresponding DocumentShareGrants
+    if (share.recipientUserId && share.documentIds?.length > 0) {
+      await DocumentShareGrant.updateMany(
+        {
+          ownerId,
+          recipientId: share.recipientUserId,
+          documentId: { $in: share.documentIds },
+        },
+        { status: GRANT_STATUS.REVOKED }
+      ).catch(() => {});
+    }
 
     await ShareAccessLog.create({
       ownerId,

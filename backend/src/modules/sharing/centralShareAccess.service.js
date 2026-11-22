@@ -14,6 +14,7 @@ import { SharePrivacyService } from './sharePrivacy.service.js';
 import { ConnectionService } from './connection.service.js';
 import { Document } from '../documents/document.model.js';
 import { User } from '../auth/auth.model.js';
+import { User } from '../auth/auth.model.js';
 
 export class CentralShareAccessService {
   /**
@@ -73,14 +74,18 @@ export class CentralShareAccessService {
     }
 
     // 5. Verify Recipient Identity or Connection
-    if (share.shareType === SHARE_TYPE.CONNECTION && share.recipientUserId) {
+    if (share.recipientUserId) {
       if (!userId || userId.toString() !== share.recipientUserId.toString()) {
         return { allowed: false, status: 403, reason: 'You are not the designated recipient for this share.' };
       }
-      // Check mutual connection
-      const canReceive = await ConnectionService.canReceiveFromOwner(userId, share.ownerId);
-      if (!canReceive) {
-        return { allowed: false, status: 403, reason: 'Mutual connection with document owner is required.' };
+      // Designated recipient is authorized; ensure connection authorization is synchronized
+      await ConnectionService.ensureOwnerApproved(share.ownerId, userId).catch(() => {});
+    } else if (share.recipientEmail && userId) {
+      const userObj = await User.findById(userId).select('email');
+      if (userObj?.email && userObj.email.toLowerCase().trim() === share.recipientEmail.toLowerCase().trim()) {
+        share.recipientUserId = userId;
+        await share.save().catch(() => {});
+        await ConnectionService.ensureOwnerApproved(share.ownerId, userId).catch(() => {});
       }
     }
 

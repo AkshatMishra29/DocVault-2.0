@@ -6,6 +6,8 @@ import {
   AUDIENCE_MODE,
   DocumentShareGrant,
   GRANT_STATUS,
+  DocumentShare,
+  SHARE_STATUS,
   DocumentAccessRequest,
   ACCESS_REQUEST_STATUS,
   ShareAccessLog,
@@ -19,15 +21,61 @@ import { User } from '../auth/auth.model.js';
 const router = Router();
 
 /**
+ * GET /api/sharing/lookup-recipient
+ * Safe lookup of recipient by DocVault ID or Email for sharing
+ */
+router.get('/lookup-recipient', requireAuth, async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+    if (!q) {
+      return res.status(400).json({ success: false, error: 'Query parameter "q" is required.' });
+    }
+
+    let user = null;
+    if (q.includes('@')) {
+      user = await User.findOne({ email: q.toLowerCase() }).select('_id name docVaultId email');
+    } else {
+      user = await User.findOne({ docVaultId: q.toUpperCase() }).select('_id name docVaultId email');
+    }
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'No DocVault user found with this ID or email.' });
+    }
+
+    if (user._id.toString() === req.user.userId.toString()) {
+      return res.status(400).json({ success: false, error: 'You cannot share documents with yourself.' });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: user._id,
+        name: user.name,
+        docVaultId: user.docVaultId,
+        email: user.email,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * GET /api/sharing/received
- * List all documents shared with the current user via active grants
+ * List all documents shared with the current user via active grants and direct shares
  */
 router.get('/received', requireAuth, async (req, res) => {
   try {
+    const userId = req.user.userId;
+    const now = new Date();
+    const userDoc = await User.findById(userId).select('email');
+    const userEmail = userDoc?.email ? userDoc.email.toLowerCase().trim() : null;
+
+    // 1. Grants
     const grants = await DocumentShareGrant.find({
-      recipientId: req.user.userId,
+      recipientId: userId,
       status: GRANT_STATUS.ACTIVE,
-      $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }],
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
     })
       .populate({
         path: 'documentId',
@@ -40,9 +88,37 @@ router.get('/received', requireAuth, async (req, res) => {
       .lean()
       .sort({ createdAt: -1 });
 
-    const validGrants = grants
-      .filter((g) => g.documentId)
-      .map((g) => ({
+    // 2. Direct Shares
+    const directShares = await DocumentShare.find({
+      status: SHARE_STATUS.ACTIVE,
+      $or: [
+        { recipientUserId: userId },
+        ...(userEmail ? [{ recipientEmail: userEmail }] : []),
+      ],
+      $and: [
+        { $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }] },
+      ],
+    })
+      .populate({
+        path: 'documentIds',
+        select: 'title category format fileSizeFormatted createdAt summary tags sensitiveFlag',
+      })
+      .populate({
+        path: 'ownerId',
+        select: 'name docVaultId',
+      })
+      .lean()
+      .sort({ createdAt: -1 });
+
+    const seenDocIds = new Set();
+    const validGrants = [];
+
+    // Process grants
+    for (const g of grants) {
+      if (!g.documentId) continue;
+      const dId = g.documentId._id.toString();
+      seenDocIds.add(dId);
+      validGrants.push({
         grantId: g._id,
         documentId: g.documentId._id,
         title: g.documentId.title,
@@ -58,7 +134,36 @@ router.get('/received', requireAuth, async (req, res) => {
         permissions: g.permissions,
         expiresAt: g.expiresAt,
         sharedAt: g.createdAt,
-      }));
+      });
+    }
+
+    // Process direct shares
+    for (const s of directShares) {
+      for (const d of s.documentIds || []) {
+        if (!d) continue;
+        const dId = d._id.toString();
+        if (seenDocIds.has(dId)) continue;
+        seenDocIds.add(dId);
+        validGrants.push({
+          grantId: null,
+          shareId: s._id,
+          documentId: d._id,
+          title: d.title,
+          category: d.category,
+          format: d.format,
+          fileSizeFormatted: d.fileSizeFormatted,
+          summary: d.summary,
+          owner: {
+            id: s.ownerId?._id,
+            name: s.ownerId?.name || 'DocVault User',
+            docVaultId: s.ownerId?.docVaultId || '',
+          },
+          permissions: s.permissions,
+          expiresAt: s.expiresAt,
+          sharedAt: s.createdAt,
+        });
+      }
+    }
 
     res.json({ success: true, count: validGrants.length, data: validGrants });
   } catch (err) {
