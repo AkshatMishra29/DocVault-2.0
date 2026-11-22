@@ -162,6 +162,7 @@ export default function ShareCenterPage() {
   // Convert Smart Pack into a Create Share Wizard
   const handleProceedWithSmartPack = () => {
     if (!smartResult) return;
+    setCreatedShareResult(null);
     setShareForm((prev) => ({
       ...prev,
       purpose: smartResult.suggestedTitle,
@@ -221,6 +222,8 @@ export default function ShareCenterPage() {
       if (res.success && res.data) {
         setCreatedShareResult(res.data);
         fetchShares();
+      } else {
+        alert(res.error || res.message || "Failed to authorize share. Please check recipient details and try again.");
       }
     } catch (err) {
       alert("Failed to create share: " + err.message);
@@ -571,31 +574,104 @@ export default function ShareCenterPage() {
       {/* CREATE SHARE WIZARD MODAL */}
       <Modal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        title={createdShareResult ? "Share Created Successfully!" : "Create Secure Document Share"}
+        onClose={() => {
+          setShowCreateModal(false);
+          setCreatedShareResult(null);
+        }}
+        title={createdShareResult ? "Share Authorized Successfully!" : "Create Secure Document Share"}
       >
         {createdShareResult ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--color-success)" }}>
-              <CheckCircle2 size={24} />
-              <strong>Secure Share is Live</strong>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)", textAlign: "center", padding: "8px 4px" }}>
+            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(16, 185, 129, 0.12)", color: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}>
+              <CheckCircle2 size={36} />
             </div>
 
-            <p style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
-              Your documents have been authorized under strict privacy guardrails.
-            </p>
+            <div>
+              <h3 style={{ margin: 0, fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--color-text-primary)" }}>
+                Share Authorized & Live!
+              </h3>
+              <p style={{ margin: "6px 0 0", fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
+                Your documents have been securely authorized under strict privacy guardrails.
+              </p>
+            </div>
+
+            <div style={{ background: "var(--color-surface-subtle)", borderRadius: "var(--radius-lg)", border: "1px solid var(--color-border)", padding: "14px", textAlign: "left", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                <span style={{ color: "var(--color-text-secondary)" }}>Package Name:</span>
+                <strong style={{ color: "var(--color-text-primary)" }}>
+                  {createdShareResult.share?.purpose || shareForm.purpose || "Shared Package"}
+                </strong>
+              </div>
+
+              {(createdShareResult.recipient || shareForm.recipientDocVaultId || shareForm.recipientEmail) && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px" }}>
+                  <span style={{ color: "var(--color-text-secondary)" }}>Recipient:</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <strong>{createdShareResult.recipient?.name || createdShareResult.recipient?.email || shareForm.recipientDocVaultId || shareForm.recipientEmail}</strong>
+                    {(createdShareResult.recipient?.docVaultId || shareForm.recipientDocVaultId) && (
+                      <span className="dv-id-pill" style={{ fontSize: "10px", padding: "2px 6px" }}>
+                        {createdShareResult.recipient?.docVaultId || shareForm.recipientDocVaultId}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                <span style={{ color: "var(--color-text-secondary)" }}>Documents:</span>
+                <strong style={{ color: "var(--color-primary)" }}>
+                  {shareForm.documentIds.length} document{shareForm.documentIds.length === 1 ? "" : "s"} shared
+                </strong>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                <span style={{ color: "var(--color-text-secondary)" }}>Permissions:</span>
+                <span style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>
+                  {shareForm.permissions.download ? "View & Download" : "View Only"}
+                </span>
+              </div>
+
+              {createdShareResult.share?.expiresAt && (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                  <span style={{ color: "var(--color-text-secondary)" }}>Expires:</span>
+                  <span style={{ color: "var(--color-text-secondary)" }}>
+                    {new Date(createdShareResult.share.expiresAt).toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
 
             {createdShareResult.shareUrl && (
-              <div style={{ background: "var(--color-surface-subtle)", padding: "10px", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)" }}>
-                <span style={{ fontSize: "11px", color: "var(--color-text-secondary)", display: "block" }}>Expiring Link (One-time copy):</span>
-                <code style={{ fontSize: "12px", wordBreak: "break-all", color: "var(--color-primary)" }}>
+              <div style={{ background: "var(--color-surface-subtle)", padding: "12px", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)", textAlign: "left" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--color-text-secondary)" }}>Expiring Access Link:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}${createdShareResult.shareUrl}`);
+                      alert("Share link copied to clipboard!");
+                    }}
+                    style={{ padding: "3px 8px", fontSize: "11px", borderRadius: "4px", background: "var(--color-primary)", color: "#fff", border: "none", cursor: "pointer" }}
+                  >
+                    Copy Link
+                  </button>
+                </div>
+                <code style={{ fontSize: "11px", wordBreak: "break-all", color: "var(--color-primary)", display: "block" }}>
                   {window.location.origin}{createdShareResult.shareUrl}
                 </code>
               </div>
             )}
 
-            <Button variant="primary" onClick={() => setShowCreateModal(false)}>
-              Done
+            <Button
+              variant="primary"
+              onClick={() => {
+                setShowCreateModal(false);
+                setCreatedShareResult(null);
+                setActiveTab("SENT");
+              }}
+              style={{ marginTop: 4, width: "100%" }}
+            >
+              Done & View Active Shares
             </Button>
           </div>
         ) : (

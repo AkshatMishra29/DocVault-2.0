@@ -11,6 +11,7 @@ import {
   Eye,
   Copy,
   Check,
+  CheckCircle2,
   ShieldCheck,
   Search,
   Link as LinkIcon,
@@ -339,22 +340,63 @@ export default function ShareModal({ documentId, documentTitle, isOpen, onClose,
           </button>
         </div>
 
-        {/* Feedback alerts */}
+        {/* Feedback error alert */}
         {error && (
           <div className="share-modal__alert share-modal__alert--error">
             {error}
           </div>
         )}
-        {successMessage && (
-          <div className="share-modal__alert share-modal__alert--success">
-            <Check size={16} />
-            <span>{successMessage}</span>
-          </div>
-        )}
 
-        {/* TAB 1: SHARE WITH PERSON */}
-        {activeTab === 'DIRECT' && (
-          <form onSubmit={handleDirectShare} className="share-modal__body">
+        {/* FULL SUCCESS CONFIRMATION SCREEN */}
+        {successMessage ? (
+          <div className="share-modal__body share-modal__success-body">
+            <div className="share-modal__success-icon-wrap">
+              <CheckCircle2 size={44} className="share-modal__success-icon" />
+            </div>
+            <h3 className="share-modal__success-title">Share Authorized & Live!</h3>
+            <p className="share-modal__success-desc">{successMessage}</p>
+
+            <div className="share-modal__success-card">
+              <div className="share-modal__success-card-row">
+                <span className="share-modal__success-card-label">Document:</span>
+                <strong className="share-modal__success-card-val">{documentTitle}</strong>
+              </div>
+              {verifiedRecipient && (
+                <div className="share-modal__success-card-row">
+                  <span className="share-modal__success-card-label">Recipient:</span>
+                  <div className="share-modal__success-card-val" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>{verifiedRecipient.name}</span>
+                    {verifiedRecipient.docVaultId && <span className="friend-id-badge">{verifiedRecipient.docVaultId}</span>}
+                  </div>
+                </div>
+              )}
+              <div className="share-modal__success-card-row">
+                <span className="share-modal__success-card-label">Access Granted:</span>
+                <span className="share-modal__success-card-val">{canDownload ? 'View & Download Allowed' : 'View Only (Secure)'}</span>
+              </div>
+              <div className="share-modal__success-card-row">
+                <span className="share-modal__success-card-label">Duration:</span>
+                <span className="share-modal__success-card-val">{expiryOption === '0' ? 'No Expiry (Continuous)' : `${expiryOption} Hours`}</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="btn-sm btn-primary"
+              style={{ width: '100%', padding: '0.8rem', fontSize: '0.95rem', fontWeight: 600, marginTop: '0.5rem' }}
+              onClick={() => {
+                if (onSaved) onSaved();
+                onClose();
+              }}
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* TAB 1: SHARE WITH PERSON */}
+            {activeTab === 'DIRECT' && (
+              <form onSubmit={handleDirectShare} className="share-modal__body">
             <div>
               <label className="section-label">Recipient DocVault ID or Email</label>
               <div className="share-modal__search-input-wrap">
@@ -677,6 +719,8 @@ export default function ShareModal({ documentId, documentTitle, isOpen, onClose,
             </div>
           </div>
         )}
+        </>
+      )}
       </div>
     </div>
   );

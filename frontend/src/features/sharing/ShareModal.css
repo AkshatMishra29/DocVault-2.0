@@ -568,3 +568,70 @@
   gap: 0.75rem;
   background: var(--color-surface, #ffffff);
 }
+
+/* Full Success State */
+.share-modal__success-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1.5rem 1.5rem;
+  gap: 1rem;
+}
+
+.share-modal__success-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.share-modal__success-icon {
+  color: #10b981;
+}
+
+.share-modal__success-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #1d2d3e);
+  margin: 0;
+}
+
+.share-modal__success-desc {
+  font-size: 0.88rem;
+  color: var(--color-text-secondary, #5b738b);
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.4;
+}
+
+.share-modal__success-card {
+  width: 100%;
+  background: var(--color-surface-subtle, #f8fafc);
+  border: 1px solid var(--color-border, #d9e1e8);
+  border-radius: var(--radius-md, 8px);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  text-align: left;
+}
+
+.share-modal__success-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.share-modal__success-card-label {
+  color: var(--color-text-secondary, #5b738b);
+}
+
+.share-modal__success-card-val {
+  color: var(--color-text-primary, #1d2d3e);
+  font-weight: 600;
+}

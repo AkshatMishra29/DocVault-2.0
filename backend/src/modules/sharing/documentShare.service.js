@@ -66,6 +66,8 @@ export class DocumentShareService {
       if (userByDocVaultId) {
         resolvedRecipientUserId = userByDocVaultId._id;
         if (!resolvedRecipientEmail) resolvedRecipientEmail = userByDocVaultId.email;
+      } else {
+        throw new Error(`No user found with DocVault ID "${cleanDocVaultId}". Please check the ID.`);
       }
     }
 
@@ -196,8 +198,20 @@ export class DocumentShareService {
       }).catch(() => {});
     }
 
+    const recipientUser = resolvedRecipientUserId
+      ? await User.findById(resolvedRecipientUserId).select('name docVaultId email')
+      : null;
+
     return {
       share,
+      recipient: recipientUser ? {
+        id: recipientUser._id,
+        name: recipientUser.name,
+        docVaultId: recipientUser.docVaultId,
+        email: recipientUser.email,
+      } : {
+        email: resolvedRecipientEmail,
+      },
       rawToken, // Only returned at creation time so owner can copy the link
       shareUrl: rawToken ? `/shares/access/${rawToken}` : `/shares/${share._id}/view`,
     };
