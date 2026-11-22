@@ -282,12 +282,42 @@ router.get('/:id/document', async (req, res) => {
       action: 'view',
     });
 
+    const totalLength = delivery.buffer.length;
+    const etag = `"${auth.document._id.toString()}-${totalLength}"`;
+
+    if (req.headers['if-none-match'] === etag) {
+      return res.status(304).end();
+    }
+
     res.set({
       'Content-Type': delivery.mimetype,
       'Content-Disposition': `inline; filename="${delivery.filename}"`,
-      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+      'Accept-Ranges': 'bytes',
+      'ETag': etag,
+      'Cache-Control': 'private, max-age=600, must-revalidate',
     });
 
+    const range = req.headers.range;
+    if (range) {
+      const parts = range.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : totalLength - 1;
+
+      if (start >= totalLength || end >= totalLength || start > end) {
+        res.set('Content-Range', `bytes */${totalLength}`);
+        return res.status(416).send('Requested range not satisfiable');
+      }
+
+      const chunkLength = end - start + 1;
+      const chunk = delivery.buffer.subarray(start, end + 1);
+
+      res.status(206);
+      res.set('Content-Range', `bytes ${start}-${end}/${totalLength}`);
+      res.set('Content-Length', chunkLength);
+      return res.send(chunk);
+    }
+
+    res.set('Content-Length', totalLength);
     res.send(delivery.buffer);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

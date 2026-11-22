@@ -395,6 +395,41 @@
   }
 }
 
+.dv-viewer-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  border-radius: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.dv-viewer-tool-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.dv-viewer-tool-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@keyframes dv-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.dv-spin {
+  animation: dv-spin 1s linear infinite;
+}
+
 .dv-document-render-panel {
   display: flex;
   flex-direction: column;

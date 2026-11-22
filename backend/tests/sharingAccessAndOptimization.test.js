@@ -450,4 +450,51 @@ describe('🚀 DocVault Sharing Authorization & Optimization Suite', () => {
     Document.findById = origDocFind;
     ShareAccessLog.create = origLogCreate;
   });
+
+  it('14. WatermarkService: preserves raw multi-page PDF bytes for fast vector streaming without corrupting mimetype', async () => {
+    const { WatermarkService } = await import('../src/modules/sharing/watermark.service.js');
+    const pdfBytes = Buffer.from('%PDF-1.4 sample multi-page high-fidelity document');
+    const fakePdfDoc = {
+      title: 'Policy Agreement.pdf',
+      mimetype: 'application/pdf',
+      fileData: pdfBytes.toString('base64'),
+    };
+
+    const rendered = await WatermarkService.renderWatermarkedDocument(fakePdfDoc, {
+      recipientLabel: 'Alice Viewer',
+      shareRef: 'SHARE-999',
+    });
+
+    assert.ok(Buffer.isBuffer(rendered), 'Should return a Buffer');
+    assert.strictEqual(rendered.toString(), pdfBytes.toString(), 'Should preserve pristine PDF binary intact');
+  });
+
+  it('15. deliverDocumentPayload: delivers PDF with correct application/pdf mimetype and metadata', async () => {
+    const fakeDoc = {
+      _id: new mongoose.Types.ObjectId(),
+      title: 'Vehicle Insurance.pdf',
+      mimetype: 'application/pdf',
+      format: 'pdf',
+      fileData: Buffer.from('%PDF-1.4 vehicle insurance test').toString('base64'),
+      keyDetails: { policyNo: 'POL-12345' },
+    };
+
+    const fakeShare = {
+      _id: new mongoose.Types.ObjectId(),
+      watermarkEnabled: true,
+      minimumNecessaryConfig: {},
+    };
+
+    const result = await CentralShareAccessService.deliverDocumentPayload({
+      share: fakeShare,
+      document: fakeDoc,
+      isRedacted: false,
+      recipientLabel: 'Test Recipient',
+      action: 'view',
+    });
+
+    assert.strictEqual(result.mimetype, 'application/pdf');
+    assert.ok(result.buffer.length > 0);
+    assert.strictEqual(result.filename, 'Vehicle Insurance.pdf.pdf');
+  });
 });

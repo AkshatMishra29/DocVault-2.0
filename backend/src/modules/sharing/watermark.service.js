@@ -87,19 +87,8 @@ export class WatermarkService {
       return await this.applyWatermarkToImage(rawBuffer, { recipientLabel, shareRef });
     }
 
-    // For PDF files, render first page to high-res image and apply dynamic watermark for the secure viewer
-    if (documentDoc.mimetype === 'application/pdf') {
-      try {
-        const { convertPdfToImages } = await import('../../services/ocr/ocrService.js');
-        const images = await convertPdfToImages(rawBuffer);
-        if (images && images.length > 0) {
-          return await this.applyWatermarkToImage(images[0], { recipientLabel, shareRef });
-        }
-      } catch (pdfErr) {
-        console.warn('[WatermarkService] PDF page rasterization failed, returning raw PDF:', pdfErr.message);
-      }
-    }
-
+    // For PDF files, preserve original multi-page vector binary for high-performance native browser streaming
+    // and instant page-by-page rendering without lossy single-page image rasterization
     return rawBuffer;
   }
 }

@@ -3,7 +3,8 @@ import { useParams, useSearchParams, Link } from "react-router-dom";
 import { apiRequest, API_BASE_URL } from "../../services/api";
 import {
   ShieldCheck, Lock, Download, Eye, Sparkles, Send, FileText,
-  AlertCircle, ArrowLeft, Key, ExternalLink, Calendar, HardDrive, CheckCircle2, Copy, Check
+  AlertCircle, ArrowLeft, Key, ExternalLink, Calendar, HardDrive, CheckCircle2, Copy, Check,
+  ZoomIn, ZoomOut, RotateCw, Maximize2, Minimize2, RefreshCw, Loader2
 } from "lucide-react";
 
 import Card from "../../components/common/Card/Card";
@@ -26,6 +27,13 @@ export default function SharedDocumentViewerPage() {
   const [error, setError] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
 
+  // Viewer Controls State
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const [rotation, setRotation] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [docLoading, setDocLoading] = useState(true);
+  const [docError, setDocError] = useState(false);
+
   // Auth Challenges State
   const [requiresPassword, setRequiresPassword] = useState(false);
   const [enteredPassword, setEnteredPassword] = useState("");
@@ -45,6 +53,15 @@ export default function SharedDocumentViewerPage() {
       setSelectedDocId(share.documents[0]._id);
     }
   }, [share]);
+
+  useEffect(() => {
+    if (selectedDocId) {
+      setDocLoading(true);
+      setDocError(false);
+      setZoomLevel(100);
+      setRotation(0);
+    }
+  }, [selectedDocId]);
 
   useEffect(() => {
     if (id && selectedDocId) {
@@ -130,6 +147,15 @@ export default function SharedDocumentViewerPage() {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  const handleZoomIn = () => setZoomLevel((z) => Math.min(z + 25, 250));
+  const handleZoomOut = () => setZoomLevel((z) => Math.max(z - 25, 50));
+  const handleResetZoom = () => {
+    setZoomLevel(100);
+    setRotation(0);
+  };
+  const handleRotate = () => setRotation((r) => (r + 90) % 360);
+  const toggleFullscreen = () => setIsFullscreen((f) => !f);
+
   if (loading) {
     return (
       <div style={{ padding: "var(--space-5)", maxWidth: "800px", margin: "40px auto" }}>
@@ -195,12 +221,28 @@ export default function SharedDocumentViewerPage() {
 
   const authToken = localStorage.getItem("token") || localStorage.getItem("docvault_token") || token || "";
   const authQuery = `${authToken ? `&token=${encodeURIComponent(authToken)}` : ""}${enteredPassword ? `&password=${encodeURIComponent(enteredPassword)}` : ""}`;
-  const documentUrl = `${API_BASE_URL}/api/shares/${id}/document?documentId=${selectedDocId}${authQuery}`;
-  const downloadUrl = `${API_BASE_URL}/api/shares/${id}/download?documentId=${selectedDocId}${authQuery}`;
+  const baseDocumentUrl = selectedDocId ? `${API_BASE_URL}/api/shares/${id}/document?documentId=${selectedDocId}${authQuery}` : "";
+  // Append PDF viewer hash for instant fit-to-width and page controls in browser PDF engine
+  const pdfViewerUrl = isPdf && baseDocumentUrl ? `${baseDocumentUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH` : baseDocumentUrl;
+  const downloadUrl = selectedDocId ? `${API_BASE_URL}/api/shares/${id}/download?documentId=${selectedDocId}${authQuery}` : "";
   const canDownload = Boolean(share?.permissions?.download);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: "var(--space-3)", padding: "var(--space-3)", boxSizing: "border-box" }}>
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      height: isFullscreen ? "100vh" : "100%",
+      position: isFullscreen ? "fixed" : "relative",
+      top: isFullscreen ? 0 : "auto",
+      left: isFullscreen ? 0 : "auto",
+      right: isFullscreen ? 0 : "auto",
+      bottom: isFullscreen ? 0 : "auto",
+      zIndex: isFullscreen ? 9999 : 1,
+      background: "var(--color-background, #0f172a)",
+      gap: "var(--space-3)",
+      padding: isFullscreen ? "12px" : "var(--space-3)",
+      boxSizing: "border-box"
+    }}>
       {/* Top Header Bar */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", paddingBottom: "10px", flexWrap: "wrap", gap: "10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -240,11 +282,11 @@ export default function SharedDocumentViewerPage() {
           </button>
 
           <a
-            href={documentUrl}
+            href={baseDocumentUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="dv-card-btn"
-            title="Open in new browser tab"
+            title="Open original in new browser tab"
           >
             <ExternalLink size={13} />
             <span>Open in Tab</span>
@@ -290,44 +332,215 @@ export default function SharedDocumentViewerPage() {
       )}
 
       {/* Main Split Layout: Document Viewer & Q&A Assistant */}
-      <div className="dv-shared-viewer-layout">
-        {/* Left: Controlled Viewer */}
-        <div className="dv-document-render-panel">
-          {selectedDocId ? (
-            isPdf ? (
-              <object
-                data={documentUrl}
-                type="application/pdf"
-                className="dv-preview-object"
-                style={{ width: "100%", height: "100%", border: "none" }}
-                aria-label={activeDoc?.title || "Shared Document PDF"}
+      <div className="dv-shared-viewer-layout" style={{ flex: 1, minHeight: 0 }}>
+        {/* Left: Controlled Viewer with Floating Toolbar */}
+        <div className="dv-document-render-panel" style={{ position: "relative", display: "flex", flexDirection: "column" }}>
+          {/* Top Viewer Toolbar */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+            padding: "8px 14px",
+            background: "rgba(15, 23, 42, 0.85)",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+            boxSizing: "border-box",
+            zIndex: 10
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#f8fafc", fontSize: "12px" }}>
+              <DocumentTypeIcon category={activeDoc?.category} format={activeDoc?.format} size={16} />
+              <strong style={{ maxWidth: "260px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {activeDoc?.title || "Document"}
+              </strong>
+              <span style={{ fontSize: "11px", color: "#94a3b8" }}>({activeDoc?.format || "PDF"})</span>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <button
+                type="button"
+                className="dv-viewer-tool-btn"
+                onClick={handleZoomOut}
+                title="Zoom Out"
+                disabled={zoomLevel <= 50}
               >
-                <iframe
-                  src={documentUrl}
-                  title={activeDoc?.title || "Shared Document Frame"}
-                  style={{ width: "100%", height: "100%", border: "none" }}
-                >
-                  <div style={{ color: "#ffffff", padding: "40px", textAlign: "center" }}>
-                    <FileText size={48} color="#94a3b8" style={{ marginBottom: 12 }} />
-                    <p style={{ margin: "0 0 16px 0", fontSize: "14px" }}>Embedded PDF preview not directly supported by browser.</p>
-                    <a href={documentUrl} target="_blank" rel="noopener noreferrer">
-                      <Button variant="primary" size="sm" icon={ExternalLink}>Open PDF in New Tab</Button>
-                    </a>
-                  </div>
-                </iframe>
-              </object>
-            ) : (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", padding: 16 }}>
-                <img
-                  src={documentUrl}
-                  alt={activeDoc?.title || "Shared Document Controlled Rendering"}
-                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: "8px" }}
-                />
+                <ZoomOut size={14} />
+              </button>
+              <button
+                type="button"
+                className="dv-viewer-tool-btn"
+                onClick={handleResetZoom}
+                title="Reset Zoom & Rotation"
+                style={{ fontSize: "11px", minWidth: "44px" }}
+              >
+                {zoomLevel}%
+              </button>
+              <button
+                type="button"
+                className="dv-viewer-tool-btn"
+                onClick={handleZoomIn}
+                title="Zoom In"
+                disabled={zoomLevel >= 250}
+              >
+                <ZoomIn size={14} />
+              </button>
+              <button
+                type="button"
+                className="dv-viewer-tool-btn"
+                onClick={handleRotate}
+                title="Rotate 90 degrees"
+              >
+                <RotateCw size={14} />
+              </button>
+              <button
+                type="button"
+                className="dv-viewer-tool-btn"
+                onClick={toggleFullscreen}
+                title={isFullscreen ? "Exit Fullscreen" : "Fullscreen Preview"}
+              >
+                {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Document Content Box */}
+          <div style={{
+            position: "relative",
+            flex: 1,
+            width: "100%",
+            height: "100%",
+            minHeight: 0,
+            overflow: "auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#0b1120"
+          }}>
+            {/* Loading Indicator */}
+            {docLoading && (
+              <div style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(11, 17, 32, 0.75)",
+                zIndex: 5,
+                color: "#e2e8f0",
+                gap: 12
+              }}>
+                <Loader2 size={36} className="dv-spin" color="#38bdf8" />
+                <span style={{ fontSize: "13px", fontWeight: 600 }}>Streaming high-performance preview...</span>
               </div>
-            )
-          ) : (
-            <div style={{ color: "#ffffff", fontSize: "var(--text-sm)" }}>Select a document to inspect</div>
-          )}
+            )}
+
+            {/* Error Fallback */}
+            {docError && (
+              <div style={{
+                padding: "32px",
+                textAlign: "center",
+                color: "#f8fafc",
+                maxWidth: "380px"
+              }}>
+                <AlertCircle size={44} color="#ef4444" style={{ marginBottom: 12 }} />
+                <h4 style={{ margin: "0 0 6px 0" }}>Preview Load Issue</h4>
+                <p style={{ fontSize: "12px", color: "#94a3b8", margin: "0 0 16px 0" }}>
+                  The browser embedded viewer encountered an issue rendering this file stream.
+                </p>
+                <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                  <a href={baseDocumentUrl} target="_blank" rel="noopener noreferrer">
+                    <Button variant="primary" size="sm" icon={ExternalLink}>Open in Native Tab</Button>
+                  </a>
+                  <button
+                    type="button"
+                    className="dv-card-btn"
+                    onClick={() => {
+                      setDocError(false);
+                      setDocLoading(true);
+                    }}
+                  >
+                    <RefreshCw size={13} /> Retry
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Main Document Stream */}
+            {selectedDocId && baseDocumentUrl && !docError ? (
+              isPdf ? (
+                <div style={{
+                  width: "100%",
+                  height: "100%",
+                  transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`,
+                  transformOrigin: "center center",
+                  transition: "transform 0.15s ease"
+                }}>
+                  <object
+                    data={pdfViewerUrl}
+                    type="application/pdf"
+                    className="dv-preview-object"
+                    style={{ width: "100%", height: "100%", border: "none" }}
+                    aria-label={activeDoc?.title || "Shared Document PDF"}
+                    onLoad={() => setDocLoading(false)}
+                    onError={() => {
+                      setDocLoading(false);
+                      setDocError(true);
+                    }}
+                  >
+                    <iframe
+                      src={pdfViewerUrl}
+                      title={activeDoc?.title || "Shared Document Frame"}
+                      style={{ width: "100%", height: "100%", border: "none" }}
+                      onLoad={() => setDocLoading(false)}
+                      onError={() => {
+                        setDocLoading(false);
+                        setDocError(true);
+                      }}
+                    >
+                      <div style={{ color: "#ffffff", padding: "40px", textAlign: "center" }}>
+                        <FileText size={48} color="#94a3b8" style={{ marginBottom: 12 }} />
+                        <p style={{ margin: "0 0 16px 0", fontSize: "14px" }}>Embedded PDF preview not directly supported by browser.</p>
+                        <a href={baseDocumentUrl} target="_blank" rel="noopener noreferrer">
+                          <Button variant="primary" size="sm" icon={ExternalLink}>Open PDF in New Tab</Button>
+                        </a>
+                      </div>
+                    </iframe>
+                  </object>
+                </div>
+              ) : (
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  height: "100%",
+                  padding: 16,
+                  overflow: "auto"
+                }}>
+                  <img
+                    src={baseDocumentUrl}
+                    alt={activeDoc?.title || "Shared Document Controlled Rendering"}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain",
+                      borderRadius: "8px",
+                      transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`,
+                      transformOrigin: "center center",
+                      transition: "transform 0.15s ease"
+                    }}
+                    onLoad={() => setDocLoading(false)}
+                    onError={() => {
+                      setDocLoading(false);
+                      setDocError(true);
+                    }}
+                  />
+                </div>
+              )
+            ) : !selectedDocId ? (
+              <div style={{ color: "#94a3b8", fontSize: "var(--text-sm)" }}>Select a document to inspect</div>
+            ) : null}
+          </div>
         </div>
 
         {/* Right: Restricted Q&A Panel */}

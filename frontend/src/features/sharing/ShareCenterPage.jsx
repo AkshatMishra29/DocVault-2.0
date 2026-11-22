@@ -6,7 +6,8 @@ import {
   Share2, ShieldCheck, Lock, Clock, Eye, Download, Sparkles, Plus,
   Trash2, AlertTriangle, Key, ExternalLink, MessageSquare, Check, X,
   FileText, Users, ArrowRight, RefreshCw, Send, CheckCircle2, Copy,
-  Calendar, HardDrive, Shield, Edit3, Activity, AlertCircle, FileCheck
+  Calendar, HardDrive, Shield, Edit3, Activity, AlertCircle, FileCheck,
+  ZoomIn, ZoomOut, RotateCw, Loader2
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -90,6 +91,21 @@ export default function ShareCenterPage() {
   const [smartLoading, setSmartLoading] = useState(false);
   const [smartResult, setSmartResult] = useState(null);
   const [selectedSmartDocs, setSelectedSmartDocs] = useState([]);
+
+  // Instant Quick Preview Modal State (Shared With Me)
+  const [quickPreview, setQuickPreview] = useState(null); // { share, doc }
+  const [previewZoom, setPreviewZoom] = useState(100);
+  const [previewRotation, setPreviewRotation] = useState(0);
+  const [previewLoading, setPreviewLoading] = useState(true);
+  const [previewError, setPreviewError] = useState(false);
+
+  const handleOpenQuickPreview = (share, doc) => {
+    setQuickPreview({ share, doc });
+    setPreviewZoom(100);
+    setPreviewRotation(0);
+    setPreviewLoading(true);
+    setPreviewError(false);
+  };
 
   useEffect(() => {
     fetchAllData();
@@ -777,9 +793,35 @@ export default function ShareCenterPage() {
                           <DocumentTypeIcon category={d.category} format={d.format} size={14} />
                           <strong>{d.title}</strong>
                         </span>
-                        <Link to={`/shares/${share._id}/view?doc=${d._id}`} style={{ fontSize: "11px", color: "var(--color-primary)", display: "flex", alignItems: "center", gap: 3 }}>
-                          View <Eye size={11} />
-                        </Link>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenQuickPreview(share, d)}
+                            style={{
+                              fontSize: "11px",
+                              color: "var(--color-primary)",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 3,
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              fontWeight: 600,
+                              padding: "2px 6px",
+                              borderRadius: "4px"
+                            }}
+                            title="Instant preview without leaving this page"
+                          >
+                            <Eye size={12} /> Quick View
+                          </button>
+                          <Link
+                            to={`/shares/${share._id}/view?doc=${d._id}`}
+                            style={{ fontSize: "11px", color: "var(--color-text-secondary)", display: "inline-flex", alignItems: "center", gap: 3, textDecoration: "none" }}
+                            title="Open with AI Copilot Reader"
+                          >
+                            <Sparkles size={11} color="#0070F2" /> AI Reader
+                          </Link>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1395,6 +1437,207 @@ export default function ShareCenterPage() {
             </table>
           </div>
         )}
+      </Modal>
+
+      {/* =========================================================================
+          MODAL 4: INSTANT SHARED DOCUMENT PREVIEW
+          ========================================================================= */}
+      <Modal
+        isOpen={Boolean(quickPreview)}
+        onClose={() => setQuickPreview(null)}
+        title={quickPreview?.doc?.title || "Shared Document Preview"}
+        maxWidth="840px"
+      >
+        {quickPreview && (() => {
+          const { share, doc } = quickPreview;
+          const isPdf = (doc.format || "").toUpperCase() === "PDF" || (doc.title || "").toLowerCase().endsWith(".pdf");
+          const token = localStorage.getItem("token") || localStorage.getItem("docvault_token") || "";
+          const streamUrl = `${API_BASE_URL}/api/shares/${share._id}/document?documentId=${doc._id}&token=${encodeURIComponent(token)}`;
+          const pdfStreamUrl = isPdf ? `${streamUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH` : streamUrl;
+          const downloadUrl = `${API_BASE_URL}/api/shares/${share._id}/download?documentId=${doc._id}&token=${encodeURIComponent(token)}`;
+          const canDownload = Boolean(share.permissions?.download);
+
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {/* Header Info & Controls */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "10px",
+                padding: "8px 12px",
+                background: "var(--color-surface-secondary, #f8fafc)",
+                borderRadius: "8px",
+                border: "1px solid var(--color-border)"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <DocumentTypeIcon category={doc.category} format={doc.format} size={20} />
+                  <div>
+                    <strong style={{ fontSize: "13px", color: "var(--color-text-primary)", display: "block" }}>
+                      {doc.title}
+                    </strong>
+                    <span style={{ fontSize: "11px", color: "var(--color-text-secondary)" }}>
+                      Shared by {share.ownerId?.name || "Vault Owner"} • {doc.category || "General"}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Badge variant={canDownload ? "primary" : "outline"} size="sm">
+                    {canDownload ? "View & Download" : "View Only"}
+                  </Badge>
+
+                  {/* Zoom Controls */}
+                  <button
+                    type="button"
+                    className="dv-viewer-tool-btn"
+                    onClick={() => setPreviewZoom((z) => Math.max(z - 25, 50))}
+                    title="Zoom Out"
+                    style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+                  >
+                    <ZoomOut size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    className="dv-viewer-tool-btn"
+                    onClick={() => { setPreviewZoom(100); setPreviewRotation(0); }}
+                    title="Reset Zoom"
+                    style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text-primary)", fontSize: "11px" }}
+                  >
+                    {previewZoom}%
+                  </button>
+                  <button
+                    type="button"
+                    className="dv-viewer-tool-btn"
+                    onClick={() => setPreviewZoom((z) => Math.min(z + 25, 250))}
+                    title="Zoom In"
+                    style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+                  >
+                    <ZoomIn size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    className="dv-viewer-tool-btn"
+                    onClick={() => setPreviewRotation((r) => (r + 90) % 360)}
+                    title="Rotate 90°"
+                    style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+                  >
+                    <RotateCw size={13} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Preview Body */}
+              <div style={{
+                position: "relative",
+                height: "480px",
+                width: "100%",
+                background: "#0f172a",
+                borderRadius: "8px",
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}>
+                {previewLoading && (
+                  <div style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(15, 23, 42, 0.75)",
+                    zIndex: 5,
+                    color: "#f8fafc",
+                    gap: 10
+                  }}>
+                    <Loader2 size={32} className="dv-spin" color="#38bdf8" />
+                    <span style={{ fontSize: "12px", fontWeight: 600 }}>Streaming preview securely...</span>
+                  </div>
+                )}
+
+                {previewError ? (
+                  <div style={{ textAlign: "center", color: "#f8fafc", padding: "20px" }}>
+                    <AlertCircle size={36} color="#ef4444" style={{ marginBottom: 10 }} />
+                    <p style={{ margin: "0 0 12px 0", fontSize: "13px" }}>Could not display preview inside modal.</p>
+                    <a href={streamUrl} target="_blank" rel="noopener noreferrer">
+                      <Button variant="primary" size="sm" icon={ExternalLink}>Open in Native Tab</Button>
+                    </a>
+                  </div>
+                ) : isPdf ? (
+                  <div style={{
+                    width: "100%",
+                    height: "100%",
+                    transform: `scale(${previewZoom / 100}) rotate(${previewRotation}deg)`,
+                    transformOrigin: "center center",
+                    transition: "transform 0.15s ease"
+                  }}>
+                    <object
+                      data={pdfStreamUrl}
+                      type="application/pdf"
+                      style={{ width: "100%", height: "100%", border: "none" }}
+                      aria-label={doc.title}
+                      onLoad={() => setPreviewLoading(false)}
+                      onError={() => { setPreviewLoading(false); setPreviewError(true); }}
+                    >
+                      <iframe
+                        src={pdfStreamUrl}
+                        title={doc.title}
+                        style={{ width: "100%", height: "100%", border: "none" }}
+                        onLoad={() => setPreviewLoading(false)}
+                        onError={() => { setPreviewLoading(false); setPreviewError(true); }}
+                      />
+                    </object>
+                  </div>
+                ) : (
+                  <img
+                    src={streamUrl}
+                    alt={doc.title}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain",
+                      transform: `scale(${previewZoom / 100}) rotate(${previewRotation}deg)`,
+                      transformOrigin: "center center",
+                      transition: "transform 0.15s ease"
+                    }}
+                    onLoad={() => setPreviewLoading(false)}
+                    onError={() => { setPreviewLoading(false); setPreviewError(true); }}
+                  />
+                )}
+              </div>
+
+              {/* Bottom Actions */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "8px", borderTop: "1px solid var(--color-border)" }}>
+                <Link
+                  to={`/shares/${share._id}/view?doc=${doc._id}`}
+                  style={{ textDecoration: "none" }}
+                  onClick={() => setQuickPreview(null)}
+                >
+                  <Button variant="outline" size="sm" icon={Sparkles}>
+                    Open in Full AI Copilot Reader
+                  </Button>
+                </Link>
+
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <a href={streamUrl} target="_blank" rel="noopener noreferrer">
+                    <Button variant="ghost" size="sm" icon={ExternalLink}>Open Tab</Button>
+                  </a>
+                  {canDownload && (
+                    <a href={downloadUrl} download={doc.title || "document"}>
+                      <Button variant="primary" size="sm" icon={Download}>Download Copy</Button>
+                    </a>
+                  )}
+                  <Button variant="secondary" size="sm" onClick={() => setQuickPreview(null)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </Modal>
     </div>
   );

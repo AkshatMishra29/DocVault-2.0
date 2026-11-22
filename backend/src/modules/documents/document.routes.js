@@ -621,15 +621,45 @@ router.get('/:id/preview', requireAuth, async (req, res) => {
     }
 
     const fileBuffer = Buffer.from(doc.fileData, 'base64');
+    const totalLength = fileBuffer.length;
     const rawFilename = (doc.originalName || doc.title || 'document').replace(/[\r\n"']/g, '_');
     const asciiFilename = rawFilename.replace(/[^\x20-\x7E]/g, '_') || 'document';
     const encodedFilename = encodeURIComponent(rawFilename);
+    const etag = `"${doc._id.toString()}-${totalLength}"`;
+
+    // Support ETag 304 validation for instant preview re-access
+    if (req.headers['if-none-match'] === etag) {
+      return res.status(304).end();
+    }
 
     res.setHeader('Content-Type', doc.mimetype || 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${asciiFilename}"; filename*=UTF-8''${encodedFilename}`);
-    res.setHeader('Content-Length', fileBuffer.length);
     res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    res.setHeader('ETag', etag);
+    res.setHeader('Cache-Control', 'private, max-age=600, must-revalidate');
+
+    // Handle HTTP Range header for progressive PDF page streaming
+    const range = req.headers.range;
+    if (range) {
+      const parts = range.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : totalLength - 1;
+
+      if (start >= totalLength || end >= totalLength || start > end) {
+        res.setHeader('Content-Range', `bytes */${totalLength}`);
+        return res.status(416).send('Requested range not satisfiable');
+      }
+
+      const chunkLength = end - start + 1;
+      const chunk = fileBuffer.subarray(start, end + 1);
+
+      res.status(206);
+      res.setHeader('Content-Range', `bytes ${start}-${end}/${totalLength}`);
+      res.setHeader('Content-Length', chunkLength);
+      return res.send(chunk);
+    }
+
+    res.setHeader('Content-Length', totalLength);
     res.send(fileBuffer);
   } catch (err) {
     res.status(500).send('Error previewing document: ' + err.message);
