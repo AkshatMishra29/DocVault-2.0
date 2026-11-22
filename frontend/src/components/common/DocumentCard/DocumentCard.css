@@ -1,0 +1,234 @@
+.dv-doc-card-component {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-4, 16px);
+  min-height: 220px;
+  position: relative;
+  cursor: pointer;
+  transition: transform var(--transition-fast, 0.15s ease), box-shadow var(--transition-fast, 0.15s ease), border-color var(--transition-fast, 0.15s ease);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.dv-doc-card-component:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.08);
+  border-color: rgba(1, 90, 71, 0.35);
+}
+
+.dv-doc-card-component:focus-visible {
+  outline: 2px solid var(--color-primary, #015a47);
+  outline-offset: 2px;
+}
+
+/* Header */
+.dv-doc-card-component__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3, 12px);
+}
+
+.dv-doc-card-component__header-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dv-card-format-pill {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--color-surface-secondary, #f1f5f9);
+  color: var(--color-text-secondary, #64748b);
+  border: 1px solid var(--color-border, #e2e8f0);
+}
+
+.dv-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.dv-card-badge--private {
+  background: rgba(100, 116, 139, 0.12);
+  color: #475569;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+.dv-card-badge--shared-in {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.dv-card-badge--shared-out {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.dv-card-badge--custom {
+  background: rgba(1, 90, 71, 0.1);
+  color: var(--color-primary, #015a47);
+  border: 1px solid rgba(1, 90, 71, 0.2);
+}
+
+/* Body */
+.dv-doc-card-component__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--space-2, 8px);
+}
+
+.dv-doc-card-component__title {
+  margin: 0 0 4px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #0f172a);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+.dv-doc-card-component__category-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--color-text-secondary, #64748b);
+  margin-bottom: 6px;
+}
+
+.dv-doc-card-component__category {
+  font-weight: 500;
+}
+
+.dv-doc-card-component__owner {
+  color: var(--color-primary, #015a47);
+  font-weight: 600;
+}
+
+.dv-doc-card-component__summary {
+  margin: 0;
+  font-size: 11px;
+  color: var(--color-text-secondary, #64748b);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Meta Specs */
+.dv-doc-card-component__specs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 11px;
+  color: var(--color-text-secondary, #64748b);
+  border-top: 1px solid var(--color-border-subtle, #f1f5f9);
+  margin-top: auto;
+}
+
+.dv-doc-card-component__spec-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Footer Actions */
+.dv-doc-card-component__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-2, 8px);
+  border-top: 1px solid var(--color-border, #e2e8f0);
+}
+
+.dv-doc-card-component__actions-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dv-card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--color-border, #e2e8f0);
+  background: var(--color-surface, #ffffff);
+  color: var(--color-text-primary, #0f172a);
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.15s ease);
+}
+
+.dv-card-btn:hover {
+  background: var(--color-surface-secondary, #f8fafc);
+  border-color: var(--color-border-strong, #cbd5e1);
+}
+
+.dv-card-btn--preview {
+  background: rgba(1, 90, 71, 0.08);
+  color: var(--color-primary, #015a47);
+  border-color: rgba(1, 90, 71, 0.2);
+}
+
+.dv-card-btn--preview:hover {
+  background: rgba(1, 90, 71, 0.15);
+}
+
+.dv-card-btn--download {
+  color: var(--color-text-secondary, #64748b);
+}
+
+.dv-card-btn--download:hover {
+  color: var(--color-primary, #015a47);
+}
+
+.dv-card-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border, #e2e8f0);
+  background: var(--color-surface, #ffffff);
+  color: var(--color-text-secondary, #64748b);
+  cursor: pointer;
+  transition: all var(--transition-fast, 0.15s ease);
+}
+
+.dv-card-icon-btn:hover {
+  background: rgba(1, 90, 71, 0.1);
+  color: var(--color-primary, #015a47);
+  border-color: rgba(1, 90, 71, 0.3);
+}
+
+@media (max-width: 640px) {
+  .dv-doc-card-component {
+    min-height: auto;
+  }
+}

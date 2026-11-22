@@ -110,7 +110,8 @@ export default function DocumentsPage() {
     if (!targetDocument) return;
     const token = localStorage.getItem("token") || localStorage.getItem("docvault_token") || "";
     const docId = targetDocument._id || targetDocument.documentId;
-    const streamUrl = `${API_BASE_URL}/api/documents/${docId}/download?token=${encodeURIComponent(token)}`;
+    const streamUrl = `${API_BASE_URL}/api/documents/${docId}/preview?token=${encodeURIComponent(token)}`;
+    const downloadUrl = `${API_BASE_URL}/api/documents/${docId}/download?token=${encodeURIComponent(token)}`;
     setPreviewDoc({
       ...targetDocument,
       _id: docId,
@@ -118,6 +119,8 @@ export default function DocumentsPage() {
       category: targetDocument.category || "General",
       format: targetDocument.format || "PDF",
       originalName: targetDocument.originalName || targetDocument.title,
+      downloadUrl,
+      canDownload: targetDocument.isOwner !== false && targetDocument.permissions?.download !== false,
     });
     setPreviewStreamUrl(streamUrl);
     setPreviewError(null);
@@ -657,15 +660,22 @@ export default function DocumentsPage() {
                       <ExternalLink size={14} />
                       <span>Open in Tab</span>
                     </a>
-                    <a
-                      href={previewStreamUrl}
-                      download={previewDoc.originalName || previewDoc.title || "document"}
-                      className="dv-preview-modal-btn"
-                      title="Download file"
-                    >
-                      <Download size={14} />
-                      <span>Download</span>
-                    </a>
+                    {previewDoc.canDownload ? (
+                      <a
+                        href={previewDoc.downloadUrl || previewStreamUrl}
+                        download={previewDoc.originalName || previewDoc.title || "document"}
+                        className="dv-preview-modal-btn"
+                        title="Download file"
+                      >
+                        <Download size={14} />
+                        <span>Download</span>
+                      </a>
+                    ) : (
+                      <span className="dv-preview-modal-btn dv-preview-modal-btn--disabled" title="Owner has granted View-Only access without download">
+                        <Lock size={12} />
+                        <span>View Only</span>
+                      </span>
+                    )}
                   </>
                 )}
                 <Link

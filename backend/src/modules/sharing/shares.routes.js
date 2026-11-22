@@ -117,6 +117,22 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * PATCH /api/shares/:id
+ * Update sharing permissions or extend expiry (Owner only)
+ */
+router.patch('/:id', requireAuth, async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid share ID format.' });
+    }
+    const updated = await DocumentShareService.updateShare(req.user.userId, req.params.id, req.body);
+    res.json({ success: true, message: 'Share updated successfully.', data: updated });
+  } catch (err) {
+    res.status(err.message.includes('unauthorized') ? 403 : 400).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * DELETE /api/shares/:id
  * Revoke a share immediately (Owner only)
  */

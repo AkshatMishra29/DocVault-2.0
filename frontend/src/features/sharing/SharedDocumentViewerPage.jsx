@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
-import { apiRequest } from "../../services/api";
+import { apiRequest, API_BASE_URL } from "../../services/api";
 import {
   ShieldCheck, Lock, Download, Eye, Sparkles, Send, FileText,
-  AlertCircle, ArrowLeft, Key, MessageSquare
+  AlertCircle, ArrowLeft, Key, ExternalLink, Calendar, HardDrive, CheckCircle2, Copy, Check
 } from "lucide-react";
 
-import AppHeader from "../../components/layout/AppHeader/AppHeader";
 import Card from "../../components/common/Card/Card";
 import Button from "../../components/common/Button/Button";
 import Input from "../../components/common/Input/Input";
 import Badge from "../../components/common/Badge/Badge";
 import Skeleton from "../../components/common/Skeleton/Skeleton";
+import DocumentTypeIcon from "../../components/common/DocumentTypeIcon/DocumentTypeIcon";
 
 import "./ShareCenterPage.css";
 
@@ -24,12 +24,12 @@ export default function SharedDocumentViewerPage() {
   const [selectedDocId, setSelectedDocId] = useState(searchParams.get("doc") || "");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Auth Challenges State
   const [requiresPassword, setRequiresPassword] = useState(false);
   const [enteredPassword, setEnteredPassword] = useState("");
-  const [requiresOtp, setRequiresOtp] = useState(false);
-  const [enteredOtp, setEnteredOtp] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   // Q&A State
   const [qaInput, setQaInput] = useState("");
@@ -61,9 +61,6 @@ export default function SharedDocumentViewerPage() {
         setShare(res.data);
         if (res.data.passwordRequired) {
           setRequiresPassword(true);
-        }
-        if (res.data.otpRequired) {
-          setRequiresOtp(true);
         }
       } else {
         setError(res.error || "Unable to load share details.");
@@ -111,6 +108,7 @@ export default function SharedDocumentViewerPage() {
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
+    setPasswordError("");
     try {
       const res = await apiRequest(`/api/shares/${id}/verify-password`, {
         method: "POST",
@@ -118,27 +116,39 @@ export default function SharedDocumentViewerPage() {
       });
       if (res.success) {
         setRequiresPassword(false);
+      } else {
+        setPasswordError(res.error || "Incorrect share password.");
       }
     } catch (err) {
-      alert("Incorrect password: " + err.message);
+      setPasswordError(err.message || "Incorrect share password.");
     }
+  };
+
+  const copyShareLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   if (loading) {
     return (
-      <div style={{ padding: "var(--space-5)" }}>
-        <Skeleton height="300px" />
+      <div style={{ padding: "var(--space-5)", maxWidth: "800px", margin: "40px auto" }}>
+        <Skeleton height="350px" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: "var(--space-5)", maxWidth: "500px", margin: "40px auto", textAlign: "center" }}>
-        <AlertCircle size={40} color="var(--color-danger)" style={{ marginBottom: 12 }} />
-        <h3>Access Restricted</h3>
-        <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-sm)" }}>{error}</p>
-        <Link to="/shares"><Button variant="secondary">Back to Share Center</Button></Link>
+      <div style={{ padding: "var(--space-5)", maxWidth: "520px", margin: "60px auto", textAlign: "center" }}>
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(239, 68, 68, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px auto" }}>
+          <AlertCircle size={36} color="var(--color-danger, #ef4444)" />
+        </div>
+        <h3 style={{ margin: "0 0 8px 0" }}>Access Unavailable</h3>
+        <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-sm)", marginBottom: "20px" }}>{error}</p>
+        <Link to="/shares">
+          <Button variant="secondary" icon={ArrowLeft}>Back to Share Center</Button>
+        </Link>
       </div>
     );
   }
@@ -146,15 +156,22 @@ export default function SharedDocumentViewerPage() {
   // Password Gate
   if (requiresPassword) {
     return (
-      <div style={{ maxWidth: "400px", margin: "60px auto" }}>
+      <div style={{ maxWidth: "420px", margin: "80px auto", padding: "0 16px" }}>
         <Card padding="lg">
-          <div style={{ textAlign: "center", marginBottom: "16px" }}>
-            <Key size={32} color="#0070F2" />
-            <h3 style={{ margin: "8px 0" }}>Password Protected Share</h3>
-            <p style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
-              The owner has protected this document package with a password.
+          <div style={{ textAlign: "center", marginBottom: "20px" }}>
+            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(0, 112, 242, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px auto" }}>
+              <Key size={28} color="#0070F2" />
+            </div>
+            <h3 style={{ margin: "0 0 6px 0", fontSize: "1.1rem" }}>Password Protected Share</h3>
+            <p style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", margin: 0 }}>
+              The owner has protected this document package with a password. Enter password to inspect.
             </p>
           </div>
+          {passwordError && (
+            <div style={{ background: "rgba(239, 68, 68, 0.1)", color: "#b91c1c", padding: "8px 12px", borderRadius: "6px", fontSize: "12px", marginBottom: "12px" }}>
+              {passwordError}
+            </div>
+          )}
           <form onSubmit={handlePasswordSubmit}>
             <Input
               type="password"
@@ -162,9 +179,10 @@ export default function SharedDocumentViewerPage() {
               value={enteredPassword}
               onChange={(e) => setEnteredPassword(e.target.value)}
               required
+              autoFocus
             />
             <Button variant="primary" type="submit" style={{ width: "100%", marginTop: "12px" }}>
-              Unlock Documents
+              Unlock Document
             </Button>
           </form>
         </Card>
@@ -172,48 +190,141 @@ export default function SharedDocumentViewerPage() {
     );
   }
 
-  const documentUrl = `/api/shares/${id}/document?documentId=${selectedDocId}${token ? `&token=${token}` : ""}${enteredPassword ? `&password=${encodeURIComponent(enteredPassword)}` : ""}`;
-  const downloadUrl = `/api/shares/${id}/download?documentId=${selectedDocId}${token ? `&token=${token}` : ""}${enteredPassword ? `&password=${encodeURIComponent(enteredPassword)}` : ""}`;
+  const activeDoc = (share?.documents || []).find((d) => d._id === selectedDocId) || share?.documents?.[0];
+  const isPdf = (activeDoc?.format || "").toUpperCase() === "PDF" || (activeDoc?.title || "").toLowerCase().endsWith(".pdf");
+
+  const authToken = localStorage.getItem("token") || localStorage.getItem("docvault_token") || token || "";
+  const authQuery = `${authToken ? `&token=${encodeURIComponent(authToken)}` : ""}${enteredPassword ? `&password=${encodeURIComponent(enteredPassword)}` : ""}`;
+  const documentUrl = `${API_BASE_URL}/api/shares/${id}/document?documentId=${selectedDocId}${authQuery}`;
+  const downloadUrl = `${API_BASE_URL}/api/shares/${id}/download?documentId=${selectedDocId}${authQuery}`;
+  const canDownload = Boolean(share?.permissions?.download);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: "var(--space-3)", padding: "var(--space-3)" }}>
-      {/* Top Bar */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", paddingBottom: "10px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Link to="/shares" style={{ color: "var(--color-text-secondary)" }}><ArrowLeft size={18} /></Link>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: "var(--space-3)", padding: "var(--space-3)", boxSizing: "border-box" }}>
+      {/* Top Header Bar */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", paddingBottom: "10px", flexWrap: "wrap", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Link to="/shares" style={{ color: "var(--color-text-secondary)", display: "flex", alignItems: "center" }} title="Back to Shares">
+            <ArrowLeft size={18} />
+          </Link>
           <div>
-            <h3 style={{ margin: 0, fontSize: "var(--text-base)" }}>{share?.purpose}</h3>
-            <span style={{ fontSize: "11px", color: "var(--color-text-secondary)" }}>
-              Owner: {share?.owner?.name} ({share?.owner?.docVaultId})
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h3 style={{ margin: 0, fontSize: "var(--text-base)", fontWeight: 700 }}>
+                {activeDoc?.title || share?.purpose || "Shared Document"}
+              </h3>
+              <Badge variant={canDownload ? "primary" : "outline"} size="sm">
+                {canDownload ? "View & Download" : "View Only"}
+              </Badge>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "11px", color: "var(--color-text-secondary)", marginTop: 2 }}>
+              <span>Owner: <strong>{share?.owner?.name || "DocVault User"}</strong></span>
+              {share?.owner?.docVaultId && (
+                <span className="dv-id-pill" style={{ fontSize: "10px", padding: "1px 5px" }}>{share.owner.docVaultId}</span>
+              )}
+              {share?.expiresAt && (
+                <span>• Expires: {new Date(share.expiresAt).toLocaleDateString()}</span>
+              )}
+            </div>
           </div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {share?.permissions?.download && (
-            <a href={downloadUrl} download>
-              <Button variant="secondary" size="sm" icon={Download}>
-                Download Watermarked Copy
+          <button
+            type="button"
+            className="dv-card-btn"
+            onClick={copyShareLink}
+            title="Copy share link"
+          >
+            {copiedLink ? <Check size={13} color="#10b981" /> : <Copy size={13} />}
+            <span>{copiedLink ? "Copied" : "Copy Link"}</span>
+          </button>
+
+          <a
+            href={documentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="dv-card-btn"
+            title="Open in new browser tab"
+          >
+            <ExternalLink size={13} />
+            <span>Open in Tab</span>
+          </a>
+
+          {canDownload && (
+            <a href={downloadUrl} download={activeDoc?.title || "document"}>
+              <Button variant="primary" size="sm" icon={Download}>
+                Download Copy
               </Button>
             </a>
           )}
-          <Badge variant="success" size="sm"><ShieldCheck size={12} /> Controlled View</Badge>
         </div>
       </div>
+
+      {/* Multi-document package selector (if package has >1 doc) */}
+      {share?.documents && share.documents.length > 1 && (
+        <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "4px" }}>
+          {share.documents.map((d) => (
+            <button
+              key={d._id}
+              type="button"
+              onClick={() => setSelectedDocId(d._id)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                borderRadius: "var(--radius-md)",
+                border: selectedDocId === d._id ? "1px solid var(--color-primary)" : "1px solid var(--color-border)",
+                background: selectedDocId === d._id ? "rgba(1, 90, 71, 0.08)" : "var(--color-surface)",
+                color: selectedDocId === d._id ? "var(--color-primary)" : "var(--color-text-primary)",
+                fontWeight: selectedDocId === d._id ? 700 : 500,
+                fontSize: "12px",
+                cursor: "pointer",
+              }}
+            >
+              <FileText size={14} />
+              <span>{d.title}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Main Split Layout: Document Viewer & Q&A Assistant */}
       <div className="dv-shared-viewer-layout">
         {/* Left: Controlled Viewer */}
         <div className="dv-document-render-panel">
           {selectedDocId ? (
-            <img
-              src={documentUrl}
-              alt="Shared Document Controlled Rendering"
-              onError={(e) => {
-                // If PDF preview rendering fallback
-                e.target.style.display = "none";
-              }}
-            />
+            isPdf ? (
+              <object
+                data={documentUrl}
+                type="application/pdf"
+                className="dv-preview-object"
+                style={{ width: "100%", height: "100%", border: "none" }}
+                aria-label={activeDoc?.title || "Shared Document PDF"}
+              >
+                <iframe
+                  src={documentUrl}
+                  title={activeDoc?.title || "Shared Document Frame"}
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                >
+                  <div style={{ color: "#ffffff", padding: "40px", textAlign: "center" }}>
+                    <FileText size={48} color="#94a3b8" style={{ marginBottom: 12 }} />
+                    <p style={{ margin: "0 0 16px 0", fontSize: "14px" }}>Embedded PDF preview not directly supported by browser.</p>
+                    <a href={documentUrl} target="_blank" rel="noopener noreferrer">
+                      <Button variant="primary" size="sm" icon={ExternalLink}>Open PDF in New Tab</Button>
+                    </a>
+                  </div>
+                </iframe>
+              </object>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", padding: 16 }}>
+                <img
+                  src={documentUrl}
+                  alt={activeDoc?.title || "Shared Document Controlled Rendering"}
+                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: "8px" }}
+                />
+              </div>
+            )
           ) : (
             <div style={{ color: "#ffffff", fontSize: "var(--text-sm)" }}>Select a document to inspect</div>
           )}
@@ -223,16 +334,16 @@ export default function SharedDocumentViewerPage() {
         <div className="dv-qa-panel">
           <div style={{ display: "flex", alignItems: "center", gap: 6, borderBottom: "1px solid var(--color-border)", paddingBottom: 8 }}>
             <Sparkles size={16} color="#0070F2" />
-            <strong style={{ fontSize: "var(--text-sm)" }}>Ask About This Document</strong>
+            <strong style={{ fontSize: "var(--text-sm)" }}>DocVault AI Document Reader</strong>
           </div>
 
           <p style={{ fontSize: "11px", color: "var(--color-text-secondary)", margin: 0 }}>
-            Grounding engine answers strictly using content visible in this shared file. Unshared documents and redacted values are protected.
+            Grounding engine answers complex queries strictly using content present in this verified shared file.
           </p>
 
           <form onSubmit={handleAskQuestion} style={{ display: "flex", gap: 6 }}>
             <Input
-              placeholder="e.g. What is the expiry date or total amount?"
+              placeholder="e.g. List certificates, policy end dates, or totals"
               value={qaInput}
               onChange={(e) => setQaInput(e.target.value)}
               style={{ flex: 1 }}
@@ -243,8 +354,8 @@ export default function SharedDocumentViewerPage() {
           {/* Q&A Stream */}
           <div className="dv-qa-history">
             {qaHistory.length === 0 ? (
-              <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", fontStyle: "italic", textAlign: "center", padding: "20px 0" }}>
-                No questions asked yet. Ask about policy dates, invoice amounts, or terms.
+              <div style={{ fontSize: "11px", color: "var(--color-text-secondary)", fontStyle: "italic", textAlign: "center", padding: "24px 8px" }}>
+                No questions asked yet. Ask any questions about policy dates, certifications, coverage, or invoice totals.
               </div>
             ) : (
               qaHistory.map((item) => (
@@ -261,4 +372,3 @@ export default function SharedDocumentViewerPage() {
     </div>
   );
 }
-

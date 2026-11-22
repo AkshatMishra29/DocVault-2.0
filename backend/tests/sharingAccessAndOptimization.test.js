@@ -6,10 +6,13 @@ import { Document } from '../src/modules/documents/document.model.js';
 import { ConnectionService } from '../src/modules/sharing/connection.service.js';
 import { DocumentShareService } from '../src/modules/sharing/documentShare.service.js';
 import { DocumentAccessControlService } from '../src/modules/sharing/accessControl.service.js';
+import { CentralShareAccessService } from '../src/modules/sharing/centralShareAccess.service.js';
 import {
   DocumentShare,
   DocumentShareGrant,
   UserConnection,
+  DocumentAccessPolicy,
+  ShareAccessLog,
   USER_CONNECTION_STATUS,
   GRANT_STATUS,
   SHARE_STATUS,
@@ -303,5 +306,148 @@ describe('🚀 DocVault Sharing Authorization & Optimization Suite', () => {
     assert.strictEqual(jsonBody.data.name, 'Alice Recipient');
 
     User.findOne = origFindOne;
+  });
+
+  it('11. View vs Download: canViewDocument allows preview while canDownloadDocument strictly blocks downloading when permission is VIEW ONLY', async () => {
+    const ownerId = new mongoose.Types.ObjectId();
+    const recipientId = new mongoose.Types.ObjectId();
+    const documentId = new mongoose.Types.ObjectId();
+
+    const fakeDoc = {
+      _id: documentId,
+      userId: ownerId,
+      title: 'Vehicle Insurance.pdf',
+      category: 'Insurance Policy',
+      fileData: Buffer.from('test-pdf-binary').toString('base64'),
+    };
+
+    const origFindById = Document.findById;
+    const origGrantFindOne = DocumentShareGrant.findOne;
+    const origShareFindOne = DocumentShare.findOne;
+    const origPolicyFindOne = DocumentAccessPolicy.findOne;
+    const origConnFindOne = UserConnection.findOne;
+    const origLogCreate = ShareAccessLog.create;
+
+    Document.findById = (id) => ({
+      select: async () => fakeDoc,
+    });
+
+    // Grant has view: true, download: false
+    DocumentShareGrant.findOne = async () => ({
+      status: GRANT_STATUS.ACTIVE,
+      expiresAt: null,
+      permissions: { view: true, download: false },
+    });
+    DocumentShare.findOne = async () => null;
+    DocumentAccessPolicy.findOne = async () => null;
+    UserConnection.findOne = async () => null;
+    ShareAccessLog.create = async () => ({});
+
+    const viewAccess = await DocumentAccessControlService.canViewDocument(recipientId, documentId);
+    assert.strictEqual(viewAccess.allowed, true, 'Recipient should be allowed to view document');
+
+    const downloadAccess = await DocumentAccessControlService.canDownloadDocument(recipientId, documentId);
+    assert.strictEqual(downloadAccess.allowed, false, 'Recipient must NOT be allowed to download when permission is VIEW ONLY');
+    assert.match(downloadAccess.reason, /download/i);
+
+    Document.findById = origFindById;
+    DocumentShareGrant.findOne = origGrantFindOne;
+    DocumentShare.findOne = origShareFindOne;
+    DocumentAccessPolicy.findOne = origPolicyFindOne;
+    UserConnection.findOne = origConnFindOne;
+    ShareAccessLog.create = origLogCreate;
+  });
+
+  it('12. DocumentShareService.updateShare: modifies permissions and extends expiry, synchronizing grants', async () => {
+    const ownerId = new mongoose.Types.ObjectId();
+    const recipientId = new mongoose.Types.ObjectId();
+    const shareId = new mongoose.Types.ObjectId();
+    const docId = new mongoose.Types.ObjectId();
+
+    let savedShare = null;
+    let updatedGrants = null;
+
+    const mockShare = {
+      _id: shareId,
+      ownerId,
+      recipientUserId: recipientId,
+      documentIds: [docId],
+      status: SHARE_STATUS.ACTIVE,
+      permissions: { view: true, download: false },
+      expiresAt: new Date(Date.now() + 3600000),
+      save: async function () {
+        savedShare = this;
+        return this;
+      },
+    };
+
+    const origFindOne = DocumentShare.findOne;
+    const origGrantUpdate = DocumentShareGrant.updateMany;
+    const origLogCreate = ShareAccessLog.create;
+
+    DocumentShare.findOne = async () => mockShare;
+    DocumentShareGrant.updateMany = async (filter, update) => {
+      updatedGrants = { filter, update };
+      return { modifiedCount: 1 };
+    };
+    ShareAccessLog.create = async () => ({});
+
+    const result = await DocumentShareService.updateShare(ownerId, shareId, {
+      permissions: { view: true, download: true },
+      expiresInHours: 168, // 7 days
+    });
+
+    assert.ok(savedShare, 'Share should be saved');
+    assert.strictEqual(savedShare.permissions.download, true, 'Download permission should be granted');
+    assert.ok(savedShare.expiresAt > new Date(Date.now() + 86400000), 'Expiry should be extended to ~7 days');
+    assert.ok(updatedGrants, 'Grants should be synchronized');
+    assert.strictEqual(updatedGrants.update.permissions.download, true);
+
+    DocumentShare.findOne = origFindOne;
+    DocumentShareGrant.updateMany = origGrantUpdate;
+    ShareAccessLog.create = origLogCreate;
+  });
+
+  it('13. CentralShareAccessService: allows document owner to view and preview their own share', async () => {
+    const ownerId = new mongoose.Types.ObjectId();
+    const recipientId = new mongoose.Types.ObjectId();
+    const docId = new mongoose.Types.ObjectId();
+    const shareId = new mongoose.Types.ObjectId();
+
+    const mockShare = {
+      _id: shareId,
+      ownerId,
+      recipientUserId: recipientId,
+      documentIds: [docId],
+      status: SHARE_STATUS.ACTIVE,
+      permissions: { view: true, download: false },
+      expiresAt: null,
+    };
+
+    const origShareFind = DocumentShare.findById;
+    const origDocFind = Document.findById;
+    const origLogCreate = ShareAccessLog.create;
+
+    DocumentShare.findById = async () => mockShare;
+    Document.findById = async () => ({
+      _id: docId,
+      userId: ownerId,
+      title: 'Aadhaar Card.pdf',
+      fileData: Buffer.from('mock-bytes').toString('base64'),
+    });
+    ShareAccessLog.create = async () => ({});
+
+    const authResult = await CentralShareAccessService.authorizeShareAccess({
+      shareId,
+      documentId: docId,
+      userId: ownerId,
+      action: 'view',
+    });
+
+    assert.strictEqual(authResult.allowed, true, 'Owner should always be authorized to view their own shared package');
+
+    DocumentShare.findById = origShareFind;
+    Document.findById = origDocFind;
+    ShareAccessLog.create = origLogCreate;
   });
 });

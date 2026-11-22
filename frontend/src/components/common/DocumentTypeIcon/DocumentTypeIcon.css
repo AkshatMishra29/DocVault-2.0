@@ -4,54 +4,61 @@
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-md, 8px);
   flex-shrink: 0;
-  transition: transform var(--transition-fast);
+  transition: transform var(--transition-fast, 0.15s ease);
 }
 
 .dv-type-icon--emerald {
-  background: rgba(1, 90, 71, 0.1);
-  color: var(--color-primary);
-  border: 1px solid rgba(1, 90, 71, 0.2);
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .dv-type-icon--blue {
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(37, 99, 235, 0.12);
   color: #2563EB;
-  border: 1px solid rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.25);
 }
 
 .dv-type-icon--amber {
-  background: rgba(217, 119, 6, 0.1);
-  color: #D97706;
-  border: 1px solid rgba(217, 119, 6, 0.2);
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.dv-type-icon--gold {
+  background: rgba(234, 179, 8, 0.14);
+  color: #ca8a04;
+  border: 1px solid rgba(234, 179, 8, 0.28);
+}
+
+.dv-type-icon--indigo {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.25);
 }
 
 .dv-type-icon--purple {
-  background: rgba(147, 51, 234, 0.1);
+  background: rgba(147, 51, 234, 0.12);
   color: #9333EA;
-  border: 1px solid rgba(147, 51, 234, 0.2);
+  border: 1px solid rgba(147, 51, 234, 0.25);
 }
 
 .dv-type-icon--ruby {
-  background: rgba(225, 29, 72, 0.1);
+  background: rgba(225, 29, 72, 0.12);
   color: #E11D48;
-  border: 1px solid rgba(225, 29, 72, 0.2);
+  border: 1px solid rgba(225, 29, 72, 0.25);
 }
 
 .dv-type-icon--storage-only {
-  background: rgba(15, 23, 42, 0.1);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--color-text-secondary, #64748b);
+  border: 1px solid var(--color-border, #e2e8f0);
 }
 
 .dv-type-icon--default {
-  background: var(--color-surface-secondary);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
+  background: var(--color-surface-secondary, #f1f5f9);
+  color: var(--color-text-secondary, #64748b);
+  border: 1px solid var(--color-border, #e2e8f0);
 }
-
-[data-theme="dark"] .dv-type-icon--storage-only {
-  background: rgba(255, 255, 255, 0.06);
-}
-

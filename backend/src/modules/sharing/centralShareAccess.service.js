@@ -67,24 +67,30 @@ export class CentralShareAccessService {
     }
 
     // 4. Verify Document is part of this share
-    const isDocLinked = share.documentIds.some((id) => id.toString() === documentId.toString());
+    const isDocLinked = (share.documentIds || []).some((id) => {
+      const idStr = id && id._id ? id._id.toString() : id ? id.toString() : '';
+      return idStr === documentId.toString();
+    });
     if (!isDocLinked) {
       return { allowed: false, status: 403, reason: 'Document is not authorized under this share.' };
     }
 
-    // 5. Verify Recipient Identity or Connection
-    if (share.recipientUserId) {
-      if (!userId || userId.toString() !== share.recipientUserId.toString()) {
-        return { allowed: false, status: 403, reason: 'You are not the designated recipient for this share.' };
-      }
-      // Designated recipient is authorized; ensure connection authorization is synchronized
-      await ConnectionService.ensureOwnerApproved(share.ownerId, userId).catch(() => {});
-    } else if (share.recipientEmail && userId) {
-      const userObj = await User.findById(userId).select('email');
-      if (userObj?.email && userObj.email.toLowerCase().trim() === share.recipientEmail.toLowerCase().trim()) {
-        share.recipientUserId = userId;
-        await share.save().catch(() => {});
+    // 5. Verify Recipient Identity or Connection (Owner always has preview access to their own share)
+    const isOwner = userId && userId.toString() === share.ownerId.toString();
+    if (!isOwner) {
+      if (share.recipientUserId) {
+        if (!userId || userId.toString() !== share.recipientUserId.toString()) {
+          return { allowed: false, status: 403, reason: 'You are not the designated recipient for this share.' };
+        }
+        // Designated recipient is authorized; ensure connection authorization is synchronized
         await ConnectionService.ensureOwnerApproved(share.ownerId, userId).catch(() => {});
+      } else if (share.recipientEmail && userId) {
+        const userObj = await User.findById(userId).select('email');
+        if (userObj?.email && userObj.email.toLowerCase().trim() === share.recipientEmail.toLowerCase().trim()) {
+          share.recipientUserId = userId;
+          await share.save().catch(() => {});
+          await ConnectionService.ensureOwnerApproved(share.ownerId, userId).catch(() => {});
+        }
       }
     }
 

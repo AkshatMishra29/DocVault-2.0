@@ -254,15 +254,39 @@ export class DocumentShareService {
   }
 
   /**
-   * List sent shares created by this user
+   * List sent shares created by this user with last accessed metadata
    */
   static async listSentShares(ownerId) {
     const shares = await DocumentShare.find({ ownerId })
-      .populate('documentIds', 'title category format fileSizeFormatted')
-      .populate('recipientUserId', 'name docVaultId')
-      .sort({ createdAt: -1 });
+      .populate('documentIds', 'title category format fileSizeFormatted createdAt')
+      .populate('recipientUserId', 'name docVaultId email')
+      .sort({ createdAt: -1 })
+      .lean();
 
-    return shares;
+    const shareIds = shares.map((s) => s._id);
+    const accessLogs = await ShareAccessLog.aggregate([
+      {
+        $match: {
+          'metadata.shareId': { $in: shareIds },
+          action: { $in: [SHARE_ACTION.VIEWED, SHARE_ACTION.DOWNLOADED] },
+        },
+      },
+      {
+        $group: {
+          _id: '$metadata.shareId',
+          lastAccessedAt: { $max: '$createdAt' },
+          accessCount: { $sum: 1 },
+        },
+      },
+    ]).catch(() => []);
+
+    const accessMap = new Map(accessLogs.map((l) => [l._id.toString(), l]));
+
+    return shares.map((s) => ({
+      ...s,
+      lastAccessedAt: accessMap.get(s._id.toString())?.lastAccessedAt || null,
+      accessCount: accessMap.get(s._id.toString())?.accessCount || 0,
+    }));
   }
 
   /**
@@ -270,16 +294,102 @@ export class DocumentShareService {
    */
   static async listReceivedShares(recipientUserId) {
     const now = new Date();
+    const userDoc = await User.findById(recipientUserId).select('email');
+    const userEmail = userDoc?.email ? userDoc.email.toLowerCase().trim() : null;
+
     const shares = await DocumentShare.find({
-      recipientUserId,
+      $or: [
+        { recipientUserId },
+        ...(userEmail ? [{ recipientEmail: userEmail }] : []),
+      ],
       status: SHARE_STATUS.ACTIVE,
-      $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
+      $and: [{ $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }] }],
     })
-      .populate('documentIds', 'title category format fileSizeFormatted')
+      .populate('documentIds', 'title category format fileSizeFormatted createdAt summary')
       .populate('ownerId', 'name docVaultId')
       .sort({ createdAt: -1 });
 
     return shares;
+  }
+
+  /**
+   * Update existing share permissions or expiry
+   */
+  static async updateShare(ownerId, shareId, updateData) {
+    const share = await DocumentShare.findOne({ _id: shareId, ownerId });
+    if (!share) {
+      throw new Error('Share not found or unauthorized.');
+    }
+    if (share.status === SHARE_STATUS.REVOKED) {
+      throw new Error('Cannot modify a revoked share. Please create a new share.');
+    }
+
+    const { permissions, expiresInHours, customExpiryDate } = updateData;
+
+    let permissionsChanged = false;
+    if (permissions) {
+      if (permissions.view !== undefined) share.permissions.view = Boolean(permissions.view);
+      if (permissions.download !== undefined) share.permissions.download = Boolean(permissions.download);
+      permissionsChanged = true;
+    }
+
+    let expiryChanged = false;
+    if (customExpiryDate) {
+      share.expiresAt = new Date(customExpiryDate);
+      expiryChanged = true;
+    } else if (expiresInHours !== undefined) {
+      const hours = Number(expiresInHours);
+      if (hours > 0) {
+        share.expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
+      } else {
+        share.expiresAt = null; // No expiry (continuous)
+      }
+      expiryChanged = true;
+    }
+
+    if (share.status === SHARE_STATUS.EXPIRED && (share.expiresAt === null || new Date(share.expiresAt) > new Date())) {
+      share.status = SHARE_STATUS.ACTIVE;
+    }
+
+    await share.save();
+
+    // Synchronize DocumentShareGrants
+    if (share.recipientUserId && share.documentIds?.length > 0) {
+      await DocumentShareGrant.updateMany(
+        {
+          ownerId,
+          recipientId: share.recipientUserId,
+          documentId: { $in: share.documentIds },
+        },
+        {
+          permissions: share.permissions,
+          status: share.status === SHARE_STATUS.ACTIVE ? GRANT_STATUS.ACTIVE : GRANT_STATUS.EXPIRED,
+          expiresAt: share.expiresAt,
+        }
+      ).catch(() => {});
+    }
+
+    // Audit logs
+    if (permissionsChanged) {
+      await ShareAccessLog.create({
+        ownerId,
+        recipientId: share.recipientUserId,
+        documentId: share.documentIds[0],
+        action: SHARE_ACTION.PERMISSION_CHANGED,
+        metadata: { shareId: share._id, permissions: share.permissions },
+      }).catch(() => {});
+    }
+    if (expiryChanged) {
+      await ShareAccessLog.create({
+        ownerId,
+        recipientId: share.recipientUserId,
+        documentId: share.documentIds[0],
+        action: SHARE_ACTION.EXPIRY_EXTENDED,
+        metadata: { shareId: share._id, expiresAt: share.expiresAt },
+      }).catch(() => {});
+    }
+
+    return share;
   }
 }
 

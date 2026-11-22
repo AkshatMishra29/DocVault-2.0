@@ -253,8 +253,10 @@ export default function DocumentDetailPage() {
     }
   };
 
-  const token = localStorage.getItem("token");
-  const downloadUrl = `${API_BASE_URL}/api/documents/${id}/download?token=${token}`;
+  const token = localStorage.getItem("token") || localStorage.getItem("docvault_token") || "";
+  const previewUrl = `${API_BASE_URL}/api/documents/${id}/preview?token=${encodeURIComponent(token)}`;
+  const downloadUrl = `${API_BASE_URL}/api/documents/${id}/download?token=${encodeURIComponent(token)}`;
+  const canDownload = isOwner || permissions?.download === true;
 
   return (
     <div className="dv-doc-detail-page">
@@ -793,7 +795,7 @@ export default function DocumentDetailPage() {
               </div>
               <div className="dv-preview-modal-actions">
                 <a
-                  href={downloadUrl}
+                  href={previewUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="dv-preview-modal-btn"
@@ -802,22 +804,29 @@ export default function DocumentDetailPage() {
                   <ExternalLink size={14} />
                   <span>Open in Tab</span>
                 </a>
-                <a
-                  href={downloadUrl}
-                  download={doc.originalName || doc.title || "document"}
-                  className="dv-preview-modal-btn"
-                  title="Download file"
-                >
-                  <Download size={14} />
-                  <span>Download</span>
-                </a>
+                {canDownload ? (
+                  <a
+                    href={downloadUrl}
+                    download={doc.originalName || doc.title || "document"}
+                    className="dv-preview-modal-btn"
+                    title="Download file"
+                  >
+                    <Download size={14} />
+                    <span>Download</span>
+                  </a>
+                ) : (
+                  <span className="dv-preview-modal-btn dv-preview-modal-btn--disabled" title="Owner has granted View-Only access without download">
+                    <Lock size={12} />
+                    <span>View Only</span>
+                  </span>
+                )}
               </div>
             </div>
 
             <div className="dv-preview-modal-frame-container">
               {(doc.format || "").toUpperCase() === "PDF" || (doc.mimetype || "").includes("pdf") ? (
                 <object
-                  data={downloadUrl}
+                  data={previewUrl}
                   type="application/pdf"
                   className="dv-preview-modal-iframe"
                   aria-label={doc.title || "Original Document PDF"}
@@ -826,21 +835,23 @@ export default function DocumentDetailPage() {
                     <FileText size={40} color="#64748B" />
                     <span>Embedded PDF preview not supported directly by this browser.</span>
                     <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-                      <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="dv-preview-modal-btn">
+                      <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="dv-preview-modal-btn">
                         <ExternalLink size={14} />
                         <span>Open PDF in Tab</span>
                       </a>
-                      <a href={downloadUrl} download={doc.title || "document.pdf"} className="dv-preview-modal-btn">
-                        <Download size={14} />
-                        <span>Download PDF</span>
-                      </a>
+                      {canDownload && (
+                        <a href={downloadUrl} download={doc.title || "document.pdf"} className="dv-preview-modal-btn">
+                          <Download size={14} />
+                          <span>Download PDF</span>
+                        </a>
+                      )}
                     </div>
                   </div>
                 </object>
               ) : (
                 <div className="dv-preview-modal-img-wrap">
                   <img
-                    src={downloadUrl}
+                    src={previewUrl}
                     alt={doc.title || "Document Preview"}
                     className="dv-preview-modal-image"
                   />

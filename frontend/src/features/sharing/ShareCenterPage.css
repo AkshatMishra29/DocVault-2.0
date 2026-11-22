@@ -457,3 +457,224 @@
   font-style: italic;
 }
 
+/* ==========================================================================
+   Document Access Management Dashboard & Overview Styles
+   ========================================================================== */
+
+/* Access Overview Metric Cards Grid */
+.dv-access-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4, 16px);
+  margin-bottom: var(--space-4, 16px);
+}
+
+.dv-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dv-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.08);
+}
+
+.dv-stat-card__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dv-stat-card__icon--emerald {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.dv-stat-card__icon--blue {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+
+.dv-stat-card__icon--amber {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.dv-stat-card__icon--purple {
+  background: rgba(147, 51, 234, 0.12);
+  color: #9333ea;
+}
+
+.dv-stat-card__icon--slate {
+  background: rgba(100, 116, 139, 0.12);
+  color: #475569;
+}
+
+.dv-stat-card__icon--red {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.dv-stat-card__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.dv-stat-card__val {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-text-primary, #0f172a);
+  line-height: 1.1;
+}
+
+.dv-stat-card__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary, #64748b);
+  margin-top: 3px;
+}
+
+.dv-stat-card__hint {
+  font-size: 11px;
+  color: var(--color-text-tertiary, #94a3b8);
+  margin-top: 2px;
+}
+
+/* Quick Actions in Share Card Footer */
+.dv-share-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dv-action-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--color-border, #e2e8f0);
+  background: var(--color-surface, #ffffff);
+  color: var(--color-text-primary, #0f172a);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.dv-action-pill-btn:hover {
+  background: var(--color-surface-secondary, #f8fafc);
+  border-color: var(--color-border-strong, #cbd5e1);
+}
+
+.dv-action-pill-btn--primary {
+  background: rgba(1, 90, 71, 0.08);
+  color: var(--color-primary, #015a47);
+  border-color: rgba(1, 90, 71, 0.25);
+}
+
+.dv-action-pill-btn--primary:hover {
+  background: rgba(1, 90, 71, 0.16);
+}
+
+.dv-action-pill-btn--danger {
+  color: var(--color-danger, #ef4444);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.dv-action-pill-btn--danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* Access & Activity Timeline Table */
+.dv-activity-timeline-card {
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.25rem;
+}
+
+.dv-activity-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin-top: 0.75rem;
+}
+
+.dv-activity-table th {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--color-border, #e2e8f0);
+  color: var(--color-text-secondary, #64748b);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+}
+
+.dv-activity-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border-subtle, #f1f5f9);
+  color: var(--color-text-primary, #0f172a);
+}
+
+.dv-activity-table tr:hover td {
+  background: var(--color-surface-secondary, #f8fafc);
+}
+
+.dv-action-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dv-action-badge--viewed {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.dv-action-badge--downloaded {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.dv-action-badge--created {
+  background: rgba(147, 51, 234, 0.1);
+  color: #9333ea;
+}
+
+.dv-action-badge--denied {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.dv-action-badge--revoked {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.dv-action-badge--changed {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+

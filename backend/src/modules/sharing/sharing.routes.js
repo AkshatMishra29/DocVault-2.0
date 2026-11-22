@@ -222,6 +222,182 @@ router.get('/sent', requireAuth, async (req, res) => {
 });
 
 /**
+ * GET /api/sharing/access-overview
+ * Accurate backend-derived counts across all documents, shares, and grants
+ */
+router.get('/access-overview', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const now = new Date();
+
+    const [totalDocs, userShares, userGrants, incomingGrants, incomingShares, pendingRequests] = await Promise.all([
+      Document.countDocuments({ userId }),
+      DocumentShare.find({ ownerId: userId }).select('documentIds status expiresAt').lean(),
+      DocumentShareGrant.find({ ownerId: userId }).select('documentId status expiresAt').lean(),
+      DocumentShareGrant.find({
+        recipientId: userId,
+        status: GRANT_STATUS.ACTIVE,
+        $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
+      }).countDocuments(),
+      DocumentShare.find({
+        status: SHARE_STATUS.ACTIVE,
+        $or: [
+          { recipientUserId: userId },
+          ...(req.user.email ? [{ recipientEmail: req.user.email.toLowerCase().trim() }] : []),
+        ],
+        $and: [{ $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }] }],
+      }).countDocuments(),
+      DocumentAccessRequest.countDocuments({ ownerId: userId, status: ACCESS_REQUEST_STATUS.PENDING }),
+    ]);
+
+    // Compute distinct active shared documents
+    const activeSharedDocIds = new Set();
+    let activeGrantsCount = 0;
+    let expiredSharesCount = 0;
+    let revokedSharesCount = 0;
+
+    for (const s of userShares) {
+      const isExpired = (s.expiresAt && new Date(s.expiresAt) <= now) || s.status === SHARE_STATUS.EXPIRED;
+      if (s.status === SHARE_STATUS.REVOKED) {
+        revokedSharesCount++;
+      } else if (isExpired) {
+        expiredSharesCount++;
+      } else if (s.status === SHARE_STATUS.ACTIVE) {
+        activeGrantsCount++;
+        for (const docId of s.documentIds || []) {
+          if (docId) activeSharedDocIds.add(docId.toString());
+        }
+      }
+    }
+
+    for (const g of userGrants) {
+      const isExpired = (g.expiresAt && new Date(g.expiresAt) <= now) || g.status === GRANT_STATUS.EXPIRED;
+      if (g.status === GRANT_STATUS.ACTIVE && !isExpired && g.documentId) {
+        activeSharedDocIds.add(g.documentId.toString());
+      }
+    }
+
+    const sharedByMeCount = activeSharedDocIds.size;
+    const privateDocsCount = Math.max(0, totalDocs - sharedByMeCount);
+    const sharedWithMeCount = incomingGrants + incomingShares;
+
+    res.json({
+      success: true,
+      data: {
+        totalDocuments: totalDocs,
+        privateDocuments: privateDocsCount,
+        sharedByMe: sharedByMeCount,
+        sharedWithMe: sharedWithMeCount,
+        activeGrants: activeGrantsCount,
+        expiredShares: expiredSharesCount,
+        revokedShares: revokedSharesCount,
+        pendingRequests,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/sharing/private-documents
+ * List all documents strictly private to the authenticated user
+ */
+router.get('/private-documents', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const now = new Date();
+
+    // 1. Get active shared document IDs
+    const [userShares, userGrants, policies] = await Promise.all([
+      DocumentShare.find({
+        ownerId: userId,
+        status: SHARE_STATUS.ACTIVE,
+        $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
+      }).select('documentIds').lean(),
+      DocumentShareGrant.find({
+        ownerId: userId,
+        status: GRANT_STATUS.ACTIVE,
+        $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
+      }).select('documentId').lean(),
+      DocumentAccessPolicy.find({
+        audienceMode: { $ne: AUDIENCE_MODE.ONLY_ME },
+      }).select('documentId').lean(),
+    ]);
+
+    const sharedDocIds = new Set();
+    userShares.forEach((s) => (s.documentIds || []).forEach((id) => id && sharedDocIds.add(id.toString())));
+    userGrants.forEach((g) => g.documentId && sharedDocIds.add(g.documentId.toString()));
+    policies.forEach((p) => p.documentId && sharedDocIds.add(p.documentId.toString()));
+
+    // 2. Query documents owned by user excluding sharedDocIds
+    const privateDocs = await Document.find({
+      userId,
+      _id: { $nin: Array.from(sharedDocIds) },
+    })
+      .select('-fileData')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formatted = privateDocs.map((d) => ({
+      ...d,
+      isPrivate: true,
+      privacyStatus: 'PRIVATE',
+      accessSummary: 'Strictly private. No external links or connections can view this document.',
+    }));
+
+    res.json({ success: true, count: formatted.length, data: formatted });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/sharing/all-activity
+ * Combined access and audit timeline for all shared documents
+ */
+router.get('/all-activity', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const page = Math.max(1, parseInt(req.query.page || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit || '50', 10)));
+    const skip = (page - 1) * limit;
+
+    const [logs, total] = await Promise.all([
+      ShareAccessLog.find({ ownerId: userId })
+        .populate('recipientId', 'name docVaultId email')
+        .populate('documentId', 'title category format')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      ShareAccessLog.countDocuments({ ownerId: userId }),
+    ]);
+
+    const formatted = logs.map((l) => ({
+      _id: l._id,
+      documentTitle: l.documentId?.title || 'Shared Document',
+      documentId: l.documentId?._id || l.documentId,
+      recipient: l.recipientId
+        ? {
+            name: l.recipientId.name || 'DocVault User',
+            docVaultId: l.recipientId.docVaultId || '',
+            email: l.recipientId.email || '',
+          }
+        : { name: 'External / Link Viewer', docVaultId: '' },
+      action: l.action,
+      result: l.action === SHARE_ACTION.ACCESS_DENIED ? 'DENIED' : 'SUCCESS',
+      timestamp: l.createdAt,
+      metadata: l.metadata || {},
+    }));
+
+    res.json({ success: true, count: formatted.length, total, page, data: formatted });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * GET /api/sharing/:documentId
  * Get sharing policy & active grants for a specific document
  */
@@ -486,11 +662,27 @@ router.get('/audit/:documentId', requireAuth, async (req, res) => {
     }
 
     const logs = await ShareAccessLog.find({ documentId: req.params.documentId })
-      .populate('recipientId', 'name docVaultId')
+      .populate('recipientId', 'name docVaultId email')
       .sort({ createdAt: -1 })
-      .limit(50);
+      .limit(100)
+      .lean();
 
-    res.json({ success: true, data: logs });
+    const formatted = logs.map((l) => ({
+      _id: l._id,
+      action: l.action,
+      result: l.action === SHARE_ACTION.ACCESS_DENIED ? 'DENIED' : 'SUCCESS',
+      timestamp: l.createdAt,
+      recipient: l.recipientId
+        ? {
+            name: l.recipientId.name || 'DocVault User',
+            docVaultId: l.recipientId.docVaultId || '',
+            email: l.recipientId.email || '',
+          }
+        : { name: 'External / Link Viewer', docVaultId: '' },
+      metadata: l.metadata || {},
+    }));
+
+    res.json({ success: true, count: formatted.length, data: formatted });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

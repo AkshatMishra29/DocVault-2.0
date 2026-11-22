@@ -573,11 +573,87 @@ router.patch('/:id/ai-policy', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/documents/:id/preview - Stream document content for inline preview (Protected with Central Access Control)
+router.get('/:id/preview', requireAuth, async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).send('Invalid document ID format');
+    }
+
+    const access = await DocumentAccessControlService.canViewDocument(req.user.userId, req.params.id);
+    if (!access.allowed) {
+      if (req.user?.userId) {
+        await ShareAccessLog.create({
+          ownerId: access.doc?.userId || req.user.userId,
+          recipientId: req.user.userId,
+          documentId: req.params.id,
+          action: SHARE_ACTION.ACCESS_DENIED,
+          metadata: { reason: access.reason, attempted: 'preview', client: req.headers['user-agent'] || 'Web Client' },
+        }).catch(() => {});
+      }
+      return res.status(access.reason === 'Document not found' ? 404 : 403).send(access.reason || 'View permission denied');
+    }
+
+    const doc = await Document.findById(req.params.id);
+    if (!doc) {
+      return res.status(404).send('Document not found');
+    }
+
+    if (!doc.fileData) {
+      return res.status(404).send('File content unavailable in database storage');
+    }
+
+    if (!access.isOwner) {
+      await ShareAccessLog.create({
+        ownerId: doc.userId,
+        recipientId: req.user.userId,
+        documentId: doc._id,
+        action: SHARE_ACTION.VIEWED,
+        metadata: { client: req.headers['user-agent'] || 'Web Client' },
+      }).catch(() => {});
+    } else {
+      await AuditLog.create({
+        userId: req.user.userId,
+        action: 'VIEW',
+        documentTitle: doc.title,
+        device: req.headers['user-agent'] || 'Web Client',
+      }).catch(() => {});
+    }
+
+    const fileBuffer = Buffer.from(doc.fileData, 'base64');
+    const rawFilename = (doc.originalName || doc.title || 'document').replace(/[\r\n"']/g, '_');
+    const asciiFilename = rawFilename.replace(/[^\x20-\x7E]/g, '_') || 'document';
+    const encodedFilename = encodeURIComponent(rawFilename);
+
+    res.setHeader('Content-Type', doc.mimetype || 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${asciiFilename}"; filename*=UTF-8''${encodedFilename}`);
+    res.setHeader('Content-Length', fileBuffer.length);
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    res.send(fileBuffer);
+  } catch (err) {
+    res.status(500).send('Error previewing document: ' + err.message);
+  }
+});
+
 // GET /api/documents/:id/download - Stream document content directly (Protected with Central Access Control)
 router.get('/:id/download', requireAuth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).send('Invalid document ID format');
+    }
+
     const access = await DocumentAccessControlService.canDownloadDocument(req.user.userId, req.params.id);
     if (!access.allowed) {
+      if (req.user?.userId) {
+        await ShareAccessLog.create({
+          ownerId: access.doc?.userId || req.user.userId,
+          recipientId: req.user.userId,
+          documentId: req.params.id,
+          action: SHARE_ACTION.ACCESS_DENIED,
+          metadata: { reason: access.reason, attempted: 'download', client: req.headers['user-agent'] || 'Web Client' },
+        }).catch(() => {});
+      }
       return res.status(access.reason === 'Document not found' ? 404 : 403).send(access.reason || 'Download permission denied');
     }
 
@@ -610,7 +686,7 @@ router.get('/:id/download', requireAuth, async (req, res) => {
     const encodedFilename = encodeURIComponent(rawFilename);
 
     res.setHeader('Content-Type', doc.mimetype || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `inline; filename="${asciiFilename}"; filename*=UTF-8''${encodedFilename}`);
+    res.setHeader('Content-Disposition', `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodedFilename}`);
     res.setHeader('Content-Length', fileBuffer.length);
     res.setHeader('Accept-Ranges', 'bytes');
     res.send(fileBuffer);
