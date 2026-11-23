@@ -44,6 +44,11 @@ export function AppRoutes() {
       <Route path="/enter-pin" element={<EnterPinPage />} />
       <Route path="/auth/verify" element={<AuthVerifiedPage />} />
 
+      {/* Public Document Share Viewer Routes (Direct access via shared link / QR code) */}
+      <Route path="/shares/:id/view" element={<SharedDocumentViewerPage />} />
+      <Route path="/shares/access/:token" element={<SharedDocumentViewerPage />} />
+      <Route path="/shares/:id" element={<SharedDocumentViewerPage />} />
+
       {/* Authenticated Application Shell */}
       <Route
         path="/dashboard"
@@ -67,7 +72,6 @@ export function AppRoutes() {
         <Route path="/documents/:id" element={<DocumentDetailPage />} />
         <Route path="/connections" element={<ConnectionsPage />} />
         <Route path="/shares" element={<ShareCenterPage />} />
-        <Route path="/shares/:id/view" element={<SharedDocumentViewerPage />} />
         <Route path="/ask-ai" element={<AskAiPage />} />
         <Route path="/assets" element={<AssetsPage />} />
         <Route path="/assets/:id" element={<AssetDetailPage />} />

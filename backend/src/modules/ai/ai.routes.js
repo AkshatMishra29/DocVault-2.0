@@ -39,6 +39,7 @@ function computeLexicalScore(doc, queryTokens) {
   const docDate = (doc.documentDate || '').toLowerCase();
   const expDate = (doc.expiryDate || '').toLowerCase();
   const keyDetailsStr = JSON.stringify(doc.keyDetails || {}).toLowerCase();
+  const fieldsStr = (doc.extractedFields || []).map(f => `${f.fieldName} ${f.value}`).join(' ').toLowerCase();
 
   // Intent/attribute tokens should not hijack document entity matching
   const intentTokens = new Set(['date', 'issue', 'issued', 'due', 'expiry', 'expire', 'amount', 'total', 'price', 'cost', 'fee', 'who', 'name', 'account', 'number', 'status', 'summary', 'details']);
@@ -47,6 +48,44 @@ function computeLexicalScore(doc, queryTokens) {
     if (token.length < 2) continue;
     const isIntentToken = intentTokens.has(token);
     const weightMult = isIntentToken ? 0.2 : 1.0;
+
+    // Cross-lingual and domain-specific semantic synonyms (Hindi / Hinglish / English)
+    const isElectricity = /electricity|electric|bijli|power|light|energy|meter|kwh|consumer|uppcl|bses|discom/.test(token);
+    const isBillOrReceipt = /bill|receipt|invoice|payment|paid|chalan|expense|kharche?/.test(token);
+    const isInsurance = /insurance|policy|bima|premium|claim|cov(?:er|erage)/.test(token);
+    const isVehicle = /vehicle|car|bike|motor|gadi|scooter|rc|puc|dl|licen[cs]e/.test(token);
+    const isCert = /certif|certf|degree|diploma|marksheet|matric|passing/.test(token);
+
+    if (isElectricity) {
+      if (/electricity|electric|bill|receipt|payment|power|consumer/i.test(title) || /receipt|bill|invoice/i.test(category) || /electricity|consumer|amount|kwh/i.test(extractedText) || /electricity|consumer|amount/i.test(fieldsStr)) {
+        score += 10.0;
+      }
+    }
+
+    if (isBillOrReceipt) {
+      if (/bill|receipt|invoice|payment|tax/i.test(title) || /receipt|bill|invoice|statement/i.test(category) || /total|amount|receipt|paid/i.test(keyDetailsStr) || /total|amount|receipt|paid/i.test(fieldsStr)) {
+        score += 7.0;
+      }
+    }
+
+    if (isInsurance) {
+      if (/insurance|policy|motor|health|life|term/i.test(title) || /insurance/i.test(category) || /policy|insured|premium/i.test(extractedText) || /policy|insured/i.test(fieldsStr)) {
+        score += 8.0;
+      }
+    }
+
+    if (isVehicle) {
+      if (/vehicle|motor|car|bike|rc|puc|chassis|engine/i.test(title) || /vehicle|automobile/i.test(category) || /registration|engine|chassis/i.test(extractedText)) {
+        score += 8.0;
+      }
+    }
+
+    if (isCert) {
+      if (/certif|certf|degree|diploma|stanford|university|college/i.test(title) || /certificate|education/i.test(category)) {
+        score += 8.0;
+      }
+    }
+
     const tokenRegex = (token === 'certificate' || token === 'certficate') ? /certif|certf/
       : (token === 'resume' || token === 'cv') ? /resume|cv|curriculum/
       : new RegExp(token);
@@ -56,6 +95,7 @@ function computeLexicalScore(doc, queryTokens) {
     if (!isIntentToken && tokenRegex.test(tags)) score += 4.0;
     if (!isIntentToken && tokenRegex.test(summary)) score += 3.0;
     if (tokenRegex.test(extractedText)) score += 2.0 * weightMult;
+    if (fieldsStr.includes(token)) score += 5.0 * weightMult;
 
     if (isIntentToken) {
       if (docDate.includes(token)) score += 0.5;
@@ -489,6 +529,12 @@ async function handleAiQuery(req, res) {
         // Filter by relevance first, then sort by fused RRF score
         scoredDocs.sort((a, b) => b.rrf - a.rrf);
         documents = scoredDocs.filter(item => item.isRelevant).slice(0, 5).map(item => item.doc);
+
+        // Fallback: If no document passed strict threshold but user has valid processable documents,
+        // provide the top candidate documents to Groq so user's factual queries are not dropped
+        if (documents.length === 0 && validCandidates.length > 0 && !hasAssetTarget) {
+          documents = scoredDocs.slice(0, 3).map(item => item.doc);
+        }
       }
     }
 

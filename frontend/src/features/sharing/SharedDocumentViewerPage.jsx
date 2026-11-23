@@ -17,9 +17,10 @@ import DocumentTypeIcon from "../../components/common/DocumentTypeIcon/DocumentT
 import "./ShareCenterPage.css";
 
 export default function SharedDocumentViewerPage() {
-  const { id } = useParams(); // shareId
+  const { id, token: routeToken } = useParams(); // shareId or access token
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token") || "";
+  const queryToken = searchParams.get("token") || "";
+  const shareIdentifier = routeToken || id || queryToken;
 
   const [share, setShare] = useState(null);
   const [selectedDocId, setSelectedDocId] = useState(searchParams.get("doc") || "");
@@ -46,7 +47,7 @@ export default function SharedDocumentViewerPage() {
 
   useEffect(() => {
     fetchShareDetails();
-  }, [id]);
+  }, [shareIdentifier]);
 
   useEffect(() => {
     if (share && share.documents && share.documents.length > 0 && !selectedDocId) {
@@ -64,16 +65,18 @@ export default function SharedDocumentViewerPage() {
   }, [selectedDocId]);
 
   useEffect(() => {
-    if (id && selectedDocId) {
+    if (shareIdentifier && selectedDocId) {
       fetchQaHistory();
     }
-  }, [id, selectedDocId]);
+  }, [shareIdentifier, selectedDocId]);
 
   async function fetchShareDetails() {
     try {
       setLoading(true);
       setError("");
-      const res = await apiRequest(`/api/shares/${id}`);
+      const effectiveToken = routeToken || queryToken || (id && id.length > 24 ? id : "");
+      const tokenParam = effectiveToken ? `?token=${encodeURIComponent(effectiveToken)}` : "";
+      const res = await apiRequest(`/api/shares/${shareIdentifier}${tokenParam}`);
       if (res.success && res.data) {
         setShare(res.data);
         if (res.data.passwordRequired) {
@@ -91,7 +94,8 @@ export default function SharedDocumentViewerPage() {
 
   async function fetchQaHistory() {
     try {
-      const res = await apiRequest(`/api/shares/${id}/questions?documentId=${selectedDocId}`);
+      const effectiveId = share?._id || shareIdentifier;
+      const res = await apiRequest(`/api/shares/${effectiveId}/questions?documentId=${selectedDocId}`);
       if (res.success && res.data) {
         setQaHistory(res.data);
       }
@@ -219,12 +223,13 @@ export default function SharedDocumentViewerPage() {
   const activeDoc = (share?.documents || []).find((d) => d._id === selectedDocId) || share?.documents?.[0];
   const isPdf = (activeDoc?.format || "").toUpperCase() === "PDF" || (activeDoc?.title || "").toLowerCase().endsWith(".pdf");
 
-  const authToken = localStorage.getItem("token") || localStorage.getItem("docvault_token") || token || "";
+  const authToken = queryToken || routeToken || (id && id.length > 24 ? id : "") || localStorage.getItem("token") || localStorage.getItem("docvault_token") || "";
   const authQuery = `${authToken ? `&token=${encodeURIComponent(authToken)}` : ""}${enteredPassword ? `&password=${encodeURIComponent(enteredPassword)}` : ""}`;
-  const baseDocumentUrl = selectedDocId ? `${API_BASE_URL}/api/shares/${id}/document?documentId=${selectedDocId}${authQuery}` : "";
+  const effectiveShareId = share?._id || shareIdentifier;
+  const baseDocumentUrl = selectedDocId ? `${API_BASE_URL}/api/shares/${effectiveShareId}/document?documentId=${selectedDocId}${authQuery}` : "";
   // Append PDF viewer hash for instant fit-to-width and page controls in browser PDF engine
   const pdfViewerUrl = isPdf && baseDocumentUrl ? `${baseDocumentUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH` : baseDocumentUrl;
-  const downloadUrl = selectedDocId ? `${API_BASE_URL}/api/shares/${id}/download?documentId=${selectedDocId}${authQuery}` : "";
+  const downloadUrl = selectedDocId ? `${API_BASE_URL}/api/shares/${effectiveShareId}/download?documentId=${selectedDocId}${authQuery}` : "";
   const canDownload = Boolean(share?.permissions?.download);
 
   return (

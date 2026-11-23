@@ -65,16 +65,28 @@ router.get('/lookup-recipient', requireAuth, lookupRecipientHandler);
  */
 router.get('/:id', async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ success: false, error: 'Invalid share ID format.' });
+    let share = null;
+    const identifier = req.params.id;
+    const queryToken = req.query.token;
+
+    if (mongoose.Types.ObjectId.isValid(identifier)) {
+      share = await DocumentShare.findById(identifier)
+        .populate('documentIds', 'title category format fileSizeFormatted createdAt summary')
+        .populate('ownerId', 'name docVaultId')
+        .populate('recipientUserId', 'name docVaultId');
     }
-    const share = await DocumentShare.findById(req.params.id)
-      .populate('documentIds', 'title category format fileSizeFormatted createdAt summary')
-      .populate('ownerId', 'name docVaultId')
-      .populate('recipientUserId', 'name docVaultId');
+
+    if (!share && (identifier || queryToken)) {
+      const tokenToLookup = queryToken || identifier;
+      const tokenHash = ShareVerificationService.hashToken(tokenToLookup);
+      share = await DocumentShare.findOne({ tokenHash })
+        .populate('documentIds', 'title category format fileSizeFormatted createdAt summary')
+        .populate('ownerId', 'name docVaultId')
+        .populate('recipientUserId', 'name docVaultId');
+    }
 
     if (!share) {
-      return res.status(404).json({ success: false, error: 'Share not found' });
+      return res.status(404).json({ success: false, error: 'Share not found or link is invalid' });
     }
 
     // Check expiry

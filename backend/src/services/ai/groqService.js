@@ -275,12 +275,18 @@ export async function answerDocumentQuery(question, contextDocs = [], contextAss
       content = extractRelevantContextWindow(content, question, maxDocChars);
     }
 
+    const fieldsList = (doc.extractedFields && doc.extractedFields.length > 0)
+      ? doc.extractedFields.map(f => `• ${f.fieldName}: ${f.value}`).join('\n')
+      : 'None recorded';
+
     return `
 [Document ${idx + 1}]: "${doc.title}" (Category: ${doc.category || 'General'}, Pages: ${doc.pageCount || 1})
 Primary Document Date / Issue Date: ${doc.documentDate || doc.keyDetails?.['Issue Date'] || doc.keyDetails?.['Date'] || doc.keyDetails?.['Date of Issue'] || doc.keyDetails?.['ISSUE DATE'] || 'N/A'}
 Expiry / Due Date: ${doc.expiryDate || doc.keyDetails?.['Expiry Date'] || doc.keyDetails?.['EXPIRY DATE'] || 'N/A'}
 Summary: ${doc.summary || 'N/A'}
 Key Structured Details: ${JSON.stringify(doc.keyDetails || {})}
+Verified Extracted Facts & Metrics:
+${fieldsList}
 Extracted Document Content / Text:
 ${content || 'N/A'}
 `;

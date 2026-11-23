@@ -86,6 +86,10 @@ router.post('/', requireAuth, async (req, res) => {
 
     await deadline.save();
 
+    if (deadline.linkedDocId) {
+      await deadline.populate('linkedDocId', 'title category format');
+    }
+
     res.status(201).json({ success: true, data: deadline });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -126,12 +130,13 @@ router.put('/:id', requireAuth, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Deadline not found' });
     }
 
-    const { title, description, date, category, priority, action } = req.body;
+    const { title, description, date, category, priority, action, linkedDocId } = req.body;
     if (title) deadline.title = title.trim();
     if (description !== undefined) deadline.description = description;
     if (category) deadline.category = category;
     if (priority) deadline.priority = priority;
     if (action) deadline.action = action;
+    if (linkedDocId !== undefined) deadline.linkedDocId = linkedDocId || null;
 
     if (date) {
       deadline.date = date;
@@ -147,6 +152,10 @@ router.put('/:id', requireAuth, async (req, res) => {
 
     deadline.updatedAt = new Date();
     await deadline.save();
+
+    if (deadline.linkedDocId) {
+      await deadline.populate('linkedDocId', 'title category format');
+    }
 
     res.json({ success: true, data: deadline });
   } catch (err) {

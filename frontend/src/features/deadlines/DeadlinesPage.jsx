@@ -18,6 +18,7 @@ export default function DeadlinesPage() {
   const [deadlines, setDeadlines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [availableDocs, setAvailableDocs] = useState([]);
   
   // Add manual reminder modal state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -26,11 +27,29 @@ export default function DeadlinesPage() {
   const [newDate, setNewDate] = useState("");
   const [newCategory, setNewCategory] = useState("Bill Due Date");
   const [newAction, setNewAction] = useState("");
+  const [selectedDocId, setSelectedDocId] = useState("");
   const [modalError, setModalError] = useState("");
+
+  // Link existing reminder to doc modal state
+  const [linkModalDeadline, setLinkModalDeadline] = useState(null);
+  const [linkTargetDocId, setLinkTargetDocId] = useState("");
+  const [linkingDoc, setLinkingDoc] = useState(false);
 
   useEffect(() => {
     fetchDeadlines();
+    fetchDocuments();
   }, []);
+
+  async function fetchDocuments() {
+    try {
+      const res = await apiRequest("/api/documents");
+      if (res.success && Array.isArray(res.data)) {
+        setAvailableDocs(res.data);
+      }
+    } catch (err) {
+      console.warn("Failed to retrieve documents for linking:", err);
+    }
+  }
 
   async function fetchDeadlines() {
     try {
@@ -66,6 +85,7 @@ export default function DeadlinesPage() {
           date: newDate,
           category: newCategory,
           action: newAction.trim() || "Payment / Renewal required",
+          linkedDocId: selectedDocId || null,
         }),
       });
 
@@ -75,6 +95,7 @@ export default function DeadlinesPage() {
         setNewTitle("");
         setNewDate("");
         setNewAction("");
+        setSelectedDocId("");
       } else {
         setModalError(res.error || "Failed to create reminder.");
       }
@@ -82,6 +103,33 @@ export default function DeadlinesPage() {
       setModalError(err.message || "Error saving reminder.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleLinkDocToDeadline = async (e) => {
+    e.preventDefault();
+    if (!linkModalDeadline) return;
+    try {
+      setLinkingDoc(true);
+      const res = await apiRequest(`/api/deadlines/${linkModalDeadline._id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          linkedDocId: linkTargetDocId || null,
+        }),
+      });
+      if (res.success && res.data) {
+        setDeadlines((prev) =>
+          prev.map((d) => (d._id === linkModalDeadline._id ? res.data : d))
+        );
+        setLinkModalDeadline(null);
+        setLinkTargetDocId("");
+      } else {
+        alert(res.error || "Failed to link document.");
+      }
+    } catch (err) {
+      alert("Error linking document: " + err.message);
+    } finally {
+      setLinkingDoc(false);
     }
   };
 
@@ -188,7 +236,15 @@ export default function DeadlinesPage() {
 
                 <div className="dv-deadlines-list">
                   {urgentDeadlines.map((d) => {
-                    const linkedDoc = d.linkedDocId;
+                    const targetDocId = (d.linkedDocId && typeof d.linkedDocId === "object" && d.linkedDocId._id)
+                      ? d.linkedDocId._id
+                      : (typeof d.linkedDocId === "string" && d.linkedDocId)
+                        ? d.linkedDocId
+                        : d.documentId || d.docId || null;
+                    const docTitle = (d.linkedDocId && typeof d.linkedDocId === "object" && d.linkedDocId.title)
+                      ? d.linkedDocId.title
+                      : "Document";
+
                     return (
                       <Card key={d._id} hover padding="md" className="dv-deadline-card dv-deadline-card--urgent">
                         <div className="dv-deadline-card__left">
@@ -231,12 +287,25 @@ export default function DeadlinesPage() {
                               </a>
                             );
                           })()}
-                          {linkedDoc && typeof linkedDoc === "object" && linkedDoc._id && (
-                            <Link to={`/documents/${linkedDoc._id}`}>
-                              <Button variant="outline" size="sm" icon={FileText}>
-                                View Policy
+                          {targetDocId ? (
+                            <Link to={`/documents/${targetDocId}`} style={{ textDecoration: "none" }}>
+                              <Button variant="outline" size="sm" icon={FileText} title={`View ${docTitle}`}>
+                                View Document
                               </Button>
                             </Link>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              icon={Plus}
+                              onClick={() => {
+                                setLinkModalDeadline(d);
+                                setLinkTargetDocId("");
+                              }}
+                              title="Link a document to this renewal"
+                            >
+                              Link Document
+                            </Button>
                           )}
                           <Button
                             variant={d.isCompleted ? "secondary" : "outline"}
@@ -271,7 +340,15 @@ export default function DeadlinesPage() {
 
                 <div className="dv-deadlines-list">
                   {regularDeadlines.map((d) => {
-                    const linkedDoc = d.linkedDocId;
+                    const targetDocId = (d.linkedDocId && typeof d.linkedDocId === "object" && d.linkedDocId._id)
+                      ? d.linkedDocId._id
+                      : (typeof d.linkedDocId === "string" && d.linkedDocId)
+                        ? d.linkedDocId
+                        : d.documentId || d.docId || null;
+                    const docTitle = (d.linkedDocId && typeof d.linkedDocId === "object" && d.linkedDocId.title)
+                      ? d.linkedDocId.title
+                      : "Document";
+
                     return (
                       <Card key={d._id} hover padding="md" className="dv-deadline-card">
                         <div className="dv-deadline-card__left">
@@ -291,12 +368,25 @@ export default function DeadlinesPage() {
                         </div>
 
                         <div className="dv-deadline-card__right" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          {linkedDoc && typeof linkedDoc === "object" && linkedDoc._id && (
-                            <Link to={`/documents/${linkedDoc._id}`}>
-                              <Button variant="ghost" size="sm" icon={FileText}>
-                                View Policy
+                          {targetDocId ? (
+                            <Link to={`/documents/${targetDocId}`} style={{ textDecoration: "none" }}>
+                              <Button variant="outline" size="sm" icon={FileText} title={`View ${docTitle}`}>
+                                View Document
                               </Button>
                             </Link>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              icon={Plus}
+                              onClick={() => {
+                                setLinkModalDeadline(d);
+                                setLinkTargetDocId("");
+                              }}
+                              title="Link a document to this renewal"
+                            >
+                              Link Document
+                            </Button>
                           )}
                           <Button
                             variant={d.isCompleted ? "secondary" : "outline"}
@@ -400,12 +490,71 @@ export default function DeadlinesPage() {
             />
           </div>
 
+          <div>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+              Link Stored Document (Optional)
+            </label>
+            <select
+              value={selectedDocId}
+              onChange={(e) => setSelectedDocId(e.target.value)}
+              style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.8)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px" }}
+            >
+              <option value="">-- No Document Linked --</option>
+              {availableDocs.map((doc) => (
+                <option key={doc._id || doc.id} value={doc._id || doc.id}>
+                  {doc.title || doc.name || doc.originalName || "Untitled"} ({doc.category || "General"})
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>
             <Button variant="ghost" onClick={() => setShowAddModal(false)}>
               Cancel
             </Button>
             <Button variant="primary" loading={submitting}>
               Save Reminder
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Link Document Modal for Existing Reminder */}
+      <Modal
+        isOpen={!!linkModalDeadline}
+        onClose={() => setLinkModalDeadline(null)}
+        title={`Link Document to ${linkModalDeadline?.title || "Reminder"}`}
+      >
+        <form onSubmit={handleLinkDocToDeadline} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <p style={{ fontSize: "13px", color: "#94A3B8", margin: 0, lineHeight: 1.5 }}>
+            Select a stored vault document to associate with this renewal reminder so you can access and view it anytime.
+          </p>
+
+          <div>
+            <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>
+              Choose Document *
+            </label>
+            <select
+              value={linkTargetDocId}
+              onChange={(e) => setLinkTargetDocId(e.target.value)}
+              style={{ width: "100%", padding: "10px 12px", background: "rgba(15, 23, 42, 0.8)", border: "1px solid rgba(255, 255, 255, 0.15)", borderRadius: "8px", color: "#FFF", fontSize: "14px" }}
+              required
+            >
+              <option value="">-- Select Document --</option>
+              {availableDocs.map((doc) => (
+                <option key={doc._id || doc.id} value={doc._id || doc.id}>
+                  {doc.title || doc.name || doc.originalName || "Untitled"} ({doc.category || "General"})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>
+            <Button variant="ghost" onClick={() => setLinkModalDeadline(null)}>
+              Cancel
+            </Button>
+            <Button variant="primary" loading={linkingDoc}>
+              Attach Document
             </Button>
           </div>
         </form>

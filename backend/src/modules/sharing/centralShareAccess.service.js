@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import {
   DocumentShare,
   SHARE_STATUS,
@@ -41,10 +42,14 @@ export class CentralShareAccessService {
   }) {
     // 1. Locate Share Record
     let share = null;
-    if (shareId) {
+    const effectiveToken = token || (shareId && (!mongoose.Types.ObjectId.isValid(shareId) || String(shareId).length > 24) ? shareId : null);
+
+    if (shareId && mongoose.Types.ObjectId.isValid(shareId) && String(shareId).length === 24) {
       share = await DocumentShare.findById(shareId);
-    } else if (token) {
-      const tokenHash = ShareVerificationService.hashToken(token);
+    }
+    
+    if (!share && effectiveToken) {
+      const tokenHash = ShareVerificationService.hashToken(effectiveToken);
       share = await DocumentShare.findOne({ tokenHash });
     }
 
