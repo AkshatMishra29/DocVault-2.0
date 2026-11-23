@@ -99,6 +99,8 @@ export default function DocumentDetailPage() {
   const navigate = useNavigate();
 
   const [doc, setDoc] = useState(null);
+  const [isOwner, setIsOwner] = useState(true);
+  const [permissions, setPermissions] = useState({ view: true, download: true });
   const [assets, setAssets] = useState([]);
   const [selectedAssetId, setSelectedAssetId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -138,6 +140,23 @@ export default function DocumentDetailPage() {
 
         if (docRes?.success && docRes.data) {
           setDoc(docRes.data);
+          if (typeof docRes.isOwner === 'boolean') {
+            setIsOwner(docRes.isOwner);
+          } else {
+            const storedUser = localStorage.getItem("user");
+            if (storedUser) {
+              try {
+                const u = JSON.parse(storedUser);
+                const currentUid = u.userId || u._id || u.id;
+                if (currentUid && docRes.data.userId) {
+                  setIsOwner(String(docRes.data.userId) === String(currentUid));
+                }
+              } catch (_) {}
+            }
+          }
+          if (docRes.permissions) {
+            setPermissions(docRes.permissions);
+          }
           if (docRes.data.assetId) {
             setSelectedAssetId(docRes.data.assetId);
           }
@@ -241,6 +260,12 @@ export default function DocumentDetailPage() {
         const updatedRes = await apiRequest(`/api/documents/${id}`);
         if (updatedRes.success && updatedRes.data) {
           setDoc(updatedRes.data);
+          if (typeof updatedRes.isOwner === 'boolean') {
+            setIsOwner(updatedRes.isOwner);
+          }
+          if (updatedRes.permissions) {
+            setPermissions(updatedRes.permissions);
+          }
         }
         setEditingField(null);
       } else {
@@ -274,14 +299,16 @@ export default function DocumentDetailPage() {
 
           {doc && (
             <div className="dv-detail-actions">
-              <Button
-                variant="outline"
-                size="sm"
-                icon={Share2}
-                onClick={() => setShowShareModal(true)}
-              >
-                Share / Access
-              </Button>
+              {isOwner && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={Share2}
+                  onClick={() => setShowShareModal(true)}
+                >
+                  Share / Access
+                </Button>
+              )}
               <Button
                 variant="secondary"
                 size="sm"
@@ -295,19 +322,23 @@ export default function DocumentDetailPage() {
                   Ask Copilot
                 </Button>
               </Link>
-              <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
-                <Button variant="primary" size="sm" icon={Download}>
-                  Download Original
+              {canDownload && (
+                <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
+                  <Button variant="primary" size="sm" icon={Download}>
+                    Download Original
+                  </Button>
+                </a>
+              )}
+              {isOwner && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  icon={Trash2}
+                  onClick={() => setShowDeleteModal(true)}
+                >
+                  Delete
                 </Button>
-              </a>
-              <Button
-                variant="danger"
-                size="sm"
-                icon={Trash2}
-                onClick={() => setShowDeleteModal(true)}
-              >
-                Delete
-              </Button>
+              )}
             </div>
           )}
         </div>

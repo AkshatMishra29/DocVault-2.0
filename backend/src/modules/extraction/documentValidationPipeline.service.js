@@ -207,16 +207,26 @@ export async function assessImageQuality(buffer, metadata) {
   }
 
   // Discrete 2D Laplacian variance for sharpness & blur detection
-  const lapRaw = await sharp(buffer)
+  // Multi-scale: 800px captures uncompressed blur; 400px provides baseline
+  const lapRaw800 = await sharp(buffer)
+    .resize({ width: 800, withoutEnlargement: true })
+    .flatten({ background: '#ffffff' })
+    .toColourspace('b-w')
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const lapStats800 = calculateLaplacianVariance(lapRaw800.data, lapRaw800.info.width, lapRaw800.info.height);
+
+  const lapRaw400 = await sharp(buffer)
     .resize({ width: 400, withoutEnlargement: true })
     .flatten({ background: '#ffffff' })
     .toColourspace('b-w')
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  const lapStats = calculateLaplacianVariance(lapRaw.data, lapRaw.info.width, lapRaw.info.height);
-  const sharpness = lapStats.stdev;
-  const sharpnessVariance = lapStats.variance;
+  const lapStats400 = calculateLaplacianVariance(lapRaw400.data, lapRaw400.info.width, lapRaw400.info.height);
+  const sharpness = Math.min(lapStats800.stdev, lapStats400.stdev);
+  const sharpnessVariance = Math.min(lapStats800.variance, lapStats400.variance);
   const contrast = parseFloat((ch0.max - ch0.min).toFixed(2));
 
   return {
@@ -226,8 +236,8 @@ export async function assessImageQuality(buffer, metadata) {
     sharpnessVariance,
     contrast,
     brightness: parseFloat(luminanceMean.toFixed(1)),
-    isBlurry: sharpness < 4.0 || sharpnessVariance < 16.0,
-    isSevereBlur: sharpness < 2.5 || sharpnessVariance < 6.0,
+    isBlurry: lapStats800.stdev < 5.5 || lapStats800.variance < 28.0 || lapStats400.stdev < 4.0 || lapStats400.variance < 16.0,
+    isSevereBlur: lapStats800.stdev < 3.5 || lapStats800.variance < 12.0 || lapStats400.stdev < 2.5 || lapStats400.variance < 6.0,
     isSoftFocus: sharpness >= 4.0 && sharpness < 8.0,
     width: metadata.width,
     height: metadata.height,

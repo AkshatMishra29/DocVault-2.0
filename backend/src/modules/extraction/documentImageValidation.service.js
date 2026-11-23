@@ -111,15 +111,26 @@ export async function validateDocumentImage(buffer, metadata = {}) {
   }
 
   // ── Step 2: Accurate Discrete Laplacian Variance (Blur & Quality Detection) ──
-  const lapRaw = await sharp(buffer)
+  // Compute at 800px width (without enlargement) so blur is not compressed or artificially sharpened
+  const lapRaw800 = await sharp(buffer)
+    .resize({ width: 800, withoutEnlargement: true })
+    .flatten({ background: '#ffffff' })
+    .toColourspace('b-w')
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const lapStats800 = calculateLaplacianVariance(lapRaw800.data, lapRaw800.info.width, lapRaw800.info.height);
+
+  // Also compute at 400px for multi-scale consistency and near-blank edge variance
+  const lapRaw400 = await sharp(buffer)
     .resize({ width: 400, withoutEnlargement: true })
     .flatten({ background: '#ffffff' })
     .toColourspace('b-w')
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  const lapStats = calculateLaplacianVariance(lapRaw.data, lapRaw.info.width, lapRaw.info.height);
-  const edgeVariance = lapStats.stdev;
+  const lapStats400 = calculateLaplacianVariance(lapRaw400.data, lapRaw400.info.width, lapRaw400.info.height);
+  const edgeVariance = Math.max(lapStats800.stdev, lapStats400.stdev);
 
   // A-3: Near-blank (high luminance, no dark ink text anywhere in the document)
   if (luminanceMean > 230 && ch0.min > 200 && edgeVariance < 2.0) {
@@ -131,7 +142,12 @@ export async function validateDocumentImage(buffer, metadata = {}) {
 
   // A-4: Blurry Image Guardrail
   // Reject blurred / out-of-focus captures where text is illegible
-  if (lapStats.stdev < 3.0 || lapStats.variance < 9.0) {
+  // At 800px: crisp documents consistently have variance >= 50.0 and stdev >= 7.0.
+  // Blurred documents (blur >= 1.5) drop to variance < 20.0 and stdev < 4.5.
+  const isBlurry800 = lapStats800.stdev < 5.5 || lapStats800.variance < 28.0;
+  const isBlurry400 = lapStats400.stdev < 4.0 || lapStats400.variance < 16.0;
+
+  if (isBlurry800 || isBlurry400) {
     throw new DocumentImageValidationError(
       'The uploaded document image is too blurry to be processed securely. Please hold your camera steady, ensure clear focus on the text, and recapture.',
       'IMAGE_BLURRY'

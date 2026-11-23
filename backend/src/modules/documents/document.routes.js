@@ -219,6 +219,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
           try {
             const renderedPages = await convertPdfToImages(buffer, 1, 1.0);
             if (renderedPages && renderedPages.length > 0) {
+              await validateDocumentImage(renderedPages[0]);
               const serviceVal = await validateWithService({
                 quarantinePath: quarantineFilePath,
                 sha256,
@@ -241,7 +242,7 @@ router.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
               }
             }
           } catch (renderErr) {
-            if (renderErr instanceof DocumentImageValidationError && renderErr.reasonCode === 'BLANK_IMAGE') {
+            if (renderErr instanceof DocumentImageValidationError) {
               throw renderErr;
             }
             console.warn('[PDF Guard] Page rendering inspection warning:', renderErr.message);

@@ -100,15 +100,25 @@ export async function inspectImageGuardrails(buffer, filename) {
     }
 
     // 2b. Blur detection guardrail (motion blur / out-of-focus camera capture)
-    const lapRaw = await sharp(buffer)
+    // Compute at 800px width (without enlargement) so blur is not compressed or artificially sharpened
+    const lapRaw800 = await sharp(buffer)
+      .resize({ width: 800, withoutEnlargement: true })
+      .flatten({ background: '#ffffff' })
+      .toColourspace('b-w')
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const lapStats800 = calculateLaplacianVariance(lapRaw800.data, lapRaw800.info.width, lapRaw800.info.height);
+
+    const lapRaw400 = await sharp(buffer)
       .resize({ width: 400, withoutEnlargement: true })
       .flatten({ background: '#ffffff' })
       .toColourspace('b-w')
       .raw()
       .toBuffer({ resolveWithObject: true });
+    const lapStats400 = calculateLaplacianVariance(lapRaw400.data, lapRaw400.info.width, lapRaw400.info.height);
 
-    const lapStats = calculateLaplacianVariance(lapRaw.data, lapRaw.info.width, lapRaw.info.height);
-    if (lapStats.stdev < 3.0 || lapStats.variance < 9.0) {
+    const isBlurry = lapStats800.stdev < 5.5 || lapStats800.variance < 28.0 || lapStats400.stdev < 4.0 || lapStats400.variance < 16.0;
+    if (isBlurry) {
       throw new Error('Security Guardrail: Uploaded image is too blurry to be processed as a secure document. Please retake the photo with sharp focus.');
     }
 

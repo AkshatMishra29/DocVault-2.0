@@ -124,6 +124,63 @@ export default function UploadPage() {
     });
   };
 
+  // Client-Side Blur & Clarity Detection Guardrail (< 20ms using offscreen canvas)
+  const checkImageClarity = (imageFile) => {
+    return new Promise((resolve) => {
+      if (!imageFile || !imageFile.type.startsWith("image/")) {
+        return resolve({ isBlurry: false });
+      }
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(imageFile);
+      img.src = objectUrl;
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        try {
+          const canvas = document.createElement("canvas");
+          const targetW = Math.min(img.width, 800);
+          const targetH = Math.round((img.height * targetW) / img.width);
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          if (!ctx) return resolve({ isBlurry: false });
+          ctx.drawImage(img, 0, 0, targetW, targetH);
+          const imgData = ctx.getImageData(0, 0, targetW, targetH);
+          const data = imgData.data;
+
+          const gray = new Uint8Array(targetW * targetH);
+          for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+            gray[j] = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+          }
+
+          let sum = 0, sumSq = 0, count = 0;
+          for (let y = 1; y < targetH - 1; y += 2) {
+            const row = y * targetW;
+            const prev = (y - 1) * targetW;
+            const next = (y + 1) * targetW;
+            for (let x = 1; x < targetW - 1; x += 2) {
+              const lap = -4 * gray[row + x] + gray[row + x - 1] + gray[row + x + 1] + gray[prev + x] + gray[next + x];
+              sum += lap;
+              sumSq += lap * lap;
+              count++;
+            }
+          }
+          const mean = count > 0 ? sum / count : 0;
+          const variance = count > 0 ? (sumSq / count) - (mean * mean) : 0;
+          const stdev = Math.sqrt(Math.max(0, variance));
+          // If stdev < 5.0 or variance < 25.0, image is too blurry for secure text extraction
+          const isBlurry = stdev < 5.0 || variance < 25.0;
+          resolve({ isBlurry, variance, stdev });
+        } catch {
+          resolve({ isBlurry: false });
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve({ isBlurry: false });
+      };
+    });
+  };
+
   const handleCameraCapture = async (e) => {
     if (e.target.files && e.target.files[0]) {
       const rawFile = e.target.files[0];
@@ -157,6 +214,16 @@ export default function UploadPage() {
     // Auto-populate the rename field with the base filename (strip extension)
     const baseName = selectedFile.name.replace(/\.[^/.]+$/, "").replace(/[_-]+/g, " ").trim();
     setCustomTitle(baseName);
+
+    // Instant client-side blur guardrail check
+    if (selectedFile.type.startsWith("image/")) {
+      checkImageClarity(selectedFile).then(({ isBlurry }) => {
+        if (isBlurry) {
+          setError("Security Guardrail: The uploaded document image is too blurry. Text edges are unreadable.");
+          setSuggestion("Please hold your camera steady, ensure clear focus on the text, and recapture with good lighting.");
+        }
+      });
+    }
   };
 
   const handleUpload = async (forceDuplicate = false) => {
