@@ -99,12 +99,12 @@
   font-size: 14.5px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  background-color: var(--color-auth-cta, #0070F2);
+  background: var(--gradient-primary-btn, linear-gradient(135deg, #0070F2 0%, #0056B3 100%));
   color: #FFFFFF;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 112, 242, 0.25);
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(0, 112, 242, 0.28);
+  transition: all var(--transition-spring, 0.2s cubic-bezier(0.16, 1, 0.3, 1));
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -113,14 +113,12 @@
 }
 
 .dv-auth-submit-btn:hover:not(:disabled) {
-  background-color: var(--color-auth-cta-hover, #0064D9);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 112, 242, 0.32);
+  box-shadow: 0 6px 18px rgba(0, 112, 242, 0.38);
 }
 
 .dv-auth-submit-btn:active:not(:disabled) {
-  transform: translateY(0);
-  background-color: var(--color-auth-cta-active, #C42003);
+  transform: scale(0.98);
 }
 
 .dv-auth-submit-btn:disabled {
