@@ -37,7 +37,7 @@ function getSmtpTransporter() {
  */
 async function sendViaBrevo({ apiKey, to, subject, html, text }) {
   console.log(`[EmailService] Attempting fast HTTPS dispatch via Brevo API to: ${to}`);
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || 'akshatmishraxic29@gmail.com';
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'akshatmishra2904@gmail.com';
   const senderName = process.env.BREVO_SENDER_NAME || 'DocVault Security';
 
   const controller = new AbortController();
