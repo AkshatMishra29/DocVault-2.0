@@ -18,7 +18,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: var(--color-primary, #0070f2);
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.9rem;
@@ -31,8 +31,8 @@
 
 .dv-asset-hero-card {
   margin-bottom: 1.5rem;
-  background: var(--color-surface, #ffffff);
-  border: 1px solid var(--color-border, #d9e1e8);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
 }
 
 .dv-asset-hero-top {
@@ -45,9 +45,9 @@
 .dv-asset-hero-icon-box {
   width: 56px;
   height: 56px;
-  border-radius: 12px;
-  background: rgba(0, 112, 242, 0.08);
-  color: var(--color-primary, #0070f2);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+  color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -127,12 +127,12 @@
 }
 
 .dv-asset-tab:hover {
-  color: var(--color-primary, #0070f2);
+  color: var(--color-primary);
 }
 
 .dv-asset-tab--active {
-  color: var(--color-primary, #0070f2);
-  border-bottom-color: var(--color-primary, #0070f2);
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 .dv-tab-content {
@@ -203,17 +203,17 @@
   align-items: center;
   gap: 0.35rem;
   font-size: 0.85rem;
-  color: var(--color-primary, #0070f2);
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 600;
 }
 
 /* Vehicle Wallet Cards */
 .dv-wallet-banner {
-  background: linear-gradient(135deg, #0070f2 0%, #0050b3 100%);
+  background: var(--color-primary);
   color: #ffffff;
   padding: 1.25rem;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .dv-wallet-banner h3 {
@@ -284,16 +284,16 @@
 
 .dv-wallet-link {
   font-size: 0.85rem;
-  color: var(--color-primary, #0070f2);
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 600;
 }
 
 /* Expenses Table */
 .dv-expenses-table-wrap {
-  background: var(--color-surface, #ffffff);
-  border: 1px solid var(--color-border, #d9e1e8);
-  border-radius: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   overflow-x: auto;
 }
 
@@ -306,20 +306,20 @@
 .dv-expenses-table th,
 .dv-expenses-table td {
   padding: 0.85rem 1.25rem;
-  border-bottom: 1px solid var(--color-border, #d9e1e8);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .dv-expenses-table th {
-  background: var(--color-bg, #f5f6f7);
+  background: var(--color-surface-secondary);
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: var(--color-text-secondary, #5b738b);
+  color: var(--color-text-secondary);
   font-weight: 700;
 }
 
 /* Policy Health Audit Card */
 .dv-health-audit-card {
-  border: 1px solid var(--color-border, #d9e1e8);
+  border: 1px solid var(--color-border);
 }
 
 .dv-health-header {
@@ -347,8 +347,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.85rem 1rem;
-  background: var(--color-bg, #f5f6f7);
-  border-radius: 8px;
+  background: var(--color-surface-secondary);
+  border-radius: var(--radius-sm);
 }
 
 .dv-audit-check-left {
@@ -360,12 +360,12 @@
 .dv-audit-check-left p {
   margin: 0.2rem 0 0 0;
   font-size: 0.85rem;
-  color: var(--color-text-secondary, #5b738b);
+  color: var(--color-text-secondary);
 }
 
 .dv-health-disclaimer {
   font-size: 0.75rem;
-  color: var(--color-text-secondary, #5b738b);
+  color: var(--color-text-secondary);
   font-style: italic;
   margin: 0;
   line-height: 1.4;
@@ -387,7 +387,7 @@
   bottom: 0;
   left: 6px;
   width: 2px;
-  background: var(--color-border, #d9e1e8);
+  background: var(--color-border);
 }
 
 .dv-timeline-node {
@@ -401,22 +401,22 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: var(--color-primary, #0070f2);
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 0 2px var(--color-border, #d9e1e8);
+  background: var(--color-primary);
+  border: 2px solid var(--color-surface);
+  box-shadow: 0 0 0 2px var(--color-border);
 }
 
 .dv-timeline-box {
-  background: var(--color-surface, #ffffff);
-  border: 1px solid var(--color-border, #d9e1e8);
-  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   padding: 0.85rem 1rem;
 }
 
 .dv-timeline-date {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--color-primary, #0070f2);
+  color: var(--color-primary);
   margin-bottom: 0.25rem;
 }
 

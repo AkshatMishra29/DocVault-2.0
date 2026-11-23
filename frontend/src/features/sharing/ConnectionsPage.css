@@ -37,14 +37,14 @@
 }
 
 .my-id-badge {
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--color-primary, #0070f2);
+  color: var(--color-primary);
   letter-spacing: 0.05em;
-  background: rgba(0, 112, 242, 0.08);
+  background: var(--color-accent-soft);
   padding: 0.35rem 0.75rem;
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
 }
 
 .connections-tabs {
@@ -106,20 +106,20 @@
 }
 
 .connections-tab:hover {
-  color: var(--color-primary, #0070f2);
+  color: var(--color-primary);
 }
 
 .connections-tab--active {
-  color: var(--color-primary, #0070f2);
-  border-bottom-color: var(--color-primary, #0070f2);
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 .badge-count {
-  background: var(--color-primary, #0070f2);
+  background: var(--color-primary);
   color: #ffffff;
   font-size: 0.75rem;
   padding: 0.15rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
 }
 
 .search-box {

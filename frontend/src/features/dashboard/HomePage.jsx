@@ -4,8 +4,8 @@ import { useAuth } from "../auth/context/AuthContext";
 import { apiRequest } from "../../services/api";
 import { 
   FileText, UploadCloud, Calendar, Sparkles, Layers, ArrowRight,
-  AlertTriangle, Clock, ChevronRight,
-  CheckCircle2, Eye, HelpCircle, X
+  AlertTriangle, Clock, ChevronRight, Search, Lock, Share2,
+  CheckCircle2, Eye, ShieldCheck, X
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -23,15 +23,16 @@ import "./HomePage.css";
 
 const SUGGESTED_COPILOT_QUESTIONS = [
   "When does my motor insurance expire?",
-  "What is covered under my health policy?",
+  "Find my latest electricity bill",
   "Which appliances still have active warranties?",
-  "Find the important details in my latest invoice."
+  "What is my passport number?"
 ];
 
 export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [searchQuery, setSearchQuery] = useState("");
   const [documents, setDocuments] = useState(() => {
     try {
       const cached = sessionStorage.getItem("dv_cached_docs");
@@ -55,9 +56,6 @@ export default function HomePage() {
     return !sessionStorage.getItem("dv_cached_docs");
   });
   const [error, setError] = useState(null);
-  const [showOnboarding, setShowOnboarding] = useState(() => {
-    return localStorage.getItem("dv_onboarding_dismissed") !== "true";
-  });
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -105,16 +103,34 @@ export default function HomePage() {
     (d) => d.severity === "urgent" || (d.daysLeft !== undefined && d.daysLeft <= 15)
   );
 
+  const sharedDocsCount = safeDocs.filter(
+    (d) => d.isShared || (Array.isArray(d.sharedWith) && d.sharedWith.length > 0)
+  ).length;
+  const privateDocsCount = Math.max(0, safeDocs.length - sharedDocsCount);
+
   const recentDocs = safeDocs.slice(0, 5);
-  const pendingReviewDocs = safeReviewQueue.slice(0, 4);
+  const pendingReviewDocs = safeReviewQueue.slice(0, 3);
 
   const userName = user?.name ? user.name.split(" ")[0] : "Vault Custodian";
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/ask-ai?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate("/ask-ai");
+    }
+  };
+
+  const handleChipClick = (question) => {
+    navigate(`/ask-ai?q=${encodeURIComponent(question)}`);
+  };
 
   return (
     <div className="dv-dashboard">
       <AppHeader
-        title="Home"
-        subtitle={`Welcome back, ${userName}. Your documents, deadlines, and AI — all in one place.`}
+        title={`Welcome back, ${userName}`}
+        subtitle="Privacy-First Document Manager • Secure by design"
       />
 
       <div className="dv-dashboard__content">
@@ -132,18 +148,17 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Section A: Apple Zen 3D Command Hero */}
-        <div className="dv-dash-hero">
-          <div className="dv-dash-hero__info">
-            <h2 className="dv-dash-hero__title">
-              Your <span className="dv-dash-hero__title-accent">Document Dashboard</span>
+        {/* Section 1: Compact Welcome Header & Quick Actions */}
+        <section className="dv-welcome-section" aria-label="Quick Actions">
+          <div className="dv-welcome-content">
+            <h2 className="dv-welcome-title">
+              Manage your personal & family vault
             </h2>
-            <p className="dv-dash-hero__desc">
-              Everything important in one place.
+            <p className="dv-welcome-desc">
+              Search policies, track warranties, monitor renewal deadlines, and keep records private.
             </p>
           </div>
-
-          <div className="dv-dash-hero__actions">
+          <div className="dv-welcome-actions">
             <Link to="/upload">
               <Button variant="primary" size="md" icon={UploadCloud}>
                 Upload Document
@@ -154,116 +169,52 @@ export default function HomePage() {
                 Ask Copilot
               </Button>
             </Link>
-            <Link to="/documents">
-              <Button variant="ghost" size="md" icon={FileText}>
-                Browse Vault
-              </Button>
-            </Link>
           </div>
-        </div>
+        </section>
 
-        {/* Section: 3-Step Guided Onboarding (Part C) */}
-        {showOnboarding && (
-          <div className="dv-onboarding-card">
-            <div className="dv-onboarding-header">
-              <div className="dv-onboarding-title-wrap">
-                <span className="dv-onboarding-badge">
-                  <Sparkles size={13} />
-                  <span>Quick Setup</span>
-                </span>
-                <h3 className="dv-onboarding-title">Get Started with DocVault</h3>
-                <p className="dv-onboarding-subtitle">
-                  Complete these 3 simple steps to secure your vault and automate your documents.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="dv-onboarding-dismiss-btn"
-                onClick={() => {
-                  setShowOnboarding(false);
-                  localStorage.setItem("dv_onboarding_dismissed", "true");
-                }}
-                title="Dismiss setup guide"
-              >
-                <X size={16} />
-              </button>
+        {/* Section 2: Prominent Natural Language Search Bar */}
+        <section className="dv-search-hero" aria-label="AI Search">
+          <form className="dv-search-box" onSubmit={handleSearchSubmit}>
+            <div className="dv-search-box__icon">
+              <Sparkles size={18} className="dv-search-sparkle-icon" />
             </div>
+            <input
+              type="text"
+              className="dv-search-box__input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Ask anything about your documents, e.g. What is my passport expiry date?"
+              aria-label="Ask questions about your documents"
+            />
+            <button type="submit" className="dv-search-box__submit" aria-label="Search">
+              <span>Ask Copilot</span>
+              <ArrowRight size={16} />
+            </button>
+          </form>
 
-            <div className="dv-onboarding-steps">
-              {/* Step 1 */}
-              <div className={`dv-onboarding-step ${documents.length > 0 ? "dv-onboarding-step--done" : ""}`}>
-                <div className="dv-onboarding-step-indicator">
-                  {documents.length > 0 ? <CheckCircle2 size={18} className="dv-step-check" /> : <span className="dv-step-num">1</span>}
-                </div>
-                <div className="dv-onboarding-step-body">
-                  <strong>Upload your first document or policy</strong>
-                  <p>Store an insurance policy, warranty, or ID to activate smart extraction.</p>
-                </div>
-                {documents.length > 0 ? (
-                  <span className="dv-onboarding-step-status">Completed</span>
-                ) : (
-                  <Link to="/upload" className="dv-onboarding-step-btn">
-                    Upload Now <ArrowRight size={13} />
-                  </Link>
-                )}
-              </div>
-
-              {/* Step 2 */}
-              <div className={`dv-onboarding-step ${deadlines.length > 0 ? "dv-onboarding-step--done" : ""}`}>
-                <div className="dv-onboarding-step-indicator">
-                  {deadlines.length > 0 ? <CheckCircle2 size={18} className="dv-step-check" /> : <span className="dv-step-num">2</span>}
-                </div>
-                <div className="dv-onboarding-step-body">
-                  <strong>Review renewal deadlines & reminders</strong>
-                  <p>Never miss a policy expiry, PUC renewal, or warranty deadline.</p>
-                </div>
-                {deadlines.length > 0 ? (
-                  <span className="dv-onboarding-step-status">Active</span>
-                ) : (
-                  <Link to="/deadlines" className="dv-onboarding-step-btn">
-                    View Deadlines <ArrowRight size={13} />
-                  </Link>
-                )}
-              </div>
-
-              {/* Step 3 */}
-              <div className="dv-onboarding-step">
-                <div className="dv-onboarding-step-indicator">
-                  <span className="dv-step-num">3</span>
-                </div>
-                <div className="dv-onboarding-step-body">
-                  <strong>Ask AI questions about your policies</strong>
-                  <p>Get instant answers about coverage, limits, or validity with source citations.</p>
-                </div>
-                <Link to="/ask-ai" className="dv-onboarding-step-btn">
-                  Ask AI <Sparkles size={13} />
-                </Link>
-              </div>
+          <div className="dv-search-suggestions">
+            <span className="dv-search-suggestions__label">Try asking:</span>
+            <div className="dv-search-chips">
+              {SUGGESTED_COPILOT_QUESTIONS.map((question, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className="dv-search-chip"
+                  onClick={() => handleChipClick(question)}
+                >
+                  <Search size={12} className="dv-search-chip__icon" />
+                  <span>{question}</span>
+                </button>
+              ))}
             </div>
           </div>
-        )}
+        </section>
 
-        {/* Mobile & Tablet Native App Quick Action Pills */}
-        <div className="dv-mobile-quick-actions">
-          <Link to="/upload" className="dv-mobile-quick-btn dv-mobile-quick-btn--primary">
-            <UploadCloud size={16} />
-            <span>Upload File</span>
-          </Link>
-          <Link to="/ask-ai" className="dv-mobile-quick-btn dv-mobile-quick-btn--dark">
-            <Sparkles size={16} />
-            <span>Ask Copilot</span>
-          </Link>
-          <Link to="/documents" className="dv-mobile-quick-btn dv-mobile-quick-btn--outline">
-            <FileText size={16} />
-            <span>All Documents</span>
-          </Link>
-        </div>
-
-        {/* Urgent Renewal Alert Banner */}
+        {/* Section 3: Important Reminders / Needs Attention */}
         {urgentDeadlines.length > 0 && (
-          <div className="dv-alert-banner dv-alert-banner--warning">
+          <section className="dv-alert-banner dv-alert-banner--warning" aria-label="Urgent Reminders">
             <div className="dv-alert-banner__icon-box">
-              <AlertTriangle size={20} color="#DC2626" />
+              <AlertTriangle size={20} />
             </div>
             <div className="dv-alert-banner__text">
               <h4>Renewal Attention Required</h4>
@@ -276,116 +227,79 @@ export default function HomePage() {
                 Review Deadlines
               </Button>
             </Link>
-          </div>
+          </section>
         )}
 
-        {/* Section B: Overview Metrics Grid */}
-        <div className="dv-stats-grid">
-          <Card padding="md" className="dv-stat-card dv-stat-card--blue">
-            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--blue">
-              <FileText size={22} />
+        {/* Section 4: Vault Overview Statistics */}
+        <section className="dv-stats-grid" aria-label="Vault Overview Statistics">
+          <Card padding="md" className="dv-stat-card">
+            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--primary">
+              <FileText size={20} />
             </div>
             <div className="dv-stat-card__meta">
               <span className="dv-stat-card__label">Total Documents</span>
               <span className="dv-stat-card__value">
-                {loading ? <Skeleton width="60px" height="28px" /> : documents.length}
+                {loading ? <Skeleton width="48px" height="28px" /> : documents.length}
               </span>
-              <span className="dv-stat-card__sub">Encrypted & Indexed</span>
+              <span className="dv-stat-card__sub">Stored & Indexed</span>
             </div>
           </Card>
 
-          <Card padding="md" className="dv-stat-card dv-stat-card--amber">
-            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--amber">
-              <Calendar size={22} />
+          <Card padding="md" className="dv-stat-card">
+            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--success">
+              <Lock size={20} />
+            </div>
+            <div className="dv-stat-card__meta">
+              <span className="dv-stat-card__label">Private Documents</span>
+              <span className="dv-stat-card__value">
+                {loading ? <Skeleton width="48px" height="28px" /> : privateDocsCount}
+              </span>
+              <span className="dv-stat-card__sub">Zero External Access</span>
+            </div>
+          </Card>
+
+          <Card padding="md" className="dv-stat-card">
+            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--info">
+              <Share2 size={20} />
+            </div>
+            <div className="dv-stat-card__meta">
+              <span className="dv-stat-card__label">Shared Documents</span>
+              <span className="dv-stat-card__value">
+                {loading ? <Skeleton width="48px" height="28px" /> : sharedDocsCount}
+              </span>
+              <span className="dv-stat-card__sub">With Authorized Members</span>
+            </div>
+          </Card>
+
+          <Card padding="md" className="dv-stat-card">
+            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--warning">
+              <Calendar size={20} />
             </div>
             <div className="dv-stat-card__meta">
               <span className="dv-stat-card__label">Upcoming Deadlines</span>
               <span className="dv-stat-card__value">
-                {loading ? <Skeleton width="60px" height="28px" /> : deadlines.length}
+                {loading ? <Skeleton width="48px" height="28px" /> : deadlines.length}
               </span>
-              <span className="dv-stat-card__sub">{urgentDeadlines.length > 0 ? `${urgentDeadlines.length} urgent action(s)` : "Monitored on schedule"}</span>
+              <span className="dv-stat-card__sub">
+                {urgentDeadlines.length > 0 ? `${urgentDeadlines.length} urgent action(s)` : "Monitored on schedule"}
+              </span>
             </div>
           </Card>
+        </section>
 
-          <Card padding="md" className="dv-stat-card dv-stat-card--emerald">
-            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--emerald">
-              <Layers size={22} />
-            </div>
-            <div className="dv-stat-card__meta">
-              <span className="dv-stat-card__label">Connected Assets</span>
-              <span className="dv-stat-card__value">
-                {loading ? <Skeleton width="60px" height="28px" /> : assets.length}
-              </span>
-              <span className="dv-stat-card__sub">Vehicles & Properties</span>
-            </div>
-          </Card>
-
-          <Card padding="md" className="dv-stat-card dv-stat-card--purple">
-            <div className="dv-stat-card__icon-box dv-stat-card__icon-box--purple">
-              <CheckCircle2 size={22} />
-            </div>
-            <div className="dv-stat-card__meta">
-              <span className="dv-stat-card__label">Needs Review</span>
-              <span className="dv-stat-card__value">
-                {loading ? <Skeleton width="60px" height="28px" /> : reviewQueue.length}
-              </span>
-              <span className="dv-stat-card__sub">{reviewQueue.length > 0 ? "Requires confirmation" : "100% verified"}</span>
-            </div>
-          </Card>
-        </div>
-
-        {/* Section D: AI Copilot Panel */}
-        <div className="dv-ai-copilot-card">
-          <div className="dv-ai-copilot-card__header">
-            <div className="dv-ai-copilot-card__icon">
-              <Sparkles size={22} color="#FFFFFF" />
-            </div>
-            <div className="dv-ai-copilot-card__titles">
-              <h3 className="dv-ai-copilot-card__title">Your Documents. One Intelligent Assistant.</h3>
-              <p className="dv-ai-copilot-card__desc">
-                Ask questions and get answers grounded strictly in your personal vault. Zero training, zero leakage.
-              </p>
-            </div>
-            <div className="dv-ai-copilot-card__cta">
-              <Link to="/ask-ai">
-                <Button variant="secondary" size="md" icon={ArrowRight} iconPosition="right">
-                  Open Copilot
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          <div className="dv-ai-copilot-card__suggestions">
-            <span className="dv-ai-suggestions-label">Try asking:</span>
-            <div className="dv-ai-chips">
-              {SUGGESTED_COPILOT_QUESTIONS.map((question, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className="dv-ai-chip"
-                  onClick={() => navigate(`/ask-ai?q=${encodeURIComponent(question)}`)}
-                >
-                  <Sparkles size={12} className="dv-ai-chip__icon" />
-                  <span>{question}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Section F: Extraction Review Queue (Key Product Differentiator) */}
+        {/* Section: Extraction Review Queue if flagged */}
         {reviewQueue.length > 0 && (
-          <div className="dv-review-queue-section">
-            <div className="dv-dash-pane__header">
-              <div className="dv-dash-pane__title-wrap">
-                <div className="dv-review-pill">Attention Needed</div>
-                <h3 className="dv-dash-pane__title">Documents Needing Review</h3>
-                <p className="dv-dash-pane__subtitle">
-                  Important details flagged for your quick confirmation.
+          <section className="dv-review-queue-section" aria-label="Review Queue">
+            <div className="dv-section-header">
+              <div className="dv-section-header__title-wrap">
+                <span className="dv-badge dv-badge--warning">Action Needed</span>
+                <h3 className="dv-section-header__title">Fields Requiring Confirmation</h3>
+                <p className="dv-section-header__subtitle">
+                  AI extracted these values with lower confidence. Confirm or correct them in one tap.
                 </p>
               </div>
-              <Link to="/documents" className="dv-dash-pane__action">
-                View All Documents <ChevronRight size={16} />
+              <Link to="/documents" className="dv-section-header__action">
+                View All <ChevronRight size={16} />
               </Link>
             </div>
 
@@ -406,7 +320,7 @@ export default function HomePage() {
                           <span className="dv-review-card__category">{doc.category || "General"}</span>
                         </div>
                       </div>
-                      <Badge variant="warning" size="sm">Verification Required</Badge>
+                      <Badge variant="warning" size="sm">Review</Badge>
                     </div>
 
                     {sampleField ? (
@@ -422,7 +336,7 @@ export default function HomePage() {
                         </div>
                         {sampleField.evidence && (
                           <div className="dv-review-field-evidence">
-                            "{sampleField.evidence.slice(0, 90)}..."
+                            "{sampleField.evidence.slice(0, 80)}..."
                           </div>
                         )}
                       </div>
@@ -443,19 +357,19 @@ export default function HomePage() {
                 );
               })}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Section E & G: Dual Column (Recent Documents & Renewal Attention) */}
+        {/* Section 5: Recent Documents & Upcoming Expirations */}
         <div className="dv-dash-dual-grid">
           {/* Left Column: Recent Documents */}
-          <div className="dv-dash-pane">
-            <div className="dv-dash-pane__header">
+          <section className="dv-dash-pane" aria-label="Recent Documents">
+            <div className="dv-section-header">
               <div>
-                <h3 className="dv-dash-pane__title">Recent Vault Documents</h3>
-                <p className="dv-dash-pane__subtitle">Latest policies, contracts, and proofs</p>
+                <h3 className="dv-section-header__title">Recent Documents</h3>
+                <p className="dv-section-header__subtitle">Recently added to your vault</p>
               </div>
-              <Link to="/documents" className="dv-dash-pane__action">
+              <Link to="/documents" className="dv-section-header__action">
                 View All <ChevronRight size={16} />
               </Link>
             </div>
@@ -468,8 +382,8 @@ export default function HomePage() {
               </div>
             ) : recentDocs.length === 0 ? (
               <EmptyState
-                title="Your vault is currently empty"
-                description="Upload your insurance policies, warranty cards, or identity proofs to enable automated OCR extraction."
+                title="Your vault is empty"
+                description="Upload your personal documents, insurance policies, or IDs to get started."
                 actionLabel="Upload First Document"
                 onAction={() => navigate("/upload")}
               />
@@ -519,16 +433,16 @@ export default function HomePage() {
                 ))}
               </div>
             )}
-          </div>
+          </section>
 
           {/* Right Column: Renewal Attention (Deadlines) */}
-          <div className="dv-dash-pane">
-            <div className="dv-dash-pane__header">
+          <section className="dv-dash-pane" aria-label="Upcoming Expirations">
+            <div className="dv-section-header">
               <div>
-                <h3 className="dv-dash-pane__title">Renewal Attention</h3>
-                <p className="dv-dash-pane__subtitle">Upcoming policy and warranty expirations</p>
+                <h3 className="dv-section-header__title">Upcoming Expirations</h3>
+                <p className="dv-section-header__subtitle">Monitored policy and warranty dates</p>
               </div>
-              <Link to="/deadlines" className="dv-dash-pane__action">
+              <Link to="/deadlines" className="dv-section-header__action">
                 View Calendar <ChevronRight size={16} />
               </Link>
             </div>
@@ -541,7 +455,7 @@ export default function HomePage() {
               </div>
             ) : deadlines.length === 0 ? (
               <Card padding="lg" className="dv-empty-card">
-                <Clock size={32} color="#94A3B8" />
+                <Clock size={32} className="dv-empty-card__icon" />
                 <p className="dv-empty-card__title">No pending renewal deadlines</p>
                 <span className="dv-empty-card__desc">
                   Upload contracts or bills to automatically extract expiry schedules.
@@ -569,7 +483,7 @@ export default function HomePage() {
                 ))}
               </div>
             )}
-          </div>
+          </section>
         </div>
 
       </div>

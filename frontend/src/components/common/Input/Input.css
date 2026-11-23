@@ -27,7 +27,7 @@
 
 .dv-input-field:focus-within {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(1, 90, 71, 0.15);
+  box-shadow: 0 0 0 3px var(--color-focus-ring, rgba(53, 106, 230, 0.24));
 }
 
 .dv-input-field--error {
@@ -35,7 +35,7 @@
 }
 
 .dv-input-field--error:focus-within {
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+  box-shadow: 0 0 0 3px rgba(214, 69, 69, 0.24);
 }
 
 .dv-input-icon {

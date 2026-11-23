@@ -3,10 +3,10 @@
   align-items: center;
   gap: var(--space-1);
   font-family: var(--font-body);
-  font-weight: var(--font-semibold);
+  font-weight: 550;
   border-radius: var(--radius-full);
   line-height: 1;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
 .dv-badge--sm {
@@ -15,12 +15,12 @@
 }
 
 .dv-badge--md {
-  padding: 5px 12px;
+  padding: 4px 10px;
   font-size: var(--text-xs);
 }
 
 .dv-badge--default {
-  background-color: var(--color-surface-hover);
+  background-color: var(--color-surface-secondary);
   color: var(--color-text-secondary);
   border: 1px solid var(--color-border);
 }
@@ -28,35 +28,35 @@
 .dv-badge--primary {
   background-color: var(--color-primary-subtle);
   color: var(--color-primary);
-  border: 1px solid rgba(1, 90, 71, 0.25);
+  border: 1px solid var(--color-accent-border, rgba(53, 106, 230, 0.25));
 }
 
 .dv-badge--accent {
-  background-color: var(--color-accent-subtle);
-  color: var(--color-primary-light);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent-border);
 }
 
 .dv-badge--ai {
-  background: linear-gradient(135deg, rgba(1, 90, 71, 0.1) 0%, rgba(16, 185, 129, 0.15) 100%);
-  color: var(--color-primary);
-  border: 1px solid rgba(1, 90, 71, 0.3);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent-border);
 }
 
 .dv-badge--success {
-  background-color: var(--color-success-subtle);
+  background-color: var(--color-success-bg);
   color: var(--color-success);
-  border: 1px solid rgba(5, 150, 105, 0.25);
+  border: 1px solid var(--color-success-border);
 }
 
 .dv-badge--warning {
-  background-color: var(--color-warning-subtle);
+  background-color: var(--color-warning-bg);
   color: var(--color-warning);
-  border: 1px solid rgba(217, 119, 6, 0.25);
+  border: 1px solid var(--color-warning-border);
 }
 
 .dv-badge--danger {
-  background-color: var(--color-danger-subtle);
+  background-color: var(--color-danger-bg);
   color: var(--color-danger);
-  border: 1px solid rgba(220, 38, 38, 0.25);
+  border: 1px solid var(--color-danger-border);
 }

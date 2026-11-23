@@ -26,12 +26,12 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #EDF6FF;
-  color: #0070F2;
-  border: 1.5px solid #FFE4DF;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-border);
   align-items: center;
   justify-content: center;
-  font-family: 'Manrope', sans-serif;
+  font-family: inherit;
   font-size: 13px;
   font-weight: 800;
   flex-shrink: 0;
@@ -84,18 +84,18 @@
 
 .dv-app-header__user-pill:hover {
   background-color: var(--color-surface-hover);
-  border-color: #0071E3;
+  border-color: var(--color-primary);
 }
 
 .dv-app-header__shield-icon {
-  color: #0071E3;
+  color: var(--color-primary);
 }
 
 .dv-app-header__user-email {
   font-size: 12px;
   font-weight: 600;
   color: var(--color-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", monospace;
+  font-family: var(--font-mono, monospace);
   max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -106,8 +106,8 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  background: rgba(0, 113, 227, 0.1);
-  color: #0071E3;
+  background: var(--color-accent-soft);
+  color: var(--color-primary);
   padding: 1px 6px;
   border-radius: 9999px;
   font-size: 10.5px;
@@ -183,7 +183,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0071E3, #4F46E5);
+  background: var(--color-primary);
   color: #FFFFFF;
   display: flex;
   align-items: center;
@@ -201,7 +201,7 @@
 }
 
 .dv-header-meta strong {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   color: var(--color-text-primary);
@@ -219,14 +219,14 @@
 }
 
 .dv-current-check {
-  color: #0071E3;
+  color: var(--color-primary);
 }
 
 .dv-switch-pill {
   font-size: 10px;
   font-weight: 700;
-  color: #0071E3;
-  background: rgba(0, 113, 227, 0.1);
+  color: var(--color-primary);
+  background: var(--color-accent-soft);
   padding: 2px 7px;
   border-radius: 6px;
 }
@@ -247,15 +247,15 @@
   border-radius: 8px;
   background: transparent;
   border: none;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-family: inherit;
   font-size: 11.5px;
   font-weight: 600;
-  color: #0071E3;
+  color: var(--color-primary);
   cursor: pointer;
 }
 
 .dv-header-add-session-btn:hover {
-  background-color: rgba(0, 113, 227, 0.05);
+  background-color: var(--color-accent-soft);
 }
 
 /* Mobile & Tablet Native App Bar */

@@ -31,6 +31,8 @@ PROGRESS_REPORT.md
 progress-report.md
 PROGRESS_REPORT*
 progress_report*
+FRONTEND_*.md
+FRONTEND_*.txt
 
 # OCR Models & Tesseract Cache
 *.traineddata

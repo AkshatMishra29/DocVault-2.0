@@ -1,6 +1,6 @@
 /* ==========================================================================
-   DOCVAULT VAULT OVERVIEW DASHBOARD (APPLE ZEN 3D SPECIFICATION)
-   Unified Knowledge Command • Spatial Glassmorphism • Responsive Layout
+   DOCVAULT DASHBOARD STYLES (MODERN, CLEAN, TRUSTWORTHY)
+   Simple outside. Powerful inside. Secure by design.
    ========================================================================== */
 
 .dv-dashboard {
@@ -15,48 +15,208 @@
 .dv-dashboard__content {
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  padding-top: 16px;
-  padding-bottom: 48px;
+  gap: var(--space-6);
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-10);
   box-sizing: border-box;
 }
 
-/* ==========================================================================
-   1. ALERT BANNERS (APPLE GLASS STATUS CAPSULES)
-   ========================================================================== */
+/* ── Section 1: Compact Welcome Section ───────────────────────────────────── */
+.dv-welcome-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-8);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
+}
 
+.dv-welcome-content {
+  flex: 1;
+}
+
+.dv-welcome-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-1) 0;
+  letter-spacing: -0.015em;
+  line-height: var(--leading-tight);
+}
+
+.dv-welcome-desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: var(--leading-normal);
+}
+
+.dv-welcome-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* ── Section 2: Prominent Natural Language Search Bar ─────────────────────── */
+.dv-search-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6) var(--space-8);
+  box-shadow: var(--shadow-xs);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
+}
+
+.dv-search-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-3);
+  transition: all var(--transition-fast);
+}
+
+.dv-search-box:focus-within {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 3px var(--color-primary-focus);
+}
+
+.dv-search-box__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  padding-left: var(--space-2);
+}
+
+.dv-search-box__input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  padding: var(--space-2) 0;
+  outline: none;
+}
+
+.dv-search-box__input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.dv-search-box__submit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 16px;
+  background: var(--color-primary);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.dv-search-box__submit:hover {
+  background: var(--color-primary-hover);
+}
+
+.dv-search-suggestions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.dv-search-suggestions__label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.dv-search-chips {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.dv-search-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 5px 12px;
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dv-search-chip:hover {
+  background: var(--color-accent-soft);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.dv-search-chip__icon {
+  color: var(--color-text-muted);
+}
+
+.dv-search-chip:hover .dv-search-chip__icon {
+  color: var(--color-primary);
+}
+
+/* ── Section 3: Alert Banners ─────────────────────────────────────────────── */
 .dv-alert-banner {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px 22px;
-  border-radius: 18px;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-xs);
+  transition: background-color var(--transition-normal);
 }
 
 .dv-alert-banner--warning {
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-left: 4px solid #F59E0B;
-  background: linear-gradient(90deg, rgba(254, 243, 199, 0.45) 0%, rgba(255, 255, 255, 0.95) 100%);
-  box-shadow: 0 8px 24px -4px rgba(245, 158, 11, 0.12);
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
 }
 
 .dv-alert-banner--danger {
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-left: 4px solid #EF4444;
-  background: linear-gradient(90deg, rgba(254, 242, 242, 0.5) 0%, rgba(255, 255, 255, 0.95) 100%);
-  box-shadow: 0 8px 24px -4px rgba(239, 68, 68, 0.12);
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
 }
 
 .dv-alert-banner__icon-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: rgba(239, 68, 68, 0.12);
-  color: #EF4444;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,8 +224,11 @@
 }
 
 .dv-alert-banner--warning .dv-alert-banner__icon-box {
-  background: rgba(245, 158, 11, 0.14);
-  color: #D97706;
+  color: var(--color-warning);
+}
+
+.dv-alert-banner--danger .dv-alert-banner__icon-box {
+  color: var(--color-danger);
 }
 
 .dv-alert-banner__text {
@@ -73,256 +236,71 @@
 }
 
 .dv-alert-banner__text h4 {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
   color: var(--color-text-primary);
-  margin: 0 0 3px 0;
+  margin: 0 0 2px 0;
 }
 
 .dv-alert-banner__text p {
-  font-size: 13px;
+  font-size: var(--text-xs);
   color: var(--color-text-secondary);
   margin: 0;
-  line-height: 1.45;
 }
 
-/* ==========================================================================
-   2. HERO COMMAND BANNER (APPLE ZEN 3D SPATIAL SURFACE)
-   ========================================================================== */
-
-.dv-dash-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 32px;
-  background: 
-    radial-gradient(ellipse at 88% 18%, rgba(0, 113, 227, 0.08) 0%, transparent 55%),
-    radial-gradient(ellipse at 12% 82%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
-    var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 22px;
-  padding: 30px 36px;
-  box-shadow: var(--shadow-sm);
-  position: relative;
-  overflow: hidden;
-  transition: background-color 0.25s ease, border-color 0.25s ease;
-}
-
-.dv-dash-hero::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent 0%, #0071E3 35%, #10B981 70%, transparent 100%);
-  opacity: 0.6;
-}
-
-.dv-dash-hero__info {
-  flex: 1;
-  max-width: 720px;
-}
-
-.dv-dash-hero__kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 12px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 113, 227, 0.2);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #0071E3;
-  box-shadow: 0 2px 10px rgba(0, 113, 227, 0.08);
-  margin-bottom: 14px;
-}
-
-.dv-dash-hero__kicker-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: #0071E3;
-  box-shadow: 0 0 8px rgba(0, 113, 227, 0.7);
-  animation: dvPulseGlow 2.5s infinite;
-}
-
-@keyframes dvPulseGlow {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.15); }
-}
-
-.dv-dash-hero__title {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-  font-size: clamp(22px, 2.6vw, 28px);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  letter-spacing: -0.025em;
-  margin: 0 0 8px 0;
-  line-height: 1.2;
-}
-
-.dv-dash-hero__title-accent {
-  background: linear-gradient(135deg, #0071E3 0%, #4F46E5 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: inline-block;
-}
-
-.dv-dash-hero__desc {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  line-height: 1.55;
-  margin: 0;
-}
-
-.dv-dash-hero__actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.dv-dash-hero__actions a {
-  text-decoration: none;
-  display: inline-flex;
-}
-
-/* ==========================================================================
-   3. MOBILE QUICK ACTION PILLS (TOUCH ERGONOMIC)
-   ========================================================================== */
-
-.dv-mobile-quick-actions {
-  display: none;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.dv-mobile-quick-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 12.5px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-}
-
-.dv-mobile-quick-btn:active {
-  transform: scale(0.96);
-}
-
-.dv-mobile-quick-btn--primary {
-  background: linear-gradient(135deg, #0071E3 0%, #0056B3 100%);
-  color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.28);
-}
-
-.dv-mobile-quick-btn--dark {
-  background: #0F172A;
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.dv-mobile-quick-btn--outline {
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-}
-
-/* ==========================================================================
-   4. METRICS STATS GRID (APPLE ZEN TITANIUM 3D CARDS)
-   ========================================================================== */
-
+/* ── Section 4: Vault Overview Statistics ─────────────────────────────────── */
 .dv-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: var(--space-4);
 }
 
 .dv-stat-card {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
   background: var(--color-surface);
-  border-radius: 20px;
   border: 1px solid var(--color-border);
-  padding: 22px 24px;
-  box-shadow: var(--shadow-xs);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  transition: all var(--transition-fast);
 }
-
-.dv-stat-card::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: transparent;
-  transition: background-color 0.25s ease;
-}
-
-.dv-stat-card--blue::after { background: #0071E3; }
-.dv-stat-card--amber::after { background: #F59E0B; }
-.dv-stat-card--emerald::after { background: #10B981; }
-.dv-stat-card--purple::after { background: #8B5CF6; }
 
 .dv-stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 30px -4px rgba(15, 23, 42, 0.08);
-  border-color: rgba(0, 113, 227, 0.25);
+  transform: translateY(-2px);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-sm);
 }
 
 .dv-stat-card__icon-box {
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: transform 0.25s ease;
 }
 
-.dv-stat-card:hover .dv-stat-card__icon-box {
-  transform: scale(1.06);
+.dv-stat-card__icon-box--primary {
+  background: var(--color-accent-soft);
+  color: var(--color-primary);
 }
 
-.dv-stat-card__icon-box--blue,
-.dv-stat-card__icon-box--brand {
-  background: rgba(0, 113, 227, 0.1);
-  color: #0071E3;
+.dv-stat-card__icon-box--success {
+  background: var(--color-success-soft);
+  color: var(--color-success);
 }
 
-.dv-stat-card__icon-box--amber {
-  background: rgba(245, 158, 11, 0.12);
-  color: #D97706;
+.dv-stat-card__icon-box--info {
+  background: rgba(53, 106, 230, 0.1);
+  color: var(--color-primary);
 }
 
-.dv-stat-card__icon-box--emerald {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-}
-
-.dv-stat-card__icon-box--purple {
-  background: rgba(139, 92, 246, 0.12);
-  color: #7C3AED;
+.dv-stat-card__icon-box--warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
 }
 
 .dv-stat-card__meta {
@@ -332,402 +310,212 @@
 }
 
 .dv-stat-card__label {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
   color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 2px;
 }
 
 .dv-stat-card__value {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  font-size: 28px;
-  font-weight: 800;
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
   color: var(--color-text-primary);
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  line-height: var(--leading-tight);
+  margin: 2px 0;
 }
 
 .dv-stat-card__sub {
-  font-size: 11.5px;
-  color: #94A3B8;
-  font-weight: 500;
-  margin-top: 3px;
+  font-size: 11px;
+  color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* ==========================================================================
-   5. AI COPILOT SPATIAL CARD (APPLE VISION OBSIDIAN)
-   ========================================================================== */
-
-.dv-ai-copilot-card {
-  background: linear-gradient(135deg, #090E17 0%, #0F172A 50%, #1E293B 100%);
-  border-radius: 22px;
-  padding: 28px 34px;
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 
-    0 16px 40px -6px rgba(15, 23, 42, 0.35),
-    0 2px 10px rgba(0, 113, 227, 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-.dv-ai-copilot-card::before {
-  content: "";
-  position: absolute;
-  top: -30%;
-  right: -10%;
-  width: 380px;
-  height: 380px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 113, 227, 0.28) 0%, transparent 65%);
-  pointer-events: none;
-}
-
-.dv-ai-copilot-card::after {
-  content: "";
-  position: absolute;
-  bottom: -40%;
-  left: 20%;
-  width: 320px;
-  height: 320px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.16) 0%, transparent 60%);
-  pointer-events: none;
-}
-
-.dv-ai-copilot-card__header {
+/* ── Section Headers ──────────────────────────────────────────────────────── */
+.dv-section-header {
   display: flex;
-  align-items: center;
-  gap: 18px;
-  margin-bottom: 20px;
-  position: relative;
-  z-index: 2;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  gap: var(--space-4);
 }
 
-.dv-ai-copilot-card__icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #0071E3 0%, #4F46E5 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 18px rgba(0, 113, 227, 0.45);
-  flex-shrink: 0;
-}
-
-.dv-ai-copilot-card__titles {
-  flex: 1;
-}
-
-.dv-ai-copilot-card__title {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  font-size: 19px;
-  font-weight: 700;
-  color: #FFFFFF;
-  letter-spacing: -0.02em;
-  margin: 0 0 3px 0;
-}
-
-.dv-ai-copilot-card__desc {
-  font-size: 13.5px;
-  color: rgba(248, 250, 252, 0.75);
+.dv-section-header__title {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
   margin: 0;
-  line-height: 1.45;
 }
 
-.dv-ai-copilot-card__cta {
-  margin-left: auto;
-  flex-shrink: 0;
+.dv-section-header__subtitle {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin: 2px 0 0 0;
 }
 
-.dv-ai-copilot-card__cta a {
-  text-decoration: none;
-}
-
-.dv-ai-copilot-card__suggestions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  position: relative;
-  z-index: 2;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.dv-ai-suggestions-label {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: rgba(248, 250, 252, 0.65);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.dv-ai-chips {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.dv-ai-chip {
+.dv-section-header__action {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #F8FAFC;
-  padding: 6px 14px;
-  border-radius: 9999px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  gap: 4px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  white-space: nowrap;
 }
 
-.dv-ai-chip:hover {
-  background: rgba(0, 113, 227, 0.35);
-  border-color: rgba(77, 177, 255, 0.7);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.3);
+.dv-section-header__action:hover {
+  color: var(--color-primary-hover);
 }
 
-.dv-ai-chip__icon {
-  color: #38BDF8;
-}
-
-/* ==========================================================================
-   6. EXTRACTION REVIEW QUEUE SECTION
-   ========================================================================== */
-
+/* ── Extraction Review Queue Section ──────────────────────────────────────── */
 .dv-review-queue-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.dv-review-pill {
-  display: inline-block;
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  background: rgba(245, 158, 11, 0.12);
-  color: #D97706;
-  border: 1px solid rgba(245, 158, 11, 0.28);
-  margin-bottom: 6px;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
 }
 
 .dv-review-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
 }
 
 .dv-review-card {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-top: 3px solid #F59E0B;
-  border-radius: 18px;
-  padding: 18px 20px;
-  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03);
-  transition: all 0.25s ease;
-}
-
-.dv-review-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px -2px rgba(15, 23, 42, 0.06);
+  gap: var(--space-3);
 }
 
 .dv-review-card__header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
 }
 
 .dv-review-card__doc-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
   min-width: 0;
 }
 
 .dv-review-card__doc-title {
-  font-size: 13.5px;
-  font-weight: 700;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
   color: var(--color-text-primary);
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 150px;
-  margin: 0;
+  max-width: 140px;
 }
 
 .dv-review-card__category {
   font-size: 11px;
   color: var(--color-text-secondary);
-  display: block;
 }
 
 .dv-review-card__field-box {
   background: var(--color-surface-secondary);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 14px;
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .dv-review-field-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
 }
 
 .dv-review-field-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 11px;
+  font-weight: var(--font-semibold);
   color: var(--color-text-secondary);
+  text-transform: capitalize;
 }
 
 .dv-review-field-val {
-  font-size: 13.5px;
-  font-weight: 700;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
   color: var(--color-text-primary);
-  word-break: break-word;
 }
 
 .dv-review-field-evidence {
   font-size: 11px;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   font-style: italic;
-  margin-top: 6px;
-  line-height: 1.35;
 }
 
 .dv-review-card__footer {
   margin-top: auto;
-  padding-top: 8px;
 }
 
-.dv-review-card__footer a {
-  display: block;
-  width: 100%;
-  text-decoration: none;
-}
-
-/* ==========================================================================
-   7. DUAL COLUMN SECTION (RECENT DOCUMENTS & RENEWAL ATTENTION)
-   ========================================================================== */
-
+/* ── Section 5: Dual Grid (Recent Documents + Deadlines) ──────────────────── */
 .dv-dash-dual-grid {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 .dv-dash-pane {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.dv-dash-pane__header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 0 4px;
-}
-
-.dv-dash-pane__title {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  letter-spacing: -0.02em;
-  margin: 0 0 2px 0;
-}
-
-.dv-dash-pane__subtitle {
-  font-size: 12.5px;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-.dv-dash-pane__action {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #0071E3;
-  text-decoration: none;
-  transition: transform 0.2s ease, color 0.2s ease;
-}
-
-.dv-dash-pane__action:hover {
-  color: #0056B3;
-  transform: translateX(3px);
-}
-
-/* Table Card: Recent Documents */
-.dv-doc-table-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 20px;
-  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.03);
-  overflow: hidden;
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-xs);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
+}
+
+.dv-doc-table-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .dv-doc-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--color-border-subtle);
-  transition: all 0.2s ease;
+  gap: var(--space-3);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-secondary);
   cursor: pointer;
-  background: var(--color-surface);
-}
-
-.dv-doc-row:last-child {
-  border-bottom: none;
+  transition: all var(--transition-fast);
 }
 
 .dv-doc-row:hover {
   background: var(--color-surface-hover);
+  border-color: var(--color-border-strong);
+  transform: translateX(2px);
 }
 
 .dv-doc-row__details {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
 }
 
 .dv-doc-row__title {
-  display: block;
-  font-size: 13.5px;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
   color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -735,77 +523,69 @@
 }
 
 .dv-doc-row__meta {
-  display: block;
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--color-text-secondary);
-  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dv-doc-row__badges {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
 .dv-doc-row__arrow {
-  color: #94A3B8;
-  transition: transform 0.2s ease, color 0.2s ease;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
 }
 
 .dv-doc-row:hover .dv-doc-row__arrow {
-  color: #0071E3;
+  color: var(--color-primary);
   transform: translateX(3px);
 }
 
-/* List Card: Renewal Deadlines */
+/* ── Deadlines / Expirations List ─────────────────────────────────────────── */
 .dv-deadline-list {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.03);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .dv-deadline-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--color-border-subtle);
-  transition: background-color 0.2s ease;
-  background: var(--color-surface);
-}
-
-.dv-deadline-row:last-child {
-  border-bottom: none;
-}
-
-.dv-deadline-row:hover {
-  background: var(--color-surface-hover);
+  gap: var(--space-3);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-secondary);
 }
 
 .dv-deadline-row__left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   min-width: 0;
 }
 
 .dv-deadline-row__indicator {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background-color: #F59E0B;
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+  background: var(--color-warning);
   flex-shrink: 0;
 }
 
 .dv-deadline-row__title {
   display: block;
-  font-size: 13.5px;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
   color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -814,603 +594,97 @@
 
 .dv-deadline-row__date {
   display: block;
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--color-text-secondary);
-  margin-top: 1px;
 }
 
+/* ── Empty States & Skeletons ─────────────────────────────────────────────── */
 .dv-empty-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 36px 24px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.03);
+  padding: var(--space-8) var(--space-4);
+}
+
+.dv-empty-card__icon {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-3);
 }
 
 .dv-empty-card__title {
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
   color: var(--color-text-primary);
-  margin-top: 12px;
-  margin-bottom: 4px;
+  margin: 0 0 var(--space-1) 0;
 }
 
 .dv-empty-card__desc {
-  font-size: 12.5px;
+  font-size: var(--text-xs);
   color: var(--color-text-secondary);
-  max-width: 320px;
-  line-height: 1.45;
-}
-
-/* ==========================================================================
-   8. UPLOAD ENTRY POINT (INTELLIGENT INGESTION BANNER)
-   ========================================================================== */
-
-.dv-upload-entry-section {
-  width: 100%;
-}
-
-.dv-upload-entry-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 28px;
-  background: 
-    radial-gradient(ellipse at 95% 50%, rgba(0, 113, 227, 0.08) 0%, transparent 60%),
-    radial-gradient(ellipse at 5% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 55%),
-    var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  padding: 26px 32px;
-  box-shadow: var(--shadow-sm);
-  transition: background-color 0.25s ease, border-color 0.25s ease;
-}
-
-.dv-upload-entry-card__content {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.dv-upload-entry-card__icon-box {
-  width: 52px;
-  height: 52px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.12) 0%, rgba(0, 113, 227, 0.04) 100%);
-  color: #0071E3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(0, 113, 227, 0.18);
-  flex-shrink: 0;
-}
-
-.dv-upload-entry-card__title {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  font-size: 16.5px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0 0 4px 0;
-}
-
-.dv-upload-entry-card__desc {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  margin: 0;
-  line-height: 1.45;
-}
-
-.dv-upload-entry-card a {
-  text-decoration: none;
-  flex-shrink: 0;
-}
-
-/* ==========================================================================
-   9. SECURITY & TRUST PANEL (APPLE ZERO-TRUST GRID)
-   ========================================================================== */
-
-.dv-trust-panel {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 22px;
-  padding: 30px 36px;
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.03);
-}
-
-.dv-trust-panel__header {
-  margin-bottom: 24px;
-}
-
-.dv-trust-panel__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #0071E3;
-  letter-spacing: 0.05em;
-  margin-bottom: 6px;
-}
-
-.dv-trust-panel__title {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
-.dv-trust-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 22px;
-}
-
-.dv-trust-item {
-  display: flex;
-  gap: 14px;
-}
-
-.dv-trust-item__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.dv-trust-item__icon--emerald {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-}
-
-.dv-trust-item__icon--blue {
-  background: rgba(0, 113, 227, 0.1);
-  color: #0071E3;
-}
-
-.dv-trust-item__icon--purple {
-  background: rgba(139, 92, 246, 0.12);
-  color: #7C3AED;
-}
-
-.dv-trust-item__icon--amber {
-  background: rgba(245, 158, 11, 0.12);
-  color: #D97706;
-}
-
-.dv-trust-item__content h5 {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0 0 3px 0;
-}
-
-.dv-trust-item__content p {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  line-height: 1.45;
-  margin: 0;
+  max-width: 280px;
 }
 
 .dv-skeleton-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
-/* ==========================================================================
-   10. RESPONSIVE MEDIA QUERIES (MOBILE FIRST 3D ADAPTABILITY)
-   ========================================================================== */
-
-@media (max-width: 1200px) {
+/* ── Responsive Breakpoints ──────────────────────────────────────────────── */
+@media (max-width: 1024px) {
   .dv-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .dv-trust-grid {
+
+  .dv-review-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-}
 
-@media (max-width: 992px) {
   .dv-dash-dual-grid {
     grid-template-columns: 1fr;
   }
-  
-  .dv-dash-hero {
+}
+
+@media (max-width: 768px) {
+  .dv-welcome-section {
     flex-direction: column;
     align-items: flex-start;
-    padding: 24px 28px;
+    padding: var(--space-5);
   }
 
-  .dv-dash-hero__actions {
+  .dv-welcome-actions {
     width: 100%;
+  }
+
+  .dv-welcome-actions a {
+    flex: 1;
+  }
+
+  .dv-welcome-actions button {
+    width: 100%;
+  }
+
+  .dv-search-hero {
+    padding: var(--space-5);
+  }
+
+  .dv-search-box {
     flex-wrap: wrap;
   }
 
-  .dv-upload-entry-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .dv-upload-entry-card a {
+  .dv-search-box__submit {
     width: 100%;
-  }
-
-  .dv-upload-entry-card a button {
-    width: 100%;
-  }
-
-  .dv-mobile-quick-actions {
-    display: grid;
-  }
-}
-
-@media (max-width: 680px) {
-  .dv-dashboard__content {
-    gap: 20px;
-    padding-top: 10px;
-  }
-
-  .dv-dash-hero {
-    padding: 20px;
-    border-radius: 18px;
-  }
-
-  .dv-dash-hero__actions {
-    display: none; /* Mobile uses .dv-mobile-quick-actions instead */
+    justify-content: center;
   }
 
   .dv-stats-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
   }
 
-  .dv-stat-card {
-    padding: 16px 18px;
-    border-radius: 16px;
-  }
-
-  .dv-ai-copilot-card {
-    padding: 20px;
-    border-radius: 18px;
-  }
-
-  .dv-ai-copilot-card__header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .dv-ai-copilot-card__cta {
-    margin-left: 0;
-    width: 100%;
-  }
-
-  .dv-ai-copilot-card__cta a,
-  .dv-ai-copilot-card__cta button {
-    width: 100%;
-  }
-
-  .dv-trust-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .dv-trust-panel {
-    padding: 20px;
-  }
-
-  .dv-doc-row {
-    padding: 12px 14px;
-  }
-
-  .dv-deadline-row {
-    padding: 12px 14px;
-  }
-}
-
-/* ==========================================================================
-   3-STEP GUIDED ONBOARDING CARD (PART C)
-   ========================================================================== */
-
-.dv-onboarding-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  padding: 24px 28px;
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  position: relative;
-  transition: all 0.25s ease;
-}
-
-.dv-onboarding-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.dv-onboarding-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  background: rgba(59, 130, 246, 0.12);
-  color: var(--color-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.dv-onboarding-title {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin: 0 0 4px 0;
-}
-
-.dv-onboarding-subtitle {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  margin: 0;
-  line-height: 1.45;
-}
-
-.dv-onboarding-dismiss-btn {
-  color: var(--color-text-muted);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  transition: color 0.2s ease, background 0.2s ease;
-}
-
-.dv-onboarding-dismiss-btn:hover {
-  color: var(--color-text-primary);
-  background: var(--color-surface-hover);
-}
-
-.dv-onboarding-steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.dv-onboarding-step {
-  display: flex;
-  flex-direction: column;
-  background: var(--color-surface-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  padding: 16px;
-  gap: 10px;
-  transition: all 0.2s ease;
-}
-
-.dv-onboarding-step--done {
-  border-color: rgba(34, 197, 94, 0.35);
-  background: rgba(34, 197, 94, 0.05);
-}
-
-.dv-onboarding-step-indicator {
-  display: flex;
-  align-items: center;
-}
-
-.dv-step-num {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--color-primary-subtle);
-  color: var(--color-primary);
-  font-weight: 700;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dv-step-check {
-  color: #22C55E;
-}
-
-.dv-onboarding-step-body strong {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: 3px;
-}
-
-.dv-onboarding-step-body p {
-  font-size: 11.5px;
-  color: var(--color-text-secondary);
-  margin: 0;
-  line-height: 1.4;
-}
-
-.dv-onboarding-step-status {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: #22C55E;
-  margin-top: auto;
-}
-
-.dv-onboarding-step-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-primary);
-  text-decoration: none;
-  margin-top: auto;
-  transition: transform 0.2s ease;
-}
-
-.dv-onboarding-step-btn:hover {
-  transform: translateX(3px);
-}
-
-@media (max-width: 900px) {
-  .dv-onboarding-steps {
+  .dv-review-grid {
     grid-template-columns: 1fr;
   }
-}
-
-/* ==========================================================================
-   DARK MODE ADAPTATIONS (PITCH BLACK & VIBRANT ICONS)
-   ========================================================================== */
-
-[data-theme="dark"] .dv-alert-banner {
-  background: #121214;
-  border-color: #27272A;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.7);
-}
-
-[data-theme="dark"] .dv-alert-banner--warning {
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  border-left: 4px solid #F59E0B;
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.14) 0%, #121214 100%);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.8);
-}
-
-[data-theme="dark"] .dv-alert-banner--danger {
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  border-left: 4px solid #EF4444;
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.14) 0%, #121214 100%);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.8);
-}
-
-[data-theme="dark"] .dv-alert-banner__icon-box {
-  background: rgba(239, 68, 68, 0.2);
-  color: #F87171;
-}
-
-[data-theme="dark"] .dv-alert-banner--warning .dv-alert-banner__icon-box {
-  background: rgba(245, 158, 11, 0.2);
-  color: #FBBF24;
-}
-
-[data-theme="dark"] .dv-dash-hero {
-  background: 
-    radial-gradient(ellipse at 88% 18%, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse at 12% 82%, rgba(34, 197, 94, 0.08) 0%, transparent 55%),
-    #121214;
-  border-color: #27272A;
-  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.8);
-}
-
-[data-theme="dark"] .dv-dash-hero__kicker {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(59, 130, 246, 0.35);
-  color: #60A5FA;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-}
-
-[data-theme="dark"] .dv-dash-hero__kicker-dot {
-  background-color: #60A5FA;
-  box-shadow: 0 0 10px rgba(96, 165, 250, 0.8);
-}
-
-/* Stat Card Icon Boxes in Dark Mode */
-[data-theme="dark"] .dv-stat-card {
-  background: #121214;
-  border-color: #27272A;
-}
-
-[data-theme="dark"] .dv-stat-card:hover {
-  border-color: #3B82F6;
-  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.9), 0 0 16px rgba(59, 130, 246, 0.2);
-}
-
-[data-theme="dark"] .dv-stat-card__icon-box--blue,
-[data-theme="dark"] .dv-stat-card__icon-box--brand {
-  background: rgba(59, 130, 246, 0.16);
-  color: #60A5FA;
-  border: 1px solid rgba(59, 130, 246, 0.32);
-}
-
-[data-theme="dark"] .dv-stat-card__icon-box--amber {
-  background: rgba(245, 158, 11, 0.16);
-  color: #FBBF24;
-  border: 1px solid rgba(245, 158, 11, 0.32);
-}
-
-[data-theme="dark"] .dv-stat-card__icon-box--emerald {
-  background: rgba(34, 197, 94, 0.16);
-  color: #34D399;
-  border: 1px solid rgba(34, 197, 94, 0.32);
-}
-
-[data-theme="dark"] .dv-stat-card__icon-box--purple {
-  background: rgba(168, 85, 247, 0.16);
-  color: #C084FC;
-  border: 1px solid rgba(168, 85, 247, 0.32);
-}
-
-/* AI Card in Dark Mode */
-[data-theme="dark"] .dv-ai-copilot-card {
-  background: linear-gradient(135deg, #09090B 0%, #121214 50%, #18181B 100%);
-  border: 1px solid #27272A;
-  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.9);
-}
-
-/* Upload Card in Dark Mode */
-[data-theme="dark"] .dv-upload-entry-card {
-  background: 
-    radial-gradient(ellipse at 95% 50%, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse at 5% 50%, rgba(34, 197, 94, 0.08) 0%, transparent 55%),
-    #121214;
-  border-color: #27272A;
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.7);
-}
-
-[data-theme="dark"] .dv-upload-entry-card__icon-box {
-  background: rgba(59, 130, 246, 0.16);
-  color: #60A5FA;
-  border: 1px solid rgba(59, 130, 246, 0.32);
-}
-
-/* Tables and Review Cards in Dark Mode */
-[data-theme="dark"] .dv-doc-table-card,
-[data-theme="dark"] .dv-deadline-list {
-  background: #121214;
-  border-color: #27272A;
-  box-shadow: 0 4px 18px -2px rgba(0, 0, 0, 0.6);
-}
-
-[data-theme="dark"] .dv-review-card {
-  background: #121214;
-  border-color: #27272A;
-  border-top-color: #F59E0B;
-  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.6);
-}
-
-[data-theme="dark"] .dv-review-card__field-box {
-  background: #18181B;
-  border-color: #27272A;
-}
-
-[data-theme="dark"] .dv-trust-panel {
-  background: #121214;
-  border-color: #27272A;
 }

@@ -188,7 +188,7 @@
 
 .dv-doc-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(1, 90, 71, 0.35);
+  border-color: var(--color-primary);
   box-shadow: var(--shadow-md);
 }
 
@@ -408,19 +408,19 @@
   padding: 4px 10px;
   font-size: 11.5px;
   font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid rgba(1, 90, 71, 0.25);
-  background: var(--color-primary-subtle, rgba(1, 90, 71, 0.08));
-  color: var(--color-primary, #015A47);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-accent-soft);
+  color: var(--color-primary);
   cursor: pointer;
-  transition: all 0.15s ease-in-out;
+  transition: all var(--transition-fast);
   flex-shrink: 0;
 }
 
 .dv-doc-preview-pill:hover {
-  background: var(--color-primary, #015A47);
+  background: var(--color-primary);
   color: #FFFFFF;
-  border-color: var(--color-primary, #015A47);
+  border-color: var(--color-primary);
   transform: translateY(-1px);
 }
 
@@ -431,17 +431,17 @@
   padding: 4px 9px;
   font-size: 12px;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease-in-out;
+  transition: all var(--transition-fast);
 }
 
 .dv-table-preview-btn:hover {
   border-color: var(--color-primary);
-  background: var(--color-primary-subtle, rgba(1, 90, 71, 0.08));
+  background: var(--color-accent-soft);
   color: var(--color-primary);
 }
 

@@ -1,88 +1,98 @@
 :root {
-  /* SAP Horizon (Fiori) Typography & Fonts */
-  --font-display: '72', '72-Bold', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-ui: '72', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  
-  /* SAP Learning Hub & Horizon Auth Palette */
-  --color-auth-bg: #F5F6F7;
-  --color-auth-panel: #EAECEF;
-  --color-auth-panel-deep: #D5DADD;
-  --color-auth-panel-light: #F5F6F7;
-  --color-auth-text-dark: #1D2D3E;
-  --color-auth-cta: #0070F2;
-  --color-auth-cta-hover: #0064D9;
-  --color-auth-cta-active: #0051B4;
-  --color-auth-coral: #E9730C;
-  --color-auth-taupe: #89A0B4;
-  --color-auth-soft-grey: #EDEFF0;
-  --color-auth-blue: #0070F2;
-  --color-auth-muted: #556B82;
-  --color-auth-border: #D5DADD;
-  --color-auth-border-focus: #0070F2;
+  /* =========================================================================
+     DOCVAULT DESIGN SYSTEM TOKENS (LIGHT THEME - DEFAULT)
+     Principle: Simple outside. Powerful inside. Secure by design.
+     ========================================================================= */
+
+  /* Primary Brand Interaction Color */
+  --color-accent: #356AE6;
+  --color-accent-hover: #2858C7;
+  --color-accent-active: #2149A8;
+  --color-accent-soft: #EEF4FF;
+  --color-accent-border: #D5E3FF;
+  --color-focus-ring: rgba(53, 106, 230, 0.24);
+
+  /* Primary Accent Aliases for Backward Compatibility */
+  --color-primary: #356AE6;
+  --color-primary-hover: #2858C7;
+  --color-primary-active: #2149A8;
+  --color-primary-light: #5B88EE;
+  --color-primary-subtle: #EEF4FF;
+  --color-secondary: #171A21;
+  --color-secondary-hover: #282E3A;
+
+  /* Surfaces & Canvas (Light Theme) */
+  --color-background: #F7F8FA;
+  --color-bg: #F7F8FA;
+  --color-surface: #FFFFFF;
+  --color-surface-white: #FFFFFF;
+  --color-surface-secondary: #F1F3F6;
+  --color-surface-tertiary: #E5E8ED;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-hover: #F8F9FA;
+  --color-surface-dark: #171A21;
+  --color-surface-dark-card: #202632;
+
+  /* Typography Colors (Light Theme) */
+  --color-text-primary: #171A21;
+  --color-text-secondary: #626B78;
+  --color-text-muted: #929AA6;
+  --color-text-inverse: #FFFFFF;
+
+  /* Borders & Dividers (Light Theme) */
+  --color-border: #E5E8ED;
+  --color-border-subtle: #EDF0F4;
+  --color-border-strong: #D5DAE2;
+  --color-border-hover: #C2C9D4;
+  --color-border-focus: #356AE6;
+
+  /* Semantic Feedback (Light Theme) */
+  --color-success: #18865B;
+  --color-success-bg: rgba(24, 134, 91, 0.08);
+  --color-success-subtle: rgba(24, 134, 91, 0.08);
+  --color-success-border: rgba(24, 134, 91, 0.24);
+
+  --color-warning: #B7791F;
+  --color-warning-bg: rgba(183, 121, 31, 0.08);
+  --color-warning-subtle: rgba(183, 121, 31, 0.08);
+  --color-warning-border: rgba(183, 121, 31, 0.24);
+
+  --color-danger: #D64545;
+  --color-danger-bg: rgba(214, 69, 69, 0.08);
+  --color-danger-subtle: rgba(214, 69, 69, 0.08);
+  --color-danger-border: rgba(214, 69, 69, 0.24);
+
+  --color-info: #356AE6;
+  --color-info-bg: #EEF4FF;
+  --color-info-subtle: #EEF4FF;
+  --color-info-border: #D5E3FF;
+
+  /* Auth Specific Theming (Light) */
+  --color-auth-bg: #F7F8FA;
+  --color-auth-panel: #FFFFFF;
+  --color-auth-panel-deep: #F1F3F6;
+  --color-auth-panel-light: #F7F8FA;
+  --color-auth-text-dark: #171A21;
+  --color-auth-cta: #356AE6;
+  --color-auth-cta-hover: #2858C7;
+  --color-auth-cta-active: #2149A8;
+  --color-auth-muted: #626B78;
+  --color-auth-border: #E5E8ED;
+  --color-auth-border-focus: #356AE6;
   --color-auth-input-bg: #FFFFFF;
   --color-auth-surface: #FFFFFF;
   --color-auth-card-bg: #FFFFFF;
-  --color-auth-disabled: #EDEFF0;
-  --color-auth-disabled-text: #89A0B4;
-  --color-auth-success: #188918;
-  --color-auth-error: #BB0000;
-  --color-auth-focus-ring: rgba(0, 112, 242, 0.25);
+  --color-auth-disabled: #F1F3F6;
+  --color-auth-disabled-text: #929AA6;
+  --color-auth-soft-grey: #F1F3F6;
+  --color-auth-focus-ring: rgba(53, 106, 230, 0.24);
 
-  /* SAP Learning Hub Official Brand Palette (Morning Horizon) */
-  --color-primary: #0070F2;          /* SAP Signature Horizon Blue / sapBrandColor */
-  --color-primary-hover: #0064D9;    /* SAP Active Blue */
-  --color-primary-light: #4DB1FF;    /* SAP Horizon Light Blue Accent */
-  --color-secondary: #1D2D3E;        /* SAP Horizon Deep Navy / Slate */
-  --color-secondary-hover: #131E29;  /* SAP Shell Deep Navy */
-  --color-accent: #0070F2;           /* Primary Highlight Color */
-  --color-accent-hover: #0064D9;
-  --color-accent-subtle: #EDF6FF;
-  --color-primary-subtle: #EDF6FF;   /* Crisp Subtle Blue Tint */
-  
-  /* SAP Foundation Surfaces */
-  --color-bg: #F5F6F7;               /* SAP Canvas / Group Content Background */
-  --color-surface: #FFFFFF;          /* Pure White Card / Tile Background */
-  --color-surface-white: #FFFFFF;
-  --color-surface-hover: #F0F2F5;
-  --color-surface-secondary: #EAECEF;
-  --color-surface-tertiary: #D5DADD;
-  --color-surface-dark: #1D2D3E;     /* SAP Deep Slate Surface */
-  --color-surface-dark-card: #131E29;
+  /* Layout Dimensions (4px Grid) */
+  --sidebar-width: 240px;
+  --header-height: 64px;
+  --content-max-width: 1280px;
 
-  /* SAP Typography Colors */
-  --color-text-primary: #1D2D3E;     /* sapTextColor */
-  --color-text-secondary: #556B82;   /* sapContent_LabelColor */
-  --color-text-muted: #788FA6;       /* sapContent_PlaceholderColor */
-  --color-text-inverse: #FFFFFF;     /* Pure White */
-
-  /* SAP Borders & Dividers */
-  --color-border: #D5DADD;           /* Standard Content Border */
-  --color-border-subtle: #EAECEF;
-  --color-border-focus: #0070F2;
-  --color-border-hover: #89A0B4;
-
-  /* SAP Semantic Feedback Colors */
-  --color-success: #188918;          /* sapPositiveColor */
-  --color-success-bg: #F1FDF1;
-  --color-success-subtle: #F1FDF1;
-  --color-success-border: #BCE8BC;
-
-  --color-warning: #E9730C;          /* sapCriticalColor */
-  --color-warning-bg: #FFF7ED;
-  --color-warning-subtle: #FFF7ED;
-  --color-warning-border: #FED7AA;
-
-  --color-danger: #BB0000;           /* sapNegativeColor */
-  --color-danger-bg: #FFF2F2;
-  --color-danger-subtle: #FFF2F2;
-  --color-danger-border: #F8B4B4;
-
-  /* Layout Dimensions */
-  --sidebar-width: 260px;
-  --header-height: 70px;
-  --content-max-width: 1440px;
-
-  /* Spacing Scale (4px system) */
+  /* Spacing Scale (Multiples of 4px) */
   --space-0-5: 2px;
   --space-1: 4px;
   --space-1-5: 6px;
@@ -98,117 +108,133 @@
   --space-16: 64px;
   --space-20: 80px;
 
-  /* Radii (SAP Horizon Fiori specifies elegant 8px - 12px radii) */
+  /* Corner Radii */
   --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
   --radius-full: 9999px;
 
-  /* Elevation & Shadows (Clean enterprise elevation) */
-  --shadow-xs: 0 1px 2px 0 rgba(29, 45, 62, 0.04);
-  --shadow-sm: 0 1px 3px 0 rgba(29, 45, 62, 0.06), 0 1px 2px 0 rgba(29, 45, 62, 0.04);
-  --shadow-md: 0 4px 8px -1px rgba(29, 45, 62, 0.08), 0 2px 4px -1px rgba(29, 45, 62, 0.04);
-  --shadow-lg: 0 10px 18px -3px rgba(29, 45, 62, 0.10), 0 4px 6px -2px rgba(29, 45, 62, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(29, 45, 62, 0.12), 0 10px 10px -5px rgba(29, 45, 62, 0.03);
-  --shadow-glow: 0 0 20px -2px rgba(0, 112, 242, 0.28);
-  --shadow-glow-mint: 0 0 20px -3px rgba(0, 112, 242, 0.20);
+  /* Elevation & Subtle Shadows */
+  --shadow-xs: 0 1px 2px rgba(23, 26, 33, 0.04);
+  --shadow-sm: 0 1px 3px rgba(23, 26, 33, 0.05), 0 1px 2px rgba(23, 26, 33, 0.03);
+  --shadow-md: 0 4px 10px -1px rgba(23, 26, 33, 0.06), 0 2px 4px -1px rgba(23, 26, 33, 0.03);
+  --shadow-lg: 0 10px 20px -3px rgba(23, 26, 33, 0.08), 0 4px 6px -2px rgba(23, 26, 33, 0.03);
+  --shadow-xl: 0 20px 25px -5px rgba(23, 26, 33, 0.10), 0 8px 10px -6px rgba(23, 26, 33, 0.04);
+  --shadow-glow: 0 0 16px rgba(53, 106, 230, 0.18);
+  --shadow-glow-mint: 0 0 16px rgba(24, 134, 91, 0.16);
 
-  /* Glassmorphism tokens */
-  --glass-bg: rgba(255, 255, 255, 0.94);
-  --glass-border: rgba(213, 218, 221, 0.75);
-  --glass-blur: blur(16px);
-
-  /* Gradients */
-  --gradient-ai: linear-gradient(135deg, #0070F2 0%, #0051B4 100%);
-  --gradient-card: linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%);
-  --gradient-hero: radial-gradient(circle at 50% 15%, rgba(0, 112, 242, 0.08) 0%, rgba(0, 112, 242, 0.02) 40%, transparent 70%);
+  /* Glassmorphism Tokens */
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(229, 232, 237, 0.80);
+  --glass-blur: blur(12px);
 
   /* Transitions */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 150ms ease;
+  --transition-normal: 220ms ease;
+  --transition-slow: 300ms ease;
 }
 
-[data-theme="dark"] {
-  /* True Pitch-Black / Obsidian & Zinc Modern Dark Palette */
-  --color-auth-bg: #09090B;
-  --color-auth-panel: #121214;
-  --color-auth-panel-deep: #000000;
-  --color-auth-panel-light: #18181B;
-  --color-auth-text-dark: #FAFAFA;
-  --color-auth-cta: #3B82F6;
-  --color-auth-cta-hover: #2563EB;
-  --color-auth-muted: #A1A1AA;
-  --color-auth-border: #27272A;
-  --color-auth-input-bg: #121214;
-  --color-auth-surface: #121214;
-  --color-auth-card-bg: #121214;
-  --color-auth-disabled: #1C1C1F;
-  --color-auth-disabled-text: #71717A;
-  --color-auth-soft-grey: #18181B;
+/* =========================================================================
+   DOCVAULT DESIGN SYSTEM TOKENS (DARK THEME)
+   Carefully engineered dark surfaces: #101319 / #171C24 / #1E2530
+   ========================================================================= */
+[data-theme="dark"],
+.theme-dark {
+  /* Primary Accent in Dark Mode (Soft Electric Cobalt: #79A2FF) */
+  --color-accent: #79A2FF;
+  --color-accent-hover: #98B8FF;
+  --color-accent-active: #5E8CF5;
+  --color-accent-soft: #202F4C;
+  --color-accent-border: #2E436D;
+  --color-focus-ring: rgba(121, 162, 255, 0.28);
 
-  /* Surfaces & Canvas — Pitch Black (Zinc 950 / Obsidian) */
-  --color-bg: #09090B;               /* Pitch black, never dark navy blue */
-  --color-surface: #121214;          /* Precision obsidian card surface */
-  --color-surface-white: #121214;
-  --color-surface-hover: #1A1A1E;
-  --color-surface-secondary: #18181B;
-  --color-surface-tertiary: #27272A;
-  --color-surface-dark: #000000;
-  --color-surface-dark-card: #121214;
+  --color-primary: #79A2FF;
+  --color-primary-hover: #98B8FF;
+  --color-primary-active: #5E8CF5;
+  --color-primary-light: #A8C4FF;
+  --color-primary-subtle: #202F4C;
+  --color-secondary: #F1F4F8;
+  --color-secondary-hover: #FFFFFF;
 
-  /* Borders & Dividers */
-  --color-border: #27272A;           /* Zinc 800 subtle borders */
-  --color-border-subtle: #1C1C1F;
-  --color-border-hover: #3F3F46;     /* Zinc 700 */
-  --color-border-focus: #3B82F6;
+  /* Surfaces & Canvas (Dark Theme) */
+  --color-background: #101319;
+  --color-bg: #101319;
+  --color-surface: #171C24;
+  --color-surface-white: #171C24;
+  --color-surface-secondary: #1E2530;
+  --color-surface-tertiary: #27303E;
+  --color-surface-elevated: #232B37;
+  --color-surface-hover: #1E2531;
+  --color-surface-dark: #101319;
+  --color-surface-dark-card: #171C24;
 
-  /* Typography */
-  --color-text-primary: #FAFAFA;     /* High contrast crisp white */
-  --color-text-secondary: #A1A1AA;   /* Zinc 400 clean secondary */
-  --color-text-muted: #71717A;       /* Zinc 500 placeholders */
-  --color-text-inverse: #09090B;
+  /* Typography Colors (Dark Theme) */
+  --color-text-primary: #F1F4F8;
+  --color-text-secondary: #AAB4C2;
+  --color-text-muted: #7F8998;
+  --color-text-inverse: #101319;
 
-  /* Accent & Brand — Vibrant Blue that shines on pure black */
-  --color-primary: #3B82F6;          /* High contrast bright neon blue */
-  --color-primary-hover: #60A5FA;
-  --color-primary-light: #93C5FD;
-  --color-primary-subtle: rgba(59, 130, 246, 0.15);
-  --color-accent: #3B82F6;
-  --color-accent-subtle: rgba(59, 130, 246, 0.15);
+  /* Borders & Dividers (Dark Theme) */
+  --color-border: #2B3441;
+  --color-border-subtle: #1E2530;
+  --color-border-strong: #394454;
+  --color-border-hover: #455265;
+  --color-border-focus: #79A2FF;
 
-  /* Glassmorphism */
-  --glass-bg: rgba(9, 9, 11, 0.88);
+  /* Semantic Feedback (Dark Theme) */
+  --color-success: #42C58A;
+  --color-success-bg: rgba(66, 197, 138, 0.12);
+  --color-success-subtle: rgba(66, 197, 138, 0.12);
+  --color-success-border: rgba(66, 197, 138, 0.26);
+
+  --color-warning: #F2BD5B;
+  --color-warning-bg: rgba(242, 189, 91, 0.12);
+  --color-warning-subtle: rgba(242, 189, 91, 0.12);
+  --color-warning-border: rgba(242, 189, 91, 0.26);
+
+  --color-danger: #F07575;
+  --color-danger-bg: rgba(240, 117, 117, 0.12);
+  --color-danger-subtle: rgba(240, 117, 117, 0.12);
+  --color-danger-border: rgba(240, 117, 117, 0.26);
+
+  --color-info: #79A2FF;
+  --color-info-bg: #202F4C;
+  --color-info-subtle: #202F4C;
+  --color-info-border: #2E436D;
+
+  /* Auth Specific Theming (Dark) */
+  --color-auth-bg: #101319;
+  --color-auth-panel: #171C24;
+  --color-auth-panel-deep: #101319;
+  --color-auth-panel-light: #1E2530;
+  --color-auth-text-dark: #F1F4F8;
+  --color-auth-cta: #79A2FF;
+  --color-auth-cta-hover: #98B8FF;
+  --color-auth-cta-active: #5E8CF5;
+  --color-auth-muted: #AAB4C2;
+  --color-auth-border: #2B3441;
+  --color-auth-border-focus: #79A2FF;
+  --color-auth-input-bg: #1E2530;
+  --color-auth-surface: #171C24;
+  --color-auth-card-bg: #171C24;
+  --color-auth-disabled: #1E2530;
+  --color-auth-disabled-text: #7F8998;
+  --color-auth-soft-grey: #1E2530;
+  --color-auth-focus-ring: rgba(121, 162, 255, 0.28);
+
+  /* Glassmorphism Tokens (Dark) */
+  --glass-bg: rgba(23, 28, 36, 0.88);
   --glass-border: rgba(255, 255, 255, 0.08);
 
-  /* Gradients */
-  --gradient-card: linear-gradient(180deg, #18181B 0%, #121214 100%);
-  --gradient-hero: radial-gradient(circle at 50% 15%, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.02) 50%, transparent 75%);
-
-  /* Semantic Feedback in Dark Mode */
-  --color-success: #22C55E;
-  --color-success-bg: rgba(34, 197, 94, 0.12);
-  --color-success-subtle: rgba(34, 197, 94, 0.12);
-  --color-success-border: rgba(34, 197, 94, 0.3);
-
-  --color-warning: #F59E0B;
-  --color-warning-bg: rgba(245, 158, 11, 0.12);
-  --color-warning-subtle: rgba(245, 158, 11, 0.12);
-  --color-warning-border: rgba(245, 158, 11, 0.3);
-
-  --color-danger: #EF4444;
-  --color-danger-bg: rgba(239, 68, 68, 0.12);
-  --color-danger-subtle: rgba(239, 68, 68, 0.12);
-  --color-danger-border: rgba(239, 68, 68, 0.3);
-
-  /* Elevation */
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.6);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.8), 0 1px 2px 0 rgba(0, 0, 0, 0.6);
-  --shadow-md: 0 4px 12px -1px rgba(0, 0, 0, 0.85), 0 2px 4px -1px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 14px 28px -3px rgba(0, 0, 0, 0.95), 0 6px 10px -2px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 24px -2px rgba(59, 130, 246, 0.35);
-  --shadow-glow-mint: 0 0 24px -3px rgba(34, 197, 94, 0.25);
+  /* Elevation (Dark) */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 10px -1px rgba(0, 0, 0, 0.55), 0 2px 4px -1px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 10px 22px -3px rgba(0, 0, 0, 0.65), 0 4px 6px -2px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.75), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(121, 162, 255, 0.22);
+  --shadow-glow-mint: 0 0 20px rgba(66, 197, 138, 0.18);
 }

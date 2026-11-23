@@ -600,10 +600,10 @@ export default function ShareCenterPage() {
           )}
 
           {/* Privacy & Guardrails Guarantee Banner */}
-          <div style={{ background: "rgba(1, 90, 71, 0.05)", border: "1px solid rgba(1, 90, 71, 0.2)", borderRadius: "var(--radius-lg)", padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 14 }}>
-            <ShieldCheck size={24} color="var(--color-primary, #015a47)" style={{ flexShrink: 0, marginTop: 2 }} />
+          <div style={{ background: "var(--color-accent-soft)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)", padding: "16px 20px", display: "flex", alignItems: "flex-start", gap: 14 }}>
+            <ShieldCheck size={24} color="var(--color-primary)" style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
-              <h4 style={{ margin: "0 0 4px 0", fontSize: "0.95rem", color: "var(--color-primary, #015a47)" }}>
+              <h4 style={{ margin: "0 0 4px 0", fontSize: "0.95rem", color: "var(--color-primary)" }}>
                 Zero-Leak Access Control Architecture
               </h4>
               <p style={{ margin: 0, fontSize: "12px", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
