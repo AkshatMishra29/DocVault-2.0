@@ -1518,6 +1518,69 @@
   gap: 8px;
 }
 
+.dv-viewer-zoom-controls {
+  display: inline-flex;
+  align-items: center;
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .dv-viewer-zoom-controls {
+  background: #1E293B;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dv-viewer-zoom-controls .dv-viewer-modal-btn {
+  border: none;
+  border-radius: 0;
+  height: 28px;
+  background: transparent;
+}
+
+.dv-viewer-zoom-controls .dv-viewer-modal-btn:not(:last-child) {
+  border-right: 1px solid #CBD5E1;
+}
+
+[data-theme="dark"] .dv-viewer-zoom-controls .dv-viewer-modal-btn:not(:last-child) {
+  border-right-color: rgba(255, 255, 255, 0.1);
+}
+
+.dv-viewer-modal-btn--icon {
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dv-viewer-modal-btn--scale {
+  padding: 0 8px;
+  min-width: 46px;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
+
+.dv-viewer-modal-btn--download {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #1D4ED8;
+}
+
+[data-theme="dark"] .dv-viewer-modal-btn--download {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #93C5FD;
+}
+
+.dv-viewer-transform-viewport {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  will-change: transform;
+}
+
 .dv-viewer-modal-btn {
   display: inline-flex;
   align-items: center;

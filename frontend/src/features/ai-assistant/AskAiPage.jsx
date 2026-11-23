@@ -8,7 +8,7 @@ import {
   ExternalLink, ShieldCheck, Info, Check, Copy, FileSpreadsheet,
   Plus, MessageSquare, Trash2, Edit3, ChevronLeft, ChevronRight,
   PanelLeftClose, PanelLeftOpen, Search, Clock, Eye, Download, X,
-  FileCheck, Shield, ChevronDown, Layers
+  FileCheck, Shield, ChevronDown, Layers, ZoomIn, ZoomOut, RotateCw
 } from "lucide-react";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
@@ -158,10 +158,12 @@ class DocViewerErrorBoundary extends React.Component {
                 <ExternalLink size={14} />
                 <span>Open in New Tab</span>
               </a>
-              <a href={this.props.streamUrl} download={this.props.title || "document"} className="dv-viewer-modal-btn">
-                <Download size={14} />
-                <span>Download</span>
-              </a>
+              {this.props.downloadUrl && (
+                <a href={this.props.downloadUrl} download={this.props.title || "document"} className="dv-viewer-modal-btn">
+                  <Download size={14} />
+                  <span>Download</span>
+                </a>
+              )}
             </div>
           )}
         </div>
@@ -192,8 +194,11 @@ export default function AskAiPage() {
   const [viewerDoc, setViewerDoc] = useState(null);
   const [viewerBlobUrl, setViewerBlobUrl] = useState(null);
   const [viewerStreamUrl, setViewerStreamUrl] = useState(null);
+  const [viewerDownloadUrl, setViewerDownloadUrl] = useState(null);
   const [viewerLoading, setViewerLoading] = useState(false);
   const [viewerError, setViewerError] = useState(null);
+  const [viewerScale, setViewerScale] = useState(1);
+  const [viewerRotation, setViewerRotation] = useState(0);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const linkedDocId = searchParams.get("docId");
@@ -487,7 +492,8 @@ export default function AskAiPage() {
     }
 
     const token = localStorage.getItem("token") || localStorage.getItem("docvault_token") || "";
-    const streamUrl = `${API_BASE_URL}/api/documents/${docId}/download?token=${encodeURIComponent(token)}`;
+    const previewUrl = `${API_BASE_URL}/api/documents/${docId}/preview?token=${encodeURIComponent(token)}`;
+    const downloadUrl = `${API_BASE_URL}/api/documents/${docId}/download?token=${encodeURIComponent(token)}`;
 
     setViewerDoc({
       ...source,
@@ -498,7 +504,10 @@ export default function AskAiPage() {
       category: source.category || "Document",
       previewRoute: source.previewRoute || `/documents/${docId}`,
     });
-    setViewerStreamUrl(streamUrl);
+    setViewerStreamUrl(previewUrl);
+    setViewerDownloadUrl(downloadUrl);
+    setViewerScale(1);
+    setViewerRotation(0);
     setViewerLoading(false);
     setViewerError(null);
   };
@@ -511,10 +520,18 @@ export default function AskAiPage() {
     }
     setViewerDoc(null);
     setViewerStreamUrl(null);
+    setViewerDownloadUrl(null);
     setViewerBlobUrl(null);
     setViewerError(null);
     setViewerLoading(false);
+    setViewerScale(1);
+    setViewerRotation(0);
   };
+
+  const handleZoomIn = () => setViewerScale(s => Math.min(2.5, +(s + 0.15).toFixed(2)));
+  const handleZoomOut = () => setViewerScale(s => Math.max(0.5, +(s - 0.15).toFixed(2)));
+  const handleResetZoom = () => { setViewerScale(1); setViewerRotation(0); };
+  const handleRotate = () => setViewerRotation(r => (r + 90) % 360);
 
   // Filter conversations
   const filteredConversations = useMemo(() => {
@@ -850,16 +867,6 @@ export default function AskAiPage() {
                                     <Eye size={12} />
                                     <span>Preview</span>
                                   </button>
-                                  <Link
-                                    to={targetRoute}
-                                    target={isAsset ? "_self" : "_blank"}
-                                    rel="noopener noreferrer"
-                                    className="dv-source-btn dv-source-btn--open"
-                                    title={isAsset ? "View Full Asset Card" : "Open full document record"}
-                                  >
-                                    <ExternalLink size={12} />
-                                    {isAsset && <span style={{ marginLeft: 4 }}>Open Card</span>}
-                                  </Link>
                                 </div>
                               </div>
                             );
@@ -1010,45 +1017,86 @@ export default function AskAiPage() {
         maxWidth="920px"
         className="dv-viewer-modal-dialog"
       >
-        <DocViewerErrorBoundary streamUrl={viewerStreamUrl} title={viewerDoc?.title}>
+        <DocViewerErrorBoundary streamUrl={viewerStreamUrl} downloadUrl={viewerDownloadUrl} title={viewerDoc?.title}>
           <div className="dv-viewer-modal-content">
             <div className="dv-viewer-modal-bar">
               <div className="dv-viewer-modal-badges">
                 <Badge variant="outline" size="sm">{viewerDoc?.category || "Document"}</Badge>
                 {viewerDoc?.pageNumber && <Badge variant="neutral" size="sm">Page {viewerDoc.pageNumber}</Badge>}
+                {viewerScale !== 1 && (
+                  <Badge variant="neutral" size="sm">{Math.round(viewerScale * 100)}%</Badge>
+                )}
+                {viewerRotation !== 0 && (
+                  <Badge variant="neutral" size="sm">{viewerRotation}°</Badge>
+                )}
               </div>
               <div className="dv-viewer-modal-actions">
                 {viewerStreamUrl && (
                   <>
-                    <a
-                      href={viewerStreamUrl}
-                      download={viewerDoc?.title || "document"}
-                      className="dv-viewer-modal-btn"
-                    >
-                      <Download size={14} />
-                      <span>Download</span>
-                    </a>
+                    <div className="dv-viewer-zoom-controls">
+                      <button
+                        type="button"
+                        onClick={handleZoomOut}
+                        disabled={viewerScale <= 0.5}
+                        className="dv-viewer-modal-btn dv-viewer-modal-btn--icon"
+                        title="Zoom Out"
+                        aria-label="Zoom Out"
+                      >
+                        <ZoomOut size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleResetZoom}
+                        className="dv-viewer-modal-btn dv-viewer-modal-btn--scale"
+                        title="Reset Zoom & Orientation"
+                        aria-label="Reset Zoom and Rotation"
+                      >
+                        {Math.round(viewerScale * 100)}%
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleZoomIn}
+                        disabled={viewerScale >= 2.5}
+                        className="dv-viewer-modal-btn dv-viewer-modal-btn--icon"
+                        title="Zoom In"
+                        aria-label="Zoom In"
+                      >
+                        <ZoomIn size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRotate}
+                        className="dv-viewer-modal-btn dv-viewer-modal-btn--icon"
+                        title="Rotate 90° clockwise"
+                        aria-label="Rotate 90° clockwise"
+                      >
+                        <RotateCw size={14} />
+                      </button>
+                    </div>
+
                     <a
                       href={viewerStreamUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="dv-viewer-modal-btn"
+                      title="Open stream in a clean new tab"
                     >
                       <ExternalLink size={14} />
                       <span>Open in Tab</span>
                     </a>
+
+                    {viewerDownloadUrl && (
+                      <a
+                        href={viewerDownloadUrl}
+                        download={viewerDoc?.title || "document"}
+                        className="dv-viewer-modal-btn dv-viewer-modal-btn--download"
+                        title="Download original file"
+                      >
+                        <Download size={14} />
+                        <span>Download</span>
+                      </a>
+                    )}
                   </>
-                )}
-                {viewerDoc && (
-                  <Link
-                    to={viewerDoc.previewRoute || (viewerDoc.isAsset ? `/assets/${viewerDoc.documentId}` : `/documents/${viewerDoc.documentId}`)}
-                    target={viewerDoc.isAsset ? "_self" : "_blank"}
-                    rel="noopener noreferrer"
-                    className="dv-viewer-modal-btn"
-                  >
-                    <Eye size={14} />
-                    <span>{viewerDoc.isAsset ? "Full Flashcard" : "Full Record"}</span>
-                  </Link>
                 )}
               </div>
             </div>
@@ -1111,16 +1159,6 @@ export default function AskAiPage() {
                           <p>{viewerDoc.assetData.description}</p>
                         </div>
                       )}
-
-                      <div className="dv-asset-modal-actions">
-                        <Link
-                          to={viewerDoc.previewRoute || `/assets/${viewerDoc.documentId}`}
-                          className="dv-viewer-modal-btn dv-viewer-modal-btn--primary"
-                        >
-                          <ExternalLink size={14} />
-                          <span>Open Full Asset Details</span>
-                        </Link>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -1143,46 +1181,52 @@ export default function AskAiPage() {
                             <ExternalLink size={14} />
                             <span>Open in New Tab</span>
                           </a>
+                          {viewerDownloadUrl && (
+                            <a href={viewerDownloadUrl} download={viewerDoc?.title || "document"} className="dv-viewer-modal-btn">
+                              <Download size={14} />
+                              <span>Download</span>
+                            </a>
+                          )}
                         </div>
                       )}
                     </div>
                   )}
 
                   {!viewerLoading && !viewerError && viewerStreamUrl && (
-                    <>
+                    <div
+                      className="dv-viewer-transform-viewport"
+                      style={{
+                        transform: viewerScale !== 1 || viewerRotation !== 0
+                          ? `scale(${viewerScale}) rotate(${viewerRotation}deg)`
+                          : "none",
+                        transformOrigin: "center center",
+                        transition: "transform 0.15s ease-out",
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
                       {(viewerDoc?.documentType || "").toLowerCase().includes("pdf") ? (
-                        <object
-                          data={viewerStreamUrl}
-                          type="application/pdf"
+                        <iframe
+                          src={`${viewerStreamUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+                          title={viewerDoc?.title || "Document PDF"}
                           className="dv-viewer-modal-iframe"
-                          aria-label={viewerDoc?.title || "Document PDF"}
-                        >
-                          <div className="dv-viewer-modal-state">
-                            <FileText size={36} color="#64748B" />
-                            <span>Embedded preview not available on this browser.</span>
-                            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                              <a href={viewerStreamUrl} target="_blank" rel="noopener noreferrer" className="dv-viewer-modal-btn">
-                                <ExternalLink size={14} />
-                                <span>Open in New Tab</span>
-                              </a>
-                              <a href={viewerStreamUrl} download={viewerDoc?.title || "document.pdf"} className="dv-viewer-modal-btn">
-                                <Download size={14} />
-                                <span>Download</span>
-                              </a>
-                            </div>
-                          </div>
-                        </object>
+                          loading="lazy"
+                        />
                       ) : (
                         <div className="dv-viewer-modal-img-wrap">
                           <img
                             src={viewerStreamUrl}
                             alt={viewerDoc?.title || "Document Image"}
                             className="dv-viewer-modal-image"
-                            onError={() => setViewerError("Unable to display document image. Please download or view full record.")}
+                            onError={() => setViewerError("Unable to display document image. Please download to view.")}
+                            loading="lazy"
                           />
                         </div>
                       )}
-                    </>
+                    </div>
                   )}
                 </>
               )}
