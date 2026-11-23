@@ -33,6 +33,47 @@ function getSmtpTransporter() {
 }
 
 /**
+ * Dispatch email via Brevo REST API (HTTPS Port 443 - zero firewall blocks on Render / AWS)
+ */
+async function sendViaBrevo({ apiKey, to, subject, html, text }) {
+  console.log(`[EmailService] Attempting fast HTTPS dispatch via Brevo API to: ${to}`);
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || 'akshatmishraxic29@gmail.com';
+  const senderName = process.env.BREVO_SENDER_NAME || 'DocVault Security';
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+  try {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey.trim(),
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        sender: { name: senderName, email: senderEmail },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+        textContent: text,
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.message || `Brevo API Error: ${res.statusText}`);
+    }
+
+    console.log(`[EmailService] Successfully dispatched via Brevo API. Message ID: ${data.messageId}`);
+    return { messageId: data.messageId, provider: 'brevo' };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
  * Dispatch email via Resend REST API (HTTPS Port 443 - zero firewall blocks)
  */
 async function sendViaResend({ apiKey, to, subject, html, text }) {
@@ -46,7 +87,7 @@ async function sendViaResend({ apiKey, to, subject, html, text }) {
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 2000);
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -122,7 +163,23 @@ export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
 
   const isRenderCloud = Boolean(process.env.RENDER || process.env.NODE_ENV === 'production');
 
-  // Strategy A: If Resend API Key is configured, use fast HTTPS port 443 first (takes ~300ms)
+  // Strategy 1 (Top Priority for Cloud & Render): Brevo REST API (Port 443 HTTPS - No Port Blocking)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      return await sendViaBrevo({
+        apiKey: process.env.BREVO_API_KEY,
+        to: mailOptions.to,
+        subject: mailOptions.subject,
+        html: mailOptions.html,
+        text: mailOptions.text,
+      });
+    } catch (brevoErr) {
+      console.warn('[EmailService] Brevo dispatch bypassed/failed:', brevoErr.message);
+      // Fall through to other strategies
+    }
+  }
+
+  // Strategy 2: If Resend API Key is configured, use fast HTTPS port 443
   if (process.env.RESEND_API_KEY) {
     try {
       return await sendViaResend({
@@ -134,7 +191,7 @@ export async function sendOtpEmail(email, otpCode, purpose = 'Verification') {
       });
     } catch (resendErr) {
       console.warn('[EmailService] Resend dispatch bypassed/failed:', resendErr.message);
-      // Fall through to Strategy B (Gmail SMTP) without blocking
+      // Fall through to Strategy 3 (Gmail SMTP) without blocking
     }
   }
 
