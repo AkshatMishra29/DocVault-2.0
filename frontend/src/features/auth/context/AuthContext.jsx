@@ -141,6 +141,10 @@ export const AuthProvider = ({ children }) => {
       })
       .catch((err) => {
         console.warn('[DocVault Auth] Silent profile sync:', err?.message || err);
+        // If user session no longer exists in database, clear stale local session
+        if (!isCancelled && (err?.message?.includes('401') || err?.message?.includes('Unauthorized') || err?.message?.includes('not found') || err?.status === 401)) {
+          logout();
+        }
       });
 
     return () => {
