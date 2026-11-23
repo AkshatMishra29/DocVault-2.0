@@ -9,15 +9,120 @@
   flex-direction: column;
   flex-shrink: 0;
   z-index: 50;
-  transition: background-color var(--transition-normal), border-color var(--transition-normal);
+  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), background-color var(--transition-normal), border-color var(--transition-normal);
+  will-change: width;
 }
 
 .dv-sidebar__header {
   height: var(--header-height);
-  padding: 0 var(--space-6);
+  padding: 0 var(--space-4);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   border-bottom: 1px solid var(--color-border);
+  gap: var(--space-2);
+}
+
+.dv-sidebar__logo-wrap {
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.dv-sidebar__collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.dv-sidebar__collapse-btn:hover {
+  background: var(--color-accent-soft);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+}
+
+/* Collapsed Sidebar State (Hide/Unhide Icon Mode) */
+.dv-sidebar--collapsed {
+  width: 72px;
+}
+
+.dv-sidebar--collapsed .dv-sidebar__header {
+  padding: 0 10px;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  height: auto;
+  padding-top: 14px;
+  padding-bottom: 12px;
+}
+
+.dv-sidebar--collapsed .dv-sidebar__collapse-btn {
+  width: 26px;
+  height: 26px;
+}
+
+.dv-sidebar--collapsed .dv-sidebar__nav {
+  padding: var(--space-4) 8px;
+}
+
+.dv-sidebar--collapsed .dv-sidebar__item {
+  padding: 12px 0;
+  justify-content: center;
+  gap: 0;
+}
+
+.dv-sidebar--collapsed .dv-sidebar__label,
+.dv-sidebar--collapsed .dv-sidebar__badge,
+.dv-sidebar--collapsed .dv-sidebar__tier-pill,
+.dv-sidebar--collapsed .dv-sidebar__user-info,
+.dv-sidebar--collapsed .dv-sidebar__theme-btn span,
+.dv-sidebar--collapsed .dv-sidebar__lock-btn span,
+.dv-sidebar--collapsed .dv-sidebar__switch-btn span {
+  display: none !important;
+}
+
+.dv-sidebar--collapsed .dv-sidebar__footer {
+  padding: 10px 8px;
+  gap: 8px;
+}
+
+.dv-sidebar--collapsed .dv-sidebar__theme-segment {
+  padding: 2px;
+}
+
+.dv-sidebar--collapsed .dv-sidebar__theme-btn {
+  padding: 6px 0;
+}
+
+.dv-sidebar--collapsed .dv-sidebar__session-card {
+  padding: 8px 4px;
+  align-items: center;
+}
+
+.dv-sidebar--collapsed .dv-sidebar__user-row {
+  justify-content: center;
+}
+
+.dv-sidebar--collapsed .dv-sidebar__session-actions {
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dv-sidebar--collapsed .dv-sidebar__lock-btn,
+.dv-sidebar--collapsed .dv-sidebar__switch-btn {
+  padding: 0;
+  height: 26px;
 }
 
 .dv-sidebar__nav {

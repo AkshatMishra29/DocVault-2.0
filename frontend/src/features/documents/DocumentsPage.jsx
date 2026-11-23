@@ -245,14 +245,14 @@ export default function DocumentsPage() {
         <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem' }}>
           <button
             type="button"
-            className={`dv-cat-pill ${activeTab === 'my_vault' ? 'active' : ''}`}
+            className={`dv-cat-pill ${activeTab === 'my_vault' ? 'dv-cat-pill--active' : ''}`}
             onClick={() => setActiveTab('my_vault')}
           >
             My Vault ({documents.length})
           </button>
           <button
             type="button"
-            className={`dv-cat-pill ${activeTab === 'shared_with_me' ? 'active' : ''}`}
+            className={`dv-cat-pill ${activeTab === 'shared_with_me' ? 'dv-cat-pill--active' : ''}`}
             onClick={() => setActiveTab('shared_with_me')}
           >
             <Users size={14} style={{ display: 'inline', marginRight: '6px' }} />

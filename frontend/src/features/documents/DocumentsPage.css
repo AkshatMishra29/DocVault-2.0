@@ -144,12 +144,19 @@
 .dv-cat-pill:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
+  transform: translateY(-1px);
 }
 
-.dv-cat-pill--active {
-  background-color: var(--color-primary);
+.dv-cat-pill:active {
+  transform: scale(0.97);
+}
+
+.dv-cat-pill--active,
+.dv-cat-pill.active {
+  background: var(--gradient-primary-btn, var(--color-primary));
   border-color: var(--color-primary);
   color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 112, 242, 0.28);
 }
 
 .dv-cat-count {

@@ -4,47 +4,58 @@
      Principle: Simple outside. Powerful inside. Secure by design.
      ========================================================================= */
 
-  /* Primary Brand Interaction Color */
-  --color-accent: #356AE6;
-  --color-accent-hover: #2858C7;
-  --color-accent-active: #2149A8;
-  --color-accent-soft: #EEF4FF;
-  --color-accent-border: #D5E3FF;
-  --color-focus-ring: rgba(53, 106, 230, 0.24);
+  /* Primary Brand Interaction Color (Vibrant DocVault Electric Blue) */
+  --color-accent: #0070F2;
+  --color-accent-hover: #005BD4;
+  --color-accent-active: #004CB3;
+  --color-accent-soft: #EDF5FF;
+  --color-accent-border: #C8E0FF;
+  --color-focus-ring: rgba(0, 112, 242, 0.28);
 
   /* Primary Accent Aliases for Backward Compatibility */
-  --color-primary: #356AE6;
-  --color-primary-hover: #2858C7;
-  --color-primary-active: #2149A8;
-  --color-primary-light: #5B88EE;
-  --color-primary-subtle: #EEF4FF;
-  --color-secondary: #171A21;
-  --color-secondary-hover: #282E3A;
+  --color-primary: #0070F2;
+  --color-primary-hover: #005BD4;
+  --color-primary-active: #004CB3;
+  --color-primary-light: #4DA2FF;
+  --color-primary-subtle: #EDF5FF;
+  --color-secondary: #0F172A;
+  --color-secondary-hover: #1E293B;
+
+  /* Vibrant Modern Gradients */
+  --gradient-primary: linear-gradient(135deg, #0070F2 0%, #2563EB 50%, #4F46E5 100%);
+  --gradient-primary-btn: linear-gradient(135deg, #0070F2 0%, #0056B3 100%);
+  --gradient-primary-btn-hover: linear-gradient(135deg, #0060D0 0%, #004494 100%);
+  --gradient-accent: linear-gradient(135deg, #0070F2 0%, #60A5FA 100%);
+  --gradient-ai: linear-gradient(135deg, #7C3AED 0%, #0070F2 100%);
+  --gradient-emerald: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  --gradient-amber: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  --gradient-rose: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
+  --gradient-glow: radial-gradient(circle at 50% 0%, rgba(0, 112, 242, 0.12) 0%, transparent 70%);
 
   /* Surfaces & Canvas (Light Theme) */
-  --color-background: #F7F8FA;
-  --color-bg: #F7F8FA;
+  --color-background: #F8FAFC;
+  --color-bg: #F8FAFC;
   --color-surface: #FFFFFF;
   --color-surface-white: #FFFFFF;
-  --color-surface-secondary: #F1F3F6;
-  --color-surface-tertiary: #E5E8ED;
+  --color-surface-secondary: #F1F5F9;
+  --color-surface-tertiary: #E2E8F0;
   --color-surface-elevated: #FFFFFF;
-  --color-surface-hover: #F8F9FA;
-  --color-surface-dark: #171A21;
-  --color-surface-dark-card: #202632;
+  --color-surface-hover: #F8FAFC;
+  --color-surface-dark: #0F172A;
+  --color-surface-dark-card: #1E293B;
 
-  /* Typography Colors (Light Theme) */
-  --color-text-primary: #171A21;
-  --color-text-secondary: #626B78;
-  --color-text-muted: #929AA6;
+  /* Typography Colors (Light Theme - High Contrast) */
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94A3B8;
   --color-text-inverse: #FFFFFF;
 
   /* Borders & Dividers (Light Theme) */
-  --color-border: #E5E8ED;
-  --color-border-subtle: #EDF0F4;
-  --color-border-strong: #D5DAE2;
-  --color-border-hover: #C2C9D4;
-  --color-border-focus: #356AE6;
+  --color-border: #E2E8F0;
+  --color-border-subtle: #F1F5F9;
+  --color-border-strong: #CBD5E1;
+  --color-border-hover: #94A3B8;
+  --color-border-focus: #0070F2;
 
   /* Semantic Feedback (Light Theme) */
   --color-success: #18865B;
@@ -131,10 +142,11 @@
   --glass-border: rgba(229, 232, 237, 0.80);
   --glass-blur: blur(12px);
 
-  /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-normal: 220ms ease;
-  --transition-slow: 300ms ease;
+  /* Smooth Easing & Micro-interaction Transitions */
+  --transition-fast: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-normal: 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 380ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-spring: 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* =========================================================================

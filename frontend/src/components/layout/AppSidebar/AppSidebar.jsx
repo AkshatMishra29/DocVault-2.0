@@ -3,9 +3,10 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, FileText, UploadCloud, Layers, Calendar, 
   Sparkles, Settings, ShieldCheck, Activity, Users, Share2, 
-  Landmark, Lock, ChevronDown, Check, UserPlus, Sun, Moon 
+  Landmark, Lock, ChevronDown, Check, UserPlus, Sun, Moon,
+  PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
-import DocVaultLogo from '../../common/DocVaultLogo/DocVaultLogo';
+import DocVaultLogo, { DocVaultLogoIcon } from '../../common/DocVaultLogo/DocVaultLogo';
 import { useAuth } from '../../../features/auth/context/AuthContext';
 import { useTheme } from '../../../app/theme';
 import './AppSidebar.css';
@@ -24,7 +25,18 @@ export default function AppSidebar() {
   const { user, lockSession, savedSessions = [], switchSession, logout } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [showSwitchMenu, setShowSwitchMenu] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem('dv_sidebar_collapsed') === 'true';
+  });
   const navigate = useNavigate();
+
+  const toggleCollapse = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('dv_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   const handleLock = () => {
     lockSession();
@@ -43,11 +55,24 @@ export default function AppSidebar() {
   );
 
   return (
-    <aside className="dv-sidebar">
+    <aside className={`dv-sidebar ${isCollapsed ? 'dv-sidebar--collapsed' : ''}`}>
       <div className="dv-sidebar__header">
-        <NavLink to="/dashboard">
-          <DocVaultLogo height={44} />
+        <NavLink to="/dashboard" className="dv-sidebar__logo-wrap" title="DocVault Home">
+          {isCollapsed ? (
+            <DocVaultLogoIcon size={32} />
+          ) : (
+            <DocVaultLogo height={42} />
+          )}
         </NavLink>
+        <button
+          type="button"
+          className="dv-sidebar__collapse-btn"
+          onClick={toggleCollapse}
+          title={isCollapsed ? "Expand sidebar (unhide)" : "Collapse sidebar (hide)"}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        </button>
       </div>
 
       <nav className="dv-sidebar__nav">
@@ -57,6 +82,7 @@ export default function AppSidebar() {
             <NavLink
               key={item.to}
               to={item.to}
+              title={isCollapsed ? item.label : undefined}
               className={({ isActive }) =>
                 `dv-sidebar__item ${isActive ? 'dv-sidebar__item--active' : ''}`
               }
@@ -70,6 +96,7 @@ export default function AppSidebar() {
         {user?.role === 'admin' && (
           <NavLink
             to="/admin"
+            title={isCollapsed ? "Admin Console" : undefined}
             className={({ isActive }) =>
               `dv-sidebar__item ${isActive ? 'dv-sidebar__item--active' : ''}`
             }
@@ -81,7 +108,7 @@ export default function AppSidebar() {
       </nav>
 
       <div className="dv-sidebar__footer">
-        {/* Prominent Segmented Theme Switcher */}
+        {/* Segmented Theme Switcher */}
         <div className="dv-sidebar__theme-segment" role="group" aria-label="Theme selector">
           <button
             type="button"
@@ -105,7 +132,7 @@ export default function AppSidebar() {
 
         {/* User Session & Quick Lock Card */}
         <div className="dv-sidebar__session-card">
-          <div className="dv-sidebar__user-row">
+          <div className="dv-sidebar__user-row" title={`${user?.name || 'Vault Custodian'} (${user?.email || 'Protected'})`}>
             <div className="dv-sidebar__user-avatar">
               <span>{userInitial}</span>
             </div>
@@ -120,10 +147,10 @@ export default function AppSidebar() {
               type="button"
               onClick={handleLock}
               className="dv-sidebar__lock-btn"
-              title="Lock this session (Cmd+L)"
+              title="Lock this session"
             >
               <Lock size={13} />
-              <span>Lock Session</span>
+              <span>Lock</span>
             </button>
 
             {otherSessions.length > 0 && (
