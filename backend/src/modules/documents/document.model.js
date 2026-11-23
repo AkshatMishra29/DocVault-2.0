@@ -149,7 +149,11 @@ const DocumentSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'queued', 'processing', 'completed', 'failed', 'needs_review', 'needs_retake', 'storage_only'],
     default: function () {
-      return this.status === 'queued' ? 'pending' : this.status;
+      if (!this.status || this.status === 'queued' || this.status === 'PENDING') return 'pending';
+      if (this.status === 'ACCEPTED') return 'completed';
+      if (this.status === 'REJECTED') return 'failed';
+      if (this.status === 'REVIEW') return 'needs_review';
+      return typeof this.status === 'string' ? this.status.toLowerCase() : 'pending';
     },
     index: true,
   },

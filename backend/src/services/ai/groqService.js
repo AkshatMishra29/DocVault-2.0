@@ -820,6 +820,11 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
         const amtMatch = text.match(/(?:total\s*amount\s*(?:received|paid|due|payable)?|amount\s*(?:received|paid|due|payable)?|total\s*(?:received|paid|payable)?|grand\s*total|net\s*payable|bill\s*amount)[:.\s]*(?:₹|rs\.?|inr|\$|€|£)?\s*([0-9,]+(?:\.[0-9]{2})?(?:\s*\([^\)]+\))?(?:\s*only)?)/i);
         if (amtMatch) amount = amtMatch[1].trim();
       }
+      let txId = keyDetails['TRANSACTION ID'] || keyDetails['Transaction Id'] || keyDetails['Transaction ID'] || keyDetails['Receipt No'] || keyDetails['REFERENCE NUMBER'] || null;
+      if (!txId) {
+        const txMatch = text.match(/(?:transaction\s*id|receipt\s*no\.?|ref(?:\s*no|\s*id|\s*number)?|reference\s*no\.?)[:.\s]*([A-Za-z0-9\-_]{6,35})/i);
+        if (txMatch) txId = txMatch[1].trim();
+      }
       let docDate = primaryDoc.documentDate || keyDetails['ISSUE DATE'] || keyDetails['Issue Date'] || null;
       if (!docDate) {
         const dateMatch = text.match(/(?:collection\s*date|printed\s*date|payment\s*date|bill\s*date|issue\s*date|due\s*date|date[:.\s-]*|[¢|~]?\s*)([0-9]{1,2}[-\/.][0-9]{1,2}[-\/.][0-9]{2,4})/i);
@@ -832,9 +837,17 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
       const provMatch = text.match(/([A-Z][A-Za-z\s]+(?:Vidyut|Nigam|Power|Electric|Energy|Distribution|Corporation|Ltd|Limited|Board|Utility))/i);
       if (provMatch) provider = provMatch[1].trim();
 
+      // Safely convert amount to string to avoid TypeError when stored as a number
+      const amtStr = amount != null ? String(amount).trim() : '';
+      const formattedAmt = amtStr ? (amtStr.startsWith('₹') || amtStr.startsWith('$') ? amtStr : `₹${amtStr}`) : '';
+
+      // If user specifically asked for transaction ID
+      if (isTxIdQ && txId) {
+        return `The transaction ID for **${primaryDoc.title}** is \`${txId}\`.${docReferral}`;
+      }
+
       // If user specifically asked for amount ONLY
-      if (isAmountQ && !lowerQ.includes('bill') && !lowerQ.includes('detail') && amount) {
-        const formattedAmt = amount.startsWith('₹') || amount.startsWith('$') ? amount : `₹${amount}`;
+      if (isAmountQ && !lowerQ.includes('bill') && !lowerQ.includes('detail') && amtStr) {
         return `The total amount for **${primaryDoc.title}** is **${formattedAmt}**.${docReferral}`;
       }
 
@@ -847,9 +860,9 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
       let billCard = `### ⚡ Verified Details for **${primaryDoc.title}**\n\n`;
       if (consumer) billCard += `• **Consumer Name:** **${consumer}**\n`;
       if (accountNo) billCard += `• **Account / Consumer ID:** \`${accountNo}\`\n`;
+      if (txId) billCard += `• **Transaction ID / Reference:** \`${txId}\`\n`;
       if (provider) billCard += `• **Utility Provider:** ${provider}\n`;
-      if (amount) {
-        const formattedAmt = amount.startsWith('₹') || amount.startsWith('$') ? amount : `₹${amount}`;
+      if (amtStr) {
         billCard += `• **Total Amount:** **${formattedAmt}**\n`;
       }
       if (docDate) billCard += `• **Billing / Payment Date:** **${docDate}**\n`;
