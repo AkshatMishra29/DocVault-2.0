@@ -30,7 +30,8 @@ body {
 html, body, #root {
   min-height: 100vh;
   min-height: 100dvh;
-  background-color: var(--color-bg);
+  background: var(--bg-app-ambient, var(--color-bg));
+  background-attachment: fixed;
   color: var(--color-text-primary);
 }
 

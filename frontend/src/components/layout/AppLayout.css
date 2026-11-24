@@ -4,9 +4,10 @@
   max-width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
-  background-color: var(--color-bg);
+  background: var(--bg-app-ambient, var(--color-bg));
+  background-attachment: fixed;
   color: var(--color-text-primary);
-  transition: background-color 0.25s ease;
+  transition: background 0.25s ease;
   overflow-x: hidden;
   position: relative;
 }

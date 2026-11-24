@@ -3,7 +3,7 @@
   height: 100vh;
   position: sticky;
   top: 0;
-  background: var(--color-surface);
+  background: var(--gradient-card-light, var(--color-surface));
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
@@ -154,9 +154,11 @@
 }
 
 .dv-sidebar__item--active {
-  background: var(--color-accent-soft);
+  background: var(--gradient-sidebar-active, var(--color-accent-soft));
   color: var(--color-primary);
   font-weight: var(--font-semibold);
+  border: 1px solid rgba(0, 112, 242, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 112, 242, 0.08);
 }
 
 .dv-sidebar__item--active::before {
@@ -166,7 +168,7 @@
   top: 15%;
   bottom: 15%;
   width: 3.5px;
-  background: var(--color-primary);
+  background: var(--gradient-primary);
   border-radius: 0 4px 4px 0;
 }
 
