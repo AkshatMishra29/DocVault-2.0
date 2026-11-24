@@ -41,17 +41,6 @@
   transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
-.dv-upload-hero::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--color-primary);
-  opacity: 0.6;
-}
-
 .dv-upload-hero__info {
   flex: 1;
   max-width: 720px;

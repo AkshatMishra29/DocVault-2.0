@@ -44,17 +44,6 @@
   overflow: hidden;
 }
 
-.dv-intel-hero::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent 0%, #10B981 35%, #0071E3 70%, transparent 100%);
-  opacity: 0.6;
-}
-
 .dv-intel-hero__info {
   flex: 1;
   max-width: 720px;

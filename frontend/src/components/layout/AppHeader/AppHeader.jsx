@@ -1,20 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../features/auth/context/AuthContext';
-import { LogOut, ShieldCheck, Lock, Users, ChevronDown, UserPlus, Check, Bell, Calendar, AlertTriangle, FileText, ChevronRight, Sun, Moon, Sparkles } from 'lucide-react';
+import { 
+  LogOut, ShieldCheck, Lock, Users, ChevronDown, UserPlus, 
+  Check, Bell, Calendar, AlertTriangle, FileText, ChevronRight, 
+  Sun, Moon, Sparkles 
+} from 'lucide-react';
 import { useTheme } from '../../../app/theme';
 import { apiRequest } from '../../../services/api';
-import Button from '../../common/Button/Button';
 import './AppHeader.css';
 
 export default function AppHeader({ title, subtitle }) {
   const { user, lockSession, logout, savedSessions = [], switchSession } = useAuth();
-  const { resolvedTheme, toggleTheme } = useTheme();
-  const [showSwitchMenu, setShowSwitchMenu] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const notifRef = useRef(null);
+  const accountRef = useRef(null);
+  const navigate = useNavigate();
 
+  // Load real-time vault notifications
   useEffect(() => {
     let mounted = true;
     async function loadNotifications() {
@@ -70,8 +76,6 @@ export default function AppHeader({ title, subtitle }) {
     loadNotifications();
     return () => { mounted = false; };
   }, []);
-  const menuRef = useRef(null);
-  const navigate = useNavigate();
 
   const handleLockSession = () => {
     lockSession();
@@ -80,15 +84,15 @@ export default function AppHeader({ title, subtitle }) {
 
   const handleSwitchToOldSession = (targetEmail) => {
     switchSession(targetEmail);
-    setShowSwitchMenu(false);
+    setShowAccountMenu(false);
     navigate('/enter-pin', { state: { email: targetEmail } });
   };
 
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setShowSwitchMenu(false);
+      if (accountRef.current && !accountRef.current.contains(e.target)) {
+        setShowAccountMenu(false);
       }
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setShowNotifications(false);
@@ -98,24 +102,20 @@ export default function AppHeader({ title, subtitle }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const userInitial = user?.name ? user.name[0].toUpperCase() : 'U';
+  const userInitial = user?.name ? user.name[0].toUpperCase() : (user?.email ? user.email[0].toUpperCase() : 'U');
+  const userDisplayName = user?.name ? user.name.split(' ')[0] : (user?.email ? user.email.split('@')[0] : 'Account');
   const otherSessions = savedSessions.filter(
-    (s) => s.email.toLowerCase() !== (user?.email || '').toLowerCase()
+    (s) => s.email && s.email.toLowerCase() !== (user?.email || '').toLowerCase()
   );
 
   return (
     <header className="dv-app-header">
       <div className="dv-app-header__title-group">
-        <div className="dv-app-header__mobile-avatar">
-          <span>{userInitial}</span>
-        </div>
-        <div>
-          <h1 className="dv-app-header__title">{title}</h1>
-          {subtitle && <p className="dv-app-header__subtitle">{subtitle}</p>}
-        </div>
+        <h1 className="dv-app-header__title">{title}</h1>
+        {subtitle && <p className="dv-app-header__subtitle">{subtitle}</p>}
       </div>
 
-            <div className="dv-app-header__actions" ref={menuRef}>
+      <div className="dv-app-header__actions">
         {/* Quick Ask AI Copilot Button */}
         <Link
           to="/ask-ai"
@@ -127,27 +127,6 @@ export default function AppHeader({ title, subtitle }) {
           <span className="dv-header-ask-label">Ask AI</span>
         </Link>
 
-        {/* Dark / Light Mode Theme Toggle Pill */}
-        <button
-          type="button"
-          className="dv-header-theme-toggle"
-          onClick={toggleTheme}
-          title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
-          aria-label="Toggle theme"
-        >
-          {resolvedTheme === 'dark' ? (
-            <>
-              <Sun size={15} className="dv-theme-icon-sun" />
-              <span className="dv-header-theme-label">Light</span>
-            </>
-          ) : (
-            <>
-              <Moon size={15} className="dv-theme-icon-moon" />
-              <span className="dv-header-theme-label">Dark</span>
-            </>
-          )}
-        </button>
-
         {/* Notification Bell Dropdown */}
         <div className="dv-header-notif-wrapper" ref={notifRef}>
           <button
@@ -155,8 +134,9 @@ export default function AppHeader({ title, subtitle }) {
             className={`dv-header-notif-btn ${notifications.length > 0 ? 'dv-header-notif-btn--has-unread' : ''}`}
             onClick={() => setShowNotifications(!showNotifications)}
             title="Notifications"
+            aria-label="Notifications"
           >
-            <Bell size={18} />
+            <Bell size={17} />
             {notifications.length > 0 && (
               <span className="dv-header-notif-badge">{notifications.length}</span>
             )}
@@ -206,59 +186,86 @@ export default function AppHeader({ title, subtitle }) {
           )}
         </div>
 
-        {/* User Account & Switch Pill */}
-        <div className="dv-app-header__session-wrapper">
+        {/* Quick Lock Session Button */}
+        <button
+          type="button"
+          onClick={handleLockSession}
+          className="dv-header-quick-lock-btn"
+          title="Lock active session (Cmd+L / Ctrl+L)"
+          aria-label="Lock Session"
+        >
+          <Lock size={14} />
+          <span className="dv-header-lock-label">Lock</span>
+          <kbd className="dv-app-header__kbd">⌘L</kbd>
+        </button>
+
+        {/* Consolidated User Profile Menu */}
+        <div className="dv-app-header__session-wrapper" ref={accountRef}>
           <button
             type="button"
-            className="dv-app-header__user-pill"
-            onClick={() => otherSessions.length > 0 && setShowSwitchMenu(!showSwitchMenu)}
-            title={otherSessions.length > 0 ? "Click to switch session" : "Active session"}
+            className="dv-app-header__account-trigger"
+            onClick={() => setShowAccountMenu(!showAccountMenu)}
+            title="Account & Security"
+            aria-label="Account Menu"
           >
-            <ShieldCheck size={15} className="dv-app-header__shield-icon" />
-            <span className="dv-app-header__user-email">{user?.email || 'Authenticated User'}</span>
-            {otherSessions.length > 0 && (
-              <span className="dv-app-header__switch-badge">
-                <Users size={11} />
-                <span>{savedSessions.length}</span>
-                <ChevronDown size={11} className={showSwitchMenu ? "dv-rotate-180" : ""} />
-              </span>
-            )}
+            <div className="dv-header-avatar">
+              <span>{userInitial}</span>
+            </div>
+            <span className="dv-header-account-name">{userDisplayName}</span>
+            <ChevronDown size={13} className={`dv-header-account-chevron ${showAccountMenu ? "dv-rotate-180" : ""}`} />
           </button>
 
-          {/* Quick Session Switch Menu */}
-          {showSwitchMenu && otherSessions.length > 0 && (
+          {showAccountMenu && (
             <div className="dv-header-switch-dropdown">
-              <div className="dv-header-switch-title">Switch to Another Session</div>
-              {savedSessions.map((s) => {
-                const isCurrent = s.email.toLowerCase() === (user?.email || '').toLowerCase();
-                return (
-                  <button
-                    key={s.email}
-                    type="button"
-                    className={`dv-header-session-btn ${isCurrent ? 'dv-header-session-btn--current' : ''}`}
-                    onClick={() => !isCurrent && handleSwitchToOldSession(s.email)}
-                  >
-                    <div className="dv-header-avatar">
-                      <span>{s.name?.[0]?.toUpperCase() || 'U'}</span>
-                    </div>
-                    <div className="dv-header-meta">
-                      <strong>{s.name}</strong>
-                      <small>{s.email}</small>
-                    </div>
-                    {isCurrent ? (
-                      <Check size={14} className="dv-current-check" />
-                    ) : (
-                      <span className="dv-switch-pill">Switch</span>
-                    )}
-                  </button>
-                );
-              })}
+              <div className="dv-header-account-card">
+                <div className="dv-header-avatar dv-header-avatar--lg">
+                  <span>{userInitial}</span>
+                </div>
+                <div className="dv-header-meta">
+                  <strong>{user?.name || 'Vault Custodian'}</strong>
+                  <small>{user?.email || 'Authenticated User'}</small>
+                  <span className="dv-header-security-tag">
+                    <ShieldCheck size={11} /> Verified Session
+                  </span>
+                </div>
+              </div>
+
+              {otherSessions.length > 0 && (
+                <>
+                  <div className="dv-header-switch-title">Switch Account ({otherSessions.length})</div>
+                  {savedSessions.map((s) => {
+                    const isCurrent = s.email.toLowerCase() === (user?.email || '').toLowerCase();
+                    return (
+                      <button
+                        key={s.email}
+                        type="button"
+                        className={`dv-header-session-btn ${isCurrent ? 'dv-header-session-btn--current' : ''}`}
+                        onClick={() => !isCurrent && handleSwitchToOldSession(s.email)}
+                      >
+                        <div className="dv-header-avatar">
+                          <span>{s.name?.[0]?.toUpperCase() || 'U'}</span>
+                        </div>
+                        <div className="dv-header-meta">
+                          <strong>{s.name}</strong>
+                          <small>{s.email}</small>
+                        </div>
+                        {isCurrent ? (
+                          <Check size={14} className="dv-current-check" />
+                        ) : (
+                          <span className="dv-switch-pill">Switch</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </>
+              )}
+
               <div className="dv-header-dropdown-footer">
                 <button
                   type="button"
                   className="dv-header-add-session-btn"
                   onClick={() => {
-                    setShowSwitchMenu(false);
+                    setShowAccountMenu(false);
                     logout();
                     navigate('/login');
                   }}
@@ -266,35 +273,21 @@ export default function AppHeader({ title, subtitle }) {
                   <UserPlus size={13} />
                   <span>Sign In with New Account</span>
                 </button>
+                <button
+                  type="button"
+                  className="dv-header-logout-dropdown-btn"
+                  onClick={() => {
+                    setShowAccountMenu(false);
+                    logout();
+                  }}
+                >
+                  <LogOut size={13} />
+                  <span>Sign Out</span>
+                </button>
               </div>
             </div>
           )}
         </div>
-
-        {/* Lock Session Button (Immediately locks vault and redirects to PIN screen) */}
-        <Button 
-          variant="outline" 
-          size="sm" 
-          icon={Lock} 
-          onClick={handleLockSession}
-          className="dv-app-header__lock-btn"
-          title="Lock active session (Cmd+L / Ctrl+L)"
-        >
-          <span>Lock Session</span>
-          <kbd className="dv-app-header__kbd">⌘L</kbd>
-        </Button>
-
-        {/* Complete Sign Out */}
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          icon={LogOut} 
-          onClick={logout} 
-          title="Sign Out of Session"
-          className="dv-app-header__logout-btn"
-        >
-          Sign Out
-        </Button>
       </div>
     </header>
   );
