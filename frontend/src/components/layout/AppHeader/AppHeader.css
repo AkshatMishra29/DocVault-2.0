@@ -272,6 +272,34 @@
   background-color: var(--color-accent-soft);
 }
 
+/* Mid-Desktop Adaptive Sizing (1025px - 1300px) */
+@media (max-width: 1300px) {
+  .dv-app-header__kbd {
+    display: none;
+  }
+  .dv-app-header__user-email {
+    max-width: 170px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .dv-app-header__lock-btn .dv-btn__text,
+  .dv-app-header__logout-btn .dv-btn__text,
+  .dv-header-theme-label {
+    display: none;
+  }
+  .dv-app-header__lock-btn,
+  .dv-app-header__logout-btn {
+    padding: 0 10px;
+  }
+  .dv-app-header__user-email {
+    max-width: 130px;
+  }
+  .dv-app-header__actions {
+    gap: 8px;
+  }
+}
+
 /* Mobile & Tablet Native App Bar */
 @media (max-width: 1024px) {
   .dv-app-header {
