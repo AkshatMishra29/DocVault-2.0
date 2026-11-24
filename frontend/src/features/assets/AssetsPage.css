@@ -531,6 +531,33 @@
   gap: 10px;
 }
 
+.dv-custom-field-row .dv-input,
+.dv-custom-field-row input {
+  height: 40px;
+  padding: 0 12px;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 8px);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: normal;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.dv-custom-field-row .dv-input:focus,
+.dv-custom-field-row input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring, rgba(53, 106, 230, 0.2));
+}
+
+.dv-custom-field-row .dv-input::placeholder,
+.dv-custom-field-row input::placeholder {
+  color: var(--color-text-muted);
+}
+
 .dv-color-selector {
   display: flex;
   align-items: center;
@@ -693,6 +720,31 @@
 [data-theme="dark"] .dv-custom-fields-builder {
   background: #19212D;
   border-color: #263346;
+}
+
+[data-theme="dark"] .dv-custom-field-row .dv-input,
+[data-theme="dark"] .dv-custom-field-row input {
+  background-color: #121824 !important;
+  color: #F8FAFC !important;
+  border-color: #2E3B4E !important;
+  color-scheme: dark;
+}
+
+[data-theme="dark"] .dv-custom-field-row .dv-input:focus,
+[data-theme="dark"] .dv-custom-field-row input:focus {
+  border-color: #3B82F6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+}
+
+[data-theme="dark"] .dv-custom-field-row .dv-input::placeholder,
+[data-theme="dark"] .dv-custom-field-row input::placeholder {
+  color: #64748B !important;
+}
+
+[data-theme="dark"] .dv-custom-field-row input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.9) brightness(1.2);
+  cursor: pointer;
+  opacity: 0.85;
 }
 
 [data-theme="dark"] .dv-picker-chip {
