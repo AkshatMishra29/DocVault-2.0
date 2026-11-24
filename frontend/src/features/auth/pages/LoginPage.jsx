@@ -137,9 +137,21 @@ export default function LoginPage() {
               } 
             });
           } else {
-            // Direct, instant, seamless entry to dashboard for verified Google users
+            // Require vault passcode/PIN verification to unlock encrypted vault
+            localStorage.setItem("pending_pin_email", targetEmail);
+            sessionStorage.setItem("docvault_pending_email", targetEmail);
+            sessionStorage.setItem("docvault_pin_length", pinLen.toString());
             sessionStorage.removeItem("docvault_requires_pin_setup");
-            navigate("/dashboard", { replace: true });
+            navigate("/enter-pin", { 
+              replace: true,
+              state: { 
+                email: targetEmail, 
+                name: result.user?.name,
+                pinLength: pinLen,
+                isSetup: false,
+                requiresPinSetup: false
+              } 
+            });
           }
         } else {
           setError(result?.error || "Google authentication failed.");
@@ -186,8 +198,21 @@ export default function LoginPage() {
               } 
             });
           } else {
+            // Require vault passcode/PIN verification to unlock encrypted vault
+            localStorage.setItem("pending_pin_email", targetEmail);
+            sessionStorage.setItem("docvault_pending_email", targetEmail);
+            sessionStorage.setItem("docvault_pin_length", pinLen.toString());
             sessionStorage.removeItem("docvault_requires_pin_setup");
-            navigate("/dashboard", { replace: true });
+            navigate("/enter-pin", { 
+              replace: true,
+              state: { 
+                email: targetEmail, 
+                name: result.user?.name,
+                pinLength: pinLen,
+                isSetup: false,
+                requiresPinSetup: false
+              } 
+            });
           }
         }
       } catch (err) {

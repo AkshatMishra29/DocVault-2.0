@@ -194,13 +194,22 @@ export default function MobileAppAuthView({ onSwitchToDesktopWeb }) {
                 email: targetEmail, 
                 name: result.user?.name,
                 pinLength: pinLen,
-                isSetup,
-                requiresPinSetup: isSetup
+                isSetup: true,
+                requiresPinSetup: true
               } 
             });
           } else {
             sessionStorage.removeItem('docvault_requires_pin_setup');
-            navigate("/dashboard", { replace: true });
+            navigate("/enter-pin", { 
+              replace: true,
+              state: { 
+                email: targetEmail, 
+                name: result.user?.name,
+                pinLength: pinLen,
+                isSetup: false,
+                requiresPinSetup: false
+              } 
+            });
           }
         } else {
           setLoginError(result?.error || "Google sign-in could not complete.");

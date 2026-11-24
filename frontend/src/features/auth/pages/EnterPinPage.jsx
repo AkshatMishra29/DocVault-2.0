@@ -80,15 +80,21 @@ export default function EnterPinPage() {
   }, [user, isVaultUnlocked, navigate]);
 
   // Setup PIN Mode for Google OAuth / new users without configured PIN
-  const [isSetupMode, setIsSetupMode] = useState(() => Boolean(
-    location.state?.isSetup ||
-    location.state?.requiresPinSetup ||
-    sessionStorage.getItem("docvault_requires_pin_setup") === "true" ||
-    user?.pinSet === false
-  ));
+  const [isSetupMode, setIsSetupMode] = useState(() => {
+    if (location.state?.isSetup === false || location.state?.requiresPinSetup === false) return false;
+    return Boolean(
+      location.state?.isSetup ||
+      location.state?.requiresPinSetup ||
+      sessionStorage.getItem("docvault_requires_pin_setup") === "true" ||
+      user?.pinSet === false
+    );
+  });
 
   useEffect(() => {
-    if (
+    if (location.state?.isSetup === false || location.state?.requiresPinSetup === false) {
+      setIsSetupMode(false);
+      sessionStorage.removeItem("docvault_requires_pin_setup");
+    } else if (
       location.state?.isSetup ||
       location.state?.requiresPinSetup ||
       sessionStorage.getItem("docvault_requires_pin_setup") === "true" ||

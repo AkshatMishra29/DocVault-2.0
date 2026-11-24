@@ -143,13 +143,21 @@ export async function sendOtp({ email, purpose = 'register' }) {
     cleanEmail = user.email;
   }
 
-  // If registering, verify email not already claimed
+  // If registering, verify if email is already claimed by a non-OAuth user
   if (purpose === 'register') {
     const existing = await User.findOne({ email: cleanEmail });
     if (existing) {
-      const error = new Error('An account with this email already exists.');
-      error.status = 400;
-      throw error;
+      // If the account was created via OAuth (Google/Firebase) or lacks a custom password,
+      // allow sending an OTP so the user can link their master password and PIN directly!
+      const isOAuthAccount = existing.passwordHash?.startsWith('oauth:placeholder:') || 
+                             existing.authProvider === 'google' || 
+                             existing.authProvider === 'firebase' ||
+                             !existing.pinSet;
+      if (!isOAuthAccount) {
+        const error = new Error('An account with this email already exists. Please sign in or use "Forgot / Set Password".');
+        error.status = 400;
+        throw error;
+      }
     }
   }
 
@@ -259,9 +267,66 @@ export async function registerUser({ name, email, password, pin, phone, otp }) {
 
   const existingUser = await User.findOne({ email: cleanEmail });
   if (existingUser) {
-    const error = new Error('An account with this email already exists.');
-    error.status = 400;
-    throw error;
+    const isOAuthAccount = existingUser.passwordHash?.startsWith('oauth:placeholder:') || 
+                           existingUser.authProvider === 'google' || 
+                           existingUser.authProvider === 'firebase' ||
+                           !existingUser.pinSet;
+    if (!isOAuthAccount) {
+      const error = new Error('An account with this email already exists. Please sign in or use "Forgot / Set Password".');
+      error.status = 400;
+      throw error;
+    }
+
+    // Seamlessly link normal account credentials (password and PIN) to this existing OAuth account!
+    const [passwordHash, pinHash] = await Promise.all([
+      hashPassword(password),
+      hashPin(cleanPin)
+    ]);
+
+    existingUser.passwordHash = passwordHash;
+    existingUser.pinHash = pinHash;
+    existingUser.pinLength = cleanPin.length === 6 ? 6 : 4;
+    existingUser.pinSet = true;
+    existingUser.authProvider = 'both';
+    if (name && (!existingUser.name || existingUser.name === cleanEmail.split('@')[0])) {
+      existingUser.name = name.trim();
+    }
+    if (phone) {
+      existingUser.phone = phone.trim();
+    }
+    existingUser.failedAttempts = 0;
+    existingUser.lockUntil = null;
+    await existingUser.save();
+    claimPendingSharesForUser(existingUser).catch(() => {});
+
+    const token = jwt.sign(
+      { userId: existingUser._id, email: existingUser.email, sessionVersion: existingUser.sessionVersion || 1 },
+      config.jwtSecret,
+      { expiresIn: '7d' }
+    );
+
+    return {
+      user: {
+        id: existingUser._id,
+        name: existingUser.name,
+        email: existingUser.email,
+        docVaultId: existingUser.docVaultId,
+        phone: existingUser.phone,
+        tier: existingUser.tier,
+        pinLength: existingUser.pinLength,
+        pinSet: true,
+        authProvider: 'both',
+        hasPassword: true,
+        hasPin: true,
+        singleSessionOnly: Boolean(existingUser.singleSessionOnly),
+        sessionVersion: existingUser.sessionVersion || 1,
+        autoLockEnabled: existingUser.autoLockEnabled !== false,
+        biometricsEnabled: Boolean(existingUser.biometricsEnabled),
+      },
+      token,
+      isLinked: true,
+      message: 'Your Google OAuth account has been successfully linked with your password and PIN!',
+    };
   }
 
   const [passwordHash, pinHash] = await Promise.all([
@@ -373,7 +438,11 @@ export async function loginUser({ email, password }) {
   }
 
   if (!isMatch) {
-    const error = new Error('Invalid email or password. If you signed in via Google OAuth, you can sign in with Google or use OTP Login.');
+    const isOAuthOnly = user.passwordHash?.startsWith('oauth:placeholder:') || user.authProvider === 'google' || user.authProvider === 'firebase';
+    const message = isOAuthOnly
+      ? 'This account was created via Google OAuth without a password yet. Please sign in with Google, or set your password via "Create account" to link manual credentials.'
+      : 'Invalid email or password.';
+    const error = new Error(message);
     error.status = 401;
     throw error;
   }
@@ -1032,6 +1101,10 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
   } else {
     // Highly optimized existing user path: avoid redundant database writes
     let needsUpdate = false;
+    if (user.authProvider && user.authProvider !== 'google' && user.authProvider !== 'both') {
+      user.authProvider = 'both';
+      needsUpdate = true;
+    }
     if (!user.docVaultId) {
       user.docVaultId = generateDocVaultId();
       needsUpdate = true;
@@ -1057,7 +1130,7 @@ export async function authenticateWithGoogleToken(idToken, accessToken, clientPr
   return {
     isNewUser,
     requiresPinSetup,
-    requiresPin: requiresPinSetup, // Existing users with PIN set don't need redundant re-prompt on Google sign in
+    requiresPin: true, // Always require passcode/PIN verification on OAuth login to protect sovereign vault!
     user: {
       id: user._id,
       name: user.name,
@@ -1248,7 +1321,7 @@ export async function authenticateWithFirebaseIdToken(idToken) {
   return {
     isNewUser,
     requiresPinSetup,
-    requiresPin: requiresPinSetup,
+    requiresPin: true, // Always require passcode/PIN verification on OAuth login!
     user: {
       id: user._id,
       name: user.name,

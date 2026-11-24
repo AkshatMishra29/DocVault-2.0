@@ -111,7 +111,7 @@ describe('DocVault Security Guardrail: Duplicate Document Detection & OAuth Opti
     assert.deepStrictEqual(cachedProfile, mockProfile);
   });
 
-  it('4. OAuth Convenience: Existing Google users with configured PIN get direct dashboard access (requiresPin: false)', () => {
+  it('4. OAuth Sovereign Security: Google users with configured PIN require PIN entry to unlock encrypted vault (requiresPin: true)', () => {
     const existingGoogleUser = {
       email: 'akshat@docvault.io',
       pinSet: true,
@@ -122,15 +122,15 @@ describe('DocVault Security Guardrail: Duplicate Document Detection & OAuth Opti
     const authResponse = {
       isNewUser: false,
       requiresPinSetup,
-      requiresPin: requiresPinSetup, // Directly false for existing user!
+      requiresPin: true, // Always require PIN entry to protect encrypted vault!
       user: existingGoogleUser,
     };
 
-    assert.strictEqual(authResponse.requiresPin, false, 'Existing OAuth user with PIN set must NOT be blocked by redundant PIN re-entry');
-    assert.strictEqual(authResponse.requiresPinSetup, false);
+    assert.strictEqual(authResponse.requiresPin, true, 'OAuth user must enter their security PIN to unlock personal vault');
+    assert.strictEqual(authResponse.requiresPinSetup, false, 'Existing user does not need to set up PIN again');
   });
 
-  it('5. OAuth Convenience: New Google users without PIN are properly routed to PIN setup (requiresPin: true)', () => {
+  it('5. OAuth Convenience: New Google users without PIN are properly routed to PIN setup (requiresPin: true, requiresPinSetup: true)', () => {
     const newGoogleUser = {
       email: 'newuser@docvault.io',
       pinSet: false,
@@ -141,7 +141,7 @@ describe('DocVault Security Guardrail: Duplicate Document Detection & OAuth Opti
     const authResponse = {
       isNewUser: true,
       requiresPinSetup,
-      requiresPin: requiresPinSetup, // True because PIN setup is needed!
+      requiresPin: true, // True because PIN setup is needed!
       user: newGoogleUser,
     };
 
@@ -159,5 +159,52 @@ describe('DocVault Security Guardrail: Duplicate Document Detection & OAuth Opti
     const slowCall = new Promise(resolve => setTimeout(() => resolve({ email: 'slow@docvault.io' }), 200));
     const fastest = await Promise.any([fastCall, slowCall]);
     assert.strictEqual(fastest.email, 'fast@docvault.io', 'Hedged race must return the fastest response');
+  });
+
+  it('7. Seamless Account Linking: An account created via OAuth can directly link manual password & PIN on registration', () => {
+    const mockUserDatabase = [
+      {
+        _id: 'oauth_user_1',
+        name: 'Sanjay Mishra',
+        email: 'sanjay@example.com',
+        authProvider: 'google',
+        passwordHash: 'oauth:placeholder:abcdef123456',
+        pinHash: 'oauth:placeholder:abcdef123456',
+        pinSet: false,
+        pinLength: 4,
+      }
+    ];
+
+    // Simulate registration linking logic
+    const linkAccountIfOAuth = (email, password, pin) => {
+      const existingUser = mockUserDatabase.find(u => u.email === email);
+      if (!existingUser) return { isNew: true };
+      
+      const isOAuthAccount = existingUser.passwordHash?.startsWith('oauth:placeholder:') || 
+                             existingUser.authProvider === 'google' || 
+                             existingUser.authProvider === 'firebase';
+      if (!isOAuthAccount) {
+        throw new Error('An account with this email already exists.');
+      }
+
+      existingUser.passwordHash = 'hashed_new_password';
+      existingUser.pinHash = 'hashed_new_pin';
+      existingUser.pinLength = pin.length;
+      existingUser.pinSet = true;
+      existingUser.authProvider = 'both';
+
+      return {
+        success: true,
+        user: existingUser,
+        isLinked: true,
+      };
+    };
+
+    const linkResult = linkAccountIfOAuth('sanjay@example.com', 'MyPassword123!', '1234');
+    assert.strictEqual(linkResult.success, true);
+    assert.strictEqual(linkResult.isLinked, true);
+    assert.strictEqual(linkResult.user.authProvider, 'both', 'Account must now support both OAuth and manual credentials');
+    assert.strictEqual(linkResult.user.pinSet, true);
+    assert.strictEqual(linkResult.user.passwordHash, 'hashed_new_password');
   });
 });

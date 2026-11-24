@@ -325,17 +325,14 @@ export const AuthProvider = ({ children }) => {
       }
 
       const isSetup = Boolean(res.requiresPinSetup || res.isNewUser || res.user?.pinSet === false);
-      if (isSetup) {
-        handleLoginSuccess(res.user, true);
-      } else {
-        // Direct instant unlock for verified Google OAuth!
-        handlePinSuccess(res.token, res.user);
-      }
+      // DocVault sovereign security: always require passcode/PIN unlock on OAuth authentication
+      handleLoginSuccess(res.user, true);
 
       return { 
         success: true, 
         user: res.user, 
-        requiresPin: isSetup, 
+        token: res.token,
+        requiresPin: true, 
         requiresPinSetup: isSetup, 
         isNewUser: Boolean(res.isNewUser) 
       };
@@ -385,16 +382,14 @@ export const AuthProvider = ({ children }) => {
       }
 
       const isSetup = Boolean(res.requiresPinSetup || res.isNewUser || !res.user?.pinSet);
-      if (isSetup) {
-        handleLoginSuccess(res.user, true);
-      } else {
-        handlePinSuccess(res.token, res.user);
-      }
+      // DocVault sovereign security: always require passcode/PIN unlock on OAuth authentication
+      handleLoginSuccess(res.user, true);
 
       return { 
         success: true, 
         user: res.user, 
-        requiresPin: isSetup,
+        token: res.token,
+        requiresPin: true,
         requiresPinSetup: isSetup,
         isNewUser: Boolean(res.isNewUser)
       };
