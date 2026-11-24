@@ -110,7 +110,7 @@
   font-weight: 600;
   color: var(--color-text-primary);
   font-family: var(--font-mono, monospace);
-  max-width: 150px;
+  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
