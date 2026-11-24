@@ -164,57 +164,20 @@
   transform: scale(0.97);
 }
 
-.dv-search-suggestions {
+.dv-search-hero__tagline-bar {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.dv-search-suggestions__label {
-  font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  flex-shrink: 0;
-}
-
-.dv-search-chips {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.dv-search-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: 5px 12px;
-  background: var(--color-surface-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  font-family: var(--font-sans);
-  font-size: var(--text-xs);
-  font-weight: var(--font-medium);
+  gap: 8px;
+  font-size: 13px;
   color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
+  font-weight: 500;
+  padding: 4px 2px 0;
+  line-height: 1.4;
 }
 
-.dv-search-chip:hover {
-  background: var(--color-accent-soft);
+.dv-search-hero__tagline-bar .dv-search-sparkle-icon {
   color: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.dv-search-chip__icon {
-  color: var(--color-text-muted);
-}
-
-.dv-search-chip:hover .dv-search-chip__icon {
-  color: var(--color-primary);
+  flex-shrink: 0;
 }
 
 /* ── Section 3: Alert Banners ─────────────────────────────────────────────── */

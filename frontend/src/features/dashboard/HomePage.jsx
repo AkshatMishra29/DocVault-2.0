@@ -21,13 +21,6 @@ import ExtractionConfidence from "../../components/common/ExtractionConfidence/E
 
 import "./HomePage.css";
 
-const SUGGESTED_COPILOT_QUESTIONS = [
-  "When does my motor insurance expire?",
-  "Find my latest electricity bill",
-  "Which appliances still have active warranties?",
-  "What is my passport number?"
-];
-
 export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -148,10 +141,6 @@ export default function HomePage() {
     }
   };
 
-  const handleChipClick = (question) => {
-    navigate(`/ask-ai?q=${encodeURIComponent(question)}`);
-  };
-
   return (
     <div className="dv-dashboard">
       <AppHeader
@@ -218,21 +207,9 @@ export default function HomePage() {
             </button>
           </form>
 
-          <div className="dv-search-suggestions">
-            <span className="dv-search-suggestions__label">Try asking:</span>
-            <div className="dv-search-chips">
-              {SUGGESTED_COPILOT_QUESTIONS.map((question, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className="dv-search-chip"
-                  onClick={() => handleChipClick(question)}
-                >
-                  <Search size={12} className="dv-search-chip__icon" />
-                  <span>{question}</span>
-                </button>
-              ))}
-            </div>
+          <div className="dv-search-hero__tagline-bar">
+            <Sparkles size={14} className="dv-search-sparkle-icon" />
+            <span>Ask questions, verify policies, track warranties, or extract details from your encrypted documents.</span>
           </div>
         </section>
 

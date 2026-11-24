@@ -18,14 +18,6 @@ import Badge from "../../components/common/Badge/Badge";
 import Modal from "../../components/common/Modal/Modal";
 import "./AskAiPage.css";
 
-const SUGGESTED_PROMPTS = [
-  "When does my motor policy expire?",
-  "What is my zero-dep insurance deductible?",
-  "What is covered under my health policy?",
-  "Which appliances still have active warranties?",
-  "Find the critical details in my latest invoice."
-];
-
 const FORM_TEMPLATES = [
   {
     name: "Home Loan Application",
@@ -950,25 +942,11 @@ export default function AskAiPage() {
             </div>
           )}
 
-          {/* Suggested Prompts Pills (Only when empty or 1 message) */}
-          {messages.length <= 1 && (
-            <div className="dv-ai-prompts-bar">
-              <span className="dv-ai-prompts-label">Suggested:</span>
-              <div className="dv-ai-prompts-chips">
-                {SUGGESTED_PROMPTS.map((prompt, pIdx) => (
-                  <button
-                    key={pIdx}
-                    type="button"
-                    className="dv-prompt-chip"
-                    onClick={() => handleSend(prompt)}
-                    disabled={loading}
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Universal Simple Tagline */}
+          <div className="dv-ai-universal-tagline">
+            <Sparkles size={13} className="dv-ai-tagline-icon" />
+            <span>Ask questions, verify policy details, or extract insights from your encrypted documents.</span>
+          </div>
 
           {/* Fixed Bottom Chat Composer */}
           <div className="dv-ai-composer-wrapper">
