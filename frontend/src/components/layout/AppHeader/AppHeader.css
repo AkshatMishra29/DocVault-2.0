@@ -1,30 +1,41 @@
 .dv-app-header {
   height: 64px;
   background: var(--gradient-glass-light, var(--glass-bg));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--color-border);
-  padding: 0;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid var(--color-border);
+  border-radius: 16px;
+  padding: 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: sticky;
-  top: 0;
+  top: 14px;
   z-index: 40;
+  margin-top: 12px;
   margin-bottom: 24px;
   width: 100%;
   box-sizing: border-box;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+  position: relative;
+  overflow: visible;
 }
 
 .dv-app-header::before {
   content: "";
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
+  left: 16px;
+  right: 16px;
   height: 2.5px;
   background: var(--gradient-accent-bar);
   opacity: 0.95;
+  border-radius: 9999px;
+}
+
+[data-theme="dark"] .dv-app-header {
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .dv-app-header__title-group {
@@ -272,25 +283,31 @@
   background-color: var(--color-accent-soft);
 }
 
-/* Mid-Desktop Adaptive Sizing (1025px - 1300px) */
-@media (max-width: 1300px) {
+/* Progressive Responsive Decluttering & Stability */
+@media (max-width: 1380px) {
   .dv-app-header__kbd {
     display: none;
   }
+  .dv-header-theme-label {
+    display: none;
+  }
   .dv-app-header__user-email {
-    max-width: 170px;
+    max-width: 160px;
   }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1240px) {
   .dv-app-header__lock-btn .dv-btn__text,
-  .dv-app-header__logout-btn .dv-btn__text,
-  .dv-header-theme-label {
+  .dv-app-header__logout-btn .dv-btn__text {
     display: none;
   }
   .dv-app-header__lock-btn,
   .dv-app-header__logout-btn {
-    padding: 0 10px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 8px;
   }
   .dv-app-header__user-email {
     max-width: 130px;
@@ -300,13 +317,30 @@
   }
 }
 
+@media (max-width: 1120px) {
+  .dv-header-ask-label {
+    display: none;
+  }
+  .dv-header-ask-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+  }
+  .dv-app-header__user-email {
+    max-width: 110px;
+  }
+}
+
 /* Mobile & Tablet Native App Bar */
 @media (max-width: 1024px) {
   .dv-app-header {
     height: 56px;
-    padding: 0;
+    padding: 0 12px;
     padding-top: max(4px, env(safe-area-inset-top));
+    margin-top: 6px;
     margin-bottom: 14px;
+    border-radius: 12px;
+    top: 6px;
   }
 
   .dv-app-header__mobile-avatar {
