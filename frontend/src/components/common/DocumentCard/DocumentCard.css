@@ -11,6 +11,7 @@
   transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
   box-shadow: var(--shadow-xs);
   box-sizing: border-box;
+  min-width: 0;
 }
 
 .dv-doc-card-component:hover {

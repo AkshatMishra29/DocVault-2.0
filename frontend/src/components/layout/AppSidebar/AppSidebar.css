@@ -1,6 +1,9 @@
 .dv-sidebar {
-  width: var(--sidebar-width);
+  width: var(--sidebar-width, 256px);
+  min-width: var(--sidebar-width, 256px);
+  max-width: var(--sidebar-width, 256px);
   height: 100vh;
+  height: 100dvh;
   position: sticky;
   top: 0;
   background: var(--gradient-card-light, var(--color-surface));
@@ -9,8 +12,10 @@
   flex-direction: column;
   flex-shrink: 0;
   z-index: 50;
-  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), background-color var(--transition-normal), border-color var(--transition-normal);
-  will-change: width;
+  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.28s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.28s cubic-bezier(0.16, 1, 0.3, 1), background-color var(--transition-normal), border-color var(--transition-normal);
+  will-change: width, min-width;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .dv-sidebar__header {
@@ -55,6 +60,8 @@
 /* Collapsed Sidebar State (Hide/Unhide Icon Mode) */
 .dv-sidebar--collapsed {
   width: 72px;
+  min-width: 72px;
+  max-width: 72px;
 }
 
 .dv-sidebar--collapsed .dv-sidebar__header {

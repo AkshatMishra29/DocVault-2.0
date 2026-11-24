@@ -2,6 +2,12 @@
 @import './typography.css';
 @import './animations.css';
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
   width: 100%;
   max-width: 100%;

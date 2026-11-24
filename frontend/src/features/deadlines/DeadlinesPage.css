@@ -126,6 +126,7 @@
   align-items: flex-start;
   gap: var(--space-3-5);
   flex: 1;
+  min-width: 0;
 }
 
 .dv-dicon-box {
@@ -153,6 +154,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+  flex: 1;
 }
 
 .dv-deadline-card__title-row {
@@ -187,9 +190,20 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 720px) {
   .dv-deadline-card {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .dv-deadline-card__right {
+    width: 100%;
+  }
+
+  .dv-deadline-card__right a,
+  .dv-deadline-card__right button {
+    width: 100%;
+    justify-content: center;
   }
 }

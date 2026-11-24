@@ -7,8 +7,6 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
   box-sizing: border-box;
 }
 
@@ -230,8 +228,8 @@
 
 .dv-flashcards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
 
 /* Apple Spatial Flashcard */

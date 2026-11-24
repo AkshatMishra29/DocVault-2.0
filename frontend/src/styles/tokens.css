@@ -113,9 +113,9 @@
   --color-auth-focus-ring: rgba(53, 106, 230, 0.24);
 
   /* Layout Dimensions (4px Grid) */
-  --sidebar-width: 240px;
+  --sidebar-width: 256px;
   --header-height: 64px;
-  --content-max-width: 1280px;
+  --content-max-width: 1440px;
 
   /* Spacing Scale (Multiples of 4px) */
   --space-0-5: 2px;
