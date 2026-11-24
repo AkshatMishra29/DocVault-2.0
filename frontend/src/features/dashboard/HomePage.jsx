@@ -58,9 +58,11 @@ export default function HomePage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchDashboardData() {
+    let mounted = true;
+
+    async function fetchDashboardData(showLoading = true) {
       try {
-        if (!sessionStorage.getItem("dv_cached_docs")) {
+        if (showLoading && !sessionStorage.getItem("dv_cached_docs")) {
           setLoading(true);
         }
         setError(null);
@@ -72,27 +74,51 @@ export default function HomePage() {
           apiRequest("/api/extraction/review-queue").catch(() => ({ data: [] })),
         ]);
 
-        if (docsRes?.data) {
-          setDocuments(docsRes.data);
-          try { sessionStorage.setItem("dv_cached_docs", JSON.stringify(docsRes.data)); } catch {}
+        if (mounted) {
+          if (docsRes?.data && Array.isArray(docsRes.data)) {
+            setDocuments(docsRes.data);
+            try { sessionStorage.setItem("dv_cached_docs", JSON.stringify(docsRes.data)); } catch {}
+          }
+          if (deadRes?.data && Array.isArray(deadRes.data)) {
+            setDeadlines(deadRes.data);
+            try { sessionStorage.setItem("dv_cached_deadlines", JSON.stringify(deadRes.data)); } catch {}
+          }
+          if (assetsRes?.data && Array.isArray(assetsRes.data)) {
+            setAssets(assetsRes.data);
+            try { sessionStorage.setItem("dv_cached_assets", JSON.stringify(assetsRes.data)); } catch {}
+          }
+          if (reviewRes?.data && Array.isArray(reviewRes.data)) {
+            setReviewQueue(reviewRes.data);
+          }
         }
-        if (deadRes?.data) {
-          setDeadlines(deadRes.data);
-          try { sessionStorage.setItem("dv_cached_deadlines", JSON.stringify(deadRes.data)); } catch {}
-        }
-        if (assetsRes?.data) {
-          setAssets(assetsRes.data);
-          try { sessionStorage.setItem("dv_cached_assets", JSON.stringify(assetsRes.data)); } catch {}
-        }
-        if (reviewRes?.data) setReviewQueue(reviewRes.data);
       } catch (err) {
-        console.warn("[Dashboard] Error loading data:", err.message);
-        setError("Unable to sync vault overview. Please refresh or check connection.");
+        if (mounted) {
+          console.warn("[Dashboard] Error loading data:", err.message);
+          setError("Unable to sync vault overview. Please refresh or check connection.");
+        }
       } finally {
-        setLoading(false);
+        if (mounted && showLoading) {
+          setLoading(false);
+        }
       }
     }
-    fetchDashboardData();
+
+    fetchDashboardData(true);
+
+    // Live sync every 4 seconds so card counts update instantly when documents are uploaded or altered
+    const interval = setInterval(() => {
+      fetchDashboardData(false);
+    }, 4000);
+
+    // Immediate sync on tab/window focus
+    const handleFocus = () => fetchDashboardData(false);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
   const safeDeadlines = Array.isArray(deadlines) ? deadlines : [];
@@ -232,20 +258,39 @@ export default function HomePage() {
 
         {/* Section 4: Vault Overview Statistics */}
         <section className="dv-stats-grid" aria-label="Vault Overview Statistics">
-          <Card padding="md" className="dv-stat-card">
+          <Card 
+            padding="md" 
+            hover
+            className="dv-stat-card dv-stat-card--clickable"
+            onClick={() => navigate('/documents')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate('/documents')}
+            title="Click to view all documents"
+          >
             <div className="dv-stat-card__icon-box dv-stat-card__icon-box--primary">
               <FileText size={20} />
             </div>
             <div className="dv-stat-card__meta">
               <span className="dv-stat-card__label">Total Documents</span>
               <span className="dv-stat-card__value">
-                {loading ? <Skeleton width="48px" height="28px" /> : documents.length}
+                {loading ? <Skeleton width="48px" height="28px" /> : safeDocs.length}
               </span>
               <span className="dv-stat-card__sub">Stored & Indexed</span>
             </div>
+            <ChevronRight size={16} className="dv-stat-card__arrow" />
           </Card>
 
-          <Card padding="md" className="dv-stat-card">
+          <Card 
+            padding="md" 
+            hover
+            className="dv-stat-card dv-stat-card--clickable"
+            onClick={() => navigate('/documents')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate('/documents')}
+            title="Click to view private documents"
+          >
             <div className="dv-stat-card__icon-box dv-stat-card__icon-box--success">
               <Lock size={20} />
             </div>
@@ -256,9 +301,19 @@ export default function HomePage() {
               </span>
               <span className="dv-stat-card__sub">Zero External Access</span>
             </div>
+            <ChevronRight size={16} className="dv-stat-card__arrow" />
           </Card>
 
-          <Card padding="md" className="dv-stat-card">
+          <Card 
+            padding="md" 
+            hover
+            className="dv-stat-card dv-stat-card--clickable"
+            onClick={() => navigate('/shares')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate('/shares')}
+            title="Click to view shared documents"
+          >
             <div className="dv-stat-card__icon-box dv-stat-card__icon-box--info">
               <Share2 size={20} />
             </div>
@@ -269,21 +324,32 @@ export default function HomePage() {
               </span>
               <span className="dv-stat-card__sub">With Authorized Members</span>
             </div>
+            <ChevronRight size={16} className="dv-stat-card__arrow" />
           </Card>
 
-          <Card padding="md" className="dv-stat-card">
+          <Card 
+            padding="md" 
+            hover
+            className="dv-stat-card dv-stat-card--clickable"
+            onClick={() => navigate('/deadlines')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate('/deadlines')}
+            title="Click to view upcoming deadlines"
+          >
             <div className="dv-stat-card__icon-box dv-stat-card__icon-box--warning">
               <Calendar size={20} />
             </div>
             <div className="dv-stat-card__meta">
               <span className="dv-stat-card__label">Upcoming Deadlines</span>
               <span className="dv-stat-card__value">
-                {loading ? <Skeleton width="48px" height="28px" /> : deadlines.length}
+                {loading ? <Skeleton width="48px" height="28px" /> : safeDeadlines.length}
               </span>
               <span className="dv-stat-card__sub">
                 {urgentDeadlines.length > 0 ? `${urgentDeadlines.length} urgent action(s)` : "Monitored on schedule"}
               </span>
             </div>
+            <ChevronRight size={16} className="dv-stat-card__arrow" />
           </Card>
         </section>
 
