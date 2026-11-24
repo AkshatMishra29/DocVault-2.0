@@ -451,3 +451,33 @@
   color: var(--color-text-primary, #1d2d3e);
 }
 
+/* Dark Mode Overrides */
+[data-theme="dark"] .dv-asset-hero-title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-asset-hero-desc {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-stat-label {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-stat-val {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-timeline-title {
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-timeline-desc {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .dv-form-label {
+  color: #F8FAFC;
+}
+
+

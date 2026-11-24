@@ -509,8 +509,6 @@ export default function AssetsPage() {
 
               return (
                 <div key={card._id} className={`dv-flashcard dv-flashcard--${colorTheme}`}>
-                  <div className="dv-flashcard__accent-bar" />
-                  
                   <div className="dv-flashcard__header">
                     <div className="dv-flashcard__icon-wrap">
                       <IconComponent size={20} />
@@ -568,24 +566,13 @@ export default function AssetsPage() {
                         ))}
                       </div>
                     )}
-                    {/* Digital Glove Box 4-slot indicator for vehicles (Part C) */}
+                    {/* Digital Glove Box 4-slot indicator for vehicles */}
                     {(card.category || "").toLowerCase().match(/vehicle|car|bike|scooter|auto/) && (
-                      <div style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(4, 1fr)",
-                        gap: "4px",
-                        margin: "10px 0 4px",
-                        padding: "6px",
-                        background: "var(--color-surface-secondary)",
-                        borderRadius: "8px",
-                        fontSize: "10px",
-                        textAlign: "center",
-                        fontWeight: "600"
-                      }}>
-                        <span style={{ color: "#22C55E" }}>✓ RC</span>
-                        <span style={{ color: "#3B82F6" }}>✓ Insure</span>
-                        <span style={{ color: "#F59E0B" }}>• PUC</span>
-                        <span style={{ color: "var(--color-text-secondary)" }}>• DL</span>
+                      <div className="dv-flashcard__glovebox">
+                        <span className="dv-glovebox-slot dv-glovebox-slot--green">✓ RC</span>
+                        <span className="dv-glovebox-slot dv-glovebox-slot--blue">✓ Insure</span>
+                        <span className="dv-glovebox-slot dv-glovebox-slot--amber">• PUC</span>
+                        <span className="dv-glovebox-slot dv-glovebox-slot--neutral">• DL</span>
                       </div>
                     )}
                   </div>
