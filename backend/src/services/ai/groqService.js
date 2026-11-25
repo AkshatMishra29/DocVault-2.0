@@ -389,7 +389,7 @@ ${question}
 
   try {
     const response = await executeGroqChatCompletion({
-      model: config.groq.model || 'openai/gpt-oss-120b',
+      model: 'qwen/qwen3.8-27b',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
       max_tokens: 2500,

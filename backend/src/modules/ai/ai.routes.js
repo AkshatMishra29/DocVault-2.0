@@ -86,9 +86,13 @@ function computeLexicalScore(doc, queryTokens) {
       }
     }
 
-    const tokenRegex = (token === 'certificate' || token === 'certficate') ? /certif|certf/
+    const singularToken = token.endsWith('ies') && token.length > 4
+      ? token.slice(0, -3) + 'y'
+      : (token.endsWith('es') && token.length > 4 ? token.slice(0, -2) : (token.endsWith('s') && token.length > 3 ? token.slice(0, -1) : token));
+
+    const tokenRegex = (token === 'certificate' || token === 'certficate' || singularToken === 'certificate') ? /certif|certf/
       : (token === 'resume' || token === 'cv') ? /resume|cv|curriculum/
-      : new RegExp(token);
+      : (singularToken !== token ? new RegExp(`${token}|${singularToken}`) : new RegExp(token));
 
     if (tokenRegex.test(title)) score += 8.0 * (isIntentToken ? 0.3 : 1.0);
     if (tokenRegex.test(category)) score += 6.0 * (isIntentToken ? 0.3 : 1.0);
@@ -463,6 +467,7 @@ async function handleAiQuery(req, res) {
         lexicalRankings.forEach((item, idx) => lexicalRankMap.set(item.id, idx + 1));
 
         // Reciprocal Rank Fusion (RRF) with Intent Boosters & Strict Relevance Gate
+        const hasAssetTarget = matchingAssets.length > 0 && (scoredAssets[0]?.score || 0) >= 4;
         const scoredDocs = validCandidates.map(doc => {
           const docIdStr = String(doc._id);
           const dRank = denseRankMap.get(docIdStr) || 999;
@@ -517,7 +522,6 @@ async function handleAiQuery(req, res) {
           // Strict Relevance Criterion:
           // If query matched an asset strongly, an unlinked document is only relevant if it has lexical overlap.
           // Dense semantic similarity without lexical overlap requires high confidence (>= 0.65) and no asset conflict.
-          const hasAssetTarget = matchingAssets.length > 0 && (scoredAssets[0]?.score || 0) >= 4;
           const isRelevant = isLinkedToAsset || 
                              lexScore > 0 || 
                              (!hasAssetTarget && denseScore >= 0.65) || 
