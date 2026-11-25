@@ -4,7 +4,7 @@ import { useAuth } from '../../../features/auth/context/AuthContext';
 import { 
   LogOut, ShieldCheck, Lock, Users, ChevronDown, UserPlus, 
   Check, Bell, Calendar, AlertTriangle, FileText, ChevronRight, 
-  Sun, Moon, Sparkles 
+  Sun, Moon, Sparkles, Bot 
 } from 'lucide-react';
 import { useTheme } from '../../../app/theme';
 import { apiRequest } from '../../../services/api';
@@ -116,6 +116,18 @@ export default function AppHeader({ title, subtitle }) {
       </div>
 
       <div className="dv-app-header__actions">
+        {/* Copilot Beta Header Pill */}
+        <Link
+          to="/copilot-beta"
+          className="dv-header-copilot-btn"
+          title="Autonomous AI Copilot (Beta)"
+          aria-label="DocVault Copilot Beta"
+        >
+          <Bot size={15} className="dv-header-copilot-icon" />
+          <span className="dv-header-copilot-label">Copilot</span>
+          <span className="dv-header-copilot-badge">Beta</span>
+        </Link>
+
         {/* Quick Ask AI Copilot Button */}
         <Link
           to="/ask-ai"

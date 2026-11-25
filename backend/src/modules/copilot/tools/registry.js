@@ -1,0 +1,657 @@
+import { z } from 'zod';
+import { Document, Asset, Deadline, UserConnection, DocumentShare, User } from '../../../models/index.js';
+import { StudyDeck } from '../models/studyDeck.model.js';
+import { DocumentAccessControlService } from '../../sharing/accessControl.service.js';
+import { isAiAllowed, assertAiAllowed } from '../../../services/pipeline/privacyGate.js';
+import { generateEmbedding } from '../../../services/ai/huggingFaceService.js';
+import { ensureDocumentChunks, hybridChunkRetrieval } from '../services/chunking.service.js';
+
+export const toolRegistry = new Map();
+
+/**
+ * Register a tool
+ */
+export function registerTool(toolDef) {
+  toolRegistry.set(toolDef.name, toolDef);
+}
+
+/* ==========================================================================
+   READ TOOLS
+   ========================================================================== */
+
+/**
+ * 1. search_documents
+ */
+registerTool({
+  name: 'search_documents',
+  description: 'Search personal and accessible documents by title, keyword, category, or semantic query.',
+  kind: 'read',
+  schema: z.object({
+    query: z.string().describe('Search terms or semantic query'),
+    category: z.string().optional().describe('Filter by category e.g. Tax Invoice, Identity, Medical, Insurance'),
+    limit: z.coerce.number().optional().default(5).describe('Max results to return'),
+  }),
+  summarize: (args) => `Searching documents for "${args.query}"`,
+  async run(ctx, args) {
+    const accessibleIds = await DocumentAccessControlService.getAccessibleDocumentIds(ctx.userId, 'view');
+    const filter = {
+      _id: { $in: accessibleIds },
+      aiPolicy: 'ai_enabled',
+      sensitiveFlag: { $ne: true },
+    };
+
+    if (args.category) {
+      filter.category = args.category;
+    }
+
+    if (args.query) {
+      // Escape special regex characters to avoid invalid regular expressions
+      const sanitized = args.query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim();
+      if (sanitized) {
+        filter.$or = [
+          { title: { $regex: sanitized, $options: 'i' } },
+          { 'extractedFields.value': { $regex: sanitized, $options: 'i' } },
+          { summary: { $regex: sanitized, $options: 'i' } },
+        ];
+      }
+    }
+
+    const docs = await Document.find(filter)
+      .select('_id title category summary tags expiryDate createdAt')
+      .limit(args.limit || 5)
+      .lean();
+
+    return {
+      count: docs.length,
+      documents: docs.map((d) => ({
+        id: d._id.toString(),
+        title: d.title,
+        category: d.category,
+        summary: d.summary || 'No summary available',
+        expiryDate: d.expiryDate,
+        tags: d.tags || [],
+      })),
+    };
+  },
+});
+
+/**
+ * 2. ask_documents
+ */
+registerTool({
+  name: 'ask_documents',
+  description: 'Retrieve grounded excerpts and answers from documents with exact page numbers.',
+  kind: 'read',
+  schema: z.object({
+    question: z.string().describe('The user question to ground against documents'),
+    documentId: z.string().optional().describe('Optional specific document ID to target'),
+  }),
+  summarize: (args) => `Finding grounded document answers for: "${args.question}"`,
+  async run(ctx, args) {
+    let targetDocIds = [];
+    if (args.documentId) {
+      const canView = await DocumentAccessControlService.canViewDocument(ctx.userId, args.documentId);
+      if (!canView) return { error: 'Document not found or access denied.' };
+      const doc = await Document.findById(args.documentId);
+      if (!doc || !isAiAllowed(doc)) return { error: 'Document is restricted under storage_only privacy.' };
+      targetDocIds = [args.documentId];
+      await ensureDocumentChunks(args.documentId, ctx.userId);
+    } else {
+      const accessibleIds = await DocumentAccessControlService.getAccessibleDocumentIds(ctx.userId, 'view');
+      const docs = await Document.find({
+        _id: { $in: accessibleIds },
+        aiPolicy: 'ai_enabled',
+        sensitiveFlag: { $ne: true },
+      }).select('_id');
+      targetDocIds = docs.map((d) => d._id);
+      // Ensure chunks for top accessible docs
+      for (const d of docs.slice(0, 5)) {
+        await ensureDocumentChunks(d._id, ctx.userId);
+      }
+    }
+
+    let queryVector = null;
+    try {
+      queryVector = await generateEmbedding(args.question);
+    } catch (e) {}
+
+    const chunks = await hybridChunkRetrieval({
+      userId: ctx.userId,
+      accessibleDocIds: targetDocIds,
+      query: args.question,
+      queryEmbedding: queryVector,
+      topK: 4,
+    });
+
+    const sources = [];
+    const contextBlocks = [];
+
+    for (const chunk of chunks) {
+      const doc = await Document.findById(chunk.documentId).select('title');
+      sources.push({
+        documentId: chunk.documentId.toString(),
+        title: doc?.title || 'Document',
+        page: chunk.pageNumber,
+      });
+      contextBlocks.push(
+        `--- Document: "${doc?.title || 'Unknown'}" (ID: ${chunk.documentId}, Page ${chunk.pageNumber}) ---\n${chunk.text}`
+      );
+    }
+
+    return {
+      sources,
+      evidence: contextBlocks.join('\n\n'),
+    };
+  },
+});
+
+/**
+ * 3. summarize_document
+ */
+registerTool({
+  name: 'summarize_document',
+  description: 'Get an overview and key details of a specific document.',
+  kind: 'read',
+  schema: z.object({
+    documentId: z.string().describe('ID of the document to summarize'),
+  }),
+  summarize: (args) => `Summarizing document ${args.documentId}`,
+  async run(ctx, args) {
+    const canView = await DocumentAccessControlService.canViewDocument(ctx.userId, args.documentId);
+    if (!canView) return { error: 'Access denied or document not found.' };
+
+    const doc = await Document.findById(args.documentId);
+    if (!doc) return { error: 'Document not found.' };
+    assertAiAllowed(doc, { operation: 'copilot_summarize' });
+
+    return {
+      id: doc._id.toString(),
+      title: doc.title,
+      category: doc.category,
+      summary: doc.summary,
+      keyDetails: doc.keyDetails || [],
+      extractedFields: (doc.extractedFields || []).map((f) => ({ label: f.label, value: f.value })),
+      expiryDate: doc.expiryDate,
+      pageCount: doc.pageCount || (doc.pages ? doc.pages.length : 1),
+    };
+  },
+});
+
+/**
+ * 4. compare_documents
+ */
+registerTool({
+  name: 'compare_documents',
+  description: 'Compare two documents across their key fields, terms, dates, and amounts.',
+  kind: 'read',
+  schema: z.object({
+    docIdA: z.string().describe('First document ID'),
+    docIdB: z.string().describe('Second document ID'),
+  }),
+  summarize: (args) => `Comparing document ${args.docIdA} and ${args.docIdB}`,
+  async run(ctx, args) {
+    const [canA, canB] = await Promise.all([
+      DocumentAccessControlService.canViewDocument(ctx.userId, args.docIdA),
+      DocumentAccessControlService.canViewDocument(ctx.userId, args.docIdB),
+    ]);
+    if (!canA || !canB) return { error: 'One or both documents not found or access denied.' };
+
+    const [docA, docB] = await Promise.all([Document.findById(args.docIdA), Document.findById(args.docIdB)]);
+    if (!docA || !docB) return { error: 'One or both documents do not exist.' };
+    assertAiAllowed(docA, { operation: 'copilot_compare' });
+    assertAiAllowed(docB, { operation: 'copilot_compare' });
+
+    return {
+      docA: {
+        id: docA._id.toString(),
+        title: docA.title,
+        category: docA.category,
+        summary: docA.summary,
+        fields: (docA.extractedFields || []).map((f) => ({ label: f.label, value: f.value })),
+      },
+      docB: {
+        id: docB._id.toString(),
+        title: docB.title,
+        category: docB.category,
+        summary: docB.summary,
+        fields: (docB.extractedFields || []).map((f) => ({ label: f.label, value: f.value })),
+      },
+    };
+  },
+});
+
+/**
+ * 5. extract_fields
+ */
+registerTool({
+  name: 'extract_fields',
+  description: 'Extract specific field values (e.g. invoice total, GSTIN, expiry date) from a document.',
+  kind: 'read',
+  schema: z.object({
+    documentId: z.string().describe('Document ID to inspect'),
+  }),
+  summarize: (args) => `Extracting structured fields from document ${args.documentId}`,
+  async run(ctx, args) {
+    const canView = await DocumentAccessControlService.canViewDocument(ctx.userId, args.documentId);
+    if (!canView) return { error: 'Access denied.' };
+    const doc = await Document.findById(args.documentId);
+    if (!doc) return { error: 'Document not found.' };
+    assertAiAllowed(doc, { operation: 'copilot_fields' });
+
+    return {
+      documentId: doc._id.toString(),
+      title: doc.title,
+      fields: doc.extractedFields || [],
+    };
+  },
+});
+
+/**
+ * 6. list_deadlines
+ */
+registerTool({
+  name: 'list_deadlines',
+  description: 'List upcoming renewals, expiry dates, or reminders.',
+  kind: 'read',
+  schema: z.object({
+    daysAhead: z.coerce.number().optional().default(60).describe('Number of days ahead to look'),
+    status: z.enum(['pending', 'completed', 'all']).optional().default('pending'),
+  }),
+  summarize: (args) => `Listing deadlines for next ${args.daysAhead || 60} days`,
+  async run(ctx, args) {
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + (args.daysAhead || 60));
+
+    const filter = { userId: ctx.userId };
+    if (args.status !== 'all') {
+      filter.status = args.status;
+    }
+    filter.dueDate = { $lte: maxDate };
+
+    const deadlines = await Deadline.find(filter).sort({ dueDate: 1 }).limit(20).lean();
+    return {
+      count: deadlines.length,
+      deadlines: deadlines.map((d) => ({
+        id: d._id.toString(),
+        title: d.title,
+        dueDate: d.dueDate,
+        status: d.status,
+        priority: d.priority,
+        category: d.category,
+      })),
+    };
+  },
+});
+
+/**
+ * 7. list_assets
+ */
+registerTool({
+  name: 'list_assets',
+  description: 'List asset cards / flashcards (vehicles, electronics, property) and their custom fields.',
+  kind: 'read',
+  schema: z.object({
+    category: z.string().optional().describe('Filter by asset category'),
+  }),
+  summarize: (args) => `Listing assets${args.category ? ` for category ${args.category}` : ''}`,
+  async run(ctx, args) {
+    const filter = { userId: ctx.userId };
+    if (args.category) filter.category = args.category;
+    const assets = await Asset.find(filter).sort({ createdAt: -1 }).limit(25).lean();
+
+    return {
+      count: assets.length,
+      assets: assets.map((a) => ({
+        id: a._id.toString(),
+        name: a.name || a.title,
+        category: a.category,
+        customFields: a.customFields || [],
+        purchaseDate: a.purchaseDate,
+        warrantyExpiry: a.warrantyExpiry,
+        linkedDocumentCount: (a.linkedDocumentIds || []).length,
+      })),
+    };
+  },
+});
+
+/**
+ * 8. list_study_decks
+ */
+registerTool({
+  name: 'list_study_decks',
+  description: 'List study decks and flashcards created from documents.',
+  kind: 'read',
+  schema: z.object({}),
+  summarize: () => 'Listing study decks',
+  async run(ctx) {
+    const decks = await StudyDeck.find({ userId: ctx.userId }).sort({ updatedAt: -1 }).limit(20).lean();
+    return {
+      count: decks.length,
+      decks: decks.map((d) => ({
+        id: d._id.toString(),
+        title: d.title,
+        cardCount: (d.cards || []).length,
+        sourceDocumentId: d.sourceDocumentId,
+        updatedAt: d.updatedAt,
+      })),
+    };
+  },
+});
+
+/**
+ * 9. list_shares
+ */
+registerTool({
+  name: 'list_shares',
+  description: 'List active document shares created by the user or received from others.',
+  kind: 'read',
+  schema: z.object({}),
+  summarize: () => 'Listing document shares',
+  async run(ctx) {
+    const outgoing = await DocumentShare.find({ userId: ctx.userId, status: 'active' }).limit(20).lean();
+    return {
+      outgoingCount: outgoing.length,
+      shares: outgoing.map((s) => ({
+        id: s._id.toString(),
+        documentId: s.documentId,
+        permission: s.permission,
+        expiresAt: s.expiresAt,
+        status: s.status,
+      })),
+    };
+  },
+});
+
+/**
+ * 10. lookup_docvault_id
+ */
+registerTool({
+  name: 'lookup_docvault_id',
+  description: 'Find a user name by their DocVault ID for sharing or connection requests (rate limited, no email).',
+  kind: 'read',
+  schema: z.object({
+    docvaultId: z.string().describe('The user DocVault identifier or code'),
+  }),
+  summarize: (args) => `Looking up user by DocVault ID: ${args.docvaultId}`,
+  async run(ctx, args) {
+    if (!args.docvaultId || args.docvaultId.length < 3) return { error: 'Invalid DocVault ID format.' };
+    const user = await User.findOne({
+      $or: [{ docvaultId: args.docvaultId }, { _id: args.docvaultId.match(/^[0-9a-fA-F]{24}$/) ? args.docvaultId : null }],
+    })
+      .select('name docvaultId')
+      .lean();
+
+    if (!user) return { found: false, message: 'User not found.' };
+    return {
+      found: true,
+      user: {
+        id: user._id.toString(),
+        name: user.name || 'DocVault User',
+        docvaultId: user.docvaultId,
+      },
+    };
+  },
+});
+
+/* ==========================================================================
+   WRITE TOOLS (Strict 2-Phase Confirmation Flow)
+   Never execute inside the model loop directly; queue CopilotRun.
+   ========================================================================== */
+
+/**
+ * 11. create_asset
+ */
+registerTool({
+  name: 'create_asset',
+  description: 'Create a new asset card / flashcard (e.g. MacBook Pro, Vehicle, House). Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    name: z.string().describe('Title / Name of the asset'),
+    category: z.string().optional().describe('Category e.g. Work, Vehicle, Property, Electronics'),
+    notes: z.string().optional().describe('Brief description or notes'),
+    purchaseDate: z.string().optional().describe('Purchase date (ISO format YYYY-MM-DD)'),
+    warrantyExpiry: z.string().optional().describe('Warranty expiration date (ISO format YYYY-MM-DD)'),
+  }),
+  summarize: (args) => `Create new asset card "${args.name || 'New Asset'}"`,
+});
+
+/**
+ * 12. update_asset
+ */
+registerTool({
+  name: 'update_asset',
+  description: 'Update fields, notes, or warranty dates on an existing asset card. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    assetId: z.string().describe('Asset card ID to modify'),
+    name: z.string().optional().describe('Updated asset name'),
+    category: z.string().optional().describe('Updated category'),
+    notes: z.string().optional().describe('Updated notes'),
+    warrantyExpiry: z.string().optional().describe('Updated warranty date'),
+  }),
+  summarize: (args) => `Update asset card ${args.assetId}`,
+});
+
+/**
+ * 13. link_document_to_asset
+ */
+registerTool({
+  name: 'link_document_to_asset',
+  description: 'Attach a document (receipt, invoice, warranty certificate) to an asset card. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    assetId: z.string().describe('Asset card ID'),
+    documentId: z.string().describe('Document ID to link'),
+  }),
+  summarize: (args) => `Link document ${args.documentId} to asset ${args.assetId}`,
+});
+
+/**
+ * 14. unlink_document
+ */
+registerTool({
+  name: 'unlink_document',
+  description: 'Remove a linked document from an asset card. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    assetId: z.string().describe('Asset card ID'),
+    documentId: z.string().describe('Document ID to unlink'),
+  }),
+  summarize: (args) => `Unlink document ${args.documentId} from asset ${args.assetId}`,
+});
+
+/**
+ * 15. create_reminder
+ */
+registerTool({
+  name: 'create_reminder',
+  description: 'Set a new renewal or expiration reminder / deadline. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    title: z.string().describe('Reminder title e.g. Car Insurance Renewal'),
+    dueDate: z.string().describe('Due date in ISO YYYY-MM-DD format'),
+    category: z.string().optional().describe('Category e.g. Insurance, Tax, Vehicle, Utility'),
+    priority: z.enum(['low', 'medium', 'high']).optional().default('medium'),
+  }),
+  summarize: (args) => `Create deadline "${args.title}" due on ${args.dueDate}`,
+});
+
+/**
+ * 16. update_reminder
+ */
+registerTool({
+  name: 'update_reminder',
+  description: 'Modify title, due date, or priority of an existing reminder. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    deadlineId: z.string().describe('Reminder deadline ID'),
+    title: z.string().optional().describe('New title'),
+    dueDate: z.string().optional().describe('New due date'),
+    priority: z.enum(['low', 'medium', 'high']).optional(),
+  }),
+  summarize: (args) => `Update reminder ${args.deadlineId}`,
+});
+
+/**
+ * 17. complete_reminder
+ */
+registerTool({
+  name: 'complete_reminder',
+  description: 'Mark an active reminder or deadline as completed. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    deadlineId: z.string().describe('Reminder ID to complete'),
+  }),
+  summarize: (args) => `Mark reminder ${args.deadlineId} as completed`,
+});
+
+/**
+ * 18. update_document_metadata
+ */
+registerTool({
+  name: 'update_document_metadata',
+  description: 'Update title or category of a document (never alters original file). Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    documentId: z.string().describe('Document ID to update'),
+    title: z.string().optional().describe('Updated document title'),
+    category: z.string().optional().describe('Updated category'),
+  }),
+  summarize: (args) => `Update document metadata for ${args.documentId}`,
+});
+
+/**
+ * 19. create_document_version
+ */
+registerTool({
+  name: 'create_document_version',
+  description: 'Record a version update tracking note without overwriting original file bytes. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    documentId: z.string().describe('Document ID to version'),
+    changeSummary: z.string().describe('Summary of changes or update notes'),
+  }),
+  summarize: (args) => `Record document version note for ${args.documentId}`,
+});
+
+/**
+ * 20. create_document
+ */
+registerTool({
+  name: 'create_document',
+  description: 'Generate a new PDF document server-side from text content. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    title: z.string().describe('Title of the document'),
+    text: z.string().describe('Full textual content to encode into PDF'),
+    category: z.string().optional().default('General'),
+  }),
+  summarize: (args) => `Generate new PDF document "${args.title}"`,
+});
+
+/**
+ * 21. create_study_deck
+ */
+registerTool({
+  name: 'create_study_deck',
+  description: 'Create a study deck of flashcards grounded in a specific document. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    title: z.string().describe('Deck title e.g. Insurance Policy Key Facts'),
+    sourceDocumentId: z.string().describe('Source document ID'),
+    cards: z.array(
+      z.object({
+        front: z.string().describe('Question or concept'),
+        back: z.string().describe('Answer or explanation'),
+        sourcePage: z.number().optional().default(1),
+        sourceExcerpt: z.string().optional(),
+      })
+    ),
+  }),
+  summarize: (args) => `Create study deck "${args.title}" with ${(args.cards || []).length} cards`,
+});
+
+/**
+ * 22. edit_study_deck
+ */
+registerTool({
+  name: 'edit_study_deck',
+  description: 'Edit a study deck title or update cards. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    deckId: z.string().describe('Study deck ID'),
+    title: z.string().optional(),
+  }),
+  summarize: (args) => `Edit study deck ${args.deckId}`,
+});
+
+/**
+ * 23. remove_study_deck_cards
+ */
+registerTool({
+  name: 'remove_study_deck_cards',
+  description: 'Delete selected flashcards from a study deck. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    deckId: z.string().describe('Study deck ID'),
+    cardIds: z.array(z.string()).describe('IDs of cards to remove'),
+  }),
+  summarize: (args) => `Remove cards from study deck ${args.deckId}`,
+});
+
+/**
+ * 24. send_connection_request
+ */
+registerTool({
+  name: 'send_connection_request',
+  description: 'Send a family or trusted contact connection request by DocVault ID. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    recipientDocvaultId: z.string().describe('Recipient DocVault ID or account identifier'),
+    relationshipType: z.string().optional().default('family'),
+  }),
+  summarize: (args) => `Send connection request to ${args.recipientDocvaultId}`,
+});
+
+/**
+ * 25. create_share
+ */
+registerTool({
+  name: 'create_share',
+  description: 'Share a document with view or download permissions and optional expiry. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    documentId: z.string().describe('Document ID to share'),
+    permission: z.enum(['view', 'download']).default('view'),
+    expiresAt: z.string().optional().describe('Expiration ISO date e.g. YYYY-MM-DD'),
+  }),
+  summarize: (args) => `Create ${args.permission || 'view'} share for document ${args.documentId}`,
+});
+
+/**
+ * 26. revoke_share
+ */
+registerTool({
+  name: 'revoke_share',
+  description: 'Revoke an active document share link immediately. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    shareId: z.string().describe('Share ID to revoke'),
+  }),
+  summarize: (args) => `Revoke document share ${args.shareId}`,
+});
+
+/**
+ * 27. suggest_share_pack
+ */
+registerTool({
+  name: 'suggest_share_pack',
+  description: 'Suggest a bundled pack of documents for sharing (e.g. Visa Application Pack). Suggestion only.',
+  kind: 'write',
+  schema: z.object({
+    packName: z.string().describe('Name of share pack'),
+    documentIds: z.array(z.string()).describe('Document IDs in pack'),
+  }),
+  summarize: (args) => `Suggest share pack "${args.packName}"`,
+});
+
