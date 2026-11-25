@@ -321,7 +321,7 @@ Tags: ${(asset.tags || []).join(', ') || 'None'}
 CORE OPERATING PRINCIPLE:
 Provide an executive, beautifully formatted production-grade response grounded strictly in the provided documents and tracked assets. Adapt your formatting dynamically to the user's intent: provide rich, itemized, structured Markdown when asked for resumes, profiles, certifications, or bills; provide direct laser-focused answers when asked for a specific single fact.
 
-FORMATTING BLUEPRINTS BY INTENT:
+FORMATTING BLUEPRINTS BY INTENT (Always use proper Markdown hyphen "-" bullet lists or Markdown tables, NEVER raw "•" characters):
 1. Resumes, CVs, Profiles & Work History:
    - When the user asks for a resume, detailed content, profile, career history, or skills:
      Do NOT summarize into a single sentence. Render a rich, comprehensive candidate profile:
@@ -329,16 +329,16 @@ FORMATTING BLUEPRINTS BY INTENT:
      #### 🎯 Professional Summary
      [2-3 sentence impactful executive summary]
      #### 📜 Certifications & Accreditations
-     • **[Certification Name]** - [Issuing Body / Academy] ([Date/Year if present])
+     - **[Certification Name]** - [Issuing Body / Academy] ([Date/Year if present])
      #### 💻 Technical Skills & Competencies
-     • **Core Stack:** [Languages, frameworks, e.g. Node.js, SAP, Python, React]
-     • **Tools & Platforms:** [Databases, Cloud, DevOps, Tools]
+     - **Core Stack:** [Languages, frameworks, e.g. Node.js, SAP, Python, React]
+     - **Tools & Platforms:** [Databases, Cloud, DevOps, Tools]
      #### 💼 Work Experience
-     • **[Role / Company]** ([Dates]): [Key responsibilities, measurable impacts, and systems built]
+     - **[Role / Company]** ([Dates]): [Key responsibilities, measurable impacts, and systems built]
      #### 🚀 Featured Projects
-     • **[Project Title]:** [Overview and tech stack]
+     - **[Project Title]:** [Overview and tech stack]
      #### 🎓 Education
-     • [Degree / Institution / Graduation Year]
+     - [Degree / Institution / Graduation Year]
 
 2. Certifications & Credentials Queries:
    - When the user asks for certifications (e.g. "give me the list of certifications", "certifications present in it"):
@@ -346,26 +346,28 @@ FORMATTING BLUEPRINTS BY INTENT:
      ### 📜 Verified Certifications & Credentials in **[Document Title]**
      1. **[Certification 1]** - [Issuing Organization/Body] ([Year/Status if known])
      2. **[Certification 2]** - ...
-     • **Candidate / Credential Holder:** **[Candidate Name]**
+     - **Candidate / Credential Holder:** **[Candidate Name]**
 
 3. Financial Documents, Utility Bills, Invoices & Receipts:
    - When the user asks about an electricity bill, tax invoice, or purchase receipt:
-     Render a clean, high-clarity key metrics card:
+     Render a clean, high-clarity key metrics card using a Markdown bullet list (hyphen "-") or table:
      ### ⚡ Verified Details for **[Document Title]**
-     • **Consumer / Billed To:** **[Name]**
-     • **Account / Consumer ID:** \`[Account Number]\`
-     • **Service Provider / Issuer:** [Utility or Company Name]
-     • **Total Amount:** **[Amount in ₹ or $]**
-     • **Billing / Payment Date:** **[YYYY-MM-DD]**
-     • **Status:** Verified Record
+     - **Consumer / Billed To:** **[Name]**
+     - **Account / Consumer ID:** \`[Account Number]\`
+     - **Reference / Transaction ID:** \`[Reference or Transaction ID if present]\`
+     - **Service Provider / Issuer:** [Utility or Company Name]
+     - **Total Amount:** **[Amount in ₹ or $]**
+     - **Billing / Payment Date:** **[YYYY-MM-DD]**
+     - **Payment Mode:** [Online / Cash / Card if present]
+     - **Status:** Verified Record
 
 4. Academic & Professional Certificates:
    - When asked about an academic certificate or award:
      ### 🎓 [Certificate Title]
-     • **Recipient:** **[Candidate Name]**
-     • **Issuing Authority:** [University / Academy / Company]
-     • **Completion / Award Date:** **[YYYY-MM-DD]**
-     • **Credential / Verification ID:** \`[ID if present]\`
+     - **Recipient:** **[Candidate Name]**
+     - **Issuing Authority:** [University / Academy / Company]
+     - **Completion / Award Date:** **[YYYY-MM-DD]**
+     - **Credential / Verification ID:** \`[ID if present]\`
 
 5. Single-Fact or Specific Clause Queries:
    - When asked for a specific date, amount, account number, or contractual clause/SLA:
@@ -826,10 +828,15 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
         const amtMatch = text.match(/(?:total\s*amount\s*(?:received|paid|due|payable)?|amount\s*(?:received|paid|due|payable)?|total\s*(?:received|paid|payable)?|grand\s*total|net\s*payable|bill\s*amount)[:.\s]*(?:₹|rs\.?|inr|\$|€|£)?\s*([0-9,]+(?:\.[0-9]{2})?(?:\s*\([^\)]+\))?(?:\s*only)?)/i);
         if (amtMatch) amount = amtMatch[1].trim();
       }
-      let txId = keyDetails['TRANSACTION ID'] || keyDetails['Transaction Id'] || keyDetails['Transaction ID'] || keyDetails['Receipt No'] || keyDetails['REFERENCE NUMBER'] || null;
+      let txId = keyDetails['TRANSACTION ID'] || keyDetails['Transaction Id'] || keyDetails['Transaction ID'] || keyDetails['Receipt No'] || keyDetails['REFERENCE NUMBER'] || keyDetails['Reference No'] || null;
       if (!txId) {
-        const txMatch = text.match(/(?:transaction\s*id|receipt\s*no\.?|ref(?:\s*no|\s*id|\s*number)?|reference\s*no\.?)[:.\s]*([A-Za-z0-9\-_]{6,35})/i);
+        const txMatch = text.match(/\b(?:transaction\s*id|receipt\s*no\.?|reference\s*no\.?|reference\s*number|ref(?:\s*no|\s*id|\s*number)?)[:.\s]+([A-Za-z0-9\-_]{6,35})\b/i);
         if (txMatch) txId = txMatch[1].trim();
+      }
+      let paymentMode = keyDetails['PAYMENT MODE'] || keyDetails['Payment Mode'] || null;
+      if (!paymentMode) {
+        const modeMatch = text.match(/\bpayment\s*mode\s*[:.\s]+([A-Za-z0-9\s\/\-]{2,25}?)(?=\n|$)/i);
+        if (modeMatch) paymentMode = modeMatch[1].trim();
       }
       let docDate = primaryDoc.documentDate || keyDetails['ISSUE DATE'] || keyDetails['Issue Date'] || null;
       if (!docDate) {
@@ -862,18 +869,19 @@ export function answerWithDeterministicGrounding(question, contextDocs = [], con
         return `The document **${primaryDoc.title}** is issued to **${consumer}**.${docReferral}`;
       }
 
-      // Complete structured bill breakdown
+      // Complete structured bill breakdown using proper Markdown list formatting
       let billCard = `### ⚡ Verified Details for **${primaryDoc.title}**\n\n`;
-      if (consumer) billCard += `• **Consumer Name:** **${consumer}**\n`;
-      if (accountNo) billCard += `• **Account / Consumer ID:** \`${accountNo}\`\n`;
-      if (txId) billCard += `• **Transaction ID / Reference:** \`${txId}\`\n`;
-      if (provider) billCard += `• **Utility Provider:** ${provider}\n`;
+      if (consumer) billCard += `- **Consumer Name:** **${consumer}**\n`;
+      if (accountNo) billCard += `- **Account / Consumer ID:** \`${accountNo}\`\n`;
+      if (txId) billCard += `- **Transaction ID / Reference:** \`${txId}\`\n`;
+      if (provider) billCard += `- **Utility Provider:** ${provider}\n`;
       if (amtStr) {
-        billCard += `• **Total Amount:** **${formattedAmt}**\n`;
+        billCard += `- **Total Amount:** **${formattedAmt}**\n`;
       }
-      if (docDate) billCard += `• **Billing / Payment Date:** **${docDate}**\n`;
-      if (primaryDoc.expiryDate) billCard += `• **Due Date:** **${primaryDoc.expiryDate}**\n`;
-      billCard += `• **Status:** Verified Payment Record\n`;
+      if (docDate) billCard += `- **Billing / Payment Date:** **${docDate}**\n`;
+      if (paymentMode) billCard += `- **Payment Mode:** ${paymentMode}\n`;
+      if (primaryDoc.expiryDate) billCard += `- **Due Date:** **${primaryDoc.expiryDate}**\n`;
+      billCard += `- **Status:** Verified Payment Record\n`;
       billCard += docReferral;
       return billCard;
     }
