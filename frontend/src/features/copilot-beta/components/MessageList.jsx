@@ -1,11 +1,20 @@
 import React, { useRef, useEffect, useState } from "react";
 import { ArrowDown } from "lucide-react";
 import Message from "./Message";
+import Mascot from "./Mascot";
 
 export default function MessageList({
   messages = [],
+  isStreaming = false,
   onRetry,
   onConfirmHandled,
+  onUploadComplete,
+  onUploadCancel,
+  onFlashcardSaved,
+  onFlashcardCancel,
+  onCreateFlashcard,
+  onDocumentUpdated,
+  onDocumentDeleted,
   mascotState = "idle",
 }) {
   const containerRef = useRef(null);
@@ -51,10 +60,33 @@ export default function MessageList({
             message={msg}
             onRetry={onRetry}
             onConfirmHandled={onConfirmHandled}
+            onUploadComplete={onUploadComplete}
+            onUploadCancel={onUploadCancel}
+            onFlashcardSaved={onFlashcardSaved}
+            onFlashcardCancel={onFlashcardCancel}
+            onCreateFlashcard={onCreateFlashcard}
+            onDocumentUpdated={onDocumentUpdated}
+            onDocumentDeleted={onDocumentDeleted}
             isLatestAssistant={idx === messages.length - 1 && msg.role === "assistant"}
             mascotState={mascotState}
           />
         ))}
+
+        {isStreaming && messages[messages.length - 1]?.role === "user" && (
+          <div className="dv-cp-message dv-cp-message--assistant dv-anim-fade-in">
+            <div className="dv-cp-message__avatar dv-cp-message__avatar--left">
+              <Mascot state={mascotState || "thinking"} size={56} />
+            </div>
+            <div className="dv-cp-message__body dv-cp-message__body--typing">
+              <span className="dv-cp-typing-dots" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </span>
+              <span className="dv-cp-typing-label">Vee is thinking...</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {showJump && (

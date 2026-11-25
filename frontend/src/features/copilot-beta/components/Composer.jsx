@@ -1,9 +1,42 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Square } from "lucide-react";
+import {
+  Send,
+  Square,
+  Paperclip,
+  Layers,
+  Clock,
+  Search,
+  GraduationCap,
+  Share2,
+} from "lucide-react";
 
-export default function Composer({ onSend, onStop, isStreaming, initialValue = "" }) {
+const QUICK_CHIPS = [
+  { label: "Upload Doc", action: "upload", icon: Paperclip },
+  { label: "New Flashcard", action: "flashcard", icon: Layers },
+  { label: "Deadlines", prompt: "What deadlines are coming up in the next 30 days?", icon: Clock },
+  { label: "List Assets", prompt: "List all my registered flashcard assets.", icon: Search },
+  { label: "Study Deck", prompt: "Create a 5-card study deck from my latest document.", icon: GraduationCap },
+  { label: "Shares", prompt: "Show my active document shares and access history.", icon: Share2 },
+];
+
+export default function Composer({
+  onSend,
+  onStop,
+  onFileSelect,
+  onNewFlashcard,
+  isStreaming,
+  initialValue = "",
+  triggerUploadRef,
+}) {
   const [text, setText] = useState(initialValue);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (triggerUploadRef) {
+      triggerUploadRef.current = () => fileInputRef.current?.click();
+    }
+  }, [triggerUploadRef]);
 
   useEffect(() => {
     if (initialValue) {
@@ -42,13 +75,85 @@ export default function Composer({ onSend, onStop, isStreaming, initialValue = "
     e.target.style.height = `${Math.min(e.target.scrollHeight, 140)}px`;
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file && onFileSelect) {
+      onFileSelect(file);
+    }
+    e.target.value = "";
+  };
+
+  const handleChipClick = (chip) => {
+    if (isStreaming) return;
+    if (chip.action === "upload") {
+      fileInputRef.current?.click();
+    } else if (chip.action === "flashcard" && onNewFlashcard) {
+      onNewFlashcard();
+    } else if (chip.prompt && onSend) {
+      onSend(chip.prompt);
+    }
+  };
+
   return (
     <form className="dv-cp-composer" onSubmit={handleSubmit}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,image/jpeg,image/png,image/webp"
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
+
+      {/* Quick Action Bar */}
+      <div className="dv-cp-quickbar">
+        {QUICK_CHIPS.map((chip) => {
+          const Icon = chip.icon;
+          return (
+            <button
+              key={chip.label}
+              type="button"
+              className="dv-cp-quickbar__chip"
+              onClick={() => handleChipClick(chip)}
+              disabled={isStreaming}
+            >
+              <Icon size={12} />
+              <span>{chip.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="dv-cp-composer__inner">
+        <div className="dv-cp-composer__left-tools">
+          <button
+            type="button"
+            className="dv-cp-composer__tool-btn"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isStreaming}
+            title="Upload document into chat"
+            aria-label="Upload document"
+          >
+            <Paperclip size={16} />
+          </button>
+
+          {onNewFlashcard && (
+            <button
+              type="button"
+              className="dv-cp-composer__tool-btn"
+              onClick={onNewFlashcard}
+              disabled={isStreaming}
+              title="Create interactive Flashcard"
+              aria-label="Create Flashcard"
+            >
+              <Layers size={16} />
+            </button>
+          )}
+        </div>
+
         <textarea
           ref={textareaRef}
           className="dv-cp-composer__textarea"
-          placeholder="Ask Copilot to search documents, track deadlines, or organize flashcards..."
+          placeholder="Ask Copilot, drop a file to upload, or create a flashcard..."
           rows={1}
           value={text}
           onChange={handleInput}

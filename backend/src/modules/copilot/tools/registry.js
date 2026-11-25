@@ -27,49 +27,92 @@ registerTool({
   description: 'Search personal and accessible documents by title, keyword, category, or semantic query.',
   kind: 'read',
   schema: z.object({
-    query: z.string().describe('Search terms or semantic query'),
+    query: z.string().optional().default('').describe('Search terms or semantic query (leave empty to list recent documents)'),
     category: z.string().optional().describe('Filter by category e.g. Tax Invoice, Identity, Medical, Insurance'),
     limit: z.coerce.number().optional().default(5).describe('Max results to return'),
   }),
-  summarize: (args) => `Searching documents for "${args.query}"`,
+  summarize: (args) => args.query ? `Searching documents for "${args.query}"` : 'Listing recent documents',
   async run(ctx, args) {
     const accessibleIds = await DocumentAccessControlService.getAccessibleDocumentIds(ctx.userId, 'view');
-    const filter = {
+    const unfilteredBase = {
       _id: { $in: accessibleIds },
       aiPolicy: 'ai_enabled',
       sensitiveFlag: { $ne: true },
     };
 
+    const baseFilter = { ...unfilteredBase };
     if (args.category) {
-      filter.category = args.category;
+      baseFilter.category = { $regex: args.category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim(), $options: 'i' };
     }
 
-    if (args.query) {
-      // Escape special regex characters to avoid invalid regular expressions
-      const sanitized = args.query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim();
-      if (sanitized) {
-        filter.$or = [
-          { title: { $regex: sanitized, $options: 'i' } },
-          { 'extractedFields.value': { $regex: sanitized, $options: 'i' } },
-          { summary: { $regex: sanitized, $options: 'i' } },
-        ];
+    const isGenericQuery = !args.query || /^(?:all|recent|latest|documents?|my\s+documents?|recent\s+documents?|latest\s+documents?|vault)$/i.test(args.query.trim());
+
+    const buildQueryFilter = (base, queryStr) => {
+      const f = { ...base };
+      if (!isGenericQuery && queryStr) {
+        const words = queryStr
+          .replace(/[^\w\s]/g, ' ')
+          .split(/\s+/)
+          .map((w) => w.trim())
+          .filter((w) => w.length > 2 && !['the', 'and', 'for', 'my', 'document', 'documents', 'file', 'files', 'show', 'give', 'find', 'search'].includes(w.toLowerCase()));
+        const pattern = words.length > 0 ? words.join('|') : queryStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim();
+        if (pattern) {
+          f.$or = [
+            { title: { $regex: pattern, $options: 'i' } },
+            { category: { $regex: pattern, $options: 'i' } },
+            { 'extractedFields.value': { $regex: pattern, $options: 'i' } },
+            { summary: { $regex: pattern, $options: 'i' } },
+            { extractedText: { $regex: pattern, $options: 'i' } },
+          ];
+        }
       }
-    }
+      return f;
+    };
 
-    const docs = await Document.find(filter)
-      .select('_id title category summary tags expiryDate createdAt')
+    // 1. Try with category + query
+    let docs = await Document.find(buildQueryFilter(baseFilter, args.query))
+      .select('_id title category summary tags expiryDate extractedFields extractedText createdAt')
+      .sort({ createdAt: -1 })
       .limit(args.limit || 5)
       .lean();
 
+    // 2. If 0 hits and category was specified, retry query across ALL categories
+    if (docs.length === 0 && args.category) {
+      docs = await Document.find(buildQueryFilter(unfilteredBase, args.query))
+        .select('_id title category summary tags expiryDate extractedFields extractedText createdAt')
+        .sort({ createdAt: -1 })
+        .limit(args.limit || 5)
+        .lean();
+    }
+
+    // 3. Fallback to most recent accessible documents across all categories if still 0 hits
+    if (docs.length === 0 && !isGenericQuery) {
+      docs = await Document.find(unfilteredBase)
+        .select('_id title category summary tags expiryDate extractedFields extractedText createdAt')
+        .sort({ createdAt: -1 })
+        .limit(args.limit || 5)
+        .lean();
+    }
+
     return {
       count: docs.length,
-      documents: docs.map((d) => ({
+      documents: docs.map((d, idx) => ({
         id: d._id.toString(),
         title: d.title,
         category: d.category,
         summary: d.summary || 'No summary available',
         expiryDate: d.expiryDate,
         tags: d.tags || [],
+        extractedFields: (d.extractedFields || []).map((f) => ({ label: f.label || f.fieldName, value: f.value })),
+        evidence: idx < 3 && d.extractedText ? d.extractedText.slice(0, 900) : undefined,
+      })),
+      sources: docs.map((d) => ({
+        documentId: d._id.toString(),
+        title: d.title,
+        category: d.category || 'Document',
+        page: 1,
+        pageNumber: 1,
+        previewRoute: `/documents/${d._id.toString()}`,
       })),
     };
   },
@@ -91,7 +134,7 @@ registerTool({
     let targetDocIds = [];
     if (args.documentId) {
       const canView = await DocumentAccessControlService.canViewDocument(ctx.userId, args.documentId);
-      if (!canView) return { error: 'Document not found or access denied.' };
+      if (!canView?.allowed) return { error: 'Document not found or access denied.' };
       const doc = await Document.findById(args.documentId);
       if (!doc || !isAiAllowed(doc)) return { error: 'Document is restricted under storage_only privacy.' };
       targetDocIds = [args.documentId];
@@ -104,10 +147,10 @@ registerTool({
         sensitiveFlag: { $ne: true },
       }).select('_id');
       targetDocIds = docs.map((d) => d._id);
-      // Ensure chunks for top accessible docs
-      for (const d of docs.slice(0, 5)) {
-        await ensureDocumentChunks(d._id, ctx.userId);
-      }
+      // Ensure chunks for top accessible docs in parallel
+      await Promise.all(
+        docs.slice(0, 3).map((d) => ensureDocumentChunks(d._id, ctx.userId))
+      );
     }
 
     let queryVector = null;
@@ -127,11 +170,14 @@ registerTool({
     const contextBlocks = [];
 
     for (const chunk of chunks) {
-      const doc = await Document.findById(chunk.documentId).select('title');
+      const doc = await Document.findById(chunk.documentId).select('title category');
       sources.push({
         documentId: chunk.documentId.toString(),
         title: doc?.title || 'Document',
-        page: chunk.pageNumber,
+        category: doc?.category || 'Document',
+        page: chunk.pageNumber || 1,
+        pageNumber: chunk.pageNumber || 1,
+        previewRoute: `/documents/${chunk.documentId.toString()}`,
       });
       contextBlocks.push(
         `--- Document: "${doc?.title || 'Unknown'}" (ID: ${chunk.documentId}, Page ${chunk.pageNumber}) ---\n${chunk.text}`
@@ -158,7 +204,7 @@ registerTool({
   summarize: (args) => `Summarizing document ${args.documentId}`,
   async run(ctx, args) {
     const canView = await DocumentAccessControlService.canViewDocument(ctx.userId, args.documentId);
-    if (!canView) return { error: 'Access denied or document not found.' };
+    if (!canView?.allowed) return { error: 'Access denied or document not found.' };
 
     const doc = await Document.findById(args.documentId);
     if (!doc) return { error: 'Document not found.' };
@@ -168,11 +214,20 @@ registerTool({
       id: doc._id.toString(),
       title: doc.title,
       category: doc.category,
-      summary: doc.summary,
+      summary: doc.summary || '',
+      evidence: doc.extractedText ? doc.extractedText.slice(0, 2000) : '',
       keyDetails: doc.keyDetails || [],
-      extractedFields: (doc.extractedFields || []).map((f) => ({ label: f.label, value: f.value })),
+      extractedFields: (doc.extractedFields || []).map((f) => ({ label: f.label || f.fieldName, value: f.value })),
       expiryDate: doc.expiryDate,
       pageCount: doc.pageCount || (doc.pages ? doc.pages.length : 1),
+      sources: [{
+        documentId: doc._id.toString(),
+        title: doc.title,
+        category: doc.category || 'Document',
+        page: 1,
+        pageNumber: 1,
+        previewRoute: `/documents/${doc._id.toString()}`,
+      }],
     };
   },
 });
@@ -194,7 +249,7 @@ registerTool({
       DocumentAccessControlService.canViewDocument(ctx.userId, args.docIdA),
       DocumentAccessControlService.canViewDocument(ctx.userId, args.docIdB),
     ]);
-    if (!canA || !canB) return { error: 'One or both documents not found or access denied.' };
+    if (!canA?.allowed || !canB?.allowed) return { error: 'One or both documents not found or access denied.' };
 
     const [docA, docB] = await Promise.all([Document.findById(args.docIdA), Document.findById(args.docIdB)]);
     if (!docA || !docB) return { error: 'One or both documents do not exist.' };
@@ -207,15 +262,33 @@ registerTool({
         title: docA.title,
         category: docA.category,
         summary: docA.summary,
-        fields: (docA.extractedFields || []).map((f) => ({ label: f.label, value: f.value })),
+        fields: (docA.extractedFields || []).map((f) => ({ label: f.label || f.fieldName, value: f.value })),
       },
       docB: {
         id: docB._id.toString(),
         title: docB.title,
         category: docB.category,
         summary: docB.summary,
-        fields: (docB.extractedFields || []).map((f) => ({ label: f.label, value: f.value })),
+        fields: (docB.extractedFields || []).map((f) => ({ label: f.label || f.fieldName, value: f.value })),
       },
+      sources: [
+        {
+          documentId: docA._id.toString(),
+          title: docA.title,
+          category: docA.category || 'Document',
+          page: 1,
+          pageNumber: 1,
+          previewRoute: `/documents/${docA._id.toString()}`,
+        },
+        {
+          documentId: docB._id.toString(),
+          title: docB.title,
+          category: docB.category || 'Document',
+          page: 1,
+          pageNumber: 1,
+          previewRoute: `/documents/${docB._id.toString()}`,
+        },
+      ],
     };
   },
 });
@@ -233,7 +306,7 @@ registerTool({
   summarize: (args) => `Extracting structured fields from document ${args.documentId}`,
   async run(ctx, args) {
     const canView = await DocumentAccessControlService.canViewDocument(ctx.userId, args.documentId);
-    if (!canView) return { error: 'Access denied.' };
+    if (!canView?.allowed) return { error: 'Access denied.' };
     const doc = await Document.findById(args.documentId);
     if (!doc) return { error: 'Document not found.' };
     assertAiAllowed(doc, { operation: 'copilot_fields' });
@@ -241,7 +314,18 @@ registerTool({
     return {
       documentId: doc._id.toString(),
       title: doc.title,
-      fields: doc.extractedFields || [],
+      category: doc.category,
+      summary: doc.summary || '',
+      fields: (doc.extractedFields || []).map((f) => ({ label: f.label || f.fieldName, value: f.value })),
+      evidence: doc.extractedText ? doc.extractedText.slice(0, 2500) : '',
+      sources: [{
+        documentId: doc._id.toString(),
+        title: doc.title,
+        category: doc.category || 'Document',
+        page: 1,
+        pageNumber: 1,
+        previewRoute: `/documents/${doc._id.toString()}`,
+      }],
     };
   },
 });
@@ -296,11 +380,18 @@ registerTool({
   summarize: (args) => `Listing assets${args.category ? ` for category ${args.category}` : ''}`,
   async run(ctx, args) {
     const filter = { userId: ctx.userId };
-    if (args.category) filter.category = args.category;
-    const assets = await Asset.find(filter).sort({ createdAt: -1 }).limit(25).lean();
+    if (args.category) {
+      filter.category = { $regex: args.category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim(), $options: 'i' };
+    }
+    let assets = await Asset.find(filter).sort({ createdAt: -1 }).limit(25).lean();
+
+    if (assets.length === 0 && args.category) {
+      assets = await Asset.find({ userId: ctx.userId }).sort({ createdAt: -1 }).limit(25).lean();
+    }
 
     return {
       count: assets.length,
+      note: `User has exactly ${assets.length} registered asset(s). List ONLY these exact items and do not invent any others.`,
       assets: assets.map((a) => ({
         id: a._id.toString(),
         name: a.name || a.title,
@@ -309,6 +400,15 @@ registerTool({
         purchaseDate: a.purchaseDate,
         warrantyExpiry: a.warrantyExpiry,
         linkedDocumentCount: (a.linkedDocumentIds || []).length,
+      })),
+      sources: assets.map((a) => ({
+        documentId: a._id.toString(),
+        assetId: a._id.toString(),
+        type: 'asset',
+        documentType: 'flashcard',
+        title: a.name || a.title,
+        category: a.category || 'Flashcard',
+        previewRoute: `/assets/${a._id.toString()}`,
       })),
     };
   },
@@ -510,14 +610,16 @@ registerTool({
  */
 registerTool({
   name: 'update_document_metadata',
-  description: 'Update title or category of a document (never alters original file). Requires confirmation.',
+  description: 'Update title, category, expiryDate, or AI privacy policy (ai_enabled / storage_only) of a document. Requires confirmation.',
   kind: 'write',
   schema: z.object({
     documentId: z.string().describe('Document ID to update'),
     title: z.string().optional().describe('Updated document title'),
     category: z.string().optional().describe('Updated category'),
+    expiryDate: z.string().optional().describe('Updated expiry date in ISO YYYY-MM-DD format'),
+    aiPolicy: z.enum(['ai_enabled', 'storage_only']).optional().describe('Privacy policy: ai_enabled or storage_only'),
   }),
-  summarize: (args) => `Update document metadata for ${args.documentId}`,
+  summarize: (args) => `Update document "${args.title || args.documentId}"`,
 });
 
 /**
@@ -653,5 +755,83 @@ registerTool({
     documentIds: z.array(z.string()).describe('Document IDs in pack'),
   }),
   summarize: (args) => `Suggest share pack "${args.packName}"`,
+});
+
+/**
+ * 28. delete_document
+ */
+registerTool({
+  name: 'delete_document',
+  description: 'Permanently delete a document and its linked reminders/chunks from the vault. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    documentId: z.string().describe('Document ID to permanently delete'),
+    title: z.string().optional().describe('Document title for confirmation display'),
+    reason: z.string().optional().describe('Optional reason for deletion'),
+  }),
+  summarize: (args) => `Permanently delete document "${args.title || args.documentId}"`,
+});
+
+/**
+ * 29. propose_flashcard_form
+ */
+registerTool({
+  name: 'propose_flashcard_form',
+  description: 'Open an interactive, pre-filled Asset Flashcard Builder inside the chat so the user can review, fill missing fields, and submit directly.',
+  kind: 'read',
+  schema: z.object({
+    name: z.string().describe('Suggested Flashcard / Asset name e.g. MacBook Pro 16'),
+    category: z.string().optional().default('General').describe('Category e.g. Electronics, Vehicle, Appliance, Property, Utility, Insurance'),
+    cardColor: z.enum(['blue', 'purple', 'green', 'amber', 'rose', 'indigo', 'slate']).optional().default('blue'),
+    description: z.string().optional().default(''),
+    linkedDocumentId: z.string().optional().describe('Optional document ID to attach to this flashcard'),
+    linkedDocumentTitle: z.string().optional().describe('Optional document title'),
+    customFields: z.array(
+      z.union([
+        z.object({
+          label: z.string(),
+          value: z.string().optional().default(''),
+          type: z.enum(['text', 'date', 'number']).optional().default('text'),
+        }),
+        z.string(),
+      ])
+    ).optional().default([]),
+  }),
+  summarize: (args) => `Preparing interactive Flashcard "${args.name}"`,
+  async run(ctx, args) {
+    const normalizedFields = (Array.isArray(args.customFields) ? args.customFields : []).map((item) => {
+      if (typeof item === 'string') {
+        const idx = item.indexOf(':');
+        if (idx > 0) {
+          return {
+            label: item.slice(0, idx).trim(),
+            value: item.slice(idx + 1).trim(),
+            type: 'text',
+          };
+        }
+        return { label: item.trim(), value: '', type: 'text' };
+      }
+      return {
+        label: item.label || 'Field',
+        value: item.value || '',
+        type: item.type || 'text',
+      };
+    });
+
+    return {
+      status: 'form_ready',
+      message: `Interactive flashcard form prepared for "${args.name}". The user can now fill or edit fields and submit it directly in the chat.`,
+      flashcardDraft: {
+        id: `fc_${Date.now()}`,
+        name: args.name,
+        category: args.category || 'General',
+        cardColor: args.cardColor || 'blue',
+        description: args.description || '',
+        linkedDocumentId: args.linkedDocumentId || null,
+        linkedDocumentTitle: args.linkedDocumentTitle || null,
+        customFields: normalizedFields,
+      },
+    };
+  },
 });
 

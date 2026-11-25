@@ -6,11 +6,20 @@ import Mascot from "./Mascot";
 import ToolRunCard from "./ToolRunCard";
 import ConfirmCard from "./ConfirmCard";
 import SourceChips from "./SourceChips";
+import UploadIntakeCard from "./UploadIntakeCard";
+import FlashcardWidget from "./FlashcardWidget";
 
 const Message = memo(function Message({
   message,
   onRetry,
   onConfirmHandled,
+  onUploadComplete,
+  onUploadCancel,
+  onFlashcardSaved,
+  onFlashcardCancel,
+  onCreateFlashcard,
+  onDocumentUpdated,
+  onDocumentDeleted,
   isLatestAssistant = false,
   mascotState = "idle",
 }) {
@@ -26,15 +35,10 @@ const Message = memo(function Message({
   return (
     <div className={`dv-cp-message dv-cp-message--${message.role}`}>
       {!isUser && (
-        <div className="dv-cp-message__avatar">
-          {isLatestAssistant ? (
-            <Mascot state={mascotState} size={28} />
-          ) : (
-            <Mascot state="idle" size={28} />
-          )}
+        <div className="dv-cp-message__avatar dv-cp-message__avatar--left">
+          <Mascot state={isLatestAssistant ? mascotState : "idle"} size={56} />
         </div>
       )}
-
       <div className="dv-cp-message__body">
         {/* Active/Past Tool Runs */}
         {message.toolRuns && message.toolRuns.length > 0 && (
@@ -76,9 +80,36 @@ const Message = memo(function Message({
           </div>
         )}
 
+        {/* Interactive In-Chat Upload Intake Card */}
+        {message.uploadFile && (
+          <UploadIntakeCard
+            file={message.uploadFile}
+            onCancel={() => onUploadCancel && onUploadCancel(message.id)}
+            onUploadComplete={(doc, opts) =>
+              onUploadComplete && onUploadComplete(message.id, doc, opts)
+            }
+          />
+        )}
+
+        {/* Interactive Fillable Flashcard Builder */}
+        {message.flashcardDraft && (
+          <FlashcardWidget
+            draft={message.flashcardDraft}
+            onSaved={(asset) =>
+              onFlashcardSaved && onFlashcardSaved(message.id, asset)
+            }
+            onCancel={() => onFlashcardCancel && onFlashcardCancel(message.id)}
+          />
+        )}
+
         {/* Sources */}
         {message.sources && message.sources.length > 0 && (
-          <SourceChips sources={message.sources} />
+          <SourceChips
+            sources={message.sources}
+            onCreateFlashcard={onCreateFlashcard}
+            onDocumentUpdated={onDocumentUpdated}
+            onDocumentDeleted={onDocumentDeleted}
+          />
         )}
 
         {/* Action Toolbar */}

@@ -88,15 +88,16 @@ export async function ensureDocumentChunks(documentId, userId) {
 
   if (chunksToInsert.length === 0) return [];
 
-  // Generate embeddings for chunks
-  for (const item of chunksToInsert) {
-    try {
-      item.embedding = await generateEmbedding(item.text);
-    } catch (err) {
-      // Embedding optional fallback if service unreachable
-      item.embedding = [];
-    }
-  }
+  // Generate embeddings for chunks in parallel with graceful failure handling
+  await Promise.all(
+    chunksToInsert.map(async (item) => {
+      try {
+        item.embedding = await generateEmbedding(item.text);
+      } catch (err) {
+        item.embedding = [];
+      }
+    })
+  );
 
   await DocumentChunk.insertMany(chunksToInsert, { ordered: false }).catch(() => {});
   return DocumentChunk.find({ documentId, userId }).sort({ chunkIndex: 1 });
@@ -122,11 +123,19 @@ export async function hybridChunkRetrieval({ userId, accessibleDocIds, query, qu
       .sort({ score: { $meta: 'textScore' } })
       .limit(topK * 2);
   } catch (err) {
-    // Fallback regex if text index not yet built
+    // Fallback regex matching meaningful keywords if text index not yet built
+    const stopWords = new Set(['what', 'is', 'the', 'and', 'on', 'my', 'in', 'of', 'for', 'to', 'a', 'an', 'please', 'give', 'me', 'show']);
+    const meaningful = query
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .map((w) => w.trim())
+      .filter((w) => w.length > 2 && !stopWords.has(w.toLowerCase()));
+    const regexPattern = meaningful.length > 0 ? meaningful.slice(0, 5).join('|') : query.slice(0, 15);
+
     keywordResults = await DocumentChunk.find({
       userId,
       documentId: { $in: accessibleDocIds },
-      text: { $regex: query.split(/\s+/).filter(Boolean).slice(0, 3).join('|'), $options: 'i' },
+      text: { $regex: regexPattern, $options: 'i' },
     }).limit(topK * 2);
   }
 

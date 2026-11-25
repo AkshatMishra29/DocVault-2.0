@@ -39,6 +39,9 @@ export async function executeConfirmedAction({ runId, action, args, userId }) {
         name: title,
         title,
         category: args.category || 'General',
+        cardColor: args.cardColor || 'blue',
+        description: args.description || '',
+        tags: args.tags || [],
         customFields: args.customFields || [],
         purchaseDate: args.purchaseDate ? new Date(args.purchaseDate) : null,
         warrantyExpiry: args.warrantyExpiry ? new Date(args.warrantyExpiry) : null,
@@ -52,7 +55,7 @@ export async function executeConfirmedAction({ runId, action, args, userId }) {
         details: { assetId: asset._id, name: asset.name },
       });
 
-      result = { assetId: asset._id.toString(), name: asset.name, status: 'created' };
+      result = { assetId: asset._id.toString(), name: asset.name, asset, status: 'created' };
       break;
     }
 
@@ -187,14 +190,17 @@ export async function executeConfirmedAction({ runId, action, args, userId }) {
       const doc = await Document.findOne({ _id: args.documentId, userId });
       if (!doc) throw new Error('Document not found or access denied.');
 
-      // Only update title and category
       if (args.title) doc.title = args.title;
       if (args.category) doc.category = args.category;
+      if (args.expiryDate) doc.expiryDate = new Date(args.expiryDate);
+      if (args.aiPolicy && ['ai_enabled', 'storage_only'].includes(args.aiPolicy)) {
+        doc.aiPolicy = args.aiPolicy;
+      }
       await doc.save();
 
-      // Refresh chunks if ai_enabled
+      // Purge or refresh chunks based on privacy policy
+      await DocumentChunk.deleteMany({ documentId: doc._id, userId });
       if (isAiAllowed(doc)) {
-        await DocumentChunk.deleteMany({ documentId: doc._id, userId });
         await ensureDocumentChunks(doc._id, userId).catch(() => {});
       }
 
@@ -202,10 +208,30 @@ export async function executeConfirmedAction({ runId, action, args, userId }) {
         userId,
         action: 'UPDATE_DOCUMENT_METADATA_COPILOT',
         documentId: doc._id,
-        details: { title: doc.title, category: doc.category },
+        details: { title: doc.title, category: doc.category, aiPolicy: doc.aiPolicy },
       });
 
-      result = { documentId: doc._id.toString(), status: 'updated' };
+      result = { documentId: doc._id.toString(), title: doc.title, category: doc.category, status: 'updated' };
+      break;
+    }
+
+    case 'delete_document': {
+      if (!args.documentId) throw new Error('Document ID required.');
+      const doc = await Document.findOne({ _id: args.documentId, userId });
+      if (!doc) throw new Error('Document not found or access denied.');
+
+      await Document.deleteOne({ _id: doc._id });
+      await Deadline.deleteMany({ linkedDocId: doc._id });
+      await DocumentChunk.deleteMany({ documentId: doc._id, userId });
+
+      await AuditLog.create({
+        userId,
+        action: 'DELETE_DOCUMENT_COPILOT',
+        documentTitle: doc.title,
+        details: { reason: args.reason || 'Deleted via Copilot' },
+      });
+
+      result = { documentId: doc._id.toString(), title: doc.title, status: 'deleted' };
       break;
     }
 

@@ -101,6 +101,7 @@ describe('DocVault Copilot Beta - Unit Tests', () => {
         'create_share',
         'revoke_share',
         'suggest_share_pack',
+        'delete_document',
       ];
 
       for (const t of expectedWriteTools) {
@@ -110,8 +111,8 @@ describe('DocVault Copilot Beta - Unit Tests', () => {
       }
     });
 
-    it('total registered tools equals 27 (10 read + 17 write)', () => {
-      assert.strictEqual(toolRegistry.size, 27);
+    it('total registered tools equals 29 (11 read + 18 write)', () => {
+      assert.strictEqual(toolRegistry.size, 29);
     });
   });
 

@@ -57,6 +57,7 @@ export function useCopilotStream({ onEvent, onError, onDone }) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
+        let currentEvent = "message";
 
         const scheduleFlush = () => {
           if (!rafIdRef.current && pendingTextRef.current) {
@@ -78,21 +79,22 @@ export function useCopilotStream({ onEvent, onError, onDone }) {
           const lines = buffer.split("\n");
           buffer = lines.pop(); // keep remainder
 
-          let currentEvent = "message";
           for (const line of lines) {
             const trimmed = line.trim();
             if (!trimmed || trimmed.startsWith(":")) continue; // skip comments / heartbeat
 
             if (trimmed.startsWith("event: ")) {
-              currentEvent = trimmed.slice(7);
+              currentEvent = trimmed.slice(7).trim();
               continue;
             }
 
             if (trimmed.startsWith("data: ")) {
               const dataStr = trimmed.slice(6);
+              const eventName = currentEvent;
+              currentEvent = "message";
               try {
                 const parsed = JSON.parse(dataStr);
-                if (currentEvent === "text_delta") {
+                if (eventName === "text_delta") {
                   pendingTextRef.current += parsed.text || "";
                   scheduleFlush();
                 } else {
@@ -101,7 +103,7 @@ export function useCopilotStream({ onEvent, onError, onDone }) {
                     onEvent("text_delta", { text: pendingTextRef.current });
                     pendingTextRef.current = "";
                   }
-                  if (onEvent) onEvent(currentEvent, parsed);
+                  if (onEvent) onEvent(eventName, parsed);
                 }
               } catch (e) {
                 console.warn("[Copilot Stream Parse Error]", e);

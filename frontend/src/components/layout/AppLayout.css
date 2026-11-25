@@ -32,6 +32,30 @@
   }
 }
 
+.dv-app-main--fullbleed {
+  padding-bottom: 0 !important;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden !important;
+}
+
+.dv-app-content-container--fullbleed {
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+@media (max-width: 1024px) {
+  .dv-app-content-container--fullbleed {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
 .dv-app-content-container {
   max-width: var(--content-max-width, 1440px);
   width: 100%;

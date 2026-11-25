@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import { requireAuth } from '../../middleware/auth.middleware.js';
 import { config } from '../../config/index.js';
 import { runCopilotOrchestrator } from './orchestrator.js';
@@ -113,9 +114,11 @@ router.post('/chat', requireAuth, guardCopilotBeta, copilotRateLimit, async (req
   }, 15000);
 
   const abortController = new AbortController();
-  req.on('close', () => {
-    clearInterval(heartbeat);
-    abortController.abort();
+  res.on('close', () => {
+    if (!res.writableEnded) {
+      clearInterval(heartbeat);
+      abortController.abort();
+    }
   });
 
   // Save User message to copilot history
@@ -255,8 +258,43 @@ router.post('/runs/:id/approve', requireAuth, guardCopilotBeta, async (req, res)
 });
 
 /**
- * History Endpoints for CopilotMessage
+ * History & Session Endpoints for CopilotMessage
  */
+router.get('/sessions', requireAuth, guardCopilotBeta, async (req, res) => {
+  try {
+    const userObjectId = new mongoose.Types.ObjectId(req.user.userId);
+    const sessions = await CopilotMessage.aggregate([
+      { $match: { userId: userObjectId } },
+      { $sort: { createdAt: 1 } },
+      {
+        $group: {
+          _id: '$sessionId',
+          messages: { $push: { role: '$role', content: '$content' } },
+          lastMessageAt: { $max: '$createdAt' },
+          messageCount: { $sum: 1 },
+        },
+      },
+      { $sort: { lastMessageAt: -1 } },
+      { $limit: 30 },
+    ]);
+
+    const formatted = sessions.map((s) => {
+      const firstUser = (s.messages || []).find((m) => m.role === 'user' && m.content);
+      const rawTitle = firstUser?.content || (s._id === 'default' ? 'Main Session' : 'Copilot Chat');
+      return {
+        sessionId: s._id || 'default',
+        title: rawTitle.length > 44 ? `${rawTitle.slice(0, 44)}...` : rawTitle,
+        lastMessageAt: s.lastMessageAt,
+        messageCount: s.messageCount,
+      };
+    });
+
+    res.json({ success: true, sessions: formatted });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get('/history', requireAuth, guardCopilotBeta, async (req, res) => {
   try {
     const { sessionId = 'default' } = req.query;
