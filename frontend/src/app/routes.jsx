@@ -31,6 +31,9 @@ import EntityDetailPage from "../features/intelligence/EntityDetailPage";
 import AlertsCenterPage from "../features/intelligence/AlertsCenterPage";
 import ConflictsCenterPage from "../features/intelligence/ConflictsCenterPage";
 
+// Lazy-loaded DocVault Copilot Beta (Isolated route)
+const CopilotBetaPage = React.lazy(() => import("../features/copilot-beta/CopilotBetaPage"));
+
 export function AppRoutes() {
   return (
     <Routes>
@@ -73,6 +76,14 @@ export function AppRoutes() {
         <Route path="/connections" element={<ConnectionsPage />} />
         <Route path="/shares" element={<ShareCenterPage />} />
         <Route path="/ask-ai" element={<AskAiPage />} />
+        <Route
+          path="/copilot-beta"
+          element={
+            <React.Suspense fallback={<div className="dv-page-loading">Loading Copilot Beta...</div>}>
+              <CopilotBetaPage />
+            </React.Suspense>
+          }
+        />
         <Route path="/assets" element={<AssetsPage />} />
         <Route path="/assets/:id" element={<AssetDetailPage />} />
         <Route path="/banking" element={<BankStatementsPage />} />

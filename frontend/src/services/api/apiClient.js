@@ -23,7 +23,7 @@ export const API_BASE_URL = getApiBaseUrl();
  * Centralizes Authorization headers, JSON body serialization, and error handling.
  */
 export async function apiRequest(endpoint, options = {}) {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('docvault_token') || localStorage.getItem('token');
   const headers = { ...options.headers };
 
   if (token && !headers['Authorization']) {

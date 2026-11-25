@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import AppSidebar from './AppSidebar/AppSidebar';
 import BottomNav from './BottomNav';
 import { useAuth } from '../../features/auth/context/AuthContext';
@@ -8,6 +8,8 @@ import './AppLayout.css';
 export default function AppLayout() {
   const { isVaultUnlocked, user, pendingEmail } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isFullBleed = location.pathname.startsWith('/copilot-beta');
 
   // If locked, immediately redirect to /enter-pin with replace: true
   useEffect(() => {
@@ -35,8 +37,8 @@ export default function AppLayout() {
   return (
     <div className="dv-app-shell">
       <AppSidebar />
-      <main className="dv-app-main">
-        <div className="dv-app-content-container">
+      <main className={`dv-app-main ${isFullBleed ? 'dv-app-main--fullbleed' : ''}`}>
+        <div className={`dv-app-content-container ${isFullBleed ? 'dv-app-content-container--fullbleed' : ''}`}>
           <Outlet />
         </div>
       </main>

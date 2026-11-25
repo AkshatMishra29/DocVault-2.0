@@ -514,6 +514,56 @@
 }
 
 /* Quick Ask AI Copilot Header Pill */
+.dv-header-copilot-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  background: rgba(0, 113, 227, 0.1);
+  border: 1px solid rgba(0, 113, 227, 0.3);
+  color: #0071E3;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 4px rgba(0, 113, 227, 0.1);
+}
+
+.dv-header-copilot-btn:hover {
+  background: rgba(0, 113, 227, 0.18);
+  border-color: #0071E3;
+  transform: translateY(-1px);
+}
+
+.dv-header-copilot-icon {
+  color: #0071E3;
+}
+
+.dv-header-copilot-badge {
+  font-size: 9px;
+  text-transform: uppercase;
+  background: #0071E3;
+  color: #FFFFFF;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  letter-spacing: 0.05em;
+}
+
+[data-theme="dark"] .dv-header-copilot-btn {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60A5FA;
+}
+
+[data-theme="dark"] .dv-header-copilot-icon {
+  color: #60A5FA;
+}
+
 .dv-header-ask-btn {
   display: inline-flex;
   align-items: center;

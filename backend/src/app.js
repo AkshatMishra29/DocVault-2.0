@@ -21,6 +21,7 @@ import timelineRoutes from './modules/assets/timeline.routes.js';
 import notificationRoutes from './modules/deadlines/notification.routes.js';
 import bankStatementRoutes from './modules/assets/bankStatement.routes.js';
 import sharesRoutes from './modules/sharing/shares.routes.js';
+import copilotRoutes from './modules/copilot/copilot.routes.js';
 
 import mongoose from 'mongoose';
 import { config } from './config/index.js';
@@ -85,6 +86,11 @@ app.use('/api/timeline', timelineRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/bank-statements', bankStatementRoutes);
 app.use('/api/shares', sharesRoutes);
+
+// Guarded DocVault Copilot Beta Mount (Isolation Rule)
+if (config.copilotBetaEnabled) {
+  app.use('/api/copilot', copilotRoutes);
+}
 
 /* ==========================================================================
    Static Frontend Production Serve (Unified Deployment)
