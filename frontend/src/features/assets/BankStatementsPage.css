@@ -183,3 +183,33 @@
   font-size: 0.9rem;
 }
 
+@media (max-width: 768px) {
+  .dv-bank-page {
+    padding: 1rem 0;
+  }
+
+  .dv-bank-table-wrap,
+  .dv-bank-preview-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dv-bank-card,
+  .dv-bank-upload-area {
+    padding: 1rem;
+  }
+}
+
+[data-theme="dark"] .dv-bank-card,
+[data-theme="dark"] .dv-bank-upload-area {
+  background: rgba(17, 24, 39, 0.85);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .dv-bank-alert {
+  background: rgba(239, 68, 68, 0.15);
+  color: #FCA5A5;
+}
+
+

@@ -257,3 +257,27 @@
   gap: 10px;
   margin-top: 12px;
 }
+
+@media (max-width: 768px) {
+  .dv-entity-grid,
+  .entities-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modal-actions {
+    flex-wrap: wrap;
+  }
+
+  .dv-select-input,
+  .dv-text-input {
+    font-size: 16px;
+  }
+}
+
+[data-theme="dark"] .dv-select-input,
+[data-theme="dark"] .dv-text-input {
+  background: #0F172A;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #F8FAFC;
+}
+

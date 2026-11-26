@@ -69,7 +69,7 @@ export default function BankStatementsPage() {
       const res = await fetch(`${API_BASE_URL}/api/bank-statements/preview`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
+          Authorization: `Bearer ${localStorage.getItem("docvault_token") || localStorage.getItem("token") || ""}`
         },
         body: formData
       }).then(r => r.json());

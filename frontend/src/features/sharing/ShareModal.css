@@ -635,3 +635,51 @@
   color: var(--color-text-primary, #1d2d3e);
   font-weight: 600;
 }
+
+@media (max-width: 768px) {
+  .share-modal__overlay {
+    padding: 0.5rem;
+    align-items: flex-end;
+  }
+
+  .share-modal__dialog,
+  .share-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90dvh;
+    border-radius: 18px 18px 12px 12px;
+    overflow-y: auto;
+  }
+
+  .share-modal__header,
+  .share-modal__body,
+  .share-modal__footer {
+    padding: 1rem;
+  }
+
+  .share-modal__permissions {
+    grid-template-columns: 1fr;
+  }
+
+  .share-modal input,
+  .share-modal select,
+  .share-modal textarea {
+    font-size: 16px;
+  }
+}
+
+[data-theme="dark"] .share-modal__dialog,
+[data-theme="dark"] .share-modal {
+  background: #111827;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #F8FAFC;
+}
+
+[data-theme="dark"] .share-modal__success-card-label {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .share-modal__success-card-val {
+  color: #F8FAFC;
+}
+

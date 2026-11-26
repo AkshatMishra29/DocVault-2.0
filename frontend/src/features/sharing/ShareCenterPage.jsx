@@ -1451,7 +1451,7 @@ export default function ShareCenterPage() {
         {quickPreview && (() => {
           const { share, doc } = quickPreview;
           const isPdf = (doc.format || "").toUpperCase() === "PDF" || (doc.title || "").toLowerCase().endsWith(".pdf");
-          const token = localStorage.getItem("token") || localStorage.getItem("docvault_token") || "";
+          const token = localStorage.getItem("docvault_token") || localStorage.getItem("token") || "";
           const streamUrl = `${API_BASE_URL}/api/shares/${share._id}/document?documentId=${doc._id}&token=${encodeURIComponent(token)}`;
           const pdfStreamUrl = isPdf ? `${streamUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH` : streamUrl;
           const downloadUrl = `${API_BASE_URL}/api/shares/${share._id}/download?documentId=${doc._id}&token=${encodeURIComponent(token)}`;

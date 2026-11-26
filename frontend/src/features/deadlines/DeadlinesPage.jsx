@@ -158,7 +158,7 @@ export default function DeadlinesPage() {
     }
   };
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("docvault_token") || localStorage.getItem("token") || "";
   const calendarIcsUrl = `${API_BASE_URL}/api/deadlines/calendar.ics?token=${token}`;
 
   // Group into urgent and upcoming

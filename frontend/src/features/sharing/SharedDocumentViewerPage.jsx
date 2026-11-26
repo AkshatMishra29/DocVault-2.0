@@ -223,7 +223,7 @@ export default function SharedDocumentViewerPage() {
   const activeDoc = (share?.documents || []).find((d) => d._id === selectedDocId) || share?.documents?.[0];
   const isPdf = (activeDoc?.format || "").toUpperCase() === "PDF" || (activeDoc?.title || "").toLowerCase().endsWith(".pdf");
 
-  const authToken = queryToken || routeToken || (id && id.length > 24 ? id : "") || localStorage.getItem("token") || localStorage.getItem("docvault_token") || "";
+  const authToken = queryToken || routeToken || (id && id.length > 24 ? id : "") || localStorage.getItem("docvault_token") || localStorage.getItem("token") || "";
   const authQuery = `${authToken ? `&token=${encodeURIComponent(authToken)}` : ""}${enteredPassword ? `&password=${encodeURIComponent(enteredPassword)}` : ""}`;
   const effectiveShareId = share?._id || shareIdentifier;
   const baseDocumentUrl = selectedDocId ? `${API_BASE_URL}/api/shares/${effectiveShareId}/document?documentId=${selectedDocId}${authQuery}` : "";

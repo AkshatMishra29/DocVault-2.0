@@ -480,4 +480,43 @@
   color: #F8FAFC;
 }
 
+@media (max-width: 768px) {
+  .dv-asset-detail-page {
+    padding: 12px 0;
+  }
+
+  .dv-asset-detail-nav {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .dv-asset-hero-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .dv-asset-hero-title {
+    font-size: 20px;
+  }
+
+  .dv-asset-stats-grid,
+  .dv-linked-docs-grid,
+  .dv-wallet-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dv-asset-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .dv-asset-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+
 

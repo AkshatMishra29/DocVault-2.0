@@ -483,7 +483,7 @@ export default function AskAiPage() {
       return;
     }
 
-    const token = localStorage.getItem("token") || localStorage.getItem("docvault_token") || "";
+    const token = localStorage.getItem("docvault_token") || localStorage.getItem("token") || "";
     const previewUrl = `${API_BASE_URL}/api/documents/${docId}/preview?token=${encodeURIComponent(token)}`;
     const downloadUrl = `${API_BASE_URL}/api/documents/${docId}/download?token=${encodeURIComponent(token)}`;
 

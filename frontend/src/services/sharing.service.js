@@ -1,7 +1,7 @@
 import { API_BASE_URL } from '../config';
 
 function getAuthHeader() {
-  const token = localStorage.getItem('token') || localStorage.getItem('docvault_token');
+  const token = localStorage.getItem('docvault_token') || localStorage.getItem('token');
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

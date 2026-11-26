@@ -369,7 +369,7 @@ export default function DocumentDetailPage() {
     }
   };
 
-  const token = localStorage.getItem("token") || localStorage.getItem("docvault_token") || "";
+  const token = localStorage.getItem("docvault_token") || localStorage.getItem("token") || "";
   const previewUrl = `${API_BASE_URL}/api/documents/${id}/preview?token=${encodeURIComponent(token)}`;
   const downloadUrl = `${API_BASE_URL}/api/documents/${id}/download?token=${encodeURIComponent(token)}`;
   const canDownload = isOwner || permissions?.download === true;
