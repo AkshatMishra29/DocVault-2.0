@@ -69,29 +69,57 @@ registerTool({
       return f;
     };
 
-    // 1. Try with category + query
-    let docs = await Document.find(buildQueryFilter(baseFilter, args.query))
-      .select('_id title category summary tags expiryDate extractedFields extractedText createdAt')
+    // 1. Fetch candidate docs matching category + query (or all categories if category guess misses)
+    const selectFields = '_id title category summary tags expiryDate extractedFields extractedText createdAt';
+    let candidates = await Document.find(buildQueryFilter(baseFilter, args.query))
+      .select(selectFields)
       .sort({ createdAt: -1 })
-      .limit(args.limit || 5)
+      .limit(15)
       .lean();
 
-    // 2. If 0 hits and category was specified, retry query across ALL categories
-    if (docs.length === 0 && args.category) {
-      docs = await Document.find(buildQueryFilter(unfilteredBase, args.query))
-        .select('_id title category summary tags expiryDate extractedFields extractedText createdAt')
+    if (candidates.length === 0 && args.category) {
+      candidates = await Document.find(buildQueryFilter(unfilteredBase, args.query))
+        .select(selectFields)
         .sort({ createdAt: -1 })
-        .limit(args.limit || 5)
+        .limit(15)
         .lean();
     }
 
-    // 3. Fallback to most recent accessible documents across all categories if still 0 hits
-    if (docs.length === 0 && !isGenericQuery) {
-      docs = await Document.find(unfilteredBase)
-        .select('_id title category summary tags expiryDate extractedFields extractedText createdAt')
-        .sort({ createdAt: -1 })
-        .limit(args.limit || 5)
-        .lean();
+    // Score & rank candidates by relevance so unrelated docs don't pollute Verified Sources
+    let docs = candidates;
+    if (!isGenericQuery && args.query && candidates.length > 1) {
+      const cleanQuery = args.query.trim().toLowerCase();
+      const stopWords = new Set(['the', 'and', 'for', 'my', 'document', 'documents', 'file', 'files', 'show', 'give', 'find', 'search', 'new', 'updated']);
+      const queryWords = cleanQuery
+        .replace(/[^\w\s]/g, ' ')
+        .split(/\s+/)
+        .filter((w) => w.length > 2 && !stopWords.has(w));
+
+      const scored = candidates.map((d) => {
+        const titleLower = (d.title || '').toLowerCase();
+        const catLower = (d.category || '').toLowerCase();
+        const sumLower = (d.summary || '').toLowerCase();
+        const textLower = (d.extractedText || '').toLowerCase();
+
+        let score = 0;
+        if (titleLower.includes(cleanQuery)) score += 100;
+        for (const w of queryWords) {
+          if (titleLower.includes(w)) score += 25;
+          if (catLower.includes(w) || sumLower.includes(w)) score += 8;
+          if (textLower.includes(w)) score += 4;
+        }
+        return { doc: d, score };
+      });
+
+      scored.sort((a, b) => b.score - a.score);
+      const topScore = scored[0]?.score || 0;
+      const threshold = topScore >= 25 ? topScore * 0.45 : 1;
+      docs = scored
+        .filter((s) => s.score >= threshold)
+        .slice(0, args.limit || 3)
+        .map((s) => s.doc);
+    } else {
+      docs = candidates.slice(0, args.limit || 5);
     }
 
     return {
@@ -104,7 +132,7 @@ registerTool({
         expiryDate: d.expiryDate,
         tags: d.tags || [],
         extractedFields: (d.extractedFields || []).map((f) => ({ label: f.label || f.fieldName, value: f.value })),
-        evidence: idx < 3 && d.extractedText ? d.extractedText.slice(0, 900) : undefined,
+        evidence: idx < 2 && d.extractedText ? d.extractedText.slice(0, 1000) : undefined,
       })),
       sources: docs.map((d) => ({
         documentId: d._id.toString(),
@@ -135,7 +163,7 @@ registerTool({
     if (args.documentId) {
       const canView = await DocumentAccessControlService.canViewDocument(ctx.userId, args.documentId);
       if (!canView?.allowed) return { error: 'Document not found or access denied.' };
-      const doc = await Document.findById(args.documentId);
+      const doc = await Document.findById(args.documentId).select('aiPolicy sensitiveFlag');
       if (!doc || !isAiAllowed(doc)) return { error: 'Document is restricted under storage_only privacy.' };
       targetDocIds = [args.documentId];
       await ensureDocumentChunks(args.documentId, ctx.userId);
@@ -145,12 +173,23 @@ registerTool({
         _id: { $in: accessibleIds },
         aiPolicy: 'ai_enabled',
         sensitiveFlag: { $ne: true },
-      }).select('_id');
+      })
+        .select('_id title')
+        .lean();
+
       targetDocIds = docs.map((d) => d._id);
-      // Ensure chunks for top accessible docs in parallel
-      await Promise.all(
-        docs.slice(0, 3).map((d) => ensureDocumentChunks(d._id, ctx.userId))
-      );
+
+      // Only chunk docs that don't have chunks yet (fast check via DocumentChunk.distinct)
+      const { DocumentChunk } = await import('../models/documentChunk.model.js');
+      const alreadyChunked = await DocumentChunk.distinct('documentId', {
+        userId: ctx.userId,
+        documentId: { $in: targetDocIds },
+      });
+      const chunkedSet = new Set(alreadyChunked.map((id) => id.toString()));
+      const unchunked = docs.filter((d) => !chunkedSet.has(d._id.toString())).slice(0, 3);
+      if (unchunked.length > 0) {
+        await Promise.all(unchunked.map((d) => ensureDocumentChunks(d._id, ctx.userId)));
+      }
     }
 
     let queryVector = null;
@@ -163,30 +202,51 @@ registerTool({
       accessibleDocIds: targetDocIds,
       query: args.question,
       queryEmbedding: queryVector,
-      topK: 4,
+      topK: 3,
     });
 
+    if (chunks.length === 0) {
+      return {
+        sources: [],
+        evidence: '',
+        note: 'No relevant excerpts found in indexed chunks. Try search_documents to locate the document by title.',
+      };
+    }
+
+    // Batch-fetch document metadata in 1 single query instead of N queries
+    const uniqueDocIds = [...new Set(chunks.map((c) => c.documentId.toString()))];
+    const docRecords = await Document.find({ _id: { $in: uniqueDocIds } })
+      .select('_id title category')
+      .lean();
+    const docMap = new Map(docRecords.map((d) => [d._id.toString(), d]));
+
     const sources = [];
+    const seenSourceDocs = new Set();
     const contextBlocks = [];
 
     for (const chunk of chunks) {
-      const doc = await Document.findById(chunk.documentId).select('title category');
-      sources.push({
-        documentId: chunk.documentId.toString(),
-        title: doc?.title || 'Document',
-        category: doc?.category || 'Document',
-        page: chunk.pageNumber || 1,
-        pageNumber: chunk.pageNumber || 1,
-        previewRoute: `/documents/${chunk.documentId.toString()}`,
-      });
+      const docIdStr = chunk.documentId.toString();
+      const doc = docMap.get(docIdStr);
+      if (!seenSourceDocs.has(docIdStr)) {
+        seenSourceDocs.add(docIdStr);
+        sources.push({
+          documentId: docIdStr,
+          title: doc?.title || 'Document',
+          category: doc?.category || 'Document',
+          page: chunk.pageNumber || 1,
+          pageNumber: chunk.pageNumber || 1,
+          previewRoute: `/documents/${docIdStr}`,
+        });
+      }
       contextBlocks.push(
-        `--- Document: "${doc?.title || 'Unknown'}" (ID: ${chunk.documentId}, Page ${chunk.pageNumber}) ---\n${chunk.text}`
+        `--- Document: "${doc?.title || 'Unknown'}" (ID: ${docIdStr}, Page ${chunk.pageNumber || 1}) ---\n${chunk.text}`
       );
     }
 
     return {
       sources,
       evidence: contextBlocks.join('\n\n'),
+      note: 'Grounded excerpts retrieved. Answer directly from these excerpts without calling search_documents.',
     };
   },
 });

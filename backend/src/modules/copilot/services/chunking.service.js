@@ -121,7 +121,8 @@ export async function hybridChunkRetrieval({ userId, accessibleDocIds, query, qu
       { score: { $meta: 'textScore' } }
     )
       .sort({ score: { $meta: 'textScore' } })
-      .limit(topK * 2);
+      .limit(topK * 2)
+      .lean();
   } catch (err) {
     // Fallback regex matching meaningful keywords if text index not yet built
     const stopWords = new Set(['what', 'is', 'the', 'and', 'on', 'my', 'in', 'of', 'for', 'to', 'a', 'an', 'please', 'give', 'me', 'show']);
@@ -136,7 +137,9 @@ export async function hybridChunkRetrieval({ userId, accessibleDocIds, query, qu
       userId,
       documentId: { $in: accessibleDocIds },
       text: { $regex: regexPattern, $options: 'i' },
-    }).limit(topK * 2);
+    })
+      .limit(topK * 2)
+      .lean();
   }
 
   // 2. Vector search if query embedding provided
@@ -146,7 +149,9 @@ export async function hybridChunkRetrieval({ userId, accessibleDocIds, query, qu
       userId,
       documentId: { $in: accessibleDocIds },
       embedding: { $exists: true, $ne: [] },
-    }).limit(60);
+    })
+      .limit(60)
+      .lean();
 
     const scored = allChunks.map((chunk) => {
       let dot = 0;
@@ -176,17 +181,14 @@ export async function hybridChunkRetrieval({ userId, accessibleDocIds, query, qu
     chunkScores.set(id, { chunk: item, score: (chunkScores.get(id)?.score || 0) + score });
   });
 
-  // If no scores from search, return latest accessible chunks
+  // Do NOT dump random unrelated chunks when nothing matched
   if (chunkScores.size === 0) {
-    const fallback = await DocumentChunk.find({
-      userId,
-      documentId: { $in: accessibleDocIds },
-    })
-      .sort({ createdAt: -1 })
-      .limit(topK);
-    return fallback;
+    return [];
   }
 
   const sorted = Array.from(chunkScores.values()).sort((a, b) => b.score - a.score);
-  return sorted.slice(0, topK).map((s) => s.chunk);
+  const topScore = sorted[0]?.score || 0;
+  // Keep only strong matches (>= 70% of top RRF score) so unrelated docs aren't dragged in
+  const filtered = sorted.filter((s) => s.score >= topScore * 0.7);
+  return filtered.slice(0, topK).map((s) => s.chunk);
 }
