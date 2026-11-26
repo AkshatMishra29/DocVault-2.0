@@ -9,12 +9,13 @@ const CopilotMessageSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     sessionId: { type: String, required: true, index: true },
     title: { type: String, default: 'New Conversation' },
-    role: { type: String, enum: ['user', 'assistant', 'system', 'tool'], required: true },
+    role: { type: String, enum: ['user', 'assistant', 'system', 'tool', 'cache'], required: true },
     content: { type: String, default: '' },
     toolCalls: { type: Array, default: [] },
     toolResults: { type: Array, default: [] },
     sources: { type: Array, default: [] },
     confirmations: { type: Array, default: [] },
+    metadata: { type: mongoose.Schema.Types.Mixed, default: null }, // used by semantic cache
   },
   { timestamps: true }
 );

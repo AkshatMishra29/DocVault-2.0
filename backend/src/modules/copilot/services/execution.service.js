@@ -14,6 +14,7 @@ import { DocumentChunk } from '../models/documentChunk.model.js';
 import { DocumentAccessControlService } from '../../sharing/accessControl.service.js';
 import { assertAiAllowed, isAiAllowed } from '../../../services/pipeline/privacyGate.js';
 import { ensureDocumentChunks } from './chunking.service.js';
+import { invalidateUserProfile } from './userProfile.service.js';
 
 /**
  * Executes a confirmed action atomically after validation
@@ -478,8 +479,56 @@ export async function executeConfirmedAction({ runId, action, args, userId }) {
       break;
     }
 
+    /* ==========================================================================
+       6. Delete Asset / Reminder (new tools added 2026-11)
+       ========================================================================== */
+    case 'delete_asset': {
+      if (!args.assetId) throw new Error('Asset ID required.');
+      const asset = await Asset.findOne({ _id: args.assetId, userId });
+      if (!asset) throw new Error('Asset not found or access denied.');
+
+      await Asset.deleteOne({ _id: asset._id });
+
+      await AuditLog.create({
+        userId,
+        action: 'DELETE_ASSET_COPILOT',
+        details: { assetId: asset._id, name: asset.name, reason: args.reason || 'Deleted via Copilot' },
+      });
+
+      result = { assetId: asset._id.toString(), name: asset.name, status: 'deleted' };
+      break;
+    }
+
+    case 'delete_reminder': {
+      if (!args.deadlineId) throw new Error('Deadline ID required.');
+      const deadline = await Deadline.findOne({ _id: args.deadlineId, userId });
+      if (!deadline) throw new Error('Deadline not found or access denied.');
+
+      await Deadline.deleteOne({ _id: deadline._id });
+
+      await AuditLog.create({
+        userId,
+        action: 'DELETE_DEADLINE_COPILOT',
+        details: { deadlineId: deadline._id, title: deadline.title },
+      });
+
+      result = { deadlineId: deadline._id.toString(), title: deadline.title, status: 'deleted' };
+      break;
+    }
+
     default:
       throw new Error(`Unsupported action: ${action}`);
+  }
+
+  // Invalidate the personalization profile cache after any vault mutation
+  const mutatingActions = [
+    'create_asset', 'update_asset', 'delete_asset',
+    'create_reminder', 'update_reminder', 'complete_reminder', 'delete_reminder',
+    'delete_document', 'create_document', 'update_document_metadata',
+    'create_share', 'revoke_share',
+  ];
+  if (mutatingActions.includes(action)) {
+    invalidateUserProfile(userId);
   }
 
   return result;

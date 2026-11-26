@@ -5,6 +5,7 @@ import { DocumentAccessControlService } from '../../sharing/accessControl.servic
 import { isAiAllowed, assertAiAllowed } from '../../../services/pipeline/privacyGate.js';
 import { generateEmbedding } from '../../../services/ai/huggingFaceService.js';
 import { ensureDocumentChunks, hybridChunkRetrieval } from '../services/chunking.service.js';
+import { invalidateUserProfile } from '../services/userProfile.service.js';
 
 export const toolRegistry = new Map();
 
@@ -428,7 +429,7 @@ registerTool({
 });
 
 /**
- * 7. list_assets
+ * 7. list_assets — with profile invalidation hook after mutations
  */
 registerTool({
   name: 'list_assets',
@@ -833,8 +834,7 @@ registerTool({
 });
 
 /**
- * 29. propose_flashcard_form
- */
+ * 29. propose_flashcard_form */
 registerTool({
   name: 'propose_flashcard_form',
   description: 'Open an interactive, pre-filled Asset Flashcard Builder inside the chat so the user can review, fill missing fields, and submit directly.',
@@ -895,3 +895,70 @@ registerTool({
   },
 });
 
+
+/**
+ * 30. delete_asset
+ */
+registerTool({
+  name: 'delete_asset',
+  description: 'Permanently delete an asset card / flashcard from the vault. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    assetId: z.string().describe('Asset ID to delete'),
+    name: z.string().optional().describe('Asset name for confirmation display'),
+    reason: z.string().optional().describe('Optional reason for deletion'),
+  }),
+  summarize: (args) => `Permanently delete asset "${args.name || args.assetId}"`,
+});
+
+/**
+ * 31. delete_reminder
+ */
+registerTool({
+  name: 'delete_reminder',
+  description: 'Permanently delete a reminder / deadline. Requires confirmation.',
+  kind: 'write',
+  schema: z.object({
+    deadlineId: z.string().describe('Deadline ID to delete'),
+    title: z.string().optional().describe('Deadline title for display'),
+  }),
+  summarize: (args) => `Delete reminder "${args.title || args.deadlineId}"`,
+});
+
+/**
+ * 32. get_vault_stats  (READ — cheap overview, no AI needed)
+ */
+registerTool({
+  name: 'get_vault_stats',
+  description: 'Return a quick overview of the vault: total documents, assets, active shares, deadlines due soon, and storage stats. Use for "vault overview" or "how many documents" queries.',
+  kind: 'read',
+  schema: z.object({}),
+  summarize: () => 'Fetching vault statistics overview',
+  async run(ctx) {
+    const [
+      totalDocs,
+      totalAssets,
+      activeShares,
+      pendingDeadlines,
+      expiringSoon,
+    ] = await Promise.all([
+      Document.countDocuments({ userId: ctx.userId }),
+      Asset.countDocuments({ userId: ctx.userId }),
+      DocumentShare.countDocuments({ userId: ctx.userId, status: 'active' }),
+      Deadline.countDocuments({ userId: ctx.userId, status: 'pending' }),
+      Document.countDocuments({
+        userId: ctx.userId,
+        expiryDate: { $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), $gte: new Date() },
+      }),
+    ]);
+
+    return {
+      totalDocuments: totalDocs,
+      totalAssets,
+      activeShares,
+      pendingReminders: pendingDeadlines,
+      documentsExpiringSoon: expiringSoon,
+      note: `User has ${totalDocs} document(s), ${totalAssets} asset flashcard(s), ${activeShares} active share(s), ${pendingDeadlines} pending reminder(s). ${expiringSoon} document(s) expire within 30 days.`,
+    };
+  },
+});
