@@ -475,6 +475,15 @@
    ========================================================================== */
 
 @media (max-width: 640px) {
+  .dv-3d-scene {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .dv-3d-ambient-bloom {
+    width: 100%;
+  }
+
   .dv-3d-orbit-pill {
     display: none; /* Hide heavy orbit badges on small phones to maximize readability */
   }

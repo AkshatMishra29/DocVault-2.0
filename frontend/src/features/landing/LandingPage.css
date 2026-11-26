@@ -1707,45 +1707,133 @@
 }
 
 @media (max-width: 768px) {
+  .dv-landing-root {
+    padding-bottom: 84px;
+  }
+
+  .dv-lp-container {
+    padding: 0 18px;
+  }
+
   .dv-lp-hero {
-    padding: 40px 0 60px 0;
+    padding: 28px 0 48px 0;
   }
 
   .dv-lp-hero__title {
-    font-size: 36px;
+    font-size: clamp(28px, 7.6vw, 36px);
+    line-height: 1.15;
+  }
+
+  .dv-lp-hero__desc {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .dv-lp-section-title {
+    font-size: clamp(24px, 6.4vw, 32px);
+  }
+
+  .dv-lp-features,
+  .dv-lp-showcase,
+  .dv-lp-process,
+  .dv-lp-security,
+  .dv-lp-faq,
+  .dv-lp-cta-banner {
+    padding: 48px 0;
+  }
+
+  .dv-lp-pillars-wrapper {
+    padding: 0 18px;
+    margin-top: 32px;
   }
 
   .dv-lp-pillars-grid {
     grid-template-columns: 1fr;
-    padding: 20px;
+    padding: 18px;
+    gap: 16px;
   }
 
   .dv-lp-bento-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .dv-lp-steps-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .dv-lp-security-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .dv-lp-security-card {
-    padding: 36px 24px;
+    padding: 28px 18px;
+    border-radius: 20px;
   }
 
   .dv-lp-security-title {
-    font-size: 28px;
+    font-size: 24px;
   }
 
   .dv-lp-faq-grid {
     grid-template-columns: 1fr;
   }
 
+  .dv-lp-faq-tabs {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .dv-lp-faq-contact-card,
+  .dv-lp-faq-footer-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 22px 18px;
+    gap: 14px;
+  }
+
+  .dv-lp-mockup-top {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
+  .dv-lp-mockup-search {
+    width: 100%;
+    order: 3;
+  }
+
+  .dv-lp-mockup-body {
+    padding: 16px 14px;
+  }
+
+  .dv-lp-mockup-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .dv-lp-mockup-stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .dv-lp-mockup-panels {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dv-lp-banner-inner {
+    padding: 36px 20px;
+    border-radius: 22px;
+  }
+
+  .dv-lp-banner-ambient-glow {
+    width: 100%;
   }
 
   .dv-lp-float-badge--top {
@@ -1760,31 +1848,59 @@
 }
 
 @media (max-width: 600px) {
+  .dv-lp-container {
+    padding: 0 14px;
+  }
+
   .dv-lp-hero__container {
-    padding: 0 16px;
-    gap: 32px;
+    padding: 0 14px;
+    gap: 28px;
+  }
+
+  .dv-lp-pillars-wrapper {
+    padding: 0 14px;
+  }
+
+  .dv-lp-kicker {
+    font-size: 11.5px;
+    padding: 5px 11px;
   }
 
   .dv-lp-hero__cta-row {
     flex-direction: column;
     width: 100%;
-    gap: 12px;
+    gap: 10px;
   }
 
   .dv-lp-btn-primary,
-  .dv-lp-btn-secondary {
+  .dv-lp-btn-secondary,
+  .dv-lp-btn-banner {
     width: 100% !important;
     justify-content: center !important;
     box-sizing: border-box !important;
     height: 48px !important;
     font-size: 14.5px !important;
-    padding: 0 20px !important;
+    padding: 0 18px !important;
   }
 
   .dv-lp-hero__trust-strip {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
+  }
+
+  .dv-lp-accordion-trigger {
+    padding: 14px 16px;
     gap: 10px;
+  }
+
+  .dv-lp-accordion-question {
+    font-size: 14px;
+  }
+
+  .dv-lp-accordion-answer,
+  .dv-lp-accordion-content {
+    padding: 12px 16px 16px 16px;
   }
 }
 
