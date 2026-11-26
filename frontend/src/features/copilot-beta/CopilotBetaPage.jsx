@@ -61,7 +61,9 @@ class CopilotErrorBoundary extends Component {
 
 function CopilotBetaPageContent() {
   const [messages, setMessages] = useState([]);
-  const [sessionId, setSessionId] = useState("default");
+  // Always open with a fresh session so each visit starts a new chat.
+  // Past sessions remain accessible via the History sidebar.
+  const [sessionId, setSessionId] = useState(() => `chat_${Date.now()}`);
   const [sessions, setSessions] = useState([]);
   const [historySearch, setHistorySearch] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(() =>
