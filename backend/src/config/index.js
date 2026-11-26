@@ -51,7 +51,7 @@ export const config = {
     perPageTimeoutMs: parseInt(process.env.PAGE_TIMEOUT_MS || '15000', 10),
     memoryGuardBytes: parseInt(process.env.JOB_MEMORY_GUARD_BYTES || `${450 * 1024 * 1024}`, 10),
   },
-  copilotBetaEnabled: process.env.COPILOT_BETA_ENABLED === 'true',
+  copilotBetaEnabled: process.env.COPILOT_BETA_ENABLED !== 'false',
   copilotBetaUserIds: process.env.COPILOT_BETA_USER_IDS
     ? process.env.COPILOT_BETA_USER_IDS.split(',').map((id) => id.trim()).filter(Boolean)
     : [],
