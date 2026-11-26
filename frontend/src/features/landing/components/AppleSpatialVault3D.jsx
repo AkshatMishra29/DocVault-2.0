@@ -62,36 +62,131 @@ const VAULT_ITEMS = [
 
 export default function AppleSpatialVault3D() {
   const [activeTab, setActiveTab] = useState("insurance");
-  const [rotate, setRotate] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef(null);
+  const targetRotateRef = useRef({ x: 0, y: 0, scale: 1 });
+  const currentRotateRef = useRef({ x: 0, y: 0, scale: 1 });
+  const isInteractingRef = useRef(false);
+  const hasGyroRef = useRef(false);
+  const gyroBaselineRef = useRef(null);
 
   const currentDoc = VAULT_ITEMS.find((item) => item.id === activeTab) || VAULT_ITEMS[0];
 
-  // Mouse tilt tracking with smooth natural physics
+  // 60fps direct-DOM lerp loop (zero React re-renders during tilt/gyro motion)
+  useEffect(() => {
+    let rafId = null;
+    let startTime = performance.now();
+
+    const tick = (now) => {
+      // Subtle ambient spatial float on mobile/idle when not actively hovering
+      if (!isInteractingRef.current && !hasGyroRef.current) {
+        const t = (now - startTime) * 0.0012;
+        targetRotateRef.current = {
+          x: Math.sin(t) * 2.4,
+          y: Math.cos(t * 0.85) * 3.4,
+          scale: 1,
+        };
+      }
+
+      const cur = currentRotateRef.current;
+      const tgt = targetRotateRef.current;
+      cur.x += (tgt.x - cur.x) * 0.12;
+      cur.y += (tgt.y - cur.y) * 0.12;
+      cur.scale += (tgt.scale - cur.scale) * 0.12;
+
+      if (cardRef.current) {
+        cardRef.current.style.transform = `perspective(1100px) rotateX(${cur.x.toFixed(2)}deg) rotateY(${cur.y.toFixed(2)}deg) scale3d(${cur.scale.toFixed(3)}, ${cur.scale.toFixed(3)}, 1)`;
+      }
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  // Automatic mobile gyroscope / accelerometer tracking (no touch required on Android; auto-enables on first tap on iOS)
+  useEffect(() => {
+    if (typeof window === "undefined" || !("DeviceOrientationEvent" in window)) return;
+
+    const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+
+    const handleOrientation = (event) => {
+      if (event.beta === null || event.gamma === null) return;
+      hasGyroRef.current = true;
+
+      if (!gyroBaselineRef.current) {
+        gyroBaselineRef.current = { beta: event.beta, gamma: event.gamma };
+      }
+
+      const dBeta = event.beta - gyroBaselineRef.current.beta;
+      const dGamma = event.gamma - gyroBaselineRef.current.gamma;
+
+      // Slowly drift baseline so natural posture changes stay centered
+      gyroBaselineRef.current.beta += dBeta * 0.015;
+      gyroBaselineRef.current.gamma += dGamma * 0.015;
+
+      targetRotateRef.current = {
+        x: clamp(-dBeta * 0.45, -12, 12),
+        y: clamp(dGamma * 0.55, -14, 14),
+        scale: 1.015,
+      };
+    };
+
+    const startListening = () => {
+      window.addEventListener("deviceorientation", handleOrientation, true);
+    };
+
+    const requestIOSPermissionOnce = async () => {
+      try {
+        const res = await window.DeviceOrientationEvent.requestPermission();
+        if (res === "granted") {
+          startListening();
+        }
+      } catch (_) {}
+      window.removeEventListener("touchstart", requestIOSPermissionOnce);
+      window.removeEventListener("click", requestIOSPermissionOnce);
+    };
+
+    if (typeof window.DeviceOrientationEvent.requestPermission === "function") {
+      window.addEventListener("touchstart", requestIOSPermissionOnce, { passive: true, once: true });
+      window.addEventListener("click", requestIOSPermissionOnce, { passive: true, once: true });
+    } else {
+      startListening();
+    }
+
+    return () => {
+      window.removeEventListener("deviceorientation", handleOrientation, true);
+      window.removeEventListener("touchstart", requestIOSPermissionOnce);
+      window.removeEventListener("click", requestIOSPermissionOnce);
+    };
+  }, []);
+
+  // Mouse tilt tracking for desktop
   const handleMouseMove = (e) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
-    // Max 12deg tilt for sophisticated Apple-grade subtle depth
-    const rotateX = ((y - centerY) / centerY) * -10;
-    const rotateY = ((x - centerX) / centerX) * 12;
-
-    setRotate({ x: rotateX, y: rotateY });
+    targetRotateRef.current = {
+      x: ((y - centerY) / centerY) * -10,
+      y: ((x - centerX) / centerX) * 12,
+      scale: 1.02,
+    };
   };
 
   const handleMouseEnter = () => {
-    setIsHovered(true);
+    isInteractingRef.current = true;
   };
 
   const handleMouseLeave = () => {
-    setIsHovered(false);
-    setRotate({ x: 0, y: 0 });
+    isInteractingRef.current = false;
+    targetRotateRef.current = { x: 0, y: 0, scale: 1 };
   };
 
   return (
@@ -99,18 +194,13 @@ export default function AppleSpatialVault3D() {
       {/* Ambient background light bloom */}
       <div className={`dv-3d-ambient-bloom dv-3d-ambient-bloom--${currentDoc.tagColor}`} />
 
-      {/* Floating 3D Spatial Frame - Mouse tilt for desktop, pure silky swipe for mobile */}
+      {/* Floating 3D Spatial Frame - Mouse tilt on desktop, real-time phone motion gyroscope on mobile */}
       <div
         ref={cardRef}
         className="dv-3d-tilt-container"
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        style={{
-          transform: isHovered
-            ? `perspective(1100px) rotateX(${rotate.x}deg) rotateY(${rotate.y}deg) scale3d(1.02, 1.02, 1)`
-            : 'perspective(1100px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)',
-        }}
       >
         {/* Spatial Floating Badge: Top Left */}
         <div className="dv-3d-orbit-pill dv-3d-orbit-pill--top-left">
