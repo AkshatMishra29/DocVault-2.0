@@ -5,7 +5,7 @@ import {
   FileText, Search, Plus, Filter, ArrowUpDown, Calendar,
   LayoutGrid, List, ChevronRight, Download, Star, ShieldCheck,
   AlertCircle, X, Users, Share2, CheckSquare, CheckCircle2, ArrowRight,
-  Eye, ExternalLink
+  Eye, ExternalLink, Lock
 } from "lucide-react";
 import { sharingService } from "../../services/sharing.service";
 
@@ -24,6 +24,16 @@ import VerificationStatus from "../../components/common/VerificationStatus/Verif
 import "./DocumentsPage.css";
 
 const CATEGORIES = ["All", "Tax Invoice", "Purchase Receipt", "Insurance", "Identity", "Appliances", "Medical", "Other"];
+
+const PRIVACY_FILTERS = [
+  { id: "all", label: "All Access" },
+  { id: "private", label: "Private" },
+  { id: "shared", label: "Shared" },
+  { id: "storage_only", label: "Storage Only" },
+];
+
+const isDocumentShared = (doc) =>
+  Boolean(doc?.isShared || (Array.isArray(doc?.sharedWith) && doc.sharedWith.length > 0));
 
 // Pre-built Life Event Checklist Templates (Part C)
 const CHECKLIST_TEMPLATES = [
@@ -136,6 +146,7 @@ export default function DocumentsPage() {
 
   const selectedCategory = searchParams.get("category") || "All";
   const searchQuery = searchParams.get("q") || "";
+  const privacyFilter = searchParams.get("privacy") || "all";
 
   useEffect(() => {
     if (activeTab === "my_vault") {
@@ -204,6 +215,13 @@ export default function DocumentsPage() {
     setSearchParams(next);
   };
 
+  const handlePrivacySelect = (val) => {
+    const next = new URLSearchParams(searchParams);
+    if (!val || val === "all") next.delete("privacy");
+    else next.set("privacy", val);
+    setSearchParams(next);
+  };
+
   const handleSearchChange = (e) => {
     const val = e.target.value;
     const next = new URLSearchParams(searchParams);
@@ -216,8 +234,19 @@ export default function DocumentsPage() {
     setSearchParams({});
   };
 
+  const privateCount = documents.filter((d) => !isDocumentShared(d)).length;
+  const sharedCount = documents.filter((d) => isDocumentShared(d)).length;
+  const storageOnlyCount = documents.filter((d) => d.privacyMode === "STORAGE_ONLY").length;
+
+  const filteredByPrivacy = documents.filter((doc) => {
+    if (privacyFilter === "private") return !isDocumentShared(doc);
+    if (privacyFilter === "shared") return isDocumentShared(doc);
+    if (privacyFilter === "storage_only") return doc.privacyMode === "STORAGE_ONLY";
+    return true;
+  });
+
   // Client-side sort on retrieved dataset
-  const sortedDocuments = [...documents].sort((a, b) => {
+  const sortedDocuments = [...filteredByPrivacy].sort((a, b) => {
     if (sortBy === "title") {
       return (a.title || "").localeCompare(b.title || "");
     }
@@ -361,6 +390,35 @@ export default function DocumentsPage() {
           ))}
         </div>
 
+        {/* Privacy / Access Filter Pills */}
+        <div className="dv-category-bar" aria-label="Filter by privacy status">
+          {PRIVACY_FILTERS.map((pf) => {
+            const count =
+              pf.id === "all"
+                ? documents.length
+                : pf.id === "private"
+                ? privateCount
+                : pf.id === "shared"
+                ? sharedCount
+                : storageOnlyCount;
+            return (
+              <button
+                key={pf.id}
+                type="button"
+                className={`dv-cat-pill ${privacyFilter === pf.id ? "dv-cat-pill--active" : ""}`}
+                onClick={() => handlePrivacySelect(pf.id)}
+              >
+                {pf.id === "private" && <Lock size={12} style={{ marginRight: "5px" }} />}
+                {pf.id === "shared" && <Users size={12} style={{ marginRight: "5px" }} />}
+                {pf.label}
+                {documents.length > 0 && (
+                  <span className="dv-cat-count">{count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
         {error && (
           <div className="dv-docs-error" role="alert">
             <AlertCircle size={16} />
@@ -448,10 +506,10 @@ export default function DocumentsPage() {
             </div>
           )
         ) : sortedDocuments.length === 0 ? (
-          searchQuery || selectedCategory !== "All" ? (
+          searchQuery || selectedCategory !== "All" || privacyFilter !== "all" ? (
             <EmptyState
               title="No documents matched your filter"
-              description={`No documents found matching "${searchQuery || selectedCategory}". Try adjusting your keywords or clearing the filter.`}
+              description={`No documents found matching "${searchQuery || (privacyFilter !== "all" ? PRIVACY_FILTERS.find((p) => p.id === privacyFilter)?.label : selectedCategory)}". Try adjusting your keywords or clearing the filter.`}
               actionLabel="Clear Filters"
               onAction={handleClearFilters}
             />
@@ -480,6 +538,17 @@ export default function DocumentsPage() {
                     isStorageOnly={doc.privacyMode === "STORAGE_ONLY"} 
                   />
                   <div className="dv-doc-card__badges">
+                    {isDocumentShared(doc) ? (
+                      <Badge variant="info" size="sm">
+                        <Users size={11} style={{ marginRight: "4px" }} />
+                        Shared
+                      </Badge>
+                    ) : (
+                      <Badge variant="success" size="sm">
+                        <Lock size={11} style={{ marginRight: "4px" }} />
+                        Private
+                      </Badge>
+                    )}
                     <VerificationStatus 
                       status={
                         doc.privacyMode === "STORAGE_ONLY" 
@@ -574,16 +643,29 @@ export default function DocumentsPage() {
                       <span className="dv-table-mono">{doc.format || "PDF"}</span>
                     </td>
                     <td>
-                      <VerificationStatus 
-                        status={
-                          doc.privacyMode === "STORAGE_ONLY" 
-                            ? "storage_only" 
-                            : doc.processingStatus === "needs_review" 
-                            ? "needs_review" 
-                            : "accepted"
-                        } 
-                        size="sm" 
-                      />
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                        {isDocumentShared(doc) ? (
+                          <Badge variant="info" size="sm">
+                            <Users size={11} style={{ marginRight: "4px" }} />
+                            Shared
+                          </Badge>
+                        ) : (
+                          <Badge variant="success" size="sm">
+                            <Lock size={11} style={{ marginRight: "4px" }} />
+                            Private
+                          </Badge>
+                        )}
+                        <VerificationStatus 
+                          status={
+                            doc.privacyMode === "STORAGE_ONLY" 
+                              ? "storage_only" 
+                              : doc.processingStatus === "needs_review" 
+                              ? "needs_review" 
+                              : "accepted"
+                          } 
+                          size="sm" 
+                        />
+                      </div>
                     </td>
                     <td>
                       {doc.expiryDate ? (

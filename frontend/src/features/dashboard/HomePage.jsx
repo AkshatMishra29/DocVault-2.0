@@ -262,10 +262,10 @@ export default function HomePage() {
             padding="md" 
             hover
             className="dv-stat-card dv-stat-card--clickable"
-            onClick={() => navigate('/documents')}
+            onClick={() => navigate('/documents?privacy=private')}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate('/documents')}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate('/documents?privacy=private')}
             title="Click to view private documents"
           >
             <div className="dv-stat-card__icon-box dv-stat-card__icon-box--success">
