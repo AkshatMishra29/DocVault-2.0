@@ -18,32 +18,44 @@ export default function MessageList({
   mascotState = "idle",
 }) {
   const containerRef = useRef(null);
+  const bottomRef = useRef(null);
+  const isNearBottomRef = useRef(true);
+  const prevCountRef = useRef(0);
   const [showJump, setShowJump] = useState(false);
 
   const handleScroll = () => {
     if (!containerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
     const distFromBottom = scrollHeight - (scrollTop + clientHeight);
+    isNearBottomRef.current = distFromBottom < 160;
     setShowJump(distFromBottom > 80);
   };
 
-  const scrollToBottom = () => {
-    if (containerRef.current) {
+  const scrollToBottom = (behavior = "smooth") => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior, block: "end" });
+    } else if (containerRef.current) {
       containerRef.current.scrollTo({
         top: containerRef.current.scrollHeight,
-        behavior: "smooth",
+        behavior,
       });
     }
   };
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-    // Auto-scroll only if already within 80px of bottom
-    if (scrollHeight - (scrollTop + clientHeight) < 120) {
-      containerRef.current.scrollTop = scrollHeight;
+    const lastMsg = messages[messages.length - 1];
+    const isNewUserSubmission =
+      messages.length > prevCountRef.current && lastMsg?.role === "user";
+    const isInitialLoad = prevCountRef.current === 0 && messages.length > 0;
+    prevCountRef.current = messages.length;
+
+    if (isNewUserSubmission || isInitialLoad || isNearBottomRef.current) {
+      requestAnimationFrame(() => {
+        scrollToBottom(isNewUserSubmission || isInitialLoad ? "smooth" : "auto");
+        setShowJump(false);
+      });
     }
-  }, [messages]);
+  }, [messages, isStreaming]);
 
   return (
     <div
@@ -87,13 +99,14 @@ export default function MessageList({
             </div>
           </div>
         )}
+        <div ref={bottomRef} style={{ height: 1 }} />
       </div>
 
       {showJump && (
         <button
           type="button"
           className="dv-cp-jump-btn"
-          onClick={scrollToBottom}
+          onClick={() => scrollToBottom("smooth")}
           aria-label="Jump to latest message"
         >
           <ArrowDown size={14} /> Jump to latest
