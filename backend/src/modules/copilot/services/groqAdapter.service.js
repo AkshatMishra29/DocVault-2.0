@@ -10,12 +10,11 @@ function getGroqClient() {
   return groqClient;
 }
 
-// Production-verified Groq model IDs (October 2025)
-// https://console.groq.com/docs/models
+// Production models available and verified on user Groq API key
 export const COPILOT_MODELS = {
-  PRIMARY:  'llama-3.3-70b-versatile',   // Best tool-use + reasoning, 128k context
-  FALLBACK: 'llama-3.1-8b-instant',       // Fast, cheap, great for simpler turns
-  FAST:     'llama3-8b-8192',             // Ultra-fast for intent/classification
+  PRIMARY:  'qwen/qwen3.8-27b',
+  FALLBACK: 'openai/gpt-oss-120b',
+  FAST:     'openai/gpt-oss-20b',
 };
 
 // Cooldown tracker when a model hits 429 rate limits
