@@ -144,6 +144,18 @@ const DocumentSchema = new mongoose.Schema({
     },
     index: true,
   },
+  // Zero-Knowledge Client-Side End-to-End Encryption (E2EE) envelope
+  e2ee: {
+    enabled: { type: Boolean, default: false, index: true },
+    alg: { type: String, default: 'AES-GCM-256' },
+    kdf: { type: String, default: 'PBKDF2-SHA256-250K' },
+    salt: { type: String, default: null },
+    wrappedDek: { type: String, default: null },
+    dekIv: { type: String, default: null },
+    fileIv: { type: String, default: null },
+    encryptedMetadata: { type: String, default: null },
+    metaIv: { type: String, default: null },
+  },
   fileHash: { type: String, index: true },
   processingStatus: {
     type: String,

@@ -107,4 +107,41 @@ export async function deleteFromFirebase(destinationPath) {
   }
 }
 
+/**
+ * Generate a short-lived signed PUT URL for direct browser-to-Firebase encrypted upload.
+ */
+export async function getFirebaseSignedUploadUrl(destinationPath, contentType = 'application/octet-stream', expiresInMs = 120000) {
+  if (!bucket) {
+    throw new Error('Firebase Storage bucket is not initialized.');
+  }
+  const file = bucket.file(destinationPath);
+  const [uploadUrl] = await file.getSignedUrl({
+    version: 'v4',
+    action: 'write',
+    expires: Date.now() + expiresInMs,
+    contentType,
+  });
+  return uploadUrl;
+}
+
+/**
+ * Generate a short-lived signed GET URL for direct browser-to-Firebase encrypted download.
+ */
+export async function getFirebaseSignedReadUrl(destinationPath, expiresInMs = 300000) {
+  if (!bucket) {
+    throw new Error('Firebase Storage bucket is not initialized.');
+  }
+  const file = bucket.file(destinationPath);
+  const [downloadUrl] = await file.getSignedUrl({
+    version: 'v4',
+    action: 'read',
+    expires: Date.now() + expiresInMs,
+  });
+  return downloadUrl;
+}
+
+export function isFirebaseStorageConfigured() {
+  return Boolean(bucket);
+}
+
 export { bucket };

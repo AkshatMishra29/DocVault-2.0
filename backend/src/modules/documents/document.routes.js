@@ -19,8 +19,136 @@ import { checkUploadRateLimit } from '../extraction/uploadRateLimiter.js';
 import { DocumentAccessControlService } from '../sharing/accessControl.service.js';
 import { ShareAccessLog, SHARE_ACTION } from '../sharing/models/shareAccessLog.model.js';
 import { config } from '../../config/index.js';
+import { isR2Configured, getPresignedR2UploadUrl, getPresignedR2DownloadUrl } from '../../services/storage/cloudflareR2Service.js';
+import { isFirebaseStorageConfigured, getFirebaseSignedUploadUrl, getFirebaseSignedReadUrl } from '../../services/storage/firebaseService.js';
 
 const router = Router();
+
+/* ==========================================================================
+   ZERO-KNOWLEDGE E2EE ROUTES (Direct-to-Cloud Encrypted Storage)
+   Server NEVER sees plaintext file bytes, raw keys, or sensitive filenames.
+   ========================================================================== */
+
+// POST /api/documents/e2ee/presign-upload
+router.post('/e2ee/presign-upload', requireAuth, async (req, res) => {
+  try {
+    const opaqueId = crypto.randomUUID();
+    const storagePath = `e2ee/${req.user.userId}/${opaqueId}.enc`;
+
+    if (isR2Configured()) {
+      const uploadUrl = await getPresignedR2UploadUrl(storagePath, 'application/octet-stream', 120);
+      return res.json({ success: true, provider: 'r2', storagePath, uploadUrl });
+    }
+
+    if (isFirebaseStorageConfigured()) {
+      const uploadUrl = await getFirebaseSignedUploadUrl(storagePath, 'application/octet-stream', 120000);
+      return res.json({ success: true, provider: 'firebase', storagePath, uploadUrl });
+    }
+
+    // Local/test fallback when cloud buckets are not configured
+    return res.json({ success: true, provider: 'mongodb_ciphertext', storagePath: `e2ee_db/${opaqueId}.enc`, uploadUrl: null });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/documents/e2ee/commit
+router.post('/e2ee/commit', requireAuth, async (req, res) => {
+  try {
+    const {
+      storagePath,
+      sizeBytes = 0,
+      ciphertextSha256,
+      e2ee,
+      ciphertextBase64 = null, // only used when provider === 'mongodb_ciphertext'
+      category = 'Other',
+    } = req.body || {};
+
+    if (!e2ee?.enabled || !e2ee?.wrappedDek || !e2ee?.dekIv || !e2ee?.fileIv) {
+      return res.status(400).json({ success: false, error: 'Invalid E2EE cryptographic envelope.' });
+    }
+
+    const doc = await Document.create({
+      userId: req.user.userId,
+      title: 'Encrypted Vault Document',
+      originalName: 'encrypted.bin',
+      category,
+      format: 'ENC',
+      mimetype: 'application/octet-stream',
+      sizeBytes: Number(sizeBytes) || 0,
+      fileSizeFormatted: sizeBytes ? `${(Number(sizeBytes) / 1024).toFixed(1)} KB` : '0 KB',
+      storagePath: storagePath || `e2ee/${req.user.userId}/${crypto.randomUUID()}.enc`,
+      fileData: ciphertextBase64 || null,
+      sha256: ciphertextSha256 || null,
+      aiPolicy: AI_POLICIES.STORAGE_ONLY,
+      privacyMode: 'STORAGE_ONLY',
+      sensitiveFlag: true,
+      sensitiveReason: 'Zero-Knowledge Client-Side Encrypted',
+      status: 'storage_only',
+      processingStatus: 'storage_only',
+      extractedText: '',
+      summary: 'End-to-end encrypted in your browser. Zero server or cloud AI access.',
+      e2ee: {
+        enabled: true,
+        alg: e2ee.alg || 'AES-GCM-256',
+        kdf: e2ee.kdf || 'PBKDF2-SHA256-250K',
+        salt: e2ee.salt || null,
+        wrappedDek: e2ee.wrappedDek,
+        dekIv: e2ee.dekIv,
+        fileIv: e2ee.fileIv,
+        encryptedMetadata: e2ee.encryptedMetadata || null,
+        metaIv: e2ee.metaIv || null,
+      },
+    });
+
+    await AuditLog.create({
+      userId: req.user.userId,
+      action: 'UPLOAD_E2EE',
+      documentTitle: 'Encrypted Vault Document',
+      device: req.headers['user-agent'] || 'Web Client',
+    }).catch(() => {});
+
+    res.status(201).json({ success: true, data: doc });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/documents/:id/e2ee/download-url
+router.get('/:id/e2ee/download-url', requireAuth, async (req, res) => {
+  try {
+    const access = await DocumentAccessControlService.canViewDocument(req.user.userId, req.params.id);
+    if (!access.allowed) {
+      return res.status(403).json({ success: false, error: access.reason || 'Access denied.' });
+    }
+
+    const doc = await Document.findById(req.params.id);
+    if (!doc || !doc.e2ee?.enabled) {
+      return res.status(404).json({ success: false, error: 'E2EE document not found.' });
+    }
+
+    let downloadUrl = null;
+    let provider = 'mongodb_ciphertext';
+
+    if (doc.storagePath?.startsWith('e2ee/') && isR2Configured()) {
+      downloadUrl = await getPresignedR2DownloadUrl(doc.storagePath, 300);
+      provider = 'r2';
+    } else if (doc.storagePath?.startsWith('e2ee/') && isFirebaseStorageConfigured()) {
+      downloadUrl = await getFirebaseSignedReadUrl(doc.storagePath, 300000);
+      provider = 'firebase';
+    }
+
+    res.json({
+      success: true,
+      provider,
+      downloadUrl,
+      ciphertextBase64: provider === 'mongodb_ciphertext' ? doc.fileData : null,
+      e2ee: doc.e2ee,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // GET /api/documents - List documents with optional category filter & full-text search
 router.get('/', requireAuth, async (req, res) => {

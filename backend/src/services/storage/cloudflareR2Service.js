@@ -83,3 +83,33 @@ export function isR2Configured() {
   return Boolean(s3Client && config.cloudflareR2.bucketName);
 }
 
+/**
+ * Generate a short-lived presigned PUT URL for direct browser-to-R2 encrypted upload.
+ * The Node.js server never sees or buffers the file bytes.
+ */
+export async function getPresignedR2UploadUrl(destinationPath, contentType = 'application/octet-stream', expiresIn = 120) {
+  if (!s3Client) {
+    throw new Error('Cloudflare R2 client is not configured.');
+  }
+  const command = new PutObjectCommand({
+    Bucket: config.cloudflareR2.bucketName,
+    Key: destinationPath,
+    ContentType: contentType,
+  });
+  return getSignedUrl(s3Client, command, { expiresIn });
+}
+
+/**
+ * Generate a short-lived presigned GET URL for direct browser-to-R2 encrypted download.
+ */
+export async function getPresignedR2DownloadUrl(destinationPath, expiresIn = 300) {
+  if (!s3Client) {
+    throw new Error('Cloudflare R2 client is not configured.');
+  }
+  const command = new GetObjectCommand({
+    Bucket: config.cloudflareR2.bucketName,
+    Key: destinationPath,
+  });
+  return getSignedUrl(s3Client, command, { expiresIn });
+}
+

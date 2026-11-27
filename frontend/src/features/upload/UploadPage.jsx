@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { apiRequest } from "../../services/api";
+import {
+  generateSalt,
+  deriveMasterKey,
+  encryptDocumentForVault,
+  bytesToBase64,
+} from "../../services/crypto/e2eeService";
 import { 
   UploadCloud, FileText, CheckCircle2, AlertCircle, ArrowRight, Camera, Zap,
   ShieldCheck, Sparkles, Lock, Pencil, ShieldAlert, Eye, ExternalLink
@@ -21,6 +27,8 @@ export default function UploadPage() {
   const [customTitle, setCustomTitle] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const [privacyMode, setPrivacyMode] = useState("PROCESSABLE"); // 'PROCESSABLE' | 'STORAGE_ONLY'
+  const [e2eeEnabled, setE2eeEnabled] = useState(false);
+  const [e2eePin, setE2eePin] = useState("");
   const [uploading, setUploading] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
   const [isCameraScan, setIsCameraScan] = useState(false);
@@ -229,6 +237,73 @@ export default function UploadPage() {
   const handleUpload = async (forceDuplicate = false) => {
     if (!file) return;
 
+    const finalTitle = customTitle.trim() || file.name.replace(/\.[^/.]+$/, "");
+
+    // Zero-Knowledge Client-Side E2EE path (no plaintext bytes sent to server)
+    if (privacyMode === "STORAGE_ONLY" && e2eeEnabled) {
+      if (!e2eePin || e2eePin.trim().length < 4) {
+        setError("Please enter a 4+ character Vault PIN/Passphrase to encrypt your file in the browser.");
+        return;
+      }
+
+      setUploading(true);
+      setError("");
+      setDuplicateDoc(null);
+      setProgressStage("Encrypting file & metadata in your browser (AES-GCM-256)...");
+
+      try {
+        const salt = generateSalt();
+        const masterKey = await deriveMasterKey(e2eePin.trim(), salt);
+        const plainBuffer = await file.arrayBuffer();
+        const { ciphertext, ciphertextSha256, e2eeEnvelope } = await encryptDocumentForVault(
+          plainBuffer,
+          { title: finalTitle, originalName: file.name, mimetype: file.type || "application/octet-stream" },
+          masterKey,
+          salt
+        );
+
+        setProgressStage("Requesting direct-to-cloud encrypted upload slot...");
+        const presign = await apiRequest("/api/documents/e2ee/presign-upload", { method: "POST" });
+
+        let ciphertextBase64 = null;
+        if (presign.uploadUrl) {
+          setProgressStage("Uploading encrypted bytes directly to cloud storage...");
+          const putRes = await fetch(presign.uploadUrl, {
+            method: "PUT",
+            headers: { "Content-Type": "application/octet-stream" },
+            body: ciphertext,
+          });
+          if (!putRes.ok) {
+            throw new Error(`Direct encrypted upload failed (${putRes.status})`);
+          }
+        } else {
+          ciphertextBase64 = bytesToBase64(ciphertext);
+        }
+
+        setProgressStage("Saving zero-knowledge envelope...");
+        const commitRes = await apiRequest("/api/documents/e2ee/commit", {
+          method: "POST",
+          body: JSON.stringify({
+            storagePath: presign.storagePath,
+            sizeBytes: ciphertext.length,
+            ciphertextSha256,
+            e2ee: e2eeEnvelope,
+            ciphertextBase64,
+          }),
+        });
+
+        setUploadedDoc(commitRes.data);
+        setE2eePin("");
+        return;
+      } catch (err) {
+        setError(err.message || "Zero-Knowledge encryption failed.");
+        return;
+      } finally {
+        setUploading(false);
+        setProgressStage("");
+      }
+    }
+
     setUploading(true);
     setError("");
     setDuplicateDoc(null);
@@ -244,7 +319,6 @@ export default function UploadPage() {
       formData.append("allowDuplicate", "true");
     }
     // Append custom title so backend saves it under the user's chosen name
-    const finalTitle = customTitle.trim() || file.name.replace(/\.[^/.]+$/, "");
     formData.append("title", finalTitle);
 
     try {
@@ -509,6 +583,38 @@ export default function UploadPage() {
                         <strong>Private Storage Only</strong>
                       </div>
                       <p>Encrypted personal storage for sensitive identity documents (Aadhaar, PAN). Excluded from automated indexing.</p>
+                      {privacyMode === "STORAGE_ONLY" && (
+                        <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid rgba(148,163,184,0.2)" }} onClick={(e) => e.stopPropagation()}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>
+                            <input
+                              type="checkbox"
+                              checked={e2eeEnabled}
+                              onChange={(e) => setE2eeEnabled(e.target.checked)}
+                              disabled={uploading}
+                            />
+                            <span>Zero-Knowledge Client Encryption (AES-GCM-256 in browser)</span>
+                          </label>
+                          {e2eeEnabled && (
+                            <input
+                              type="password"
+                              value={e2eePin}
+                              onChange={(e) => setE2eePin(e.target.value)}
+                              placeholder="Enter Vault PIN / Passphrase (never sent to server)"
+                              disabled={uploading}
+                              style={{
+                                marginTop: "8px",
+                                width: "100%",
+                                padding: "8px 10px",
+                                borderRadius: "8px",
+                                border: "1px solid var(--border-color, #cbd5e1)",
+                                fontSize: "13px",
+                                background: "var(--bg-primary, #fff)",
+                                color: "var(--text-primary, #0f172a)",
+                              }}
+                            />
+                          )}
+                        </div>
+                      )}
                     </div>
                   </label>
                 </div>
