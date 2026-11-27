@@ -8,6 +8,14 @@ import {
   Eye, Copy, Fingerprint, Layers
 } from "lucide-react";
 import ShareModal from "../sharing/ShareModal";
+import {
+  deriveMasterKey,
+  decryptDocumentFromVault,
+  base64ToBytes,
+  getInMemoryMasterKey,
+  setInMemoryMasterKey,
+  clearInMemoryMasterKey,
+} from "../../services/crypto/e2eeService";
 
 import AppHeader from "../../components/layout/AppHeader/AppHeader";
 import Card from "../../components/common/Card/Card";
@@ -195,6 +203,81 @@ export default function DocumentDetailPage() {
   const [fieldValueInput, setFieldValueInput] = useState("");
   const [savingCorrection, setSavingCorrection] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
+
+  // Zero-Knowledge E2EE Decryption State (in-memory only)
+  const [e2eePinInput, setE2eePinInput] = useState("");
+  const [e2eeUnlocking, setE2eeUnlocking] = useState(false);
+  const [e2eeUnlockError, setE2eeUnlockError] = useState("");
+  const [decryptedE2ee, setDecryptedE2ee] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      if (decryptedE2ee?.blobUrl) {
+        URL.revokeObjectURL(decryptedE2ee.blobUrl);
+      }
+    };
+  }, [decryptedE2ee]);
+
+  const handleUnlockE2ee = async (e) => {
+    if (e) e.preventDefault();
+    if (!doc?.e2ee?.enabled) return;
+
+    setE2eeUnlocking(true);
+    setE2eeUnlockError("");
+    try {
+      let masterKey = getInMemoryMasterKey();
+      if (!masterKey || e2eePinInput.trim().length >= 4) {
+        if (!e2eePinInput || e2eePinInput.trim().length < 4) {
+          throw new Error("Enter your Vault PIN / Passphrase (min 4 chars) to decrypt in browser.");
+        }
+        masterKey = await deriveMasterKey(e2eePinInput.trim(), doc.e2ee.salt);
+        setInMemoryMasterKey(masterKey);
+      }
+
+      const dlMeta = await apiRequest(`/api/documents/${id}/e2ee/download-url`);
+      let cipherBytes;
+      if (dlMeta.downloadUrl) {
+        const res = await fetch(dlMeta.downloadUrl);
+        if (!res.ok) throw new Error(`Failed to download encrypted payload (${res.status})`);
+        cipherBytes = new Uint8Array(await res.arrayBuffer());
+      } else if (dlMeta.ciphertextBase64) {
+        cipherBytes = base64ToBytes(dlMeta.ciphertextBase64);
+      } else {
+        throw new Error("Encrypted payload unavailable.");
+      }
+
+      const { fileBytes, metadata } = await decryptDocumentFromVault(cipherBytes, dlMeta.e2ee || doc.e2ee, masterKey);
+      const mime = metadata?.mimetype || "application/octet-stream";
+      const blob = new Blob([fileBytes], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+
+      setDecryptedE2ee({
+        title: metadata?.title || "Decrypted Document",
+        originalName: metadata?.originalName || "document",
+        mimetype: mime,
+        blobUrl,
+      });
+      setE2eePinInput("");
+    } catch (err) {
+      clearInMemoryMasterKey();
+      setE2eeUnlockError(
+        err?.name === "OperationError"
+          ? "Incorrect Vault PIN / Passphrase or tampered ciphertext."
+          : err?.message || "Decryption failed."
+      );
+    } finally {
+      setE2eeUnlocking(false);
+    }
+  };
+
+  const handleLockE2ee = () => {
+    clearInMemoryMasterKey();
+    if (decryptedE2ee?.blobUrl) {
+      URL.revokeObjectURL(decryptedE2ee.blobUrl);
+    }
+    setDecryptedE2ee(null);
+    setE2eePinInput("");
+  };
 
   const handleCopy = (val, key) => {
     if (!val) return;
@@ -512,6 +595,65 @@ export default function DocumentDetailPage() {
                     />
                   </div>
                 </div>
+
+                {/* Zero-Knowledge E2EE Client-Side Decryption Card */}
+                {doc.e2ee?.enabled && (
+                  <div className="dv-detail-summary-block" style={{ borderLeft: "3px solid #E9730C" }}>
+                    <div className="dv-detail-summary-header" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Lock size={14} color="#E9730C" />
+                        <span className="dv-detail-block-label">Zero-Knowledge Encrypted Document ({doc.e2ee.alg || "AES-GCM-256"})</span>
+                      </div>
+                      {decryptedE2ee && (
+                        <Button variant="outline" size="sm" onClick={handleLockE2ee}>
+                          <Lock size={13} /> Lock &amp; Wipe Key
+                        </Button>
+                      )}
+                    </div>
+
+                    {!decryptedE2ee ? (
+                      <form onSubmit={handleUnlockE2ee} style={{ marginTop: "10px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                        <input
+                          type="password"
+                          value={e2eePinInput}
+                          onChange={(e) => setE2eePinInput(e.target.value)}
+                          placeholder="Enter Vault PIN / Passphrase to decrypt locally"
+                          disabled={e2eeUnlocking}
+                          style={{
+                            flex: "1 1 220px",
+                            padding: "8px 12px",
+                            borderRadius: "8px",
+                            border: "1px solid var(--border-color, #cbd5e1)",
+                            fontSize: "13px",
+                          }}
+                        />
+                        <Button type="submit" size="sm" disabled={e2eeUnlocking}>
+                          {e2eeUnlocking ? "Decrypting..." : "Decrypt in Browser"}
+                        </Button>
+                        {e2eeUnlockError && (
+                          <div style={{ width: "100%", color: "#dc2626", fontSize: "12.5px", marginTop: "4px" }}>
+                            {e2eeUnlockError}
+                          </div>
+                        )}
+                      </form>
+                    ) : (
+                      <div style={{ marginTop: "10px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: "14px" }}>{decryptedE2ee.title}</div>
+                          <div style={{ fontSize: "12px", opacity: 0.75 }}>{decryptedE2ee.originalName}</div>
+                        </div>
+                        <a
+                          href={decryptedE2ee.blobUrl}
+                          download={decryptedE2ee.originalName}
+                          className="dv-btn dv-btn--primary dv-btn--sm"
+                          style={{ display: "inline-flex", alignItems: "center", gap: "6px", textDecoration: "none" }}
+                        >
+                          <Download size={14} /> Download Decrypted File
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* AI Executive Summary */}
                 {doc.summary && (

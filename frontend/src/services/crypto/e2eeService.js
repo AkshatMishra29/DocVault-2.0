@@ -201,3 +201,81 @@ export async function decryptDocumentFromVault(ciphertextBytes, e2eeEnvelope, ma
     metadata,
   };
 }
+
+/* ==========================================================================
+   IN-MEMORY MASTER KEY VAULT (Never persisted to localStorage/sessionStorage)
+   ========================================================================== */
+let _inMemoryMasterKey = null;
+let _keyExpiryTimer = null;
+const KEY_IDLE_TTL_MS = 15 * 60 * 1000; // 15 min auto-wipe
+
+export function setInMemoryMasterKey(masterKey) {
+  _inMemoryMasterKey = masterKey || null;
+  if (_keyExpiryTimer) clearTimeout(_keyExpiryTimer);
+  if (_inMemoryMasterKey) {
+    _keyExpiryTimer = setTimeout(() => {
+      _inMemoryMasterKey = null;
+    }, KEY_IDLE_TTL_MS);
+  }
+}
+
+export function getInMemoryMasterKey() {
+  return _inMemoryMasterKey;
+}
+
+export function clearInMemoryMasterKey() {
+  _inMemoryMasterKey = null;
+  if (_keyExpiryTimer) {
+    clearTimeout(_keyExpiryTimer);
+    _keyExpiryTimer = null;
+  }
+}
+
+/* ==========================================================================
+   ZERO-KNOWLEDGE #FRAGMENT LINK SHARING
+   Unwraps DEK locally so share links can pass `#key=...` (never sent to server)
+   ========================================================================== */
+export async function exportRawDekForFragment(e2eeEnvelope, masterKey) {
+  const { subtle } = getSubtle();
+  const dek = await subtle.unwrapKey(
+    'raw',
+    base64ToBytes(e2eeEnvelope.wrappedDek),
+    masterKey,
+    { name: 'AES-GCM', iv: base64ToBytes(e2eeEnvelope.dekIv) },
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['decrypt']
+  );
+  const rawDek = await subtle.exportKey('raw', dek);
+  return bytesToBase64(rawDek);
+}
+
+export async function decryptWithFragmentKey(ciphertextBytes, e2eeEnvelope, fragmentKeyBase64) {
+  const { subtle } = getSubtle();
+  const cipherU8 = ciphertextBytes instanceof Uint8Array ? ciphertextBytes : new Uint8Array(ciphertextBytes);
+  const dek = await subtle.importKey(
+    'raw',
+    base64ToBytes(fragmentKeyBase64),
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['decrypt']
+  );
+
+  const plainFileBuf = await subtle.decrypt(
+    { name: 'AES-GCM', iv: base64ToBytes(e2eeEnvelope.fileIv) },
+    dek,
+    cipherU8
+  );
+
+  let metadata = {};
+  if (e2eeEnvelope.encryptedMetadata && e2eeEnvelope.metaIv) {
+    const plainMetaBuf = await subtle.decrypt(
+      { name: 'AES-GCM', iv: base64ToBytes(e2eeEnvelope.metaIv) },
+      dek,
+      base64ToBytes(e2eeEnvelope.encryptedMetadata)
+    );
+    metadata = JSON.parse(textDecoder.decode(plainMetaBuf));
+  }
+
+  return { fileBytes: new Uint8Array(plainFileBuf), metadata };
+}

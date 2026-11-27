@@ -119,3 +119,58 @@ test('Zero-Knowledge E2EE: encrypts in-client, hides all PII from server, blocks
     (err) => err instanceof PrivacyPolicyViolationError && err.statusCode === 403
   );
 });
+
+import {
+  setInMemoryMasterKey,
+  getInMemoryMasterKey,
+  clearInMemoryMasterKey,
+  exportRawDekForFragment,
+  decryptWithFragmentKey,
+} from '../../frontend/src/services/crypto/e2eeService.js';
+import { detectSensitiveFileLocally } from '../../frontend/src/services/crypto/clientSensitiveCheck.js';
+
+test('In-memory key vault, #fragment link sharing, and local sensitive detector', async () => {
+  const pin = '739104';
+  const salt = generateSalt();
+  const masterKey = await deriveMasterKey(pin, salt);
+
+  // 1. In-memory key vault set / get / wipe
+  setInMemoryMasterKey(masterKey);
+  assert.equal(getInMemoryMasterKey(), masterKey);
+  clearInMemoryMasterKey();
+  assert.equal(getInMemoryMasterKey(), null);
+
+  // 2. Zero-Knowledge #fragment link sharing
+  const plainBytes = new TextEncoder().encode('Confidential Policy #9981');
+  const { ciphertext, e2eeEnvelope } = await encryptDocumentForVault(
+    plainBytes,
+    { title: 'Policy 9981.pdf', originalName: 'Policy_9981.pdf' },
+    masterKey,
+    salt
+  );
+  const fragmentKey = await exportRawDekForFragment(e2eeEnvelope, masterKey);
+  const { fileBytes: sharedBytes, metadata: sharedMeta } = await decryptWithFragmentKey(
+    ciphertext,
+    e2eeEnvelope,
+    fragmentKey
+  );
+  assert.equal(new TextDecoder().decode(sharedBytes), 'Confidential Policy #9981');
+  assert.equal(sharedMeta.title, 'Policy 9981.pdf');
+
+  // 3. Local pre-upload sensitive detector (Aadhaar filename & encrypted PDF)
+  const fakeAadhaarFile = { name: 'my_aadhaar_front.jpg', type: 'image/jpeg' };
+  const aadhaarRes = await detectSensitiveFileLocally(fakeAadhaarFile);
+  assert.equal(aadhaarRes.isSensitive, true);
+
+  const encPdfBytes = new TextEncoder().encode('%PDF-1.7\n1 0 obj << /Encrypt 2 0 R >> endobj');
+  const fakeEncryptedPdf = {
+    name: 'statement.pdf',
+    type: 'application/pdf',
+    slice: (start, end) => ({
+      arrayBuffer: async () => encPdfBytes.slice(start, end).buffer,
+    }),
+  };
+  const pdfRes = await detectSensitiveFileLocally(fakeEncryptedPdf);
+  assert.equal(pdfRes.isSensitive, true);
+  assert.equal(pdfRes.isEncryptedPdf, true);
+});

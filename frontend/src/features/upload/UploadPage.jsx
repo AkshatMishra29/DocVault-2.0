@@ -6,7 +6,9 @@ import {
   deriveMasterKey,
   encryptDocumentForVault,
   bytesToBase64,
+  setInMemoryMasterKey,
 } from "../../services/crypto/e2eeService";
+import { detectSensitiveFileLocally } from "../../services/crypto/clientSensitiveCheck";
 import { 
   UploadCloud, FileText, CheckCircle2, AlertCircle, ArrowRight, Camera, Zap,
   ShieldCheck, Sparkles, Lock, Pencil, ShieldAlert, Eye, ExternalLink
@@ -223,6 +225,15 @@ export default function UploadPage() {
     const baseName = selectedFile.name.replace(/\.[^/.]+$/, "").replace(/[_-]+/g, " ").trim();
     setCustomTitle(baseName);
 
+    // Local in-browser sensitive document / encrypted PDF detector (zero network calls)
+    detectSensitiveFileLocally(selectedFile).then(({ isSensitive, reason }) => {
+      if (isSensitive) {
+        setPrivacyMode("STORAGE_ONLY");
+        setE2eeEnabled(true);
+        if (reason) setSuggestion(reason);
+      }
+    });
+
     // Instant client-side blur guardrail check
     if (selectedFile.type.startsWith("image/")) {
       checkImageClarity(selectedFile).then(({ isBlurry }) => {
@@ -254,6 +265,7 @@ export default function UploadPage() {
       try {
         const salt = generateSalt();
         const masterKey = await deriveMasterKey(e2eePin.trim(), salt);
+        setInMemoryMasterKey(masterKey);
         const plainBuffer = await file.arrayBuffer();
         const { ciphertext, ciphertextSha256, e2eeEnvelope } = await encryptDocumentForVault(
           plainBuffer,
