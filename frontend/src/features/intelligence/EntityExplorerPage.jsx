@@ -122,8 +122,8 @@ export default function EntityExplorerPage() {
   return (
     <div className="entity-explorer-page">
       <AppHeader
-        title="Knowledge Graph & Entities"
-        subtitle="Connected relationships across your family, assets, documents, and policies"
+        title="Connected information"
+        subtitle="Relationships across your family, belongings, documents, and policies"
         action={
           <Button size="sm" onClick={() => setShowCreateModal(true)}>
             <Plus size={16} />

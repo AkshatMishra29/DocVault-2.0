@@ -76,8 +76,8 @@ export default function AlertsCenterPage() {
   return (
     <div className="alerts-center-page">
       <AppHeader
-        title="Proactive Alerts Centre"
-        subtitle="Automated alerts for expirations, missing paperwork, and conflicting information"
+        title="Alerts"
+        subtitle="Reminders for upcoming expirations, missing details, and differences to review."
       />
 
       {/* Status Filter Tabs */}

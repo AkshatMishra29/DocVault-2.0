@@ -358,8 +358,8 @@ export default function LoginPage() {
       )}
 
       <AuthHeader
-        title="Welcome back."
-        subtitle="Sign in to access your personal document vault."
+        title="Welcome back"
+        subtitle="Sign in to access your documents."
       />
 
       {error && <AuthAlert type="error" message={error} />}

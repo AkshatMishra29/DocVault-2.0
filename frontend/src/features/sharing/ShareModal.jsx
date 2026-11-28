@@ -353,7 +353,7 @@ export default function ShareModal({ documentId, documentTitle, isOpen, onClose,
             <div className="share-modal__success-icon-wrap">
               <CheckCircle2 size={44} className="share-modal__success-icon" />
             </div>
-            <h3 className="share-modal__success-title">Share Authorized & Live!</h3>
+            <h3 className="share-modal__success-title">Document shared successfully</h3>
             <p className="share-modal__success-desc">{successMessage}</p>
 
             <div className="share-modal__success-card">

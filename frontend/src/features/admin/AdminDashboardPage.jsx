@@ -60,8 +60,8 @@ export default function AdminDashboardPage() {
   return (
     <div className="dv-admin-page">
       <AppHeader
-        title="Enclave Administration Console"
-        subtitle="Platform telemetry, infrastructure health monitoring, and custodian directories."
+        title="Admin Dashboard"
+        subtitle="Platform overview, system health, and user management."
       />
 
       <div className="dv-admin-content">

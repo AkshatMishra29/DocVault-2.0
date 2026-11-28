@@ -167,10 +167,10 @@ export default function HomePage() {
         <section className="dv-welcome-section" aria-label="Quick Actions">
           <div className="dv-welcome-content">
             <h2 className="dv-welcome-title">
-              Manage your personal & family vault
+              Your documents, organized.
             </h2>
             <p className="dv-welcome-desc">
-              Search policies, track warranties, monitor renewal deadlines, and keep records private.
+              Everything important, right where you need it.
             </p>
           </div>
           <div className="dv-welcome-actions">
@@ -336,9 +336,9 @@ export default function HomePage() {
             <div className="dv-section-header">
               <div className="dv-section-header__title-wrap">
                 <span className="dv-badge dv-badge--warning">Action Needed</span>
-                <h3 className="dv-section-header__title">Fields Requiring Confirmation</h3>
+                <h3 className="dv-section-header__title">Needs your review</h3>
                 <p className="dv-section-header__subtitle">
-                  AI extracted these values with lower confidence. Confirm or correct them in one tap.
+                  Confirm or edit these extracted details in one tap.
                 </p>
               </div>
               <Link to="/documents" className="dv-section-header__action">
@@ -409,8 +409,8 @@ export default function HomePage() {
           <section className="dv-dash-pane" aria-label="Recent Documents">
             <div className="dv-section-header">
               <div>
-                <h3 className="dv-section-header__title">Recent Documents</h3>
-                <p className="dv-section-header__subtitle">Recently added to your vault</p>
+                <h3 className="dv-section-header__title">Recently added</h3>
+                <p className="dv-section-header__subtitle">Your latest saved documents</p>
               </div>
               <Link to="/documents" className="dv-section-header__action">
                 View All <ChevronRight size={16} />
@@ -425,9 +425,9 @@ export default function HomePage() {
               </div>
             ) : recentDocs.length === 0 ? (
               <EmptyState
-                title="Your vault is empty"
-                description="Upload your personal documents, insurance policies, or IDs to get started."
-                actionLabel="Upload First Document"
+                title="Your document space is ready."
+                description="Add your first document to start organizing bills, policies, and IDs."
+                actionLabel="Add your first document"
                 onAction={() => navigate("/upload")}
               />
             ) : (
@@ -482,8 +482,8 @@ export default function HomePage() {
           <section className="dv-dash-pane" aria-label="Upcoming Expirations">
             <div className="dv-section-header">
               <div>
-                <h3 className="dv-section-header__title">Upcoming Expirations</h3>
-                <p className="dv-section-header__subtitle">Monitored policy and warranty dates</p>
+                <h3 className="dv-section-header__title">Coming up</h3>
+                <p className="dv-section-header__subtitle">Upcoming renewals and expiry dates</p>
               </div>
               <Link to="/deadlines" className="dv-section-header__action">
                 View Calendar <ChevronRight size={16} />

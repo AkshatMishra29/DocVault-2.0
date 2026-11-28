@@ -269,19 +269,19 @@ export default function MorePage() {
     <div className="dv-settings-page">
       <AppHeader
         title="Settings"
-        subtitle="Manage account credentials, two-tier isolation settings, and review immutable access logs."
+        subtitle="Manage your account, privacy and security."
       />
 
       <div className="dv-settings-content">
         <div className="dv-settings-grid">
           {/* Profile & Security Tier */}
           <Card padding="lg" className="dv-setting-card">
-            <h3 className="dv-setting-card__title">Vault Account & Custodian Identity</h3>
+            <h3 className="dv-setting-card__title">Account details</h3>
             
             <div className="dv-setting-rows">
               <div className="dv-setting-row">
-                <span className="dv-setting-label">Custodian Name:</span>
-                <span className="dv-setting-val"><strong>{user?.name || "Vault Custodian"}</strong></span>
+                <span className="dv-setting-label">Name:</span>
+                <span className="dv-setting-val"><strong>{user?.name || "Account Owner"}</strong></span>
               </div>
               <div className="dv-setting-row">
                 <span className="dv-setting-label">Registered Email:</span>
@@ -762,7 +762,7 @@ export default function MorePage() {
 
           {/* Backup & Export */}
           <Card padding="lg" className="dv-setting-card">
-            <h3 className="dv-setting-card__title">Portable Vault Backup (JSON)</h3>
+            <h3 className="dv-setting-card__title">Export your data</h3>
             <p className="dv-setting-desc">
               Download your complete encrypted metadata snapshot, asset links, and renewal deadlines as a standardized, offline-readable JSON bundle.
             </p>
@@ -791,7 +791,7 @@ export default function MorePage() {
         <Card padding="lg" className="dv-audit-card">
           <div className="dv-audit-header">
             <div>
-              <h3 className="dv-setting-card__title">Tamper-Proof Vault Access Log</h3>
+              <h3 className="dv-setting-card__title">Security activity</h3>
               <p className="dv-setting-desc">
                 Immutable ledger recording document inspection, downloads, uploads, and deletions.
               </p>

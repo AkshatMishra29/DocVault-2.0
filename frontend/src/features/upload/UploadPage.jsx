@@ -572,9 +572,9 @@ export default function UploadPage() {
                     <div className="dv-popt-text">
                       <div className="dv-popt-header">
                         <Sparkles size={16} color="#0070F2" />
-                        <strong>Smart Processing</strong>
+                        <strong>Enable AI features</strong>
                       </div>
-                      <p>Automatically organizes dates, renewal deadlines, key policy terms, and enables Copilot questions.</p>
+                      <p>Let DocVault extract information so you can search your document and ask questions about it. Best for bills, receipts, warranties, and insurance policies.</p>
                     </div>
                   </label>
 
@@ -592,9 +592,9 @@ export default function UploadPage() {
                     <div className="dv-popt-text">
                       <div className="dv-popt-header">
                         <Lock size={16} color="#E9730C" />
-                        <strong>Private Storage Only</strong>
+                        <strong>Store only · Private</strong>
                       </div>
-                      <p>Encrypted personal storage for sensitive identity documents (Aadhaar, PAN). Excluded from automated indexing.</p>
+                      <p>Keep your original document in your vault. No OCR, text extraction, or AI indexing. Best for identity documents and highly sensitive files.</p>
                       {privacyMode === "STORAGE_ONLY" && (
                         <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid rgba(148,163,184,0.2)" }} onClick={(e) => e.stopPropagation()}>
                           <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>

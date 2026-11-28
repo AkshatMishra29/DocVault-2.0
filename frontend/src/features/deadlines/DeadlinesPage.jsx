@@ -173,8 +173,8 @@ export default function DeadlinesPage() {
   return (
     <div className="dv-deadlines-page">
       <AppHeader
-        title="Renewals & Reminders"
-        subtitle="Automated countdown schedules derived from policy and warranty expiration dates."
+        title="Renewals & reminders"
+        subtitle="Keep track of upcoming renewals, expiry dates and important tasks."
       />
 
       <div className="dv-deadlines-content">
@@ -219,9 +219,9 @@ export default function DeadlinesPage() {
           </div>
         ) : deadlines.length === 0 ? (
           <EmptyState
-            title="No upcoming policy deadlines"
-            description="When you upload documents containing expiration dates, DocVault automatically creates tracked reminders."
-            actionLabel="Upload Document to Schedule"
+            title="You're all caught up"
+            description="You don't have any upcoming reminders."
+            actionLabel="Add reminder"
             onAction={() => window.location.href = "/upload"}
           />
         ) : (

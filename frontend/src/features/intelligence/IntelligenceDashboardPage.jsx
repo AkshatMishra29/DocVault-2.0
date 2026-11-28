@@ -84,8 +84,8 @@ export default function IntelligenceDashboardPage() {
   return (
     <div className="intelligence-dashboard-page">
       <AppHeader
-        title="Policy Health"
-        subtitle="Track document expiry, conflicts, and health in one place."
+        title="Document Insights"
+        subtitle="Find missing details, upcoming expirations and information that may need your attention."
       />
 
       <div className="intelligence-content">

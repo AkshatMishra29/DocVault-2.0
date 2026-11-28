@@ -101,8 +101,8 @@ export default function AuthVerifiedPage() {
             <Loader2 size={32} className="spin-animation" />
           </div>
           <AuthHeader
-            title="Verifying link..."
-            subtitle="Cryptographically validating your authentication session."
+            title="Verifying your account..."
+            subtitle="Please wait while we complete your verification."
           />
         </div>
       )}

@@ -40,17 +40,12 @@ class CopilotErrorBoundary extends Component {
     if (this.state.hasError) {
       return (
         <div className="dv-cp-empty-state" style={{ padding: "60px 20px" }}>
-          <h2 className="dv-cp-empty-state__title">Beta had a problem</h2>
+          <h2 className="dv-cp-empty-state__title">Something went wrong</h2>
           <p className="dv-cp-empty-state__subtitle">
-            {this.state.error ? this.state.error.message || String(this.state.error) : "An unexpected error occurred in Copilot Beta."}
+            We couldn&apos;t complete your request. Please try again.
           </p>
-          {this.state.error?.stack && (
-            <pre style={{ textAlign: "left", fontSize: "11px", background: "rgba(0,0,0,0.2)", padding: "12px", borderRadius: "8px", maxWidth: "100%", overflowX: "auto" }}>
-              {this.state.error.stack}
-            </pre>
-          )}
           <Link to="/ask-ai" className="dv-cp-back-link" style={{ fontSize: "14px", marginTop: "12px" }}>
-            <ArrowLeft size={16} /> Return to Ask AI
+            <ArrowLeft size={16} /> Return to Ask DocVault
           </Link>
         </div>
       );

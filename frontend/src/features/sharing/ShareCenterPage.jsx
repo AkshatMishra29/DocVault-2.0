@@ -366,8 +366,8 @@ export default function ShareCenterPage() {
   return (
     <div className="dv-share-center">
       <AppHeader
-        title="Document Access Management"
-        subtitle="Manage secure direct shares, incoming access, private vault files, and audit history."
+        title="Sharing"
+        subtitle="Share selected documents with people you trust."
       />
 
       {/* Hero Card: Prominently display User's DocVault Sharing ID */}
@@ -1088,7 +1088,7 @@ export default function ShareCenterPage() {
           setShowCreateModal(false);
           setCreatedShareResult(null);
         }}
-        title={createdShareResult ? "Share Authorized Successfully!" : "Create Secure Document Share"}
+        title={createdShareResult ? "Document shared successfully" : "Share a document"}
       >
         {createdShareResult ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)", textAlign: "center", padding: "8px 4px" }}>
@@ -1098,10 +1098,10 @@ export default function ShareCenterPage() {
 
             <div>
               <h3 style={{ margin: 0, fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--color-text-primary)" }}>
-                Share Authorized & Live!
+                Document shared successfully
               </h3>
               <p style={{ margin: "6px 0 0", fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
-                Your documents have been securely authorized under strict privacy guardrails.
+                Your document has been shared with the permissions you selected.
               </p>
             </div>
 

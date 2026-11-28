@@ -309,16 +309,16 @@ export default function AssetsPage() {
   return (
     <div className="dv-flashcards-page">
       <AppHeader
-        title="My Assets"
-        subtitle="Track your vehicles, appliances, and properties."
+        title="Your belongings"
+        subtitle="Keep track of the things you own and the documents connected to them."
       />
 
       <div className="dv-flashcards-content">
-        {/* Apple Zen 3D Flashcards Command Hero */}
+        {/* Flashcards Hero */}
         <div className="dv-flash-hero">
           <div className="dv-flash-hero__info">
             <h2 className="dv-flash-hero__title">
-              My <span className="dv-flash-hero__title-accent">Assets</span>
+              Your <span className="dv-flash-hero__title-accent">Belongings</span>
             </h2>
             <p className="dv-flash-hero__desc">
               Track your physical assets and their documents.

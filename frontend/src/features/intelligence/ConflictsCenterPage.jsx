@@ -91,11 +91,11 @@ export default function ConflictsCenterPage() {
   return (
     <div className="conflicts-center-page">
       <AppHeader
-        title="Conflict Detection & Resolver"
-        subtitle="Cross-document fact comparison with non-destructive audit resolution"
+        title="Information to review"
+        subtitle="Compare details across your documents and confirm what is accurate"
         action={
           <Button variant="outline" size="sm" onClick={() => navigate('/intelligence')}>
-            <span>Back to Intelligence</span>
+            <span>Back to Insights</span>
           </Button>
         }
       />
@@ -108,11 +108,11 @@ export default function ConflictsCenterPage() {
       ) : conflicts.length === 0 ? (
         <EmptyState
           icon={CheckCircle2}
-          title="Zero Conflicts Detected"
-          description="All facts extracted across your connected documents and entities are mutually consistent."
+          title="No differences found"
+          description="Details across your connected documents match."
           action={
             <Button size="sm" onClick={() => navigate('/intelligence')}>
-              <span>View Knowledge Graph</span>
+              <span>View Connected Information</span>
             </Button>
           }
         />

@@ -265,8 +265,8 @@ export default function DocumentsPage() {
   return (
     <div className="dv-docs-page">
       <AppHeader
-        title="My Documents"
-        subtitle="Manage, search, and inspect your structured personal policies, certificates, and proofs."
+        title="Your documents"
+        subtitle="Everything you've saved, organized in one place."
       />
 
       <div className="dv-docs-content">

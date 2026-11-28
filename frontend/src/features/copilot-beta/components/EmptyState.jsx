@@ -90,9 +90,9 @@ const EmptyState = memo(function EmptyState({
         <Mascot state="idle" size={144} />
       </div>
 
-      <h2 className="dv-cp-empty-state__title">What would you like to do?</h2>
+      <h2 className="dv-cp-empty-state__title">What would you like to know?</h2>
       <p className="dv-cp-empty-state__subtitle">
-        Upload documents, build interactive flashcards, track deadlines, or manage sharing from one place.
+        Ask questions about your documents and get answers with sources.
       </p>
 
       <div className="dv-cp-starters-grid">

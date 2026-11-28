@@ -199,9 +199,9 @@ export default function ConnectionsPage() {
     <div className="connections-page">
       <div className="connections-header">
         <div>
-          <h1 className="connections-header__title">Mutual Connections</h1>
+          <h1 className="connections-header__title">People you&apos;re connected with</h1>
           <p className="connections-header__sub">
-            Connect with family & friends to securely share documents WhatsApp-style.
+            Connect with family &amp; friends to share selected documents securely.
           </p>
         </div>
 

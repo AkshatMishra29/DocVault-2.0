@@ -153,7 +153,7 @@ export default function Composer({
         <textarea
           ref={textareaRef}
           className="dv-cp-composer__textarea"
-          placeholder="Ask Copilot, drop a file to upload, or create a flashcard..."
+          placeholder="Ask anything about your documents..."
           rows={1}
           value={text}
           onChange={handleInput}

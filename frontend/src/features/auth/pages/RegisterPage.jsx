@@ -299,8 +299,8 @@ export default function RegisterPage() {
       )}
 
       <AuthHeader
-        title="Create your account"
-        subtitle="Create an account to access your secure document vault."
+        title="Create your DocVault account"
+        subtitle="One secure place for your important documents."
       />
 
       {error && <AuthAlert type="error" message={error} />}

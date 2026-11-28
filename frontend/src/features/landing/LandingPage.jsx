@@ -96,28 +96,28 @@ export default function LandingPage() {
           <div className="dv-lp-hero__left">
             <div className="dv-lp-kicker">
               <span className="dv-lp-kicker-dot" />
-              <span>Sovereign Personal Document Vault</span>
+              <span>Private by design</span>
             </div>
 
             <h1 className="dv-lp-hero__title">
-              Your critical documents.<br />
-              <span className="dv-lp-hero__title-accent">Protected with absolute custody.</span>
+              Your documents.<br />
+              <span className="dv-lp-hero__title-accent">All in one place.</span>
             </h1>
 
             <p className="dv-lp-hero__desc">
-              End-to-end encrypted storage, automated OCR extraction, proactive renewal intelligence, and a grounded AI assistant — unified in one serene personal vault.
+              Keep important documents organized, find information faster, and stay ahead of renewals — with privacy built in.
             </p>
 
             <div className="dv-lp-hero__cta-row">
               {user && isVaultUnlocked ? (
                 <Link to="/dashboard" className="dv-lp-btn-primary">
-                  <span>Open Your Vault Dashboard</span>
+                  <span>Open Dashboard</span>
                   <LayoutDashboard size={16} />
                 </Link>
               ) : (
                 <>
                   <Link to="/register" className="dv-lp-btn-primary">
-                    <span>Create Your Private Vault</span>
+                    <span>Get started</span>
                     <ArrowRight size={16} />
                   </Link>
                   <Link to="/login" className="dv-lp-btn-secondary">
@@ -200,12 +200,12 @@ export default function LandingPage() {
       <section className="dv-lp-features" id="features">
         <div className="dv-lp-container">
           <div className="dv-lp-section-header">
-            <span className="dv-lp-tagline">PLATFORM CAPABILITIES</span>
+            <span className="dv-lp-tagline">WHAT YOU CAN DO</span>
             <h2 className="dv-lp-section-title">
-              Engineered for clarity, built for life's milestones.
+              Less searching. More knowing.
             </h2>
             <p className="dv-lp-section-sub">
-              From zero-clutter organization to instant answers, DocVault gives you absolute confidence over your legal and financial records.
+              A simpler way to organize important documents, find what you need, and keep track of important dates.
             </p>
           </div>
 
@@ -215,8 +215,8 @@ export default function LandingPage() {
               <div className="dv-lp-bento-icon dv-lp-bento-icon--ember">
                 <FolderLock size={20} />
               </div>
-              <h4>Sovereign Document Vault</h4>
-              <p>Store, categorize, and access sensitive contracts, deeds, and health policies in an isolated personal vault.</p>
+              <h4>Everything organized</h4>
+              <p>Store, categorize, and access important contracts, policies, bills, and IDs in one private space.</p>
             </div>
 
             {/* Card 2 */}
@@ -303,10 +303,10 @@ export default function LandingPage() {
                     <div className="dv-lp-mockup-banner-info">
                       <div className="dv-lp-mockup-live-status">
                         <span className="dv-lp-pulse-dot" />
-                        <span>Hardware Enclave Active</span>
+                        <span>Vault Unlocked</span>
                       </div>
-                      <h3>Welcome back, Akshat</h3>
-                      <p>All 42 documents encrypted with sovereign zero-knowledge custody.</p>
+                      <h3>Good evening</h3>
+                      <p>Everything important, right where you need it.</p>
                     </div>
 
                     <div className="dv-lp-mockup-stats">
@@ -475,9 +475,9 @@ export default function LandingPage() {
         <div className="dv-lp-container">
           <div className="dv-lp-section-header">
             <span className="dv-lp-tagline">HOW IT WORKS</span>
-            <h2 className="dv-lp-section-title">Sovereign custody in four simple steps</h2>
+            <h2 className="dv-lp-section-title">Find important information in seconds.</h2>
             <p className="dv-lp-section-sub">
-              From upload to intelligence, your documents remain private, encrypted, and under your command.
+              From upload to quick answers, your documents stay organized and under your control.
             </p>
           </div>
 
@@ -528,15 +528,15 @@ export default function LandingPage() {
             <div className="dv-lp-security-content">
               <span className="dv-lp-security-badge">
                 <ShieldCheck size={14} />
-                <span>CRYPTOGRAPHIC DEFENSE</span>
+                <span>PRIVACY BUILT IN</span>
               </span>
 
               <h3 className="dv-lp-security-title">
-                Security and privacy engineered at every layer.
+                Privacy is built into every step.
               </h3>
 
               <p className="dv-lp-security-desc">
-                DocVault isolates sensitive document workflows. With dual-tier authentication, brute-force lockout defenses, and client-side encryption keys, your personal paperwork stays exclusively yours.
+                Your documents stay under your control. Choose which files can use AI, lock your vault with a personal PIN, and share only what you want with people you trust.
               </p>
 
               <div className="dv-lp-security-grid">
@@ -718,14 +718,14 @@ export default function LandingPage() {
               <span>FREE FOR PERSONAL USE</span>
             </div>
             <h2 className="dv-lp-banner-title">
-              Take sovereign control of your documents today.
+              Bring your documents together.
             </h2>
             <p className="dv-lp-banner-sub">
-              Join thousands who trust DocVault to protect, organize, and query life's critical paperwork with absolute peace of mind.
+              Organize important paperwork, track upcoming renewals, and get answers from your files in seconds.
             </p>
             <div className="dv-lp-banner-actions">
               <Link to="/register" className="dv-lp-btn-primary dv-lp-btn-banner">
-                <span>Create Your Private Vault</span>
+                <span>Get started</span>
                 <ArrowRight size={16} />
               </Link>
             </div>

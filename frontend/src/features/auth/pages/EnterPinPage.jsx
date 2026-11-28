@@ -521,8 +521,8 @@ export default function EnterPinPage() {
   return (
     <AuthLayout brandVariant="pin">
       <AuthHeader
-        title="Unlock your vault."
-        subtitle="Enter your personal security PIN to decrypt your documents."
+        title="Your vault is locked"
+        subtitle="Verify your identity to access your documents."
       />
 
       {/* Account Email Identification Pill & Session Switcher */}
