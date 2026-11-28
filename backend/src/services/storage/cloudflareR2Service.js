@@ -4,7 +4,7 @@ import { config } from '../../config/index.js';
 
 let s3Client = null;
 
-if (config.cloudflareR2.accountId && config.cloudflareR2.accessKeyId && config.cloudflareR2.secretAccessKey) {
+if (config.cloudflareR2?.accountId && config.cloudflareR2?.accessKeyId && config.cloudflareR2?.secretAccessKey) {
   try {
     const endpoint = config.cloudflareR2.endpoint || `https://${config.cloudflareR2.accountId}.r2.cloudflarestorage.com`;
 

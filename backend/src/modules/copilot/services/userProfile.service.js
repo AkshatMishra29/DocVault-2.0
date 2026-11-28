@@ -32,7 +32,13 @@ export async function getUserProfileContext(userId) {
 
   try {
     const [docs, assets, deadlines, shares] = await Promise.all([
-      Document.find({ userId })
+      // Privacy Gate: NEVER include storage_only, E2EE, or sensitive documents in AI prompt context
+      Document.find({
+        userId,
+        aiPolicy: 'ai_enabled',
+        sensitiveFlag: { $ne: true },
+        'e2ee.enabled': { $ne: true },
+      })
         .select('category title expiryDate createdAt')
         .sort({ createdAt: -1 })
         .limit(50)
