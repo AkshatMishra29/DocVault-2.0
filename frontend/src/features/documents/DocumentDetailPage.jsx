@@ -510,7 +510,7 @@ export default function DocumentDetailPage() {
               >
                 Preview Original
               </Button>
-              <Link to={`/ask-ai?docId=${doc._id}`}>
+              <Link to={`/copilot?docId=${doc._id}`}>
                 <Button variant="outline" size="sm" icon={Sparkles}>
                   Ask Copilot
                 </Button>
@@ -997,9 +997,9 @@ export default function DocumentDetailPage() {
               <Card padding="lg" className="dv-detail-sidebar-card">
                 <h3 className="dv-sidebar-section-title" style={{ marginBottom: 10 }}>Vault Tools</h3>
                 <div className="dv-quick-tools-list">
-                  <Link to={`/ask-ai?docId=${doc._id}`} className="dv-quick-tool-btn">
+                  <Link to={`/copilot?docId=${doc._id}`} className="dv-quick-tool-btn">
                     <Sparkles size={15} color="#8B5CF6" />
-                    <span>Ask AI Copilot about this document</span>
+                    <span>Ask Copilot about this document</span>
                   </Link>
                   <button
                     type="button"

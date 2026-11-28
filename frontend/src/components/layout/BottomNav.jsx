@@ -126,16 +126,16 @@ export default function BottomNav() {
             <span className="nav-label">Vault</span>
           </NavLink>
 
-          {/* 3. Ask AI — PROMINENT CENTERPIECE */}
+          {/* 3. Copilot — PROMINENT CENTERPIECE */}
           <NavLink 
-            to="/ask-ai" 
+            to="/copilot" 
             className={({ isActive }) => `nav-item nav-item-ai ${isActive ? 'active' : ''}`}
-            aria-label="Ask AI Assistant"
+            aria-label="DocVault Copilot"
           >
             <div className="ai-icon-bubble">
               <Sparkles size={21} className="ai-sparkle-icon" />
             </div>
-            <span className="nav-label ai-label">Ask AI</span>
+            <span className="nav-label ai-label">Copilot</span>
           </NavLink>
 
           {/* 4. Alerts / Deadlines */}

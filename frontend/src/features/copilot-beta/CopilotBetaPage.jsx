@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Component } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   MessageSquare,
@@ -44,8 +44,8 @@ class CopilotErrorBoundary extends Component {
           <p className="dv-cp-empty-state__subtitle">
             We couldn&apos;t complete your request. Please try again.
           </p>
-          <Link to="/ask-ai" className="dv-cp-back-link" style={{ fontSize: "14px", marginTop: "12px" }}>
-            <ArrowLeft size={16} /> Return to Ask DocVault
+          <Link to="/dashboard" className="dv-cp-back-link" style={{ fontSize: "14px", marginTop: "12px" }}>
+            <ArrowLeft size={16} /> Back to Dashboard
           </Link>
         </div>
       );
@@ -286,6 +286,24 @@ function CopilotBetaPageContent() {
       history: messages.slice(-6),
     });
   }, [messages, send, sessionId, setMascotState]);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const handledUrlQueryRef = useRef(false);
+
+  useEffect(() => {
+    if (handledUrlQueryRef.current) return;
+    const q = searchParams.get("q");
+    const docId = searchParams.get("docId");
+    if (q && q.trim()) {
+      handledUrlQueryRef.current = true;
+      handleSend(q.trim());
+      setSearchParams({}, { replace: true });
+    } else if (docId && docId.trim()) {
+      handledUrlQueryRef.current = true;
+      handleSend(`Summarize and inspect my document (Document ID: ${docId.trim()}).`);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams, handleSend]);
 
   const handleFileSelect = useCallback((file) => {
     if (!file) return;
@@ -591,8 +609,8 @@ function CopilotBetaPageContent() {
 
         <div className="dv-cp-sidebar__footer">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Link to="/ask-ai" className="dv-cp-back-link">
-              <ArrowLeft size={14} /> Back to Ask AI
+            <Link to="/dashboard" className="dv-cp-back-link">
+              <ArrowLeft size={14} /> Back to Dashboard
             </Link>
             {messages.length > 0 && (
               <button
@@ -655,7 +673,6 @@ function CopilotBetaPageContent() {
             <div className="dv-cp-header__brand">
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <h2 className="dv-cp-header__title">DocVault Copilot</h2>
-                <span className="dv-cp-badge">Beta</span>
               </div>
               <div className="dv-cp-header__status">
                 <span className={`dv-cp-companion-dot dv-cp-companion-dot--${mascotState}`} />
@@ -679,9 +696,6 @@ function CopilotBetaPageContent() {
               <Plus size={14} />
               <span>New Chat</span>
             </button>
-            <Link to="/ask-ai" className="dv-cp-back-link">
-              Standard Ask AI &rarr;
-            </Link>
           </div>
         </header>
 

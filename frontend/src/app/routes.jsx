@@ -18,7 +18,6 @@ const DocumentDetailPage = React.lazy(() => import("../features/documents/Docume
 const ConnectionsPage = React.lazy(() => import("../features/sharing/ConnectionsPage"));
 const ShareCenterPage = React.lazy(() => import("../features/sharing/ShareCenterPage"));
 const SharedDocumentViewerPage = React.lazy(() => import("../features/sharing/SharedDocumentViewerPage"));
-const AskAiPage = React.lazy(() => import("../features/ai-assistant/AskAiPage"));
 const CopilotBetaPage = React.lazy(() => import("../features/copilot-beta/CopilotBetaPage"));
 const AssetsPage = React.lazy(() => import("../features/assets/AssetsPage"));
 const AssetDetailPage = React.lazy(() => import("../features/assets/AssetDetailPage"));
@@ -76,8 +75,9 @@ export function AppRoutes() {
           <Route path="/documents/:id" element={<DocumentDetailPage />} />
           <Route path="/connections" element={<ConnectionsPage />} />
           <Route path="/shares" element={<ShareCenterPage />} />
-          <Route path="/ask-ai" element={<AskAiPage />} />
+          <Route path="/copilot" element={<CopilotBetaPage />} />
           <Route path="/copilot-beta" element={<CopilotBetaPage />} />
+          <Route path="/ask-ai" element={<CopilotBetaPage />} />
           <Route path="/assets" element={<AssetsPage />} />
           <Route path="/assets/:id" element={<AssetDetailPage />} />
           <Route path="/banking" element={<BankStatementsPage />} />

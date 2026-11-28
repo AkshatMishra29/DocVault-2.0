@@ -135,9 +135,9 @@ export default function HomePage() {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/ask-ai?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/copilot?q=${encodeURIComponent(searchQuery.trim())}`);
     } else {
-      navigate("/ask-ai");
+      navigate("/copilot");
     }
   };
 
@@ -179,7 +179,7 @@ export default function HomePage() {
                 Upload Document
               </Button>
             </Link>
-            <Link to="/ask-ai">
+            <Link to="/copilot">
               <Button variant="outline" size="md" icon={Sparkles}>
                 Ask Copilot
               </Button>

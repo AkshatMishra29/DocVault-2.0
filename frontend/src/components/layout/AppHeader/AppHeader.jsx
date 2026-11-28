@@ -116,27 +116,15 @@ export default function AppHeader({ title, subtitle }) {
       </div>
 
       <div className="dv-app-header__actions">
-        {/* Copilot Beta Header Pill */}
+        {/* DocVault Copilot Button */}
         <Link
-          to="/copilot-beta"
-          className="dv-header-copilot-btn"
-          title="Autonomous AI Copilot (Beta)"
-          aria-label="DocVault Copilot Beta"
-        >
-          <Bot size={15} className="dv-header-copilot-icon" />
-          <span className="dv-header-copilot-label">Copilot</span>
-          <span className="dv-header-copilot-badge">Beta</span>
-        </Link>
-
-        {/* Quick Ask AI Copilot Button */}
-        <Link
-          to="/ask-ai"
+          to="/copilot"
           className="dv-header-ask-btn"
-          title="Ask AI Assistant"
-          aria-label="Ask AI Assistant"
+          title="DocVault Copilot"
+          aria-label="DocVault Copilot"
         >
           <Sparkles size={15} className="dv-header-ask-icon" />
-          <span className="dv-header-ask-label">Ask AI</span>
+          <span className="dv-header-ask-label">Copilot</span>
         </Link>
 
         {/* Notification Bell Dropdown */}

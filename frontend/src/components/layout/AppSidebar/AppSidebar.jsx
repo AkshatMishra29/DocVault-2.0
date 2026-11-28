@@ -18,7 +18,7 @@ const navItems = [
   { to: '/deadlines', label: 'Renewals', icon: Calendar },
   { to: '/assets', label: 'My Assets', icon: Layers },
   { to: '/shares', label: 'Sharing', icon: Share2 },
-  { to: '/ask-ai', label: 'Ask AI', icon: Sparkles },
+  { to: '/copilot', label: 'Copilot', icon: Sparkles },
   { to: '/more', label: 'Settings', icon: Settings },
 ];
 
