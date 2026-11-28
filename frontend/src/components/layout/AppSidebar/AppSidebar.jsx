@@ -9,7 +9,6 @@ import {
 import DocVaultLogo, { DocVaultLogoIcon } from '../../common/DocVaultLogo/DocVaultLogo';
 import { useAuth } from '../../../features/auth/context/AuthContext';
 import { useTheme } from '../../../app/theme';
-import { apiRequest } from '../../../services/api/apiClient';
 import './AppSidebar.css';
 
 const navItems = [
@@ -18,7 +17,7 @@ const navItems = [
   { to: '/deadlines', label: 'Renewals', icon: Calendar },
   { to: '/assets', label: 'My Assets', icon: Layers },
   { to: '/shares', label: 'Sharing', icon: Share2 },
-  { to: '/copilot', label: 'Copilot', icon: Sparkles },
+  { to: '/copilot', label: 'Copilot', icon: Bot },
   { to: '/more', label: 'Settings', icon: Settings },
 ];
 
@@ -26,22 +25,10 @@ export default function AppSidebar() {
   const { user, lockSession, savedSessions = [], switchSession, logout } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [showSwitchMenu, setShowSwitchMenu] = useState(false);
-  const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(() => {
     return localStorage.getItem('dv_sidebar_collapsed') === 'true';
   });
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Check if Copilot Beta is active on the backend
-    apiRequest('/api/copilot/status')
-      .then((res) => {
-        if (res.ok && res.enabled && res.userAllowed) {
-          setCopilotEnabled(true);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const toggleCollapse = () => {
     setIsCollapsed((prev) => {
@@ -107,19 +94,6 @@ export default function AppSidebar() {
           );
         })}
 
-        {copilotEnabled && (
-          <NavLink
-            to="/copilot-beta"
-            title={isCollapsed ? "Copilot (Beta)" : undefined}
-            className={({ isActive }) =>
-              `dv-sidebar__item ${isActive ? 'dv-sidebar__item--active' : ''}`
-            }
-          >
-            <Bot size={18} className="dv-sidebar__icon" style={{ color: '#0071E3' }} />
-            <span className="dv-sidebar__label">Copilot</span>
-            <span className="dv-sidebar__badge" style={{ backgroundColor: 'rgba(0, 113, 227, 0.15)', color: '#0071E3' }}>Beta</span>
-          </NavLink>
-        )}
         {user?.role === 'admin' && (
           <NavLink
             to="/admin"

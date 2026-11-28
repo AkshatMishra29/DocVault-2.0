@@ -9,7 +9,7 @@ export default function AppLayout() {
   const { isVaultUnlocked, user, pendingEmail } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isFullBleed = location.pathname.startsWith('/copilot-beta');
+  const isFullBleed = location.pathname.startsWith('/copilot') || location.pathname.startsWith('/ask-ai');
 
   // If locked, immediately redirect to /enter-pin with replace: true
   useEffect(() => {
