@@ -160,11 +160,16 @@ registerTool({
   }),
   summarize: (args) => `Finding grounded document answers for: "${args.question}"`,
   async run(ctx, args) {
+    // Run query embedding in parallel with DB target resolution to eliminate sequential latency
+    const queryEmbeddingPromise = generateEmbedding(args.question).catch(() => null);
+
     let targetDocIds = [];
     if (args.documentId) {
-      const canView = await DocumentAccessControlService.canViewDocument(ctx.userId, args.documentId);
+      const [canView, doc] = await Promise.all([
+        DocumentAccessControlService.canViewDocument(ctx.userId, args.documentId),
+        Document.findById(args.documentId).select('aiPolicy sensitiveFlag'),
+      ]);
       if (!canView?.allowed) return { error: 'Document not found or access denied.' };
-      const doc = await Document.findById(args.documentId).select('aiPolicy sensitiveFlag');
       if (!doc || !isAiAllowed(doc)) return { error: 'Document is restricted under storage_only privacy.' };
       targetDocIds = [args.documentId];
       await ensureDocumentChunks(args.documentId, ctx.userId);
@@ -193,10 +198,7 @@ registerTool({
       }
     }
 
-    let queryVector = null;
-    try {
-      queryVector = await generateEmbedding(args.question);
-    } catch (e) {}
+    const queryVector = await queryEmbeddingPromise;
 
     const chunks = await hybridChunkRetrieval({
       userId: ctx.userId,

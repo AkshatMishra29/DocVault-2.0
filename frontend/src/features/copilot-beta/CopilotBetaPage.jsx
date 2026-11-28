@@ -71,6 +71,8 @@ function CopilotBetaPageContent() {
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef(null);
   const triggerUploadRef = useRef(null);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
   const [composerInput, setComposerInput] = useState("");
   const [mascotState, setMascotState] = useMascotState("idle");
   const [isDraggingFile, setIsDraggingFile] = useState(false);
@@ -278,14 +280,15 @@ function CopilotBetaPageContent() {
 
   const handleSend = useCallback((text) => {
     setMascotState("thinking");
+    const recentHistory = (messagesRef.current || []).slice(-14);
     const userMsg = { role: "user", content: text };
     setMessages((prev) => [...prev, userMsg]);
     send({
       message: text,
       sessionId,
-      history: messages.slice(-6),
+      history: recentHistory,
     });
-  }, [messages, send, sessionId, setMascotState]);
+  }, [send, sessionId, setMascotState]);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const handledUrlQueryRef = useRef(false);

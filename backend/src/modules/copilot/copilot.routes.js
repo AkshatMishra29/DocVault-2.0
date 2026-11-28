@@ -149,15 +149,15 @@ router.post('/chat', requireAuth, guardCopilotBeta, copilotRateLimit, async (req
       abortSignal: abortController.signal,
     });
 
-    // Save assistant message to copilot history
+    // Save assistant message cleanly without blocking stream end
     if (assistantContent) {
-      await CopilotMessage.create({
+      CopilotMessage.create({
         userId: req.user.userId,
         sessionId,
         role: 'assistant',
         content: assistantContent,
         sources: sourcesCollected,
-      });
+      }).catch(() => {});
     }
   } catch (err) {
     sendEvent('error', { message: err.message || 'An unexpected error occurred in Copilot.' });

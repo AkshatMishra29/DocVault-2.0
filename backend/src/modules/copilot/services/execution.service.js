@@ -15,6 +15,7 @@ import { DocumentAccessControlService } from '../../sharing/accessControl.servic
 import { assertAiAllowed, isAiAllowed } from '../../../services/pipeline/privacyGate.js';
 import { ensureDocumentChunks } from './chunking.service.js';
 import { invalidateUserProfile } from './userProfile.service.js';
+import { invalidateUserCache } from './semanticCache.service.js';
 
 /**
  * Executes a confirmed action atomically after validation
@@ -529,6 +530,7 @@ export async function executeConfirmedAction({ runId, action, args, userId }) {
   ];
   if (mutatingActions.includes(action)) {
     invalidateUserProfile(userId);
+    invalidateUserCache(userId);
   }
 
   return result;

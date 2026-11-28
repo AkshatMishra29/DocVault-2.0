@@ -109,48 +109,51 @@ export async function ensureDocumentChunks(documentId, userId) {
 export async function hybridChunkRetrieval({ userId, accessibleDocIds, query, queryEmbedding = null, topK = 6 }) {
   if (!accessibleDocIds || accessibleDocIds.length === 0) return [];
 
-  // 1. Keyword search over accessible document chunks
-  let keywordResults = [];
-  try {
-    keywordResults = await DocumentChunk.find(
-      {
+  // 1. Keyword search (run concurrently with vector pass if embedding exists)
+  const runKeywordSearch = async () => {
+    try {
+      return await DocumentChunk.find(
+        {
+          userId,
+          documentId: { $in: accessibleDocIds },
+          $text: { $search: query },
+        },
+        { score: { $meta: 'textScore' } }
+      )
+        .select('_id documentId pageNumber chunkIndex text')
+        .sort({ score: { $meta: 'textScore' } })
+        .limit(topK * 2)
+        .lean();
+    } catch (err) {
+      const stopWords = new Set(['what', 'is', 'the', 'and', 'on', 'my', 'in', 'of', 'for', 'to', 'a', 'an', 'please', 'give', 'me', 'show']);
+      const meaningful = query
+        .replace(/[^\w\s]/g, ' ')
+        .split(/\s+/)
+        .map((w) => w.trim())
+        .filter((w) => w.length > 2 && !stopWords.has(w.toLowerCase()));
+      const regexPattern = meaningful.length > 0 ? meaningful.slice(0, 5).join('|') : query.slice(0, 15);
+
+      return DocumentChunk.find({
         userId,
         documentId: { $in: accessibleDocIds },
-        $text: { $search: query },
-      },
-      { score: { $meta: 'textScore' } }
-    )
-      .sort({ score: { $meta: 'textScore' } })
-      .limit(topK * 2)
-      .lean();
-  } catch (err) {
-    // Fallback regex matching meaningful keywords if text index not yet built
-    const stopWords = new Set(['what', 'is', 'the', 'and', 'on', 'my', 'in', 'of', 'for', 'to', 'a', 'an', 'please', 'give', 'me', 'show']);
-    const meaningful = query
-      .replace(/[^\w\s]/g, ' ')
-      .split(/\s+/)
-      .map((w) => w.trim())
-      .filter((w) => w.length > 2 && !stopWords.has(w.toLowerCase()));
-    const regexPattern = meaningful.length > 0 ? meaningful.slice(0, 5).join('|') : query.slice(0, 15);
-
-    keywordResults = await DocumentChunk.find({
-      userId,
-      documentId: { $in: accessibleDocIds },
-      text: { $regex: regexPattern, $options: 'i' },
-    })
-      .limit(topK * 2)
-      .lean();
-  }
+        text: { $regex: regexPattern, $options: 'i' },
+      })
+        .select('_id documentId pageNumber chunkIndex text')
+        .limit(topK * 2)
+        .lean();
+    }
+  };
 
   // 2. Vector search if query embedding provided
-  let vectorResults = [];
-  if (Array.isArray(queryEmbedding) && queryEmbedding.length === 384) {
+  const runVectorSearch = async () => {
+    if (!Array.isArray(queryEmbedding) || queryEmbedding.length !== 384) return [];
     const allChunks = await DocumentChunk.find({
       userId,
       documentId: { $in: accessibleDocIds },
       embedding: { $exists: true, $ne: [] },
     })
-      .limit(60)
+      .select('_id documentId pageNumber chunkIndex text embedding')
+      .limit(40)
       .lean();
 
     const scored = allChunks.map((chunk) => {
@@ -162,8 +165,13 @@ export async function hybridChunkRetrieval({ userId, accessibleDocIds, query, qu
     });
 
     scored.sort((a, b) => b.sim - a.sim);
-    vectorResults = scored.slice(0, topK * 2).map((s) => s.chunk);
-  }
+    return scored.slice(0, topK * 2).map((s) => s.chunk);
+  };
+
+  const [keywordResults, vectorResults] = await Promise.all([
+    runKeywordSearch(),
+    runVectorSearch(),
+  ]);
 
   // 3. Compute RRF scores: RRF_score = sum(1 / (k + rank))
   const RRF_K = 60;

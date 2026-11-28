@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { toolRegistry } from './tools/registry.js';
-import { callGroqWithTools, COPILOT_MODELS } from './services/groqAdapter.service.js';
+import { callGroqWithToolsStream, COPILOT_MODELS } from './services/groqAdapter.service.js';
 import { checkTokenBudget, recordTokenUsage } from '../extraction/tokenLedger.service.js';
 import { CopilotRun } from './models/copilotRun.model.js';
 import { getCachedAnswer, cacheAnswer, warmCacheFromDB } from './services/semanticCache.service.js';
@@ -21,12 +21,12 @@ CRITICAL SECURITY AND PRIVACY RULES:
 4. CITATIONS & SOURCES: Always cite the document title and page number. Do NOT output raw "/documents/..." URLs or text preview paths; the UI automatically renders interactive Verified Source Preview Cards below your message. When calling search_documents, omit "category" unless the user explicitly asks to filter by category.
 5. STRICT ZERO-HALLUCINATION RULE: NEVER invent documents, flashcard assets, deadlines, or shares not returned by a tool call in this turn. Only use tool names that exist in your tool definitions (never invent tools like read_document).
 6. FLASHCARDS & UPLOADS: When a user wants a flashcard created or pre-filled from a document, call \`propose_flashcard_form\` with all extracted details (name, category, linkedDocumentId, linkedDocumentTitle, customFields) so an interactive fillable card opens right in the chat.
-7. EFFICIENCY & RESPONSE CURATION: Gather evidence in 1-2 tool calls (search_documents already returns extractedFields and evidence text). Present your final answer cleanly using concise Markdown headings or bullet points—highlight key extracted values in bold, clearly note any pending confirmation cards or interactive flashcard builders, and keep the tone crisp, accurate, and production-ready.`;
+7. EFFICIENCY & RESPONSE CURATION: Gather evidence in 1-2 tool calls (search_documents already returns extractedFields and evidence text). Present your final answer cleanly using concise Markdown headings or bullet points—highlight key extracted values in bold, clearly note any pending confirmation cards or interactive flashcard builders, and keep the tone crisp and accurate.`;
 };
 
-const MAX_ITERATIONS = 6;
-const TIMEOUT_MS = 90000;
-const HISTORY_WINDOW = 14; // expanded from 6 for better multi-turn context
+const MAX_ITERATIONS = 5;
+const TIMEOUT_MS = 60000;
+const HISTORY_WINDOW = 14;
 
 /**
  * Strip leaked XML reasoning or tool_call tags from assistant text
@@ -40,19 +40,22 @@ function sanitizeAssistantText(text) {
     .trim();
 }
 
-/**
- * Format tools for Groq/OpenAI function calling schema
- */
+// Pre-compiled tool schema cache (computed once instead of per-request Zod reflection)
+let cachedToolSchemas = null;
+let cachedToolSchemaMap = null;
+
 export function getAvailableToolSchemas() {
+  if (cachedToolSchemas) return cachedToolSchemas;
+
   const tools = [];
+  const schemaMap = new Map();
+
   for (const [name, def] of toolRegistry.entries()) {
-    // Convert zod schema to JSON schema representation
     const properties = {};
     const required = [];
 
     if (def.schema && def.schema.shape) {
       for (const [key, prop] of Object.entries(def.schema.shape)) {
-        // Unwrap ZodDefault / ZodOptional / ZodNullable reliably across Zod versions
         let inner = prop;
         while (
           inner instanceof z.ZodOptional ||
@@ -90,7 +93,7 @@ export function getAvailableToolSchemas() {
       }
     }
 
-    tools.push({
+    const schemaObj = {
       type: 'function',
       function: {
         name,
@@ -101,63 +104,220 @@ export function getAvailableToolSchemas() {
           required,
         },
       },
-    });
+    };
+    tools.push(schemaObj);
+    schemaMap.set(name, schemaObj);
   }
+
+  cachedToolSchemas = tools;
+  cachedToolSchemaMap = schemaMap;
   return tools;
 }
 
 /**
- * Executes Copilot Orchestrator Loop with SSE streaming callback
+ * Intent-scoped tool pruning: sends 4-9 relevant tools instead of all 32 schemas,
+ * drastically lowering prompt tokens and speeding up Groq first-token latency.
+ */
+function getScopedToolSchemas(intent, preferredTools) {
+  const all = getAvailableToolSchemas();
+  if (!preferredTools || !Array.isArray(preferredTools) || preferredTools.length === 0) {
+    return all;
+  }
+
+  const keepSet = new Set([
+    ...preferredTools,
+    'search_documents',
+    'ask_documents',
+    'get_vault_stats',
+  ]);
+  // If user is asking about docs/deadlines/assets and wants a flashcard/reminder follow-up
+  if (intent === 'search' || intent === 'deadline') {
+    keepSet.add('create_reminder');
+    keepSet.add('propose_flashcard_form');
+  }
+
+  const scoped = [];
+  for (const name of keepSet) {
+    const s = cachedToolSchemaMap.get(name);
+    if (s) scoped.push(s);
+  }
+  return scoped.length > 0 ? scoped : all;
+}
+
+/**
+ * Execute a single tool call (read or queued write confirmation)
+ */
+async function executeSingleToolCall(call, userId, sendEvent, allSources) {
+  const toolName = call.function.name;
+  let toolArgs = {};
+  try {
+    toolArgs = JSON.parse(call.function.arguments || '{}');
+    if (toolArgs && typeof toolArgs === 'object') {
+      for (const k of Object.keys(toolArgs)) {
+        if (toolArgs[k] === null || toolArgs[k] === undefined) {
+          delete toolArgs[k];
+        }
+      }
+    }
+  } catch (e) {
+    toolArgs = {};
+  }
+
+  const toolDef = toolRegistry.get(toolName);
+  if (!toolDef) {
+    return {
+      role: 'tool',
+      tool_call_id: call.id,
+      content: JSON.stringify({ error: `Tool ${toolName} not found` }),
+    };
+  }
+
+  const toolRunId = `run_${crypto.randomBytes(6).toString('hex')}`;
+  const summary = toolDef.summarize ? toolDef.summarize(toolArgs) : `Running ${toolName}`;
+
+  sendEvent('tool_started', {
+    id: toolRunId,
+    name: toolName,
+    label: summary,
+  });
+
+  if (toolDef.kind === 'write') {
+    const runRecord = await CopilotRun.create({
+      userId,
+      action: toolName,
+      args: toolArgs,
+      humanSummary: summary,
+      status: 'awaiting_approval',
+      idempotencyKey: crypto.randomUUID(),
+    });
+
+    sendEvent('confirmation_required', {
+      runId: runRecord._id.toString(),
+      action: toolName,
+      summary,
+      fields: toolArgs,
+    });
+
+    sendEvent('tool_result', {
+      id: toolRunId,
+      ok: true,
+      summary: 'Awaiting your confirmation',
+    });
+
+    return {
+      role: 'tool',
+      tool_call_id: call.id,
+      content: JSON.stringify({
+        status: 'awaiting_approval',
+        runId: runRecord._id.toString(),
+        message: 'Action queued. Awaiting user confirmation in the interface.',
+      }),
+    };
+  }
+
+  try {
+    let parsedArgs = toolArgs;
+    if (toolDef.schema) {
+      const parsed = toolDef.schema.safeParse(toolArgs);
+      if (!parsed.success) {
+        throw new Error(`Argument validation failed: ${parsed.error.message}`);
+      }
+      parsedArgs = parsed.data;
+    }
+
+    const result = await toolDef.run({ userId }, parsedArgs);
+
+    if (result?.sources && Array.isArray(result.sources)) {
+      for (const s of result.sources) {
+        if (!allSources.some((x) => x.documentId === s.documentId && x.page === s.page)) {
+          allSources.push(s);
+        }
+      }
+      sendEvent('sources', { sources: allSources });
+    }
+
+    if (result?.flashcardDraft) {
+      sendEvent('flashcard_draft', result.flashcardDraft);
+    }
+
+    sendEvent('tool_result', {
+      id: toolRunId,
+      ok: true,
+      summary: `Completed ${toolName}`,
+    });
+
+    const safeOutput = result?.evidence
+      ? { ...result, evidence: `<untrusted_document_data>\n${result.evidence}\n</untrusted_document_data>` }
+      : result;
+
+    return {
+      role: 'tool',
+      tool_call_id: call.id,
+      content: JSON.stringify(safeOutput),
+    };
+  } catch (err) {
+    sendEvent('tool_result', {
+      id: toolRunId,
+      ok: false,
+      summary: `Failed: ${err.message}`,
+    });
+
+    return {
+      role: 'tool',
+      tool_call_id: call.id,
+      content: JSON.stringify({ error: err.message }),
+    };
+  }
+}
+
+/**
+ * Executes Copilot Orchestrator Loop with real-time SSE token streaming
  */
 export async function runCopilotOrchestrator({
   userId,
   userMessage,
   history = [],
-  sendEvent, // (eventName, data) => void
+  sendEvent,
   abortSignal,
 }) {
   const startTime = Date.now();
+  const trimmedMsg = userMessage.trim();
 
-  // 1. Enforce token budget check
-  const budget = await checkTokenBudget(userId);
+  // 1. Sub-1ms intent classification + simple greeting check
+  const { intent, preferredTools } = classifyIntent(trimmedMsg);
+  const isWriteIntent = ['delete', 'flashcard', 'share', 'deadline', 'upload'].includes(intent);
+
+  // 2. Parallel pre-flight: Token budget + Cache warmup + User profile (saves ~300-800ms)
+  const [budget, , profileContext] = await Promise.all([
+    checkTokenBudget(userId),
+    !isWriteIntent && trimmedMsg.length >= 10 ? warmCacheFromDB(userId).catch(() => {}) : Promise.resolve(),
+    getUserProfileContext(userId).catch(() => ''),
+  ]);
+
   if (!budget.allowed) {
     sendEvent('error', { message: budget.reason || 'Daily AI token budget reached. Please try again tomorrow.' });
     sendEvent('done', { completed: true });
     return;
   }
 
-  // 2. Intent classification (runs in <1ms, no network)
-  const { intent, preferredTools } = classifyIntent(userMessage);
-  const isWriteIntent = ['delete', 'flashcard', 'share', 'deadline'].includes(intent);
-
-  // 3. Semantic cache check (skip for write intents and very short queries)
-  if (!isWriteIntent && userMessage.length >= 10) {
+  // 3. Fast cache lookup (O(1) exact string first; skips HF call if user has 0 cached entries)
+  if (!isWriteIntent && trimmedMsg.length >= 10) {
     try {
-      await warmCacheFromDB(userId); // no-op if already warm
-      const cached = await getCachedAnswer(userId, userMessage);
+      const cached = await getCachedAnswer(userId, trimmedMsg);
       if (cached) {
-        sendEvent('text_delta', { text: `⚡ *Instant answer from your vault history:*\n\n${cached.answer}` });
+        sendEvent('text_delta', { text: `${cached.answer}` });
         if (cached.sources?.length) sendEvent('sources', { sources: cached.sources });
         sendEvent('done', { completed: true, sources: cached.sources || [], fromCache: true });
         return;
       }
-    } catch (_) {
-      // Cache miss or error — continue normally
-    }
+    } catch (_) {}
   }
 
-  // 4. User profile context (personalized system prompt)
-  let profileContext = '';
-  try {
-    profileContext = await getUserProfileContext(userId);
-  } catch (_) {}
-
-  // 5. Assemble conversation messages with expanded history window
+  // 4. Assemble conversation messages with pruned tool schemas
   const messages = [
     { role: 'system', content: getSystemPrompt(profileContext) },
-    // Add intent hint as a lightweight system note when preferred tools exist
     ...(preferredTools
-      ? [{ role: 'system', content: `INTENT HINT: Detected intent "${intent}". Preferred tools for this query: ${preferredTools.join(', ')}. Call these first before broader searches.` }]
+      ? [{ role: 'system', content: `INTENT HINT: Intent="${intent}". Use [${preferredTools.join(', ')}] first.` }]
       : []),
     ...history
       .slice(-HISTORY_WINDOW)
@@ -166,205 +326,84 @@ export async function runCopilotOrchestrator({
         role: h.role,
         content: h.content,
       })),
-    { role: 'user', content: userMessage },
+    { role: 'user', content: trimmedMsg },
   ];
 
-  const tools = getAvailableToolSchemas();
+  const scopedTools = getScopedToolSchemas(intent, preferredTools);
   const allSources = [];
   let iteration = 0;
-  let assistantAnswerText = ''; // accumulates final answer for semantic cache
+  let assistantAnswerText = '';
 
   while (iteration < MAX_ITERATIONS) {
     iteration++;
 
-    // Check timeout or abort
     if (Date.now() - startTime > TIMEOUT_MS) {
-      sendEvent('error', { message: 'Copilot request timed out.' });
+      sendEvent('error', { message: 'Copilot request timed out. Please try again.' });
       break;
     }
-    if (abortSignal?.aborted) {
-      break;
-    }
+    if (abortSignal?.aborted) break;
 
-    // Allow up to 4 tool-calling turns; force final synthesis on turn 5+ without dropping tool schemas
-    const toolChoice = iteration >= 5 ? 'none' : 'auto';
+    // On iteration >= 4, force clean final synthesis and omit tools completely for fastest response
+    const isFinalSynthesis = iteration >= 4;
+    const toolsForTurn = isFinalSynthesis ? [] : scopedTools;
+    const toolChoice = isFinalSynthesis ? 'none' : 'auto';
 
-    const response = await callGroqWithTools({
+    let streamedTextThisTurn = '';
+
+    const streamRes = await callGroqWithToolsStream({
       messages,
-      tools,
+      tools: toolsForTurn,
       toolChoice,
       model: COPILOT_MODELS.PRIMARY,
+      maxTokens: isFinalSynthesis ? 1600 : 1400,
+      abortSignal,
+      onTextDelta: (chunkText) => {
+        if (!chunkText) return;
+        streamedTextThisTurn += chunkText;
+        assistantAnswerText += chunkText;
+        sendEvent('text_delta', { text: chunkText });
+      },
     });
 
-    const choice = response.choices?.[0];
-    const msg = choice?.message;
-    if (!msg) break;
-
-    // Track tokens
-    if (response.usage) {
+    if (streamRes.usage) {
       recordTokenUsage({
         userId,
         operation: 'copilot_chat',
-        model: response.model || COPILOT_MODELS.PRIMARY,
-        promptTokens: response.usage.prompt_tokens || 0,
-        completionTokens: response.usage.completion_tokens || 0,
+        model: streamRes.model || COPILOT_MODELS.PRIMARY,
+        promptTokens: streamRes.usage.prompt_tokens || 0,
+        completionTokens: streamRes.usage.completion_tokens || 0,
       }).catch(() => {});
     }
 
-    const cleanText = sanitizeAssistantText(msg.content);
+    const cleanVisible = sanitizeAssistantText(streamRes.visibleContent || streamedTextThisTurn);
 
-    // If model returned text delta
-    if (cleanText) {
-      assistantAnswerText += cleanText;
-      sendEvent('text_delta', { text: cleanText });
-      messages.push({ role: 'assistant', content: cleanText });
-    } else if (!msg.tool_calls || msg.tool_calls.length === 0) {
-      sendEvent('text_delta', { text: 'I checked your vault, but could not generate a response for that query. Please try rephrasing or asking about a specific document.' });
-      break;
-    }
-
-    // If model requested tool calls
-    if (msg.tool_calls && msg.tool_calls.length > 0) {
-      // Append assistant message with tool calls to context
+    if (streamRes.toolCalls && streamRes.toolCalls.length > 0) {
       messages.push({
         role: 'assistant',
-        content: msg.content || '',
-        tool_calls: msg.tool_calls,
+        content: streamRes.rawContent || '',
+        tool_calls: streamRes.toolCalls,
       });
 
-      for (const call of msg.tool_calls) {
-        const toolName = call.function.name;
-        let toolArgs = {};
-        try {
-          toolArgs = JSON.parse(call.function.arguments || '{}');
-          if (toolArgs && typeof toolArgs === 'object') {
-            for (const k of Object.keys(toolArgs)) {
-              if (toolArgs[k] === null || toolArgs[k] === undefined) {
-                delete toolArgs[k];
-              }
-            }
-          }
-        } catch (e) {
-          toolArgs = {};
-        }
-
-        const toolDef = toolRegistry.get(toolName);
-        if (!toolDef) {
-          messages.push({
-            role: 'tool',
-            tool_call_id: call.id,
-            content: JSON.stringify({ error: `Tool ${toolName} not found` }),
-          });
-          continue;
-        }
-
-        const toolRunId = `run_${crypto.randomBytes(6).toString('hex')}`;
-        const summary = toolDef.summarize ? toolDef.summarize(toolArgs) : `Running ${toolName}`;
-
-        sendEvent('tool_started', {
-          id: toolRunId,
-          name: toolName,
-          label: summary,
-        });
-
-        // If it's a write tool, do NOT run immediately; queue confirmation
-        if (toolDef.kind === 'write') {
-          const runRecord = await CopilotRun.create({
-            userId,
-            action: toolName,
-            args: toolArgs,
-            humanSummary: summary,
-            status: 'awaiting_approval',
-            idempotencyKey: crypto.randomUUID(),
-          });
-
-          sendEvent('confirmation_required', {
-            runId: runRecord._id.toString(),
-            action: toolName,
-            summary,
-            fields: toolArgs,
-          });
-
-          messages.push({
-            role: 'tool',
-            tool_call_id: call.id,
-            content: JSON.stringify({
-              status: 'awaiting_approval',
-              runId: runRecord._id.toString(),
-              message: 'Action queued. Awaiting user confirmation in the interface.',
-            }),
-          });
-          continue;
-        }
-
-        // Run read tool
-        try {
-          // Validate args with Zod schema if available
-          let parsedArgs = toolArgs;
-          if (toolDef.schema) {
-            const parsed = toolDef.schema.safeParse(toolArgs);
-            if (!parsed.success) {
-              throw new Error(`Argument validation failed: ${parsed.error.message}`);
-            }
-            parsedArgs = parsed.data;
-          }
-
-          const ctx = { userId };
-          const result = await toolDef.run(ctx, parsedArgs);
-
-          if (result?.sources && Array.isArray(result.sources)) {
-            for (const s of result.sources) {
-              if (!allSources.some((x) => x.documentId === s.documentId && x.page === s.page)) {
-                allSources.push(s);
-              }
-            }
-            sendEvent('sources', { sources: allSources });
-          }
-
-          if (result?.flashcardDraft) {
-            sendEvent('flashcard_draft', result.flashcardDraft);
-          }
-
-          sendEvent('tool_result', {
-            id: toolRunId,
-            ok: true,
-            summary: `Completed ${toolName}`,
-          });
-
-          // Wrap untrusted evidence data to prevent prompt injection
-          const safeOutput = result?.evidence
-            ? { ...result, evidence: `<untrusted_document_data>\n${result.evidence}\n</untrusted_document_data>` }
-            : result;
-
-          messages.push({
-            role: 'tool',
-            tool_call_id: call.id,
-            content: JSON.stringify(safeOutput),
-          });
-        } catch (err) {
-          sendEvent('tool_result', {
-            id: toolRunId,
-            ok: false,
-            summary: `Failed: ${err.message}`,
-          });
-
-          messages.push({
-            role: 'tool',
-            tool_call_id: call.id,
-            content: JSON.stringify({ error: err.message }),
-          });
-        }
-      }
-    } else {
-      // No further tool calls, finished loop
-      break;
+      // Execute all tool calls requested in this turn in parallel!
+      const toolResultMsgs = await Promise.all(
+        streamRes.toolCalls.map((call) => executeSingleToolCall(call, userId, sendEvent, allSources))
+      );
+      messages.push(...toolResultMsgs);
+      continue;
     }
+
+    if (!cleanVisible) {
+      const fallbackText = 'I checked your vault, but could not find matching details for that query. Try asking about a specific document title or uploading a new file.';
+      assistantAnswerText += fallbackText;
+      sendEvent('text_delta', { text: fallbackText });
+    }
+    break;
   }
 
   sendEvent('done', { completed: true, sources: allSources });
 
-  // 6. Cache the final answer for future semantic hits (non-write intents only)
-  if (!isWriteIntent && assistantAnswerText && assistantAnswerText.length > 20) {
-    cacheAnswer(userId, userMessage, assistantAnswerText, allSources).catch(() => {});
+  // Cache clean, grounded non-write answers in background
+  if (!isWriteIntent && assistantAnswerText && assistantAnswerText.trim().length > 25) {
+    cacheAnswer(userId, trimmedMsg, assistantAnswerText.trim(), allSources).catch(() => {});
   }
 }
